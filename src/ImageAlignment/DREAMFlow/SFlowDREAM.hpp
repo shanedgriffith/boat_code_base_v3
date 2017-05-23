@@ -15,7 +15,7 @@
 #include <DataTypes/SIFTImageLayer.h>
 #include <DataTypes/AlignmentResult.h>
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
-#include <ImageAlignment/BeliefPropagation/BPFlow.h>
+#include <ImageAlignment/LiuFlow/BPFlow.h>
 #include "RFlowFME.hpp"
 #include <DataTypes/Camera.hpp>
 

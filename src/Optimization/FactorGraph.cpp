@@ -19,6 +19,7 @@
 #include <gtsam/slam/BetweenFactor.h>
 #include "BetweenThree.h"
 
+using namespace std;
 
 const vector<string> FactorGraph::keys= {
     "PRIOR_P_X", "PRIOR_P_Y", "PRIOR_P_Z", "PRIOR_P_ROLL", "PRIOR_P_PITCH", "PRIOR_P_YAW",
@@ -28,8 +29,6 @@ const vector<string> FactorGraph::keys= {
     "LANDMARK_DEVIATION", "MAX_LANDMARK_DIST", "MAX_ALLOWED_OUTLIER_NOISE"
 };
 //"CAM_PARAM_FX", "CAM_PARAM_FY", "CAM_PARAM_S", "CAM_PARAM_U", "CAM_PARAM_V"
-
-using namespace std;
 
 void FactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v6p;
