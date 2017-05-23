@@ -10,7 +10,6 @@
 #define ImagePose_h
 #include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseSurvey.h>
-#include <Optimization/ParseBoatSurvey.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 
@@ -114,7 +113,7 @@ public:
     	return {sidx, mini, minj, eidx};
     }
 
-    static std::vector<img_pose> GetDataBetweenIndices(int sidx, int eidx, ParseBoatSurvey& ps){
+    static std::vector<img_pose> GetDataBetweenIndices(int sidx, int eidx, ParseSurvey& ps){
     	int limage = -1;
     	std::vector<img_pose> res;
 		for(int i=sidx; i<eidx; i++){
@@ -143,7 +142,7 @@ public:
     	return n;
     }
 
-    static std::vector<img_pose> GetDataBetweenPoses(std::vector<double> start, std::vector<double> end, ParseBoatSurvey& ps){
+    static std::vector<img_pose> GetDataBetweenPoses(std::vector<double> start, std::vector<double> end, ParseSurvey& ps){
         std::vector<std::vector<double> >& poses = ps.Poses();
 		int sidx = FindClosestPose(poses, start);
 		int eidx = FindClosestPose(poses, end);
@@ -168,7 +167,7 @@ public:
 		return  GetDataBetweenIndices(sidx, eidx, ps);
 	}
     
-    static std::vector<img_pose> GetDataBetweenPoses(Camera& _cam, std::vector<double> start, std::vector<double> end, ParseOptimizationResults& por, ParseBoatSurvey& ps, string base){
+    static std::vector<img_pose> GetDataBetweenPoses(Camera& _cam, std::vector<double> start, std::vector<double> end, ParseOptimizationResults& por, ParseSurvey& ps, string base){
         //Note: this version may not match BruteForceAlignment.cpp. Cross-check the code and implement a single version later for consistency.
         std::vector<int>& images = por.cimage;
         std::vector<vector<double> >& poses = por.boat;

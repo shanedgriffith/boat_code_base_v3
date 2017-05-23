@@ -9,6 +9,8 @@
 
 #include <FileParsing/PointMap.hpp>
 
+using namespace std;
+
 void Map::LoadISCMap(vector<string>& dates){
     num_surveys = dates.size();
 

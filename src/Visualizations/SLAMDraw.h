@@ -70,7 +70,7 @@ private:
     
     void DrawUpwardSight(double img_width, double field_of_view=FOV);
     
-    cv::CvScalar GetLandmarkColor(int id);
+    CvScalar GetLandmarkColor(int id);
     
 public:
 
