@@ -32,7 +32,7 @@ protected:
 
     std::vector<double> PoseToVector(gtsam::Pose3& cam);
     gtsam::Pose3 VectorToPose(std::vector<double>& p);
-    static void CheckLine(string& filepath, int numr, int expected);
+    static void CheckLine(std::string& filepath, int numr, int expected);
 
 public:
     std::string date0, date1;
@@ -55,7 +55,7 @@ public:
     double perc_dc=0;
     double avg_rerror_inl=0;
 
-    LocalizedPoseData(string d0, string d1, int s0_, int s1_, int s0time_, int s1time_):
+    LocalizedPoseData(std::string d0, std::string d1, int s0_, int s1_, int s0time_, int s1time_):
         date0(d0), date1(d1),
         tf_p0_to_p1frame0(6),
         s0(s0_), s0time(s0time_), s1(s1_), s1time(s1time_),

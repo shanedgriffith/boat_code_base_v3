@@ -43,7 +43,7 @@ public:
                                                 std::vector<unsigned char>& inliers);
     bool AreInliersMeaningful(int v);
     void CorrectMatches(std::vector<cv::Point2f>& points1, std::vector<cv::Point2f>& points2);
-    vector<cv::Vec3f> GetDenseEpipolarLines(std::vector<cv::Point2f>& orig, cv::Mat& F);
+    std::vector<cv::Vec3f> GetDenseEpipolarLines(std::vector<cv::Point2f>& orig, cv::Mat& F);
     cv::Mat GetFundamentalMat();
     cv::Mat GetEssentialMat();
     

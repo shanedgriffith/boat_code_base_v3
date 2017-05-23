@@ -17,8 +17,8 @@ private:
 public:
     double alignment_energy=0;
     double alignment_energy_desc=0;
-    Mat f;
-    Mat nrg;
+    cv::Mat f;
+    cv::Mat nrg;
     
     void Init(){
         SetEmptyFlow();
@@ -37,11 +37,11 @@ public:
     }
     
     void SetEmptyFlow(){
-        f = Mat(rows, cols, CV_64FC2, cv::Scalar::all(0));
+        f = cv::Mat(rows, cols, CV_64FC2, cv::Scalar::all(0));
     }
     
     void SetEmptyEnergy(){
-        nrg = Mat(rows, cols, CV_64FC1, cv::Scalar::all(-1));
+        nrg = cv::Mat(rows, cols, CV_64FC1, cv::Scalar::all(-1));
     }
     
     void CopyResult(SIFTImageLayer& sil){
@@ -85,7 +85,7 @@ public:
     }
     
     SIFTImageLayer HalfSize(){
-    	vector<cv::Mat> halves;
+    	std::vector<cv::Mat> halves;
     	for(int i=0; i<im.size(); i++){
     		halves.push_back(HalveImage(im[i]));
     	}
@@ -93,7 +93,7 @@ public:
     }
     
     Mat DoubleFlow(){
-        Mat doubled_flow;
+        cv::Mat doubled_flow;
         ImageOperations::DoubleImage(f, doubled_flow);
         return doubled_flow.mul(2.0);
     }
@@ -101,14 +101,14 @@ public:
     vector<unsigned char *> ImageRefs(int idx1){
     	//!forward flips even and odd indexed images; e.g., the image and the mask order are flipped.
         int idx2 = (idx1+1)%2;
-    	 vector<unsigned char *> refs = {im[idx1].data, im[idx2].data};
+    	 std::vector<unsigned char *> refs = {im[idx1].data, im[idx2].data};
     	 return refs;
     }
 
     AlignmentResult GetAlignmentResult(int times_extrapolated=0){
         
-        Mat flow =f;
-        Mat energy = nrg;
+        cv::Mat flow =f;
+        cv::Mat energy = nrg;
         double ares = alignment_energy;
         double e_d = alignment_energy_desc;
         

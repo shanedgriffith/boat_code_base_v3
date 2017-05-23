@@ -18,7 +18,7 @@ public:
     double consistency = 0;
     double verified_ratio = 0;
     int rows, cols, nchan;
-    vector<cv::Mat> im;
+    std::vector<cv::Mat> im;
     int layer_number=0;
     
     void SetLayerNumber(int no){
@@ -27,7 +27,7 @@ public:
     
     ImageLayer(int height, int width): rows(height), cols(width){}
 
-    ImageLayer(vector<cv::Mat> ims): im(ims), rows(ims[0].rows), cols(ims[0].cols), nchan(ims[0].channels()) {}
+    ImageLayer(std::vector<cv::Mat> ims): im(ims), rows(ims[0].rows), cols(ims[0].cols), nchan(ims[0].channels()) {}
     
     int height(){
         return rows;
@@ -41,7 +41,7 @@ public:
     	return nchan;
     }
 
-    Mat HalveImage(Mat& im, int g_hsize=7, double g_sigma=1.0){
+    cv::Mat HalveImage(cv::Mat& im, int g_hsize=7, double g_sigma=1.0){
         //note: an adaptive gaussian based on the image size doesn't seem to help.
         return ImageOperations::HalveImage(im, g_hsize, g_sigma);
     }

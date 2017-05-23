@@ -150,7 +150,7 @@ public:
 
 		if(sidx == -1 || eidx ==-1){
 			/*If 1 is negative and the other isn't, that's an edge case, which could be handled, but isn't here.*/
-			cout <<"warning: no images between the two poses" << endl;
+			std::cout <<"warning: no images between the two poses" << std::endl;
 			return res;
 		}
 
@@ -177,7 +177,7 @@ public:
         std::vector<img_pose> res;
         
         if(sidx == -1 || eidx ==-1 || sidx > eidx){
-            cout <<"warning: no images between the two poses" << endl;
+            std::cout <<"warning: no images between the two poses" << std::endl;
             return res;
         }
         

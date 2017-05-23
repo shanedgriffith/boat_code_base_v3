@@ -26,7 +26,7 @@ public:
     int stop_layer = 1;
     int pyr_type = 0;
     int start_sift_layer = 1;
-    vector<SIFTImageLayer> layers;
+    std::vector<SIFTImageLayer> layers;
     enum pyramid_type{
         RGB,
         SIFT,
@@ -38,7 +38,7 @@ public:
         if(layers.size() < _nlayers) {
         	if(layers.size() == start_sift_layer){
 				if(pyr_type == pyramid_type::SIFT) {
-					Mat i1_64, i2_64;
+                    cv::Mat i1_64, i2_64;
 					il.im[0].convertTo(i1_64, CV_64FC(il.im[0].channels()));
 					il.im[1].convertTo(i2_64, CV_64FC(il.im[1].channels()));
 					vector<cv::Mat> ims = {i1_64, i2_64};
@@ -48,8 +48,8 @@ public:
 					SIFTImageLayer change_types(ims);
 					SIFTImageLayer half = change_types.HalfSize();
 
-					Mat half1 = ImageOperations::imSIFT(half.im[0]);
-					Mat half2 = ImageOperations::imSIFT(half.im[1]);
+                    cv::Mat half1 = ImageOperations::imSIFT(half.im[0]);
+                    cv::Mat half2 = ImageOperations::imSIFT(half.im[1]);
 					ims = {half1, half2};
 					for(unsigned int i=2; i<il.im.size(); i++){
 						ims.push_back(half.im[i]);
@@ -60,9 +60,9 @@ public:
 					//Note: With BRIEF, the SIFT Flow parameters have to be decreased by a factor of 30. (divide by 30).
 					SIFTImageLayer half = il.HalfSize();
 
-					Mat half1 = ImageOperations::imBRIEF(half.im[0]);
-					Mat half2 = ImageOperations::imBRIEF(half.im[1]);
-					vector<cv::Mat> ims = {half1, half2};
+                    cv::Mat half1 = ImageOperations::imBRIEF(half.im[0]);
+                    cv::Mat half2 = ImageOperations::imBRIEF(half.im[1]);
+					std::vector<cv::Mat> ims = {half1, half2};
 					for(unsigned int i=2; i<il.im.size(); i++){
 						ims.push_back(il.im[i]);
 					}
@@ -107,7 +107,7 @@ public:
          */
         
         if(pyr_type == pyramid_type::RGB){
-            cout << "ImagePyramid: No alignment result. Indicate a descriptor."<<endl;
+            std::cout << "ImagePyramid: No alignment result. Indicate a descriptor."<<std::endl;
             exit(-1);
         }
         

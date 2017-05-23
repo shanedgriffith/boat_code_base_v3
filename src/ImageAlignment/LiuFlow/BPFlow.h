@@ -198,7 +198,7 @@ public:
     //    exit(1);
     void TestDataTerm();
     int ImageValue(cv::Mat& img, int i, int j, int k);
-    cv::Mat ComputeDataTerm2(cv::Mat si1, Mat si2);
+    cv::Mat ComputeDataTerm2(cv::Mat si1, cv::Mat si2);
     void CompareDataTerms(cv::Mat pData);
     
 	template<class T>
