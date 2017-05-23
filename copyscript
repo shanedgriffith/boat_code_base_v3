@@ -1,5 +1,5 @@
 #!/bin/bash
-SRC="/cs-share/dream/boat_code_base/src"
+SRC="/cs-share/dream/boat_code_base_v2/src"
 REF="/cs-share/dream/isc_consecutive/src"
 EXCLUDE=('main.cpp')
 types=('*.cpp' '*.hpp' '*.h')

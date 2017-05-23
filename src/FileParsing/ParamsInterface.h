@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-//#include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -27,7 +26,7 @@ protected:
     void ProcessLineEntries(int type, std::vector<std::string> lp);
     void ReadDelimitedFile(std::string file, int type);
 public:
-    string _paramfile;
+    std::string _paramfile;
     std::vector<std::string> keys;
     std::vector<double> values;
     
@@ -36,7 +35,7 @@ public:
         if(Exists(_paramfile)) {
             ReadDelimitedFile(_paramfile, 0);
         } else {
-            cout << "Couldn't get the parameters at: " << query_loc << endl;
+            std::cout << "Couldn't get the parameters at: " << query_loc << std::endl;
             exit(-1);
         }
     }
@@ -47,7 +46,7 @@ public:
     
     void SaveParams(std::string loc = "");
     
-    std::vector<double> LoadParams(vector<string> keys, std::vector<double> defaults = std::vector<double>());
+    std::vector<double> LoadParams(std::vector<std::string> keys, std::vector<double> defaults = std::vector<double>());
     
     
 };
