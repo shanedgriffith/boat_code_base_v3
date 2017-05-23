@@ -46,7 +46,7 @@ public:
         ReadDelimitedFile(_base + _auxfile, 0);
         
         if(timings.size() == 0) {
-            cout << "Survey Error. The AUX file is empty." << endl;
+            std::cout << "Survey Error. The AUX file is empty." << std::endl;
         }
     }
     

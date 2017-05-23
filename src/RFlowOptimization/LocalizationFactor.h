@@ -28,13 +28,13 @@
 #include <gtsam/geometry/Cal3_S2.h>
 #include <boost/optional.hpp>
 
-  /**
-   * Non-linear factor for a constraint derived from a 2D measurement. The calibration is known here.
-   * i.e. the main building block for visual SLAM.
-   * @addtogroup SLAM
-   */
+/**
+* Non-linear factor for a constraint derived from a 2D measurement. The calibration is known here.
+* i.e. the main building block for visual SLAM.
+* @addtogroup SLAM
+*/
 template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
-  class LocalizationFactor: public NoiseModelFactor1<POSE> {
+class LocalizationFactor: public NoiseModelFactor1<POSE> {
   protected:
 
     // Keep a copy of measurement and calibration for I/O
