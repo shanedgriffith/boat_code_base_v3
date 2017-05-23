@@ -115,7 +115,7 @@ double ParseBoatSurvey::GetAvgAngularVelocity(int sidx, int eidx) {
     return sum/(eidx-sidx);
 }
 
-bool Useable(int idx){
+bool ParseBoatSurvey::Useable(int idx){
     return (abs(cam_pan[idx])==1.569978);
 }
 

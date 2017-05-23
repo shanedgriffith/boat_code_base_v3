@@ -276,7 +276,7 @@ void KLT::PrintPointSet() {
     fclose(fp);
 }
 
-ParseFeatureTrackFile KLT::TrackKLTFeatures(cv::Mat& view_color, string base, int image_num, double timestamp) {
+ParseFeatureTrackFile KLT::TrackKLTFeatures(cv::Mat& view_color, std::string base, int image_num, double timestamp) {
     cv::Mat view;
     cvtColor(view_color, view, CV_RGB2GRAY);
     
