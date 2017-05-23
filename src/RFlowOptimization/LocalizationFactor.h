@@ -22,12 +22,12 @@
 #ifndef __BundleAdjustOneDataset__LocalizationFactor__
 #define __BundleAdjustOneDataset__LocalizationFactor__
 
-#include <gtsam/nonlinear/NonlinearFactor.h>
 #include <gtsam/geometry/SimpleCamera.h>
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Cal3_S2.h>
 #include <boost/optional.hpp>
+#include <gtsam/nonlinear/NonlinearFactor.h>
 
 /**
 * Non-linear factor for a constraint derived from a 2D measurement. The calibration is known here.
