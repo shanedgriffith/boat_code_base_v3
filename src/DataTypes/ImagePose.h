@@ -124,7 +124,7 @@ public:
 
 			std::vector<double> pose = ps.GetPose(i);
 			int pftno = ps.GetImageNumber(i);
-			double av = ps.GetAvgAngularVelocity(max(i-20,0), i);
+			double av = ps.GetAvgAngularVelocity(std::max(i-20,0), i);
 			double image_time = ps.timings[i];
 			img_pose ip(image, pose, pftno, av, image_time, i, -1);
 			res.push_back(ip);
@@ -167,10 +167,10 @@ public:
 		return  GetDataBetweenIndices(sidx, eidx, ps);
 	}
     
-    static std::vector<img_pose> GetDataBetweenPoses(Camera& _cam, std::vector<double> start, std::vector<double> end, ParseOptimizationResults& por, ParseSurvey& ps, string base){
+    static std::vector<img_pose> GetDataBetweenPoses(Camera& _cam, std::vector<double> start, std::vector<double> end, ParseOptimizationResults& por, ParseSurvey& ps, std::string base){
         //Note: this version may not match BruteForceAlignment.cpp. Cross-check the code and implement a single version later for consistency.
         std::vector<int>& images = por.cimage;
-        std::vector<vector<double> >& poses = por.boat;
+        std::vector<std::vector<double> >& poses = por.boat;
         
         int sidx = FindClosestPose(poses, start);
         int eidx = FindClosestPose(poses, end);

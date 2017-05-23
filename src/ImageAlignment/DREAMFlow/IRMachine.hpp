@@ -18,8 +18,8 @@
 
 class IRMachine: public AlignmentMachine {
 private:
-    string _im1;
-    string _im2;
+    std::string _im1;
+    std::string _im2;
     double res_async;
     double * _res;
     double ver_async;
@@ -28,7 +28,7 @@ private:
 public:
     IRMachine():_cam(0,0,0,0,0,0){}
     void SetCamera(Camera cam){_cam = cam;}
-    void Setup(string im1, string im2, double * res, double * ver = NULL);
+    void Setup(std::string im1, std::string im2, double * res, double * ver = NULL);
     void Reset();
     void * Run();
     void LogResults();

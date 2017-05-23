@@ -7,13 +7,14 @@
 
 
 #include <opencv2/opencv.hpp>
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "SFlowDREAM2RF.hpp"
-#include "LocalizePose.hpp"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/AlignmentResult.h>
+
+#include "SFlowDREAM2RF.hpp"
+#include "LocalizePose.hpp"
 
 #include "ImageToLocalization.hpp"
 

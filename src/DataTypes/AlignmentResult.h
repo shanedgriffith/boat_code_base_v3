@@ -153,7 +153,7 @@ public:
         ImageOperations::writeUncompressedImage(img, name);
     }
     
-    Mat GetWarpedImage(){
+    cv::Mat GetWarpedImage(){
         return ImageOperations::CreateWarpedImage(im2, flow);
     }
     
@@ -345,7 +345,7 @@ public:
                 }
                 if(std::isnan(fx) || std::isnan(fy)){
                     countnan++;
-                    cout <<"AlignmentResult: likely image size issue."<<endl;
+                    std::cout <<"AlignmentResult: likely image size issue."<<std::endl;
                     continue;
                 }
 //                cout << "sum: (" <<sumx<<","<<sumy<<")"<<endl;
@@ -353,8 +353,8 @@ public:
                 sumy += f[idx+1];
             }
         }
-        cout << "percent bad =" <<100.0*countbad/(_width*_height)<<endl;
-        cout << "number nan =" <<countnan<<endl;
+        std::cout << "percent bad =" <<100.0*countbad/(_width*_height)<<std::endl;
+        std::cout << "number nan =" <<countnan<<std::endl;
         
         return gtsam::Point2(sumx/(1.0*_width*_height), sumy/(1.0*_width*_height));
     }

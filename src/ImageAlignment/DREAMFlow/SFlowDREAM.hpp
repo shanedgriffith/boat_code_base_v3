@@ -52,7 +52,7 @@ protected:
 
 	//probably should be true by default, since it adds little cost and performs better.
 	bool epipolar = false;
-	vector<vector<vector<double> > > hypspace;
+	std::vector<std::vector<std::vector<double> > > hypspace;
 	int HYP_SPACE_PADDING = 0;
 
 	bool reprojection_flow = false;

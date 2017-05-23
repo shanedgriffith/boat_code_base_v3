@@ -43,18 +43,18 @@ private:
 
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
 	std::vector<int> IdentifyNeighborPoses(std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double>& p2);
-	std::vector<double> DirectionalSearch(string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
-	std::vector<double> NaiveSearch(string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
+	std::vector<double> DirectionalSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
+	std::vector<double> NaiveSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
 
     int GetMin(std::vector<double>& res);
     int GetMax(std::vector<double>& ver);
     bool HaveVerified(int i, std::vector<double>& ver);
     bool ContinueInDirection(int off, int direction, std::vector<double>& res);
     bool ArrayMatchesSignal010(std::vector<double>& res);
-    std::vector<double> MultiThreadedSearch(string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
+    std::vector<double> MultiThreadedSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
     
     MachineManager man;
-    vector<IRMachine*> ws;
+    std::vector<IRMachine*> ws;
     Camera& _cam;
 public:
     ImageRetrieval(Camera& cam, int nthreads=1): _cam(cam) {
@@ -69,8 +69,8 @@ public:
     }
 
 	void SetCamSkip(int val){CAM_SKIP=val;}//use 0 for optimized surveys, use 5 or 10 or so for unoptimized surveys in which the images overlap a lot.
-	int IdentifyClosestPose(std::string base, std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double> pose2, string image2, double * ae = NULL);
-	std::vector<double> ParallelIRWithKnownInput(std::vector<std::string> refimages, string image2);
+	int IdentifyClosestPose(std::string base, std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double> pose2, std::string image2, double * ae = NULL);
+	std::vector<double> ParallelIRWithKnownInput(std::vector<std::string> refimages, std::string image2);
 };
 
 

@@ -16,8 +16,7 @@
 
 #include "AlignmentMachine.h"
 
-class MachineManager
-{
+class MachineManager {
 private:
     int NumberOfMachinesAtState(AlignmentMachine::state s);
     int OpenMachines();
@@ -25,7 +24,7 @@ private:
 public:
     bool check_users;
     bool debug = false;
-    vector<AlignmentMachine*> ams;
+    std::vector<AlignmentMachine*> ams;
     
     MachineManager(){
     	check_users = true;

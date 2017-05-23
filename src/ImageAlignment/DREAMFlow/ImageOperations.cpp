@@ -15,29 +15,24 @@
 using namespace cv;
 using namespace std;
 
-void ImageOperations::CheckType(Mat& image, int type)
-{
+void ImageOperations::CheckType(Mat& image, int type) {
     /*Make sure the type abides.*/
 
-    if(image.type() != type)
-    {
+    if(image.type() != type) {
         cout << "Couldn't handle image type." << endl;
         exit(-1);
     }
 }
 
-double * data(Mat & image)
-{
+double * data(Mat & image) {
     return (double *) image.data;
 }
 
-double ImageOperations::ValueAtPixel(Mat& image, int x, int y, int c)
-{
+double ImageOperations::ValueAtPixel(cv::Mat& image, int x, int y, int c) {
     return data(image)[(y*image.cols + x)*image.channels()+c];
 }
 
-void ImageOperations::SetPixel(Mat& image, int x, int y, int c, double val)
-{
+void ImageOperations::SetPixel(cv::Mat& image, int x, int y, int c, double val) {
     data(image)[(y*image.cols + x)*image.channels()+c] = val;
 }
 
@@ -69,12 +64,11 @@ Mat ImageOperations::imBRIEF(Mat& imsrc){
 	return imsrc;
 }
 
-
 /*
  * imsift = 128 byte sift image.
+ A snippit from Liu et al's "SIFT Flow ..." PAMI code.
  * */
-Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBoundaryIncluded, int nBins)
-{
+Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBoundaryIncluded, int nBins) {
     /*
      * Returns a SIFT image of the same width, height, and with 128 channels. This represents the SIFT descriptor for every
      * pixel in the original image.
@@ -84,8 +78,7 @@ Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBound
     Mat imsrc64;
     imsrc.convertTo(imsrc64, CV_64FC(imsrc.channels()));
     
-    if(cellSize<=0)
-    {
+    if(cellSize<=0) {
         cout<<"The cell size must be positive!"<<endl;
         exit(-1);
     }
@@ -108,21 +101,17 @@ Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBound
     Mat mag(height,width,CV_64FC1, Scalar::all(0));
     Mat gradient(height,width,CV_64FC2, Scalar::all(0));
     double Max;
-    for(int i=0;i<nPixels;i++)
-    {
+    for(int i=0;i<nPixels;i++) {
         int offset = i*nchannels;
         for(int j = 0;j<nchannels;j++)
             data(magsrc)[offset+j] = sqrt(pow(data(imdx)[offset+j],2.0)+pow(data(imdy)[offset+j],2.0)); //DEBUGGING
         Max = data(magsrc)[offset];
-        if(Max!=0)
-        {
+        if(Max!=0) {
             data(gradient)[i*2] = data(imdx)[offset]/Max;
             data(gradient)[i*2+1] = data(imdy)[offset]/Max;
         }
-        for(int j = 1;j<nchannels;j++)
-        {
-            if(data(magsrc)[offset+j]>Max)
-            {
+        for(int j = 1;j<nchannels;j++) {
+            if(data(magsrc)[offset+j]>Max) {
                 Max = data(magsrc)[offset+j];
                 data(gradient)[i*2] = data(imdx)[offset+j]/Max;
                 data(gradient)[i*2+1] = data(imdy)[offset+j]/Max;
@@ -135,12 +124,10 @@ Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBound
     Mat imband(height,width,CV_64FC(nBins));
     double theta = M_PI*2/nBins;
     double _cos,_sin,temp;
-    for(int k = 0;k<nBins;k++)
-    {
+    for(int k = 0;k<nBins;k++) {
         _sin    = sin(theta*k);
         _cos   = cos(theta*k);
-        for(int i = 0;i<nPixels; i++)
-        {
+        for(int i = 0;i<nPixels; i++) {
             temp = max(data(gradient)[i*2]*_cos + data(gradient)[i*2+1]*_sin,0.0);
             if(alpha>1)
                 temp = pow(temp,alpha);
@@ -167,8 +154,7 @@ Mat ImageOperations::imSIFT(Mat& imsrc, int cellSize, int stepSize, bool IsBound
     sift_width = width/stepSize;
     sift_height = height/stepSize;
     
-    if(IsBoundaryIncluded == false)
-    {
+    if(IsBoundaryIncluded == false) {
         sift_width = (width-4*cellSize)/stepSize;
         sift_height= (height-4*cellSize)/stepSize;
         x_shift = 2*cellSize;

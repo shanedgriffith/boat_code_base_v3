@@ -74,7 +74,7 @@ public:
         return alignment_energy;
     }
     
-    Mat HalveImage(Mat& im, int g_hsize=5, double g_sigma=0.67){
+    cv::Mat HalveImage(Mat& im, int g_hsize=5, double g_sigma=0.67){
         /*
          Note the parameters used to halve the image are different from those used for an RGB image.
          -SIFT features are apparently quite sensitive to gaussian blur.
@@ -92,13 +92,13 @@ public:
     	return SIFTImageLayer(halves);
     }
     
-    Mat DoubleFlow(){
+    cv::Mat DoubleFlow(){
         cv::Mat doubled_flow;
         ImageOperations::DoubleImage(f, doubled_flow);
         return doubled_flow.mul(2.0);
     }
     
-    vector<unsigned char *> ImageRefs(int idx1){
+    std::vector<unsigned char *> ImageRefs(int idx1){
     	//!forward flips even and odd indexed images; e.g., the image and the mask order are flipped.
         int idx2 = (idx1+1)%2;
     	 std::vector<unsigned char *> refs = {im[idx1].data, im[idx2].data};

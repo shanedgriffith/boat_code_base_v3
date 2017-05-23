@@ -35,7 +35,7 @@ private:
     static void warpImage(cv::Mat& image, cv::Mat& imgdata, cv::Mat& pV);
     
     static int EnforceRange(int x,const int MaxValue) {return std::min(std::max(x,0),MaxValue-1);};
-    static inline void BilinearInterpolate(Mat& image, double x, double y, unsigned char* result);
+    static inline void BilinearInterpolate(cv::Mat& image, double x, double y, unsigned char* result);
     
 public:
     

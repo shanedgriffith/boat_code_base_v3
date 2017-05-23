@@ -27,7 +27,7 @@ private:
     void SortPoints(std::vector<dubs>& both);
 
     MachineManager man;
-    vector<ViewpointMachine*> ws;
+    std::vector<ViewpointMachine*> ws;
 public:
     MultiSurveyViewpointSelection(int nthreads=8){
         if(nthreads > 1) {
@@ -39,9 +39,9 @@ public:
     }
     
     std::vector<std::vector<double> > TopKViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
-                                                       std::vector<string>& dates, std::vector<double>& pref, int k=8);
+                                                       std::vector<std::string>& dates, std::vector<double>& pref, int k=8);
 
-    bool WithinThreeMonths(string date1, string date2);
+    bool WithinThreeMonths(std::string date1, std::string date2);
     ~MultiSurveyViewpointSelection(){
         man.WaitForMachine(true);
         for(int i=0; i<ws.size(); i++){
