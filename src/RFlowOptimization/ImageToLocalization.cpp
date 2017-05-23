@@ -17,6 +17,8 @@
 
 #include "ImageToLocalization.hpp"
 
+using namespace std;
+
 ParseFeatureTrackFile ImageToLocalization::LoadFTF(int survey, int time){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
             siftloc + dates[survey],
@@ -85,7 +87,7 @@ void ImageToLocalization::DrawMatchPoints(cv::Mat& imageA, cv::Mat& imageB, vect
  * Survey 1, pose2, and image2.
  * ret._height is zero if a good alignment couldn't be found.
  * */
-AlignmentResult ImageToLocalization::MatchToSet(string image1, string image2) {
+AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string image2) {
     SFlowDREAM2RF sf(_cam);
     if(hasRF) {
         if(!sf.SetReprojectionFlow(rf)) {

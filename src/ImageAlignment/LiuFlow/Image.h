@@ -1042,11 +1042,11 @@ void Image<T>::crop(Image<T1>& patch,int Left,int Top,int Width,int Height) cons
 		patch.allocate(Width,Height,nChannels);
 	// make sure that the cropping is valid
 	if(Left<0 || Top<0 || Left>=imWidth || Top>=imHeight) {
-		cout<<"The cropping coordinate is outside the image boundary!"<<endl;
+		std::cout<<"The cropping coordinate is outside the image boundary!"<<std::endl;
 		return;
 	}
 	if(Width<0 || Height<0 || Width+Left>imWidth || Height+Top>imHeight) {
-		cout<<"The patch to crop is invalid!"<<endl;
+		std::cout<<"The patch to crop is invalid!"<<std::endl;
 		return;
 	}
 	ImageProcessing::cropImage(pData,imWidth,imHeight,nChannels,patch.data(),Left,Top,Width,Height);
@@ -1059,7 +1059,7 @@ template <class T>
 template <class T1,class T2,class T3>
 void Image<T>::Multiply(const Image<T1>& image1,const Image<T2>& image2,const Image<T3>& image3) {
 	if(image1.matchDimension(image2)==false || image2.matchDimension(image3)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Multiply()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Multiply()!"<<std::endl;
 		return;
 	}
 	if(matchDimension(image1)==false)
@@ -1077,7 +1077,7 @@ template <class T>
 template <class T1,class T2>
 void Image<T>::Multiply(const Image<T1>& image1,const Image<T2>& image2) {
 	if(image1.matchDimension(image2)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Multiply()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Multiply()!"<<std::endl;
 		return;
 	}
 	if(matchDimension(image1)==false)
@@ -1094,7 +1094,7 @@ template <class T>
 template <class T1>
 void Image<T>::Multiplywith(const Image<T1> &image1) {
 	if(matchDimension(image1)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Multiplywith()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Multiplywith()!"<<std::endl;
 		return;
 	}
 	const T1*& pData1=image1.data();
@@ -1115,7 +1115,7 @@ template <class T>
 template <class T1,class T2>
 void Image<T>::Add(const Image<T1>& image1,const Image<T2>& image2) {
 	if(image1.matchDimension(image2)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Add()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Add()!"<<std::endl;
 		return;
 	}
 	if(matchDimension(image1)==false)
@@ -1131,7 +1131,7 @@ template <class T>
 template <class T1,class T2>
 void Image<T>::Add(const Image<T1>& image1,const Image<T2>& image2,double ratio) {
 	if(image1.matchDimension(image2)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Add()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Add()!"<<std::endl;
 		return;
 	}
 	if(matchDimension(image1)==false)
@@ -1147,7 +1147,7 @@ template <class T>
 template <class T1>
 void Image<T>::Add(const Image<T1>& image1,const double ratio) {
 	if(matchDimension(image1)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Add()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Add()!"<<std::endl;
 		return;
 	}
 	const T1*& pData1=image1.data();
@@ -1159,7 +1159,7 @@ template <class T>
 template <class T1>
 void Image<T>::Add(const Image<T1>& image1) {
 	if(matchDimension(image1)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Add()!"<<endl;
+		std::cout<<"Error in image dimensions--function Image<T>::Add()!"<<std::endl;
 		return;
 	}
 	const T1*& pData1=image1.data();
@@ -1181,7 +1181,7 @@ template <class T>
 template <class T1,class T2>
 void Image<T>::Subtract(const Image<T1> &image1, const Image<T2> &image2) {
 	if(image1.matchDimension(image2)==false) {
-		cout<<"Error in image dimensions--function Image<T>::Add()!"<<endl;
+        std::cout<<"Error in image dimensions--function Image<T>::Add()!"<<std::endl;
 		return;
 	}
 	if(matchDimension(image1)==false)

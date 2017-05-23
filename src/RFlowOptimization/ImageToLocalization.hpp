@@ -45,7 +45,7 @@ private:
     AlignmentResult MatchToSet(std::string image1, std::string image2);
     int MapPoints(AlignmentResult& ar, std::vector<gtsam::Point2>& imagecoord, std::vector<gtsam::Point3>& p3d,
                   std::vector<gtsam::Point2>& p1, std::vector<gtsam::Point2>& p2, std::vector<gtsam::Point3>& subset3d, bool forward);
-    bool ApplyEpipolarConstraints(std::vector<gtsam::Point2>& p0, vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers);
+    bool ApplyEpipolarConstraints(std::vector<gtsam::Point2>& p0, std::vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers);
     double RobustAlignmentConstraints(AlignmentResult& ar, ParseFeatureTrackFile& pftf0,  ParseFeatureTrackFile& pftf1);
 
     std::vector<std::vector<double> > poses;
@@ -74,7 +74,7 @@ public:
     void SetPoses(std::vector<std::vector<double> > p){poses = p;}
     void SetRF(std::vector<ReprojectionFlow*> rflow){rf = rflow; hasRF = true;}
     void SetPOR(std::vector<ParseOptimizationResults*> pores){por=pores;}
-    void SetDates(std::vector<string> d){dates=d;}
+    void SetDates(std::vector<std::string> d){dates=d;}
     void SetSurveyIDs(std::vector<int> s){sids=s;}
     void SetPORTimes(std::vector<int> ps){portimes = ps;}
     void SetVPose(gtsam::Pose3 p){p1_tm1 = p;}

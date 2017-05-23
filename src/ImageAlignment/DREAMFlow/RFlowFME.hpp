@@ -37,7 +37,7 @@ private:
     void GetHypothesisSpaceInlier(std::vector<double>& hypspace, double cx=0, double cy=0);
     bool ComputeHypothesisSpaceFirst(std::vector<std::vector<double> >& hypspace, std::vector<cv::Point2f>& orig_sparse, std::vector<cv::Point2f>& mapped_sparse, cv::Mat& flow, std::vector<unsigned char>& labels);
     bool ComputeHypothesisSpace(std::vector<std::vector<double> >& hypspace, std::vector<cv::Point2f>& mapped, std::vector<unsigned char>& labels);
-    void TransformFlow(cv::Mat& flow, std::vector<cv::Point2f>& orig, vector<cv::Point2f>& mapped);
+    void TransformFlow(cv::Mat& flow, std::vector<cv::Point2f>& orig, std::vector<cv::Point2f>& mapped);
     Camera& _cam;
 public:
     RFlowFME(Camera& cam, int width, int height):

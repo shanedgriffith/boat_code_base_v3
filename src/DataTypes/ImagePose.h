@@ -193,8 +193,8 @@ public:
                 std::vector<double> pose = GetIntermediatePose(poses[i+1], poses[i], (1.0*j)/n_between);
                 while(lastauxidx < ps.timings.size() && ps.GetImageNumber(++lastauxidx) < image);
                 if(lastauxidx >= ps.timings.size()){
-                    cout << "image: " << image << endl;
-                    cout << "reached the end of the aux: " << lastauxidx<<endl;
+                    std::cout << "image: " << image << std::endl;
+                    std::cout << "reached the end of the aux: " << lastauxidx<<std::endl;
                     exit(1);
                 }
                 double image_time = ps.timings[lastauxidx];

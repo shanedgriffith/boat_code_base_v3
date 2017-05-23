@@ -57,7 +57,7 @@ protected:
 
 	bool reprojection_flow = false;
 	ReprojectionFlow* rf = NULL;
-	vector<cv::Mat> offsets;
+    std::vector<cv::Mat> offsets;
 
 	double computation_time = 0.0;
 

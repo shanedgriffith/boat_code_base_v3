@@ -175,7 +175,7 @@ public:
 	void setDisplay(bool isDisplay){IsDisplay=isDisplay;};
 	void setTRW(bool isTRW){IsTRW=isTRW;};
 	void setCTRW(double cTRW){CTRW=cTRW;};
-	void LoadImages(int _width, int _height, int _nchannels, vector<T_input*> imgs);
+    void LoadImages(int _width, int _height, int _nchannels, std::vector<T_input*> imgs);
 //	void LoadImages(int _width,int _height,int _nchannels,const T_input* pImage1,const T_input* pImage2);
 //    void LoadImages(int _width, int _height, int _nchannels, const T_input *pImage1, const T_input *pImage2, const T_input * img2mask);
 //	void LoadImages(int _width,int _height,int _nchannels,const T_input* pImage1, int _width2,int _height2,const T_input* pImage2);
@@ -198,7 +198,7 @@ public:
     //    exit(1);
     void TestDataTerm();
     int ImageValue(cv::Mat& img, int i, int j, int k);
-    Mat ComputeDataTerm2(cv::Mat si1, Mat si2);
+    cv::Mat ComputeDataTerm2(cv::Mat si1, Mat si2);
     void CompareDataTerms(cv::Mat pData);
     
 	template<class T>
