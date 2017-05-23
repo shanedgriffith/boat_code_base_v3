@@ -35,7 +35,7 @@
 * @addtogroup SLAM
 */
 template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
-class CustomLocalizationFactor: public NoiseModelFactor1<POSE> {
+class CustomLocalizationFactor: public gtsam::NoiseModelFactor1<POSE> {
 public
     typedef POSE T;
     typedef CALIBRATION C;
