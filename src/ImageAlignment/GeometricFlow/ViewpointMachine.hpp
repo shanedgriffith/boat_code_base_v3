@@ -16,7 +16,7 @@
 class ViewpointMachine: public AlignmentMachine{
 private:
     ReprojectionFlow* _rf;
-    std::vector<vector<double> >* _plist;
+    std::vector<std::vector<double> >* _plist;
     std::vector<double> _pref;
     double g;
     int pidx;

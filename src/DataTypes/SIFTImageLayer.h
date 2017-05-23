@@ -74,7 +74,7 @@ public:
         return alignment_energy;
     }
     
-    cv::Mat HalveImage(Mat& im, int g_hsize=5, double g_sigma=0.67){
+    cv::Mat HalveImage(cv::Mat& im, int g_hsize=5, double g_sigma=0.67){
         /*
          Note the parameters used to halve the image are different from those used for an RGB image.
          -SIFT features are apparently quite sensitive to gaussian blur.
