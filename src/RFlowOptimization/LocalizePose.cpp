@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <cmath>
 
-#include "CustomLocalizationFactor.h"
+#include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
 #include "LocalizePose.hpp"
 
