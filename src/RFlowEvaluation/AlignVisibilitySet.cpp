@@ -16,7 +16,7 @@ void AlignVisibilitySet::Visibility() {
     ParseVisibilityFile vis(poses_loc, _date1, _date2);
 
     std::string saveloc = base + _date1 + "_to_" + _date2 + "/";
-    std::mkdir(saveloc.c_str(), (mode_t) (S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
+    mkdir(saveloc.c_str(), (mode_t) (S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 
     for(int i=0; i<vis.boat1.size(); i++) {
         std::cout << "Iteration: " << i << std::endl;

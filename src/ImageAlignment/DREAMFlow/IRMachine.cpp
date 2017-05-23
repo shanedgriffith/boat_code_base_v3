@@ -12,7 +12,7 @@
 #include <DataTypes/AlignmentResult.h>
 
 
-void IRMachine::Setup(string im1, string im2, double * res, double * ver){
+void IRMachine::Setup(std::string im1, std::string im2, double * res, double * ver){
     thread_state = state::LOCKED;
     _im1 = im1;
     _im2 = im2;
