@@ -14,6 +14,7 @@
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
 
 using namespace std;
+using namespace cv;
 
 char const * FlickeringDisplay::window_name = "Flickering Display";
 const string FlickeringDisplay::labelfile = "/labels.txt";
@@ -219,7 +220,7 @@ void FlickeringDisplay::CompareFromDir(string dir){
     }
 }
 
-void FlickeringDisplay::DisplaySurveyComparisonDir(string dir, std::vector<int>& dnum, int start) {
+void FlickeringDisplay::DisplaySurveyComparisonDir(std::string dir, std::vector<int>& dnum, int start) {
     cv::namedWindow(window_name);
     for(int i=start; i<dnum.size() && !finished; i++) {
         string basedir = dir + "/" + to_string(dnum[i]) + "/";

@@ -42,7 +42,7 @@ public:
     PointMap(std::string base, bool read = false) {
         _base = base;
         _pointmapfile = _base + "/point_map.csv";
-        if(debug) cout << "file: " << _pointmapfile << endl;
+        if(debug) std::cout << "file: " << _pointmapfile << std::endl;
         if(read && Exists(_pointmapfile)) ReadDelimitedFile(_pointmapfile, 0);
     }
     

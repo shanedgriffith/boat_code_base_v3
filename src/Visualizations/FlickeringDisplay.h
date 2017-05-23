@@ -40,7 +40,7 @@ private:
     bool finished = false;
     bool side_by_side = false;
     
-    void WriteText(cv::Mat& img, string text);
+    void WriteText(cv::Mat& img, std::string text);
     
     //TODO: in my attempt to create an abstract label space and key input, I think I ended up just making it more complicated.
     // It's not currently worth the time to improve.
@@ -63,7 +63,7 @@ private:
     
     cv::Mat CombinedImage(cv::Mat& im1, cv::Mat& im2);
     void FlickerImagePair(cv::Mat& im1, cv::Mat& im2, cv::Mat& im2_w, std::string text="");
-    void DisplaySurveyComparisonDir(string dir, std::vector<int>& dnum, int start=0);
+    void DisplaySurveyComparisonDir(std::string dir, std::vector<int>& dnum, int start=0);
     
     bool display_label_message = false;
     

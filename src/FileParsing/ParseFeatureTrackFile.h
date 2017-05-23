@@ -44,7 +44,7 @@ public:
     std::string siftfile;
     std::vector<int> ids;
     std::vector<gtsam::Point2> imagecoord;
-    double time=-1;
+    double time;
     
     /*Ended up reverting to something like this due to the implicit copy problem. I got 
      around it using pointers, but that approach was questionable. There's probably a 
@@ -60,7 +60,7 @@ public:
     }
     
     //this constructor is needed in case the file is downloaded and not in its usual location.
-    ParseFeatureTrackFile(Camera& cam, string file) :
+    ParseFeatureTrackFile(Camera& cam, std::string file) :
     _cam(cam), time(-1), siftfile(file)
     {
         Load();
