@@ -58,7 +58,7 @@ int FeatureMatchElimination::IdentifyInliersAndOutliers(Camera& _cam,
                                                          std::vector<unsigned char>& inliers) {
 
     if (points1.size()<8 || points2.size()!=points1.size()){
-        if(debug) cout << "Unable to measure the quality of the feature correspondences."<<endl;
+        if(debug) std::cout << "Unable to measure the quality of the feature correspondences."<<std::endl;
         return false;
     }
 
@@ -98,7 +98,7 @@ void FeatureMatchElimination::CorrectMatches(std::vector<cv::Point2f>& points1, 
 	cv::correctMatches(F, points1, points2, points1, points2);
 }
 
-vector<cv::Vec3f> FeatureMatchElimination::GetDenseEpipolarLines(vector<cv::Point2f>& orig, cv::Mat& F){
+std::vector<cv::Vec3f> FeatureMatchElimination::GetDenseEpipolarLines(std::vector<cv::Point2f>& orig, cv::Mat& F){
     std::vector<cv::Vec3f> lines;
     
     // Compute corresponding epipolar lines

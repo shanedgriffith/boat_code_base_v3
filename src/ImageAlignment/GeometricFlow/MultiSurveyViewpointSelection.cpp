@@ -11,6 +11,8 @@
 
 #include "IndependenceTest.hpp"
 
+using namespace std;
+
 bool MultiSurveyViewpointSelection::WithinThreeMonths(string date1, string date2){
     int m1 = stoi(date1.substr(2, 2));
     int m2 = stoi(date2.substr(2, 2));

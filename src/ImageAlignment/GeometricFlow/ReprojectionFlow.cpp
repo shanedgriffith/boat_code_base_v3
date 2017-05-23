@@ -12,6 +12,7 @@
 
 
 using namespace std;
+using namespace cv;
 
 bool ReprojectionFlow::DistanceCriterion(vector<double>& pose1, vector<double>& pose2){
     double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);

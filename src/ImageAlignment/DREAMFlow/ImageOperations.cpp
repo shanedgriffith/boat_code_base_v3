@@ -348,8 +348,7 @@ void ImageOperations::Undistort(Camera& _cam, Mat& img){
 }
 
 
-bool ImageOperations::writeUncompressedImage(Mat& im, String path)
-{
+bool ImageOperations::writeUncompressedImage(Mat& im, string path) {
     //DATATYPE * ref, int cols, int rows, int channels, int type) {
     FILE * file = fopen(path.c_str(), "w");
     int cols = im.cols;
@@ -388,8 +387,7 @@ bool ImageOperations::writeUncompressedImage(Mat& im, String path)
 }
 
 
-Mat ImageOperations::readUncompressedImage(string filename)
-{
+Mat ImageOperations::readUncompressedImage(string filename) {
     FILE * file = fopen(filename.c_str(), "r");
     
     char header[5];
@@ -466,8 +464,7 @@ Mat ImageOperations::readUncompressedImage(string filename)
  */
 
 
-void ImageOperations::Save(Mat im, string path)
-{
+void ImageOperations::Save(Mat im, string path) {
     /*Converts a double image to a 3 channel unsigned char image.
      * */
 //    cout << "path : "<<path<<endl;
@@ -479,8 +476,7 @@ void ImageOperations::Save(Mat im, string path)
 }
 
 
-Mat ImageOperations::HalveImage(Mat& im, int g_hsize, double g_sigma)
-{
+Mat ImageOperations::HalveImage(Mat& im, int g_hsize, double g_sigma) {
     Mat cvimg = Mat(im.rows, im.cols, im.type(), Scalar::all(0));
     Mat cvimghalf = Mat(cvimg.rows/2.0, cvimg.cols/2.0, im.type(), Scalar::all(0));
     
@@ -491,12 +487,10 @@ Mat ImageOperations::HalveImage(Mat& im, int g_hsize, double g_sigma)
 }
 
 
-void ImageOperations::DoubleImage(Mat& src, Mat& dest)
-{
+void ImageOperations::DoubleImage(Mat& src, Mat& dest) {
     cv::resize(src, dest, Size(src.cols*2, src.rows*2), 0, 0, CV_INTER_CUBIC);
 }
 
-void ImageOperations::DoubleImage(Mat& im)
-{
+void ImageOperations::DoubleImage(Mat& im) {
     cv::resize(im, im, Size(im.cols*2, im.rows*2), 0, 0, CV_INTER_CUBIC);
 }
