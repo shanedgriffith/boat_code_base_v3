@@ -1,0 +1,27 @@
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cs-share/dream/lib
+ulimit -c 10000000
+sudo ldconfig
+
+sudo mkdir /mnt/tale
+sudo chmod 777 /mnt/tale
+sshfs tale:/home /mnt/tale
+
+
+#to update the library on ubuntu:
+echo "/cs-share/dream/lib" | sudo tee -a /etc/ld.so.conf.d/gtsam.conf
+# >sudo /etc/ld.so.conf.d/gtsam.conf
+# >add the location of the library files (/cs-share/dream/lib)
+sudo ldconfig
+
+
+#GIT commands to setup access a private remote repository:
+# >git init
+# >git remote add origin <path.git>
+# >unset SSH_ASKPASS (if necessary)
+# >git pull origin master
+# >git push -u origin master (the -u initializes the tracking references)
+# >git config --global credential.helper "cache --timeout=86400"
+
+#to update code on the lab machines:
+#rsync -av src/ jjm@gtlpc119.georgiatech-metz.fr:/cs-share/dream/boat_code_base/src/
+

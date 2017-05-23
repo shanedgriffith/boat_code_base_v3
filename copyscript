@@ -1,0 +1,23 @@
+#!/bin/bash
+SRC="/cs-share/dream/boat_code_base/src"
+REF="/cs-share/dream/isc_consecutive/src"
+EXCLUDE=('main.cpp')
+types=('*.cpp' '*.hpp' '*.h')
+#filelistcmd=$(find $(REF) -name))
+for t in "${types[@]}"
+do
+  for f in `find $REF -name "$t" -exec printf '%s\n' '{}' +`
+  do
+    cont=true
+    for s in "${EXCLUDE[@]}"
+    do
+      if [[ "$f" == *"$s"* ]]; then
+        cont=false
+      fi
+    done
+    if [ "$cont" = true ]; then
+      file=${f##*src}
+      cp $SRC$file $REF$file
+    fi
+  done
+done
