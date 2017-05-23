@@ -24,6 +24,8 @@
 #include <gtsam/nonlinear/NonlinearFactor.h>
 #include <gtsam/geometry/SimpleCamera.h>
 #include <gtsam/geometry/Point2.h>
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Cal3_S2.h>
 #include <boost/optional.hpp>
 
   /**
@@ -31,7 +33,7 @@
    * i.e. the main building block for visual SLAM.
    * @addtogroup SLAM
    */
-template<class POSE=gtsam::Pose3, class CALIBRATION = gtsam::Cal3_S2>
+template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
   class LocalizationFactor: public NoiseModelFactor1<POSE> {
   protected:
 

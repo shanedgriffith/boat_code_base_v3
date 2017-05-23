@@ -21,13 +21,12 @@
  Note: This factor is designed specifically for the boat due to the
  assumption that only x,y, and yaw are the non-static variables.
  */
-template<class POSE=gtsam::Pose3>
-class VirtualBetweenFactor: public gtsam::NoiseModelFactor2<POSE, POSE>{
+class VirtualBetweenFactor: public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3>{
 public:
     typedef POSE T;
 private:
     typedef VirtualBetweenFactor This;
-    typedef gtsam::NoiseModelFactor2<POSE, POSE> Base;
+    typedef gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3> Base;
 
     gtsam::Pose3 _p0;
     gtsam::Pose3 _p1;
