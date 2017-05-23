@@ -22,8 +22,6 @@
  assumption that only x,y, and yaw are the non-static variables.
  */
 class VirtualBetweenFactor: public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3>{
-public:
-    typedef POSE T;
 private:
     typedef VirtualBetweenFactor This;
     typedef gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3> Base;

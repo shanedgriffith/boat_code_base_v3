@@ -100,7 +100,7 @@ void RFlowFactorGraph::AddVirtualBTWNFactor(int survey0, int pnum0, int survey1,
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(VirtualBetweenFactor<gtsam::Pose3>(symb1, symb3, p0, p1, btwnnoise));
+    graph.add(VirtualBetweenFactor(symb1, symb3, p0, p1, btwnnoise));
 }
 
 void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom) {
@@ -115,48 +115,6 @@ void RFlowFactorGraph::Clear(){
     pnum_to_ckey.clear();
     surveycnum.clear();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
