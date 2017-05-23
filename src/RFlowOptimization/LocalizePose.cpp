@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <cmath>
 
-#include "LocalizationFactor.h"
+#include "CustomLocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
 #include "LocalizePose.hpp"
 
@@ -156,7 +156,7 @@ bool LocalizePose::DualBA(double val,
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(VirtualBetweenFactor<gtsam::Pose3>(symb1, symb3, p0, p1, btwnnoise));
+    graph.add(VirtualBetweenFactor(symb1, symb3, p0, p1, btwnnoise));
 
     gtsam::Values result = RunBA();
     if(result.size()==0) return false;

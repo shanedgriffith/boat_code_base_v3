@@ -7,8 +7,8 @@
 
 
 
-#ifndef __BundleAdjustOneDataset__VirtualBetweenFactor__
-#define __BundleAdjustOneDataset__VirtualBetweenFactor__
+#ifndef __VirtualBetweenFactor__
+#define __VirtualBetweenFactor__
 
 #include <gtsam/inference/Key.h>
 #include <gtsam/slam/BetweenFactor.h>
@@ -96,4 +96,4 @@ public:
     }
 };
 
-#endif /* defined(__BundleAdjustOneDataset__VirtualBetweenFactor__) */
+#endif /* defined(__VirtualBetweenFactor__) */

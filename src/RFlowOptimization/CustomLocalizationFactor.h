@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * @file LocalizationFactor.h (was ProjectionFactor.h)
+ * @file CustomLocalizationFactor.h (was ProjectionFactor.h)
  * @brief Basic bearing factor from 2D measurement
  * @author Chris Beall
  * @author Richard Roberts
@@ -19,15 +19,15 @@
  * @author Shane Griffith (small modifications)
  */
 
-#ifndef __BundleAdjustOneDataset__LocalizationFactor__
-#define __BundleAdjustOneDataset__LocalizationFactor__
+#ifndef __CustomLocalizationFactor__
+#define __CustomLocalizationFactor__
 
-//#include <gtsam/geometry/SimpleCamera.h>
+#include <gtsam/geometry/SimpleCamera.h>
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Cal3_S2.h>
 #include <boost/optional.hpp>
-//#include <gtsam/nonlinear/NonlinearFactor.h>
+#include <gtsam/nonlinear/NonlinearFactor.h>
 
 /**
 * Non-linear factor for a constraint derived from a 2D measurement. The calibration is known here.
@@ -35,7 +35,7 @@
 * @addtogroup SLAM
 */
 template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
-class LocalizationFactor: public NoiseModelFactor1<POSE> {
+class CustomLocalizationFactor: public NoiseModelFactor1<POSE> {
 public
     typedef POSE T;
     typedef CALIBRATION C;
@@ -57,13 +57,13 @@ public:
     typedef NoiseModelFactor1<POSE> Base;
 
     /// shorthand for this class
-    typedef LocalizationFactor<POSE, CALIBRATION> This;
+    typedef CustomLocalizationFactor<POSE, CALIBRATION> This;
 
     /// shorthand for a smart pointer to a factor
     typedef boost::shared_ptr<This> shared_ptr;
 
     /// Default constructor
-    LocalizationFactor() : throwCheirality_(false), verboseCheirality_(false) {}
+    CustomLocalizationFactor() : throwCheirality_(false), verboseCheirality_(false) {}
 
     /**
      * Constructor
@@ -74,7 +74,7 @@ public:
      * @param K shared pointer to the constant calibration
      * @param body_P_sensor is the transform from body to sensor frame (default identity)
      */
-    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
+    CustomLocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
         gtsam::Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
         boost::optional<POSE> body_P_sensor = boost::none) :
           Base(model, poseKey), measured_(measured), world_(world), K_(K), body_P_sensor_(body_P_sensor),
@@ -91,7 +91,7 @@ public:
      * @param verboseCheirality determines whether exceptions are printed for Cheirality
      * @param body_P_sensor is the transform from body to sensor frame  (default identity)
      */
-    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
+    CustomLocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
         Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
         bool throwCheirality, bool verboseCheirality,
         boost::optional<POSE> body_P_sensor = boost::none) :
@@ -99,7 +99,7 @@ public:
           throwCheirality_(throwCheirality), verboseCheirality_(verboseCheirality) {}
 
     /** Virtual destructor */
-    virtual ~LocalizationFactor() {}
+    virtual ~CustomLocalizationFactor() {}
 
     /// @return a deep copy of this factor
     virtual gtsam::NonlinearFactor::shared_ptr clone() const {
@@ -195,4 +195,4 @@ private:
     }
 };
 
-#endif /* defined(__LocalizationFactor__) */
+#endif /* defined(__CustomLocalizationFactor__) */

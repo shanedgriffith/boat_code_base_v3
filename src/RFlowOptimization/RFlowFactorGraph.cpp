@@ -19,7 +19,7 @@
 #include <gtsam/slam/BetweenFactor.h>
 #include "RFlowFactorGraph.hpp"
 
-#include "LocalizationFactor.h"
+#include "CustomLocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
 
 void RFlowFactorGraph::InitializeNoiseModels(){
