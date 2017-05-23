@@ -88,8 +88,8 @@ public:
     virtual gtsam::Symbol GetSymbol(int survey, int pnum);
     
     std::vector<double> Params(){return vals;}
-    static std::vector<string> Keys(){return keys;}
-    void SetParams(vector<double> params){vals = params; InitializeNoiseModels();}
+    static std::vector<std::string> Keys(){return keys;}
+    void SetParams(std::vector<double> params){vals = params; InitializeNoiseModels();}
 };
 
 

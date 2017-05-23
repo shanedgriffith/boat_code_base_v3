@@ -28,14 +28,14 @@ protected:
     double ACCEPTABLE_RERROR = 6.0;
     double ACCEPTABLE_OVERLAP = 0.25;
 
-    static const string lpath;
+    static const std::string lpath;
 
     std::vector<double> PoseToVector(gtsam::Pose3& cam);
     gtsam::Pose3 VectorToPose(std::vector<double>& p);
     static void CheckLine(string& filepath, int numr, int expected);
 
 public:
-    string date0, date1;
+    std::string date0, date1;
     //this is used for the "back-end", since the relative frames are subject to change as new surveys are reoptimized.
     std::vector<double> tf_p0_to_p1frame0;
     int s0=-1;
@@ -105,10 +105,10 @@ public:
 
     void Print(string opt = "");
 
-    void Save(string toppath, string altpath = "");
-    string GetPath(string toppath, string altpath="");
-    static LocalizedPoseData Read(string path);
-    static std::vector<LocalizedPoseData> LoadAll(string toppath, string altpath = "");
+    void Save(std::string toppath, std::string altpath = "");
+    string GetPath(std::string toppath, std::string altpath="");
+    static LocalizedPoseData Read(std::string path);
+    static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "");
 };
 
 

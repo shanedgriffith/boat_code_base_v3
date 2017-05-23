@@ -29,6 +29,8 @@ const vector<string> FactorGraph::keys= {
 };
 //"CAM_PARAM_FX", "CAM_PARAM_FY", "CAM_PARAM_S", "CAM_PARAM_U", "CAM_PARAM_V"
 
+using namespace std;
+
 void FactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v6p;
 	v6p(0,0) = vals[Param::PRIOR_P_X];

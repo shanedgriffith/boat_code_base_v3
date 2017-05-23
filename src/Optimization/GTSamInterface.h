@@ -102,7 +102,7 @@ public:
     std::vector<double> Params(){return vals;}
     static std::vector<std::string> Keys(){return keys;}
     void SetParams(std::vector<double> params){vals = params;}
-    void SetPrintSymbols(){print_symbol_number = true; cout <<"set print symbols"<<endl;}
+    void SetPrintSymbols(){print_symbol_number = true; std::cout <<"set print symbols"<<std::endl;}
 };
 
 

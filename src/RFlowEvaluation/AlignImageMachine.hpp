@@ -28,7 +28,7 @@ private:
     ParseFeatureTrackFile LoadFTF(int survey, int time);
     AlignmentResult RunSFlowWithRF(std::vector<ReprojectionFlow*> rf, std::string image1, std::string image2);
 
-    std::vector<std::Map*> maps;
+    std::vector<Map*> maps;
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
     int poseloc0;

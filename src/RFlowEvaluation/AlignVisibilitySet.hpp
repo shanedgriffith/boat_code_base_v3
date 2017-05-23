@@ -16,6 +16,7 @@
 #include <DataTypes/Camera.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
+#include <DataTypes/Map.hpp>
 #include "AlignImageMachine.hpp"
 
 extern const std::string base;
@@ -32,7 +33,7 @@ private:
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
     std::vector<ParseOptimizationResults> por;
-    std::vector<std::Map> maps;
+    std::vector<Map> maps;
 
     Camera& _cam;
 public:

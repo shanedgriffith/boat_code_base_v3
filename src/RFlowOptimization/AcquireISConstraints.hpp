@@ -75,7 +75,7 @@ private:
     bool StoreLPD(LocalizedPoseData lpd);
 
     typedef struct {
-        string date;
+        std::string date;
         ParseOptimizationResults por;
         double avg_hop_distance;
     } SurveyData;
