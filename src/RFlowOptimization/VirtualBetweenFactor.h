@@ -21,13 +21,13 @@
  Note: This factor is designed specifically for the boat due to the
  assumption that only x,y, and yaw are the non-static variables.
  */
-template<class gtsam::Pose3>
-class VirtualBetweenFactor: public gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3>{
+template<class POSE=gtsam::Pose3>
+class VirtualBetweenFactor: public gtsam::NoiseModelFactor2<POSE, POSE>{
 public:
-    typedef gtsam::Pose3 T;
+    typedef POSE T;
 private:
     typedef VirtualBetweenFactor This;
-    typedef gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3> Base;
+    typedef gtsam::NoiseModelFactor2<POSE, POSE> Base;
 
     gtsam::Pose3 _p0;
     gtsam::Pose3 _p1;
@@ -59,7 +59,7 @@ public:
      * https://studywolf.wordpress.com/2013/09/02/robot-control-jacobians-velocity-and-force/
      * http://robotics.itee.uq.edu.au/~metr4202/2013/tpl/Chapter%204%20-%20Jacobain%20-%20from%20Khatib%20-%20Introduction%20to%20Robotics.pdf
      * */
-    gtsam::Vector evaluateError(const Pose3& p1frame0, const Pose3& p0frame1,
+    gtsam::Vector evaluateError(const gtsam::Pose3& p1frame0, const gtsam::Pose3& p0frame1,
                          boost::optional<gtsam::Matrix&> H1frame0 = boost::none,
                          boost::optional<gtsam::Matrix&> H0frame1 = boost::none) const
     {
