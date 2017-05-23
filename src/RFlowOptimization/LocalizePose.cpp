@@ -7,8 +7,6 @@
 
 
 
-#include "LocalizationFactor.h"
-#include "LocalizePose.hpp"
 
 #include <gtsam/base/Matrix.h>
 #include <gtsam/slam/PriorFactor.h>
@@ -22,7 +20,9 @@
 #include <unordered_map>
 #include <cmath>
 
-#include "CustomLocalizationFactor.h"
+#include "LocalizationFactor.h"
+#include "VirtualBetweenFactor.h"
+#include "LocalizePose.hpp"
 
 void LocalizePose::PrintVec(std::vector<double> p){
     for(int i=0; i<p.size(); i++){
@@ -156,7 +156,7 @@ bool LocalizePose::DualBA(double val,
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(LocalizationFactor<gtsam::Pose3>(symb1, symb3, p0, p1, btwnnoise));
+    graph.add(VirtualBetweenFactor<gtsam::Pose3>(symb1, symb3, p0, p1, btwnnoise));
 
     gtsam::Values result = RunBA();
     if(result.size()==0) return false;
@@ -230,7 +230,7 @@ void LocalizePose::AddLocalizationFactors(gtsam::Symbol symb, std::vector<gtsam:
     for(int i=0; i<p2d.size(); i++){
         if(inliers[i]<0.0) continue;
         gtsam::noiseModel::Isotropic::shared_ptr measurementNoise1 = gtsam::noiseModel::Isotropic::Sigma(2, inliers[i]);
-        graph.push_back(CustomLocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d[i], p3d[i], measurementNoise1, symb, _cam.GetGTSAMCam()));
+        graph.push_back(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d[i], p3d[i], measurementNoise1, symb, _cam.GetGTSAMCam()));
     }
 }
 
