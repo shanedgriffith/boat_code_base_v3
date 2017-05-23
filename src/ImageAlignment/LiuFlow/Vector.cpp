@@ -11,9 +11,9 @@ Vector::Vector(int ndim, double *data) {
 	nDim=ndim;
 	pData=new double[nDim];
 	if(data!=NULL)
-        std::memcpy(pData,data,sizeof(double)*nDim);
+        memcpy(pData,data,sizeof(double)*nDim);
 	else
-        std::memset(pData,0,sizeof(double)*nDim);
+        memset(pData,0,sizeof(double)*nDim);
 }
 
 Vector::Vector(const Vector& vect) {
@@ -51,12 +51,12 @@ void Vector::copyData(const Vector &vect) {
 
 void Vector::dimcheck(const Vector &vect) const {
 	if(nDim!=vect.nDim)
-		cout<<"The dimensions of the vectors don't match!"<<endl;
+        std::cout<<"The dimensions of the vectors don't match!"<<std::endl;
 }
 
 void Vector::reset() {
 	if(pData!=NULL)
-        std::memset(pData,0,sizeof(double)*nDim);
+        memset(pData,0,sizeof(double)*nDim);
 }
 
 double Vector::sum() const {

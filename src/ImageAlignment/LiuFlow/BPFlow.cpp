@@ -269,11 +269,9 @@ bool BPFlow::Masked(int masknum, T x,T y)
 //------------------------------------------------------------------------------------------------
 // function to compute range term
 //------------------------------------------------------------------------------------------------
-void BPFlow::ComputeRangeTerm(double _gamma)
-{
+void BPFlow::ComputeRangeTerm(double _gamma) {
 	gamma=_gamma;
-	for(int i=0;i<2;i++)
-	{
+	for(int i=0;i<2;i++) {
 		_Release1DBuffer(pRangeTerm[i]);
 		_Release1DBuffer(ptrRangeTerm[i]);
 		AllocateBuffer(pRangeTerm[i],1,ptrRangeTerm[i],pWinSize[i]);
@@ -297,8 +295,7 @@ void BPFlow::ComputeRangeTerm(double _gamma)
 }
 
 
-int BPFlow::ImageValue(Mat& img, int i, int j, int k)
-{
+int BPFlow::ImageValue(cv::Mat& img, int i, int j, int k) {
     /*Indices are: i=row, j=col, k=channel.*/
     
     int idx = (i*img.cols + j)*img.channels() + k;
@@ -319,8 +316,7 @@ int BPFlow::ImageValue(Mat& img, int i, int j, int k)
 }
 
 
-Mat BPFlow::ComputeDataTerm2(Mat si1, Mat si2)
-{
+cv::Mat BPFlow::ComputeDataTerm2(cv::Mat si1, cv::Mat si2) {
     /*
      * Compute the data term, compute the data truncation parameter, and then truncate the data term. The data term is
      * the L1 SIFT descriptor distance. The truncation parameter is automatically set as the median match score (a
@@ -346,7 +342,7 @@ Mat BPFlow::ComputeDataTerm2(Mat si1, Mat si2)
     int Height = si1.rows;
     int Width = si1.cols;
     
-    Mat pData = Mat(Height, Width, CV_64FC(numLabels*numLabels), Scalar::all(0));
+    cv::Mat pData = cv::Mat(Height, Width, CV_64FC(numLabels*numLabels), Scalar::all(0));
     
     double * pDataTerm = (double *) pData.data;
     //--------------------------------------------------------------------------------------------------
