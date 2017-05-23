@@ -20,12 +20,12 @@
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 
-#include <FileParsing/ParseSurvey.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/Camera.hpp>
+#include <FileParsing/ParseSurvey.h>
 
 class ParseBoatSurvey: public ParseSurvey{
-private:
+protected:
     std::vector<double> GetRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
@@ -34,7 +34,7 @@ private:
     std::vector<double> omega;
     std::vector<double> cam_pan;
     std::vector<int> imageno;
-protected:
+
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
     void ReadDelimitedFile(std::string file, int type);
 public:
@@ -53,7 +53,7 @@ public:
     int GetImageNumber(int auxidx);
     int GetIndexOfImage(int image);
     double GetAvgAngularVelocity(int sidx, int eidx);
-    bool Useable(int idx){return (abs(cam_pan[idx])==1.569978);}
+    bool Useable(int idx);
 };
 
 
