@@ -46,7 +46,7 @@ public:
 
     void SetPOR(std::vector<ParseOptimizationResults*> pores){por=pores;}
     void SetDates(std::vector<std::string> d){dates=d;}
-    void SetMaps(std::vector<std::Map*> m){maps = m;}
+    void SetMaps(std::vector<Map*> m){maps = m;}
 };
 
 #endif /* SRC_RFLOWEVALUATION_ALIGNIMAGEMACHINE_HPP_ */

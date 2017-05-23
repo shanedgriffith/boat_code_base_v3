@@ -44,13 +44,13 @@ public:
     int s1time=0;
     std::vector<double> p1frame0;
     std::vector<double> p0frame1;
-    vector<gtsam::Point3> p3d;
+    std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point3> p3d0;
-    vector<gtsam::Point2> p2d1;
+    std::vector<gtsam::Point2> p2d1;
     std::vector<double> rerrorp;
-    vector<gtsam::Point3> b3d;
+    std::vector<gtsam::Point3> b3d;
     std::vector<gtsam::Point3> b3d1;
-    vector<gtsam::Point2> b2d0;
+    std::vector<gtsam::Point2> b2d0;
     std::vector<double> rerrorb;
     double perc_dc=0;
     double avg_rerror_inl=0;
@@ -95,7 +95,7 @@ public:
     gtsam::Pose3 GetP0frame1();
     gtsam::Pose3 GetP1frame0();
 
-    void SetPoints(std::vector<unsigned char>& inliers, vector<gtsam::Point2>& p2d, vector<gtsam::Point3>& p3d, int bot, int top);
+    void SetPoints(std::vector<unsigned char>& inliers, std::vector<gtsam::Point2>& p2d, std::vector<gtsam::Point3>& p3d, int bot, int top);
     void SetPoses(std::vector<double> p0, std::vector<double> p1frame0_, std::vector<double> p0frame1_);
     void SetLocalizationQuality(double pdc, double rerror);
 
@@ -103,10 +103,10 @@ public:
     
     bool IsSet();
 
-    void Print(string opt = "");
+    void Print(std::string opt = "");
 
     void Save(std::string toppath, std::string altpath = "");
-    string GetPath(std::string toppath, std::string altpath="");
+    std::string GetPath(std::string toppath, std::string altpath="");
     static LocalizedPoseData Read(std::string path);
     static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "");
 };

@@ -45,7 +45,7 @@ public:
         return res;
     }
     
-    static int FindFeatureTrackFile(Camera& _cam, string base, int idx, double time=0){
+    static int FindFeatureTrackFile(Camera& _cam, std::string base, int idx, double time=0){
         int count = idx;
         ParseFeatureTrackFile PFT(_cam, base, count);
         while(PFT.time<time) { //pft.time is -1 if the file is bad, so a default time of 0 uses the first available file from idx.

@@ -51,7 +51,7 @@ protected:
     
     void RemoveLandmarkFromList(int list_idx);
     void AddLandmarkTracks(std::vector<LandmarkTrack> inactive, int survey=-1);
-    vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
+    std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(int iteration = -1, double percent_completed = -1);
     void RunGTSAM();
@@ -74,13 +74,13 @@ protected:
     bool clean_up = false;
 public:
     double percent_of_tracks = 100.0;
-    string _date;
+    std::string _date;
 
     SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, bool print_data_increments=false):
     	_cam(cam),
     FG(_fg), _date(date), SOR(base + date), _print_data_increments(print_data_increments){}
 
-    SurveyOptimizer(Camera& cam, string date, bool print_data_increments=false):
+    SurveyOptimizer(Camera& cam, std::string date, bool print_data_increments=false):
     	_cam(cam),
     _date(date), SOR(base + date), _print_data_increments(print_data_increments){
     	FG = new FactorGraph();
