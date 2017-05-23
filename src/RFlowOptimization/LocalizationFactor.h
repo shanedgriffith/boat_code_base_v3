@@ -19,7 +19,8 @@
  * @author Shane Griffith (small modifications)
  */
 
-#pragma once
+#ifndef __BundleAdjustOneDataset__LocalizationFactor__
+#define __BundleAdjustOneDataset__LocalizationFactor__
 
 #include <gtsam/nonlinear/NonlinearFactor.h>
 #include <gtsam/geometry/SimpleCamera.h>
@@ -33,26 +34,30 @@
 * i.e. the main building block for visual SLAM.
 * @addtogroup SLAM
 */
-class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
-  protected:
+template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
+class LocalizationFactor: public NoiseModelFactor1<POSE> {
+public
+    typedef POSE T;
+    typedef CALIBRATION C;
+protected:
 
     // Keep a copy of measurement and calibration for I/O
     gtsam::Point2 measured_;                    ///< 2D measurement
     gtsam::Point3 world_;			////< 3D point
-    boost::shared_ptr<gtsam::Cal3_S2> K_;  ///< shared pointer to calibration object
-    boost::optional<gtsam::Pose3> body_P_sensor_; ///< The pose of the sensor in the body frame
+    boost::shared_ptr<CALIBRATION> K_;  ///< shared pointer to calibration object
+    boost::optional<POSE> body_P_sensor_; ///< The pose of the sensor in the body frame
 
     // verbosity handling for Cheirality Exceptions
     bool throwCheirality_; ///< If true, rethrows Cheirality exceptions (default: false)
     bool verboseCheirality_; ///< If true, prints text for Cheirality exceptions (default: false)
 
-  public:
+public:
 
     /// shorthand for base class type
-    typedef NoiseModelFactor1<gtsam::Pose3> Base;
+    typedef NoiseModelFactor1<POSE> Base;
 
     /// shorthand for this class
-    typedef LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2> This;
+    typedef LocalizationFactor<POSE, CALIBRATION> This;
 
     /// shorthand for a smart pointer to a factor
     typedef boost::shared_ptr<This> shared_ptr;
@@ -70,8 +75,8 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
      * @param body_P_sensor is the transform from body to sensor frame (default identity)
      */
     LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
-        gtsam::Key poseKey, const boost::shared_ptr<gtsam::Cal3_S2>& K,
-        boost::optional<gtsam::Pose3> body_P_sensor = boost::none) :
+        gtsam::Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
+        boost::optional<POSE> body_P_sensor = boost::none) :
           Base(model, poseKey), measured_(measured), world_(world), K_(K), body_P_sensor_(body_P_sensor),
           throwCheirality_(false), verboseCheirality_(false) {}
 
@@ -87,9 +92,9 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
      * @param body_P_sensor is the transform from body to sensor frame  (default identity)
      */
     LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
-        Key poseKey, const boost::shared_ptr<gtsam::Cal3_S2>& K,
+        Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
         bool throwCheirality, bool verboseCheirality,
-        boost::optional<gtsam::Pose3> body_P_sensor = boost::none) :
+        boost::optional<POSE> body_P_sensor = boost::none) :
           Base(model, poseKey), measured_(measured), world_(world), K_(K), body_P_sensor_(body_P_sensor),
           throwCheirality_(throwCheirality), verboseCheirality_(verboseCheirality) {}
 
@@ -133,17 +138,17 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
         if(body_P_sensor_) {
           if(H1) {
             gtsam::Matrix H0;
-            PinholeCamera<gtsam::Cal3_S2> camera(pose.compose(*body_P_sensor_, H0), *K_);
+            PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_, H0), *K_);
             gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
             *H1 = *H1 * H0;
             return reprojectionError.vector();
           } else {
-            PinholeCamera<gtsam::Cal3_S2> camera(pose.compose(*body_P_sensor_), *K_);
+            PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_), *K_);
             gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
             return reprojectionError.vector();
           }
         } else {
-          PinholeCamera<gtsam::Cal3_S2> camera(pose, *K_);
+          PinholeCamera<CALIBRATION> camera(pose, *K_);
           gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
           return reprojectionError.vector();
         }
@@ -164,7 +169,7 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
     }
 
     /** return the calibration object */
-    inline const boost::shared_ptr<gtsam::Cal3_S2> calibration() const {
+    inline const boost::shared_ptr<CALIBRATION> calibration() const {
       return K_;
     }
 
@@ -174,7 +179,7 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
     /** return flag for throwing cheirality exceptions */
     inline bool throwCheirality() const { return throwCheirality_; }
 
-  private:
+private:
 
     /// Serialization function
     friend class boost::serialization::access;
@@ -189,3 +194,5 @@ class LocalizationFactor: public NoiseModelFactor1<gtsam::Pose3> {
       ar & BOOST_SERIALIZATION_NVP(verboseCheirality_);
     }
 };
+
+#endif /* defined(__LocalizationFactor__) */
