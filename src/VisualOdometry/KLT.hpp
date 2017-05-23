@@ -110,7 +110,7 @@ public:
     
     void SetSizes(std::vector<double> tenparams);
 
-    ParseFeatureTrackFile TrackKLTFeatures(cv::Mat& view_color, string base, int image_num, double timestamp);
+    ParseFeatureTrackFile TrackKLTFeatures(cv::Mat& view_color, std::string base, int image_num, double timestamp);
     
     void DrawFeatures(cv::Mat& image);
 };

@@ -342,7 +342,7 @@ cv::Mat BPFlow::ComputeDataTerm2(cv::Mat si1, cv::Mat si2) {
     int Height = si1.rows;
     int Width = si1.cols;
     
-    cv::Mat pData = cv::Mat(Height, Width, CV_64FC(numLabels*numLabels), Scalar::all(0));
+    cv::Mat pData = cv::Mat(Height, Width, CV_64FC(numLabels*numLabels), cv::Scalar::all(0));
     
     double * pDataTerm = (double *) pData.data;
     //--------------------------------------------------------------------------------------------------
@@ -816,8 +816,7 @@ void BPFlow::AddConstraint(int px, int py, double fx, double fy, double r){
 //        }
 }
 
-void BPFlow::TestDataTerm()
-{
+void BPFlow::TestDataTerm() {
     int ptrnum = 3;
     int ntests=15;
     double binsize = 1.0*Height*Width/(ntests+1);
@@ -831,9 +830,7 @@ void BPFlow::TestDataTerm()
     }
 }
 
-
-void BPFlow::CompareDataTerms(Mat pData)
-{
+void BPFlow::CompareDataTerms(cv::Mat pData) {
     int wsize = 5;
     int numLabels = wsize*2+1;
     
@@ -883,12 +880,10 @@ void BPFlow::CompareDataTerms(Mat pData)
 //	function to allocate buffer for the messages
 //------------------------------------------------------------------------------------------------
 template <class T1,class T2>
-size_t BPFlow::AllocateBuffer(T1*& pBuffer,size_t factor,T2*& ptrData,const int* pWinSize)
-{
+size_t BPFlow::AllocateBuffer(T1*& pBuffer,size_t factor,T2*& ptrData,const int* pWinSize) {
 	pBuffer=new T1[Area*factor];
 	size_t totalElements=0;
-	for(ptrdiff_t i=0;i<Area;i++)
-	{
+	for(ptrdiff_t i=0;i<Area;i++) {
 		totalElements+=pWinSize[i]*2+1;
 		for(ptrdiff_t j=0;j<factor;j++)
 			pBuffer[i*factor+j].allocate(pWinSize[i]*2+1);
@@ -909,8 +904,7 @@ size_t BPFlow::AllocateBuffer(T1*& pBuffer,size_t factor,T2*& ptrData,const int*
 }
 
 template<class T1,class T2>
-size_t BPFlow::AllocateBuffer(T1*& pBuffer,T2*& ptrData,const int* pWinSize1,const int* pWinSize2)
-{
+size_t BPFlow::AllocateBuffer(T1*& pBuffer,T2*& ptrData,const int* pWinSize1,const int* pWinSize2) {
 	pBuffer=new T1[Area];
 	size_t totalElements=0;
 	for(ptrdiff_t i=0;i<Area;i++)
@@ -932,11 +926,9 @@ size_t BPFlow::AllocateBuffer(T1*& pBuffer,T2*& ptrData,const int* pWinSize1,con
 	return total;
 }
 
-void BPFlow::AllocateMessage()
-{
+void BPFlow::AllocateMessage() {
 	// delete the buffers for the messages
-	for(int i=0;i<2;i++)
-	{
+	for(int i=0;i<2;i++) {
 		_Release1DBuffer(pSpatialMessage[i]);
 		_Release1DBuffer(ptrSpatialMessage[i]);
 		_Release1DBuffer(pDualMessage[i]);
@@ -945,8 +937,7 @@ void BPFlow::AllocateMessage()
 		_Release1DBuffer(ptrBelief[i]);
 	}
 	// allocate the buffers for the messages
-	for(int i=0;i<2;i++)
-	{
+	for(int i=0;i<2;i++) {
 		nTotalSpatialElements[i]=AllocateBuffer(pSpatialMessage[i],nNeighbors,ptrSpatialMessage[i],pWinSize[i]);
 		nTotalDualElements[i]=AllocateBuffer(pDualMessage[i],1,ptrDualMessage[i],pWinSize[i]);
 		nTotalBelifElements[i]=AllocateBuffer(pBelief[i],1,ptrBelief[i],pWinSize[i]);
@@ -956,11 +947,9 @@ void BPFlow::AllocateMessage()
 //------------------------------------------------------------------------------------------------
 // function for belief propagation
 //------------------------------------------------------------------------------------------------
-double BPFlow::MessagePassing(int nIterations,int nHierarchy,double* pEnergyList)
-{
+double BPFlow::MessagePassing(int nIterations,int nHierarchy,double* pEnergyList) {
 	AllocateMessage();
-	if(nHierarchy>0)
-	{
+	if(nHierarchy>0) {
 		BPFlow bp;
 		generateCoarserLevel(bp);
 		bp.MessagePassing(20,nHierarchy-1);
@@ -971,8 +960,7 @@ double BPFlow::MessagePassing(int nIterations,int nHierarchy,double* pEnergyList
 		_Release1DBuffer(pX);
 	pX=new int[Area*2];
 	double energy=0;
-	for(int count=0;count<nIterations;count++)
-	{
+	for(int count=0;count<nIterations;count++) {
 		//Bipartite(count);
 		BP_S(count);
 		//TRW_S(count);

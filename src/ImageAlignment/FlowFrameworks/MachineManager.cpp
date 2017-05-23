@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 
+using namespace std;
 
 void MachineManager::CleanupMachine(int j){
     if(debug)
