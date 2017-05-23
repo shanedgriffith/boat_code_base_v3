@@ -34,6 +34,7 @@
 * i.e. the main building block for visual SLAM.
 * @addtogroup SLAM
 */
+
 template<class POSE=gtsam::Pose3, class CALIBRATION=gtsam::Cal3_S2>
 class LocalizationFactor: public gtsam::NoiseModelFactor1<POSE> {
 public:
@@ -74,7 +75,7 @@ public:
      * @param K shared pointer to the constant calibration
      * @param body_P_sensor is the transform from body to sensor frame (default identity)
      */
-    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
+    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const gtsam::SharedNoiseModel& model,
         gtsam::Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
         boost::optional<POSE> body_P_sensor = boost::none) :
           Base(model, poseKey), measured_(measured), world_(world), K_(K), body_P_sensor_(body_P_sensor),
@@ -91,8 +92,8 @@ public:
      * @param verboseCheirality determines whether exceptions are printed for Cheirality
      * @param body_P_sensor is the transform from body to sensor frame  (default identity)
      */
-    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const SharedNoiseModel& model,
-        Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
+    LocalizationFactor(const gtsam::Point2& measured, const gtsam::Point3& world, const gtsam::SharedNoiseModel& model,
+        gtsam::Key poseKey, const boost::shared_ptr<CALIBRATION>& K,
         bool throwCheirality, bool verboseCheirality,
         boost::optional<POSE> body_P_sensor = boost::none) :
           Base(model, poseKey), measured_(measured), world_(world), K_(K), body_P_sensor_(body_P_sensor),
@@ -111,7 +112,7 @@ public:
      * @param s optional string naming the factor
      * @param keyFormatter optional formatter useful for printing Symbols
      */
-    void print(const std::string& s = "", const KeyFormatter& keyFormatter = DefaultKeyFormatter) const {
+    void print(const std::string& s = "", const gtsam::KeyFormatter& keyFormatter = DefaultKeyFormatter) const {
       std::cout << s << "LocalizationFactor, z = ";
       measured_.print();
       world_.print();
@@ -121,7 +122,7 @@ public:
     }
 
     /// equals
-    virtual bool equals(const NonlinearFactor& p, double tol = 1e-9) const {
+    virtual bool equals(const gtsam::NonlinearFactor& p, double tol = 1e-9) const {
       const This *e = dynamic_cast<const This*>(&p);
       return e
           && Base::equals(p, tol)
@@ -138,21 +139,21 @@ public:
         if(body_P_sensor_) {
           if(H1) {
             gtsam::Matrix H0;
-            PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_, H0), *K_);
+            gtsam::PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_, H0), *K_);
             gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
             *H1 = *H1 * H0;
             return reprojectionError.vector();
           } else {
-            PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_), *K_);
+            gtsam::PinholeCamera<CALIBRATION> camera(pose.compose(*body_P_sensor_), *K_);
             gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
             return reprojectionError.vector();
           }
         } else {
-          PinholeCamera<CALIBRATION> camera(pose, *K_);
+          gtsam::PinholeCamera<CALIBRATION> camera(pose, *K_);
           gtsam::Point2 reprojectionError(camera.project(world_, H1) - measured_);
           return reprojectionError.vector();
         }
-      } catch( CheiralityException& e) {
+      } catch( gtsam::CheiralityException& e) {
         if (H1) *H1 = zeros(2,6);
 //        if (verboseCheirality_)
 //          std::cout << e.what() << ": Landmark "<< DefaultKeyFormatter(this->key2()) <<
