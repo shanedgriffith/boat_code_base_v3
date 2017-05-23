@@ -5,8 +5,8 @@
  *      Author: shane
  */
 
-#include <BikeRoute/ImageModification.hpp>
-#include "FileParsing/FileParsing.hpp"
+#include <BikeSurvey/ImageModification.hpp>
+#include <FileParsing/FileParsing.hpp>
 
 const std::string ImageModification::_facefile = "/haarcascade_frontalface_alt.xml";
 const std::string ImageModification::_profilefile = "/haarcascade_profileface.xml";
