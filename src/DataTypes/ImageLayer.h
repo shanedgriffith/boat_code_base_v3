@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
 
-class ImageLayer
-{
+class ImageLayer {
 public:
     double consistency = 0;
     double verified_ratio = 0;
@@ -47,7 +46,7 @@ public:
     }
     
     ImageLayer HalfSize(){
-    	vector<cv::Mat> halves;
+        std::vector<cv::Mat> halves;
     	for(int i=0; i<im.size(); i++){
     		halves.push_back(HalveImage(im[i]));
     	}

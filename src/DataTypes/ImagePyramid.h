@@ -41,7 +41,7 @@ public:
                     cv::Mat i1_64, i2_64;
 					il.im[0].convertTo(i1_64, CV_64FC(il.im[0].channels()));
 					il.im[1].convertTo(i2_64, CV_64FC(il.im[1].channels()));
-					vector<cv::Mat> ims = {i1_64, i2_64};
+                    std::vector<cv::Mat> ims = {i1_64, i2_64};
 					for(unsigned int i=2; i<il.im.size(); i++){
 						ims.push_back(il.im[i]);
 					}
@@ -78,8 +78,7 @@ public:
     
     ImagePyramid(){}
 
-    ImagePyramid(int nlayers, int _stop_layer, vector<cv::Mat> ims, int type=pyramid_type::SIFT)
-    {
+    ImagePyramid(int nlayers, int _stop_layer, std::vector<cv::Mat> ims, int type=pyramid_type::SIFT) {
         _nlayers = nlayers;
         start_layer = nlayers - 1;
         stop_layer = _stop_layer;
@@ -88,7 +87,6 @@ public:
         Stack(SIFTImageLayer(ims));
     }
     
-
     void SetStartLayer(int l){
         start_layer = l;
     }

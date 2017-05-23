@@ -30,7 +30,7 @@ public:
     	Init();
     }
 
-    SIFTImageLayer(vector<cv::Mat> ims):
+    SIFTImageLayer(std::vector<cv::Mat> ims):
     ImageLayer(ims)
     {
         Init();
@@ -46,7 +46,7 @@ public:
     
     void CopyResult(SIFTImageLayer& sil){
     	if(sil.rows != rows || sil.cols != cols){
-    		cout << "Incompatible sift image layer size." << endl;
+    		std::cout << "Incompatible sift image layer size." << std::endl;
     		exit(-1);
     	}
     	memcpy(f.data, sil.f.data, f.total()*f.channels()*sizeof(double));
@@ -112,9 +112,8 @@ public:
         double ares = alignment_energy;
         double e_d = alignment_energy_desc;
         
-        for(int i=0; i<times_extrapolated; i++)
-        {
-            Mat doubled;
+        for(int i=0; i<times_extrapolated; i++) {
+            cv::Mat doubled;
             ImageOperations::DoubleImage(flow, doubled);
             flow = doubled.mul(2.0);
             

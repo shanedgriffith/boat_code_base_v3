@@ -18,6 +18,7 @@
 #include "ImageToLocalization.hpp"
 
 using namespace std;
+using namespace cv;
 
 ParseFeatureTrackFile ImageToLocalization::LoadFTF(int survey, int time){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,

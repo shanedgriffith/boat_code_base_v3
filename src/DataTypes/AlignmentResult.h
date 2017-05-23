@@ -181,7 +181,7 @@ public:
     }
     
     void Save(std::string directory){
-        if(debug) cout << "save to: " << directory << endl;
+        if(debug) std::cout << "save to: " << directory << std::endl;
         SaveFileInfo(directory);
         SaveImages(directory);
     }
@@ -194,13 +194,13 @@ public:
         char line[1024]="";
         
         if (fgets(line,1023,fp)==NULL ) {
-            cout<<"AlignmentResult: Can't parse file "<< filename<<endl;
+            std::cout<<"AlignmentResult: Can't parse file "<< filename<<std::endl;
             exit(-1);
         }
         
         if (sscanf(line,"%d,%d,%lf,%lf",
                    &_height,&_width,&alignment_energy,&computation_time)!=4) {
-            cout<<"AlignmentResult: Can't parse file "<< filename<<endl;
+            std::cout<<"AlignmentResult: Can't parse file "<< filename<<std::endl;
             exit(-1);
         }
         fclose(fp);
@@ -231,9 +231,9 @@ public:
                     continue;
                 int i_idx = (int) (locy*_width + locx)*2;
                 if(i_idx >= _width*_height*2){
-                    cout << "("<<locx<<","<<locy<<")"<<endl;
-                    cout << "trying to place data at: " << i_idx <<" of "<< _width*_height << endl;
-                    cout << "heightxwidth: ("<<_height<<", " <<_width<<")"<<endl;
+                    std::cout << "("<<locx<<","<<locy<<")"<<std::endl;
+                    std::cout << "trying to place data at: " << i_idx <<" of "<< _width*_height << std::endl;
+                    std::cout << "heightxwidth: ("<<_height<<", " <<_width<<")"<<std::endl;
                     exit(1);
                 }
                 if(mark[i_idx/2]==1){
@@ -255,8 +255,7 @@ public:
                 have_inverted = true;
             }
             map = (double *)inverted_flow.data;
-        }
-        else{
+        } else {
             map = (double*)flow.data;
         }
         
@@ -386,7 +385,7 @@ public:
         }
         
         if(debug)
-            cout << "min, max: " << _Min << ", " << _Max << ", total: " << _Total << ", avg: " << _Avg << endl;
+            std::cout << "min, max: " << _Min << ", " << _Max << ", total: " << _Total << ", avg: " << _Avg << std::endl;
         
         std::vector<double> stats;
         stats.push_back(_Min);
