@@ -138,14 +138,12 @@ void PreprocessBikeRoute::MakeAux(){
     int idx = 0;
     string saveto = _bdbase + _name + _auxfile;
     FILE * fp = OpenFile(saveto, "w");
-    while(curtime < endtime) {
-        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", curtime,
-                poses[idx][0], poses[idx][1], poses[idx][2], poses[idx][3], poses[idx][4], poses[idx][5], arrs[9][idx]);
-        curtime += 1./video_fps;
-        idx++;
+    for(int i=0; i<arrs.size(); i++) {
+        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", vtimes[i],
+                poses[i][0], poses[i][1], poses[i][2], poses[i][3], poses[i][4], poses[i][5], arrs[9][i]);
     }
     fclose(fp);
-    std::cout << "Aux file at: " << saveto << " with " << idx << " lines"<< std::endl;
+    std::cout << "Aux file at: " << saveto << " with " << arrs.size() << " lines"<< std::endl;
 }
 
 void PreprocessBikeRoute::GetPoses() {
