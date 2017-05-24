@@ -14,7 +14,7 @@
 
 using namespace std;
 
-const string PreprocessBikeRoute::_auxfile = "/image_auxilliary.csv";
+const string PreprocessBikeRoute::_auxfile = "/image_auxiliary.csv";
 
 void PreprocessBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
     if(lp.size()<11) return;
@@ -103,22 +103,28 @@ void PreprocessBikeRoute::AlignDataToImages() {
     int n = arrs.size();
     std::vector<int> intervals = {10, 10, 10, 2, 2, 2, 1, 2, 2, 2};
     std::vector<int> lastidxs(n, 0.0);
-    std::vector<std::vector<double> > fullset(n, std::vector<double>());
     
     double curtime = GetNearestTimeToPosition(0, 0);
     double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
+    int nentries = (int) ceil((endtime-curtime)*video_fps);
+    std::vector<double> vtimes(nentries, 0.0);
+    std::vector<std::vector<double> > fullset(n, std::vector<double>(nentries, 0.0));
     
+    int idx=0;
     //use a buffer at the end due to possible synchronization issues.
     while(curtime < endtime) { //timings[timings.size()-10]
         for(int j=0; j<n; j++) {
             while(timings[lastidxs[j]+intervals[j]] <= curtime)
                 lastidxs[j] += intervals[j];
-            fullset[j].push_back(InterpolateValue(curtime, arrs[j][lastidxs[j]], arrs[j][lastidxs[j]+intervals[j]],
-                                                  timings[lastidxs[j]], timings[lastidxs[j]+intervals[j]]));
+            fullset[j][idx] = InterpolateValue(curtime, arrs[j][lastidxs[j]], arrs[j][lastidxs[j]+intervals[j]],
+                                                  timings[lastidxs[j]], timings[lastidxs[j]+intervals[j]]);
         }
         curtime += 1./video_fps;
+        vtimes[idx] = curtime;
+        idx++;
     }
     std::swap(arrs, fullset);
+    std::swap(timings, vtimes);
 }
 
 void PreprocessBikeRoute::MakeAux(){
@@ -130,7 +136,7 @@ void PreprocessBikeRoute::MakeAux(){
     double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
     
     int idx = 0;
-    string saveto = _bdbase + _name + "/" + _auxfile;
+    string saveto = _bdbase + _name + _auxfile;
     FILE * fp = OpenFile(saveto, "w");
     while(curtime < endtime) {
         fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", curtime,
@@ -139,6 +145,7 @@ void PreprocessBikeRoute::MakeAux(){
         idx++;
     }
     fclose(fp);
+    std::cout << "Aux file at: " << saveto << " with " << idx << " lines"<< std::endl;
 }
 
 void PreprocessBikeRoute::GetPoses() {
@@ -183,7 +190,7 @@ void PreprocessBikeRoute::GetPoses() {
             if(d>0){
                 dx /= d;
                 dy /= d;
-                heading = (heading + arrs[2][i]*atan2(dx,dy))/(1+arrs[2][i]) - M_PI_2;
+                heading = (heading + arrs[2][i]*atan2(dy,dx))/(1+arrs[2][i]) - M_PI_2;
             }
             
             for(int i=0; i<2; i++)
@@ -201,7 +208,7 @@ void PreprocessBikeRoute::PlayPoses(){
     //unit test the poses.
     
     SLAMDraw art;
-    art.SetScale(-2000,1000,-2000,1000);
+    art.SetScale(-2000,400,-500,1500);
     art.ResetCanvas();
     
     for(int i=0; i<poses.size(); i=i+video_fps){
