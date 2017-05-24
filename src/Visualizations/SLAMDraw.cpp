@@ -14,7 +14,7 @@ using namespace cv;
 using namespace std;
 
 
-void SLAMDraw::ShowImage(char * window_name, Mat img, bool flipped){
+char SLAMDraw::ShowImage(char * window_name, Mat img, bool flipped){
     /*Show the specified image. flipped specifies the orientation of the image in the y channel.*/
     
     if(flipped) {
@@ -35,6 +35,7 @@ void SLAMDraw::ShowImage(char * window_name, Mat img, bool flipped){
     } else if(c=='g') {
         cout<<"good match\n";
     }
+    return c;
 }
 
 void SLAMDraw::SaveDrawing(string filename){
@@ -88,8 +89,8 @@ void SLAMDraw::ProjectRay(double x, double y, double yaw, double x_ratio, double
     line(canvas, bpt, Point2f(px,py), RAY_COLOR);
 }
 
-void SLAMDraw::Display(){
-    ShowImage((char *) "SLAM map", canvas, true);
+char SLAMDraw::Display(){
+    return ShowImage((char *) "SLAM map", canvas, true);
 }
 
 void SLAMDraw::AddPointLandmark(double x, double y, int l) {

@@ -52,7 +52,7 @@ private:
     //later I could fix this by separting the angles used for drawing the boat and the camera.
     double YAW_OFFSET = M_PI_2;
     
-    void ShowImage(char * window_name, cv::Mat img, bool flipped);
+    char ShowImage(char * window_name, cv::Mat img, bool flipped);
     void SaveImage(char * filename, cv::Mat img, bool flipped);
     
     void TestGRID();
@@ -82,7 +82,7 @@ public:
     
     void ResetCanvas();
     
-    void Display();
+    char Display();
     
     void SaveDrawing(std::string filename);
     

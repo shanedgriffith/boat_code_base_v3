@@ -206,8 +206,14 @@ void PreprocessBikeRoute::PlayPoses(){
     
     for(int i=0; i<poses.size(); i=i+video_fps){
         std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
-        art.DrawSight(poses[i][0], poses[i][1], poses[i][5]);
-        art.Display();
+        for(int j=0; j<=i; j++)
+            art.AddShape(SLAMDraw::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][3], 0.838, 255, 0, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][4], 0.838, 0, 255, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][5], 0.838, 0, 0, 255);
+        char c = art.Display();
+        std::cout << "key value: " << (int) c << std::endl;
+        if(c==83) i -= video_fps;
         art.ResetCanvas();
     }
 }
@@ -431,7 +437,6 @@ void PreprocessBikeRoute::Play(){
         char c = cvWaitKey(30);
         if(c == 'q') break;
     }
-
 
     cv::destroyWindow("klt points");
 }
