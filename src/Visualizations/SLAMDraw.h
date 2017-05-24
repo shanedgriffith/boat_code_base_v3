@@ -26,7 +26,7 @@ private:
     const cv::Scalar SEEN_COLOR = CV_RGB(255,255,255);
     const cv::Scalar LAND_COLOR = CV_RGB(100,169,100);
     const cv::Scalar RAY_COLOR = CV_RGB(0,255,255);
-
+    
     const cv::Scalar STARBOARD_COLOR = CV_RGB(0,255,0);
     const cv::Scalar PORT_COLOR = CV_RGB(255,0,0);
     

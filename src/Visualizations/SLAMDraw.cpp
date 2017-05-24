@@ -42,10 +42,8 @@ void SLAMDraw::SaveDrawing(string filename){
     SaveImage((char *) filename.c_str(), canvas, true);
 }
 
-void SLAMDraw::SaveImage(char * filename, Mat img, bool flipped)
-{
-    if(flipped)
-    {
+void SLAMDraw::SaveImage(char * filename, Mat img, bool flipped) {
+    if(flipped) {
         Mat flipped;
         flip(img, flipped, 0);
         img = flipped;
@@ -54,10 +52,8 @@ void SLAMDraw::SaveImage(char * filename, Mat img, bool flipped)
     imwrite((const char*)filename, img);
 }
 
-void SLAMDraw::TestCanvas(vector<Point3d> boatpos)
-{
-    for(int i=1; i<boatpos.size(); i++)
-    {
+void SLAMDraw::TestCanvas(vector<Point3d> boatpos) {
+    for(int i=1; i<boatpos.size(); i++) {
         Point2f from = Scale(Point2f(boatpos[i-1].x, boatpos[i-1].y));
         Point2f to = Scale(Point2f(boatpos[i].x, boatpos[i].y));
         line(canvas, from, to, SIGHT_COLOR);
@@ -67,13 +63,11 @@ void SLAMDraw::TestCanvas(vector<Point3d> boatpos)
     ShowImage((char *) "test canvas with the boat path", canvas, true);
 }
 
-void SLAMDraw::ResetCanvas()
-{
+void SLAMDraw::ResetCanvas() {
     canvas = Mat(img_w, img_h, CV_8UC3, LAND_COLOR);
 }
 
-void SLAMDraw::ProjectRay(double x, double y, double yaw, double x_ratio, double field_of_view)
-{
+void SLAMDraw::ProjectRay(double x, double y, double yaw, double x_ratio, double field_of_view) {
     /*Projects a ray through x_ratio, which is the x pixel coordinate/image width*/
     Point2f bpt = Scale(Point2f(x, y));
     
@@ -111,8 +105,7 @@ void SLAMDraw::SetScale(vector<Point3d> boatpos){
     /*Find the max and min x,y coordinates for plotting */
     
     //finds values that put the boat
-    for(int i=0; i<boatpos.size(); i++)
-    {
+    for(int i=0; i<boatpos.size(); i++) {
         if(boatpos[i].x < scale_x_min) scale_x_min = boatpos[i].x;
         if(boatpos[i].x > scale_x_max) scale_x_max = boatpos[i].x;
         if(boatpos[i].y < scale_y_min) scale_y_min = boatpos[i].y;
@@ -127,11 +120,9 @@ void SLAMDraw::SetScale(double xmin, double xmax, double ymin, double ymax){
     scale_y_max = ymax;
 }
 
-
 double SLAMDraw::ScaleToDisplay(double val, double min, double max, double display_size){
     return display_size * (val - min)/(max-min);
 }
-
 
 Point2f SLAMDraw::Scale(Point2f p){
     if(scale_x_max < scale_x_min) {printf("The scale isn't set.\n"); exit(-1);}
@@ -140,15 +131,12 @@ Point2f SLAMDraw::Scale(Point2f p){
     return Point2f(x,y);
 }
 
-
 void SLAMDraw::TestGRID(){
     double xbin = (scale_x_max - scale_x_min)/9;
     double ybin = (scale_y_max - scale_y_min)/9;
     
-    for(int i=0; i<10; i++)
-    {
-        for(int j=0; j<10; j++)
-        {
+    for(int i=0; i<10; i++) {
+        for(int j=0; j<10; j++) {
             circle(canvas, Point2f(scale_x_min+xbin*i, scale_y_min+ybin*j), 2, LANDMARK_COLOR, -1, 8, 0);
         }
     }
@@ -203,21 +191,22 @@ void SLAMDraw::DrawSight(double x, double y, double yaw, double field_of_view, i
     double SIGHT_LENGTH = 1000;
     
     //add pi/2 to get from pointing right to pointing up.
-    double angle = yaw+YAW_OFFSET;
+    double angle = yaw;//+YAW_OFFSET;
     double top = angle + field_of_view/2.0;
     double bottom = angle - field_of_view/2.0;
     
     Point2f boat = Scale(Point2f(x, y));
+    Point2f origin = Scale(Point2f(0, 0));
     
     Point2d topline;
     Point2f topsight = Scale(Point2f(SIGHT_LENGTH*cos(top), SIGHT_LENGTH*sin(top)));
-    topline.x = boat.x + topsight.x;
-    topline.y = boat.y + topsight.y;
+    topline.x = (boat.x-origin.x) + topsight.x;
+    topline.y = (boat.y-origin.y) + topsight.y;
     
     Point2d botline;
     Point2f botsight = Scale(Point2f(SIGHT_LENGTH*cos(bottom), SIGHT_LENGTH*sin(bottom)));
-    botline.x = boat.x + botsight.x;
-    botline.y = boat.y + botsight.y;
+    botline.x = (boat.x-origin.x) + botsight.x;
+    botline.y = (boat.y-origin.y) + botsight.y;
     
     line(canvas, boat, topline, linecol);
     line(canvas, boat, botline, linecol);

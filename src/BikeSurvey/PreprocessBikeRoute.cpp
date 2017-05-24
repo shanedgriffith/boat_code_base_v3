@@ -171,8 +171,8 @@ void PreprocessBikeRoute::GetPoses() {
         
         double r_acc = sqrt(pow(arrs[3][i],2.)+pow(arrs[4][i],2.)+pow(arrs[5][i],2.));
         std::vector<double> n_acc = {arrs[3][i]/r_acc, arrs[4][i]/r_acc, arrs[5][i]/r_acc};
-        std::vector<double> acc_angles(3,0.);
-        acc_angles[2] = arrs[6][i]*M_PI/180 - M_PI;
+        std::vector<double> acc_angles(2,0.);
+        double heading = arrs[6][i]; //-1*(arrs[6][i] - M_PI);
         acc_angles[0] = atan(n_acc[1]/((n_acc[2]/abs(n_acc[2]))*sqrt(pow(n_acc[0],2.)+pow(n_acc[2],2.))));
         acc_angles[1] = atan2(-1.*n_acc[0],sqrt(pow(n_acc[1],2.)+pow(n_acc[2],2.)));
         
@@ -183,17 +183,17 @@ void PreprocessBikeRoute::GetPoses() {
             if(d>0){
                 dx /= d;
                 dy /= d;
-                acc_angles[2] = (acc_angles[2]  + arrs[2][i]*atan2(dx,dy))/(1+arrs[2][i]);
+                heading = (heading + arrs[2][i]*atan2(dx,dy))/(1+arrs[2][i]) - M_PI_2;
             }
             
-            for(int i=0; i<3; i++)
+            for(int i=0; i<2; i++)
                 res[i] = acc_angles[i]*(1-weight) + (res[i]+arrs[i+7][i]*dt)*weight;
         } else {
             res = acc_angles;
         }
         
         //a height of 0 is inaccurate, but optimization may be able to compensate.
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, acc_angles[0], acc_angles[1], acc_angles[2]});
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, acc_angles[0], acc_angles[1], heading});
     }
 }
 
@@ -201,19 +201,18 @@ void PreprocessBikeRoute::PlayPoses(){
     //unit test the poses.
     
     SLAMDraw art;
-    art.SetScale(-2000,2000,-2000,2000);
+    art.SetScale(-2000,1000,-2000,1000);
     art.ResetCanvas();
     
     for(int i=0; i<poses.size(); i=i+video_fps){
         std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
         for(int j=0; j<=i; j++)
-            art.AddShape(SLAMDraw::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);
+            art.AddShape(SLAMDraw::shape::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);
         art.DrawSight(poses[i][0], poses[i][1], poses[i][3], 0.838, 255, 0, 0);
         art.DrawSight(poses[i][0], poses[i][1], poses[i][4], 0.838, 0, 255, 0);
         art.DrawSight(poses[i][0], poses[i][1], poses[i][5], 0.838, 0, 0, 255);
         char c = art.Display();
-        std::cout << "key value: " << (int) c << std::endl;
-        if(c==83) i -= video_fps;
+        if(c==83) i = (i>=2*video_fps)?i-2*video_fps:i-video_fps;
         art.ResetCanvas();
     }
 }
@@ -227,7 +226,7 @@ void PreprocessBikeRoute::Preprocess(){
         if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
     }
     
-    ProcessRawVideo(); //run this before cropping.
+//    ProcessRawVideo(); //run this before cropping.
     
     AlignDataToImages();
     
