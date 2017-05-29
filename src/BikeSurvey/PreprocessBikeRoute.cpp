@@ -138,12 +138,12 @@ void PreprocessBikeRoute::MakeAux(){
     int idx = 0;
     string saveto = _bdbase + _name + _auxfile;
     FILE * fp = OpenFile(saveto, "w");
-    for(int i=0; i<arrs.size(); i++) {
-        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", vtimes[i],
+    for(int i=0; i<timings.size(); i++) {
+        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", timings[i],
                 poses[i][0], poses[i][1], poses[i][2], poses[i][3], poses[i][4], poses[i][5], arrs[9][i]);
     }
     fclose(fp);
-    std::cout << "Aux file at: " << saveto << " with " << arrs.size() << " lines"<< std::endl;
+    std::cout << "Aux file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
 }
 
 void PreprocessBikeRoute::GetPoses() {
@@ -231,7 +231,7 @@ void PreprocessBikeRoute::Preprocess(){
         if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
     }
     
-//    ProcessRawVideo(); //run this before cropping.
+    ProcessRawVideo(); //run this before cropping.
     
     AlignDataToImages();
     
@@ -287,7 +287,7 @@ void PreprocessBikeRoute::ProcessRawVideo(){
         std::cout << "saving pft as " << PFT.siftfile << std::endl;
     }
 
-    std::cout << "read " << savedimages << " images from the file." << std::endl;
+    std::cout << "saved " << savedimages << " images from the video file." << std::endl;
 }
 
 Camera PreprocessBikeRoute::GetCamera(){
