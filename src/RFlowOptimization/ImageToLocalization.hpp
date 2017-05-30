@@ -63,7 +63,9 @@ private:
     
     Camera& _cam;
 public:
-    std::string _results_dir, _query_loc, _pftbase;
+    std::string _results_dir;
+    std::string _query_loc;
+    std::string _pftbase;
     
     ImageToLocalization(Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
     _cam(cam), _query_loc(query_loc), _pftbase(pftbase) _results_dir(results_dir) {Reset();}
