@@ -29,7 +29,7 @@ private:
     
     Camera& _cam;
 public:
-    std::string _pftbase, _query_loc;
+    std::string _pftbase, _query_loc, _results_dir;
     
     AlignImageMachine(Camera& cam):
         _cam(cam) {}

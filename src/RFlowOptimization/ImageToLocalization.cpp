@@ -93,7 +93,7 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
     SFlowDREAM2RF sf(_cam);
     if(hasRF) {
         if(!sf.SetReprojectionFlow(rf)) {
-            std::cout <<"AcquireISConstraints::GetConstraints_ReprojectionFlow() STATUS: couldn't set reprojection flow" << std::endl;
+            std::cout <<"ImageToLocalization::MatchToSet() couldn't set reprojection flow" << std::endl;
             exit(-1);
         }
     }

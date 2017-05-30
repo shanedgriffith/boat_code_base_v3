@@ -46,7 +46,6 @@ protected:
 public:
     std::string _bdbase;
     std::string _name;
-    std::string _pftbase;
     
     std::vector<double> timings;
     std::vector<std::vector<double> > arrs;

@@ -115,7 +115,7 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
             nonexist++;
             if(nonexist>60000) {
                 if(found) return PFT;
-                cout << "SurveyOptimizer::LoadVisualFeatureTracks() Error. There are no feature tracking files. Check directory: " << PFT.siftfile << endl;
+                cout << "ParseSurvey::LoadVisualFeatureTracks() Error. There are no feature tracking files. Check directory: " << PFT.siftfile << endl;
                 exit(-1);
             }
         }

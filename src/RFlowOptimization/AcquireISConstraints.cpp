@@ -288,16 +288,16 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
     //topk: vector of {snum, portime, gstat};
     vector<double> logdata = {(double)por1time, -1.0, -1.0, (double) hasRF, -1.0, 0.0};
     if(topk.size()==0) return logdata;
-
+    
     MachineManager man;
     vector<ImageToLocalization*> ws;
     int loc_nthreads = min(nthreads, (int) topk.size());
     for(int i=0; i<loc_nthreads; i++) {
-        ws.push_back(new ImageToLocalization(_cam));
+        ws.push_back(new ImageToLocalization(_cam, _results_dir, _query_loc, _pftbase));
         ws[i]->SetDebug();
         man.AddMachine(ws[i]);
     }
-
+    
     LocalizedPoseData * toverify = NULL;
     if(hasRF) toverify = NearestLPD(por1time);
     else toverify = &most_adv_lpd;

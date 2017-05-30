@@ -27,7 +27,7 @@ double RFlowSurveyOptimizer::LoadHopDistance(string path, string date) {
     double avg_hop_distance = 0.0;
     if(fp) {
         if(fscanf(fp, "%lf\n", &avg_hop_distance)!=1){
-            std::cout << "AcquireISConstraints::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
+            std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
             exit(-1);
         }
         fclose(fp);
@@ -97,7 +97,7 @@ void RFlowSurveyOptimizer::AddUnverified(){
     /*vector<LocalizedPoseData> unverified = LocalizedPoseData::LoadAll(_results_dir + _date, "/unverified/");
     std::cout <<localizations.size() << " Verified LPD, "<<unverified.size() << " unverified LPD, ";
 
-    EvaluateRFlow erf(_cam, _date);
+    EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     vector<double> unext = erf.ErrorForLocalizations(unverified, poses);
@@ -198,7 +198,7 @@ int RFlowSurveyOptimizer::UpdateError() {
     static vector<double> permerr(lpd_rerror.size(), 0);
     static vector<double> rerrs = EvaluateSLAM::LoadRerrorFile(_first_optimization_dir, _date);
     double mult = 3;
-    EvaluateRFlow erf(_cam, _date);
+    EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;
 
     int nchanges = 0;
@@ -249,7 +249,7 @@ void RFlowSurveyOptimizer::IterativeMerge() {
         nchanges = UpdateError();
     }
 
-    EvaluateRFlow erf(_cam, _date);
+    EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     vector<double> rerror_localizations = erf.ErrorForLocalizations(localizations, poses);
