@@ -25,7 +25,7 @@ const string AcquireISConstraints::_locoptname = "/locoptlist.csv";
 
 void AcquireISConstraints::WriteLog(vector<double> data, vector<string> paths) {
     // logfile: camera_key, poseloc, g-statistic, null_rejected?, ar.consistency, ar.alignment_energy_lowres, ar.alignment_energy
-    string fname = base + _date + _logname;
+    string fname = _results_dir + _date + _logname;
     FILE * fp = fopen(fname.c_str(), "a");
     if(!fp){
         std::cout << "AcquireISConstraints::WriteLog() Something went wrong with the log."<<std::endl;
@@ -45,7 +45,7 @@ void AcquireISConstraints::WriteLog(vector<double> data, vector<string> paths) {
 }
 
 int AcquireISConstraints::FindRestart() {
-    string fname = base + _date + _logname;
+    string fname = _results_dir + _date + _logname;
     int res=-1;
     ifstream fin;
     fin.open(fname);
@@ -67,7 +67,7 @@ int AcquireISConstraints::FindRestart() {
 }
 
 double AcquireISConstraints::LoadHopDistance(string path, string date) {
-    string fname = base + _date + _locoptname;
+    string fname = _results_dir + _date + _locoptname;
     FILE * fp = fopen(fname.c_str(), "r");
     double avg_hop_distance = 0.0;
     if(fp) {
@@ -93,10 +93,10 @@ void AcquireISConstraints::InitializeTrajEstimates(string path, string date){
 }
 
 void AcquireISConstraints::InitializeSaveDirectory(){
-    string fname = base + _date + _logname;
+    string fname = _results_dir + _date + _logname;
     FILE * fp = fopen(fname.c_str(), "r");
     if(!fp){
-        string command = "cp -r " + optimized_datasets + _date + " " + base + _date;
+        string command = "cp -r " + _first_optimization_dir + _date + " " + _results_dir + _date;
         system(command.c_str());
     }
     else
@@ -105,8 +105,8 @@ void AcquireISConstraints::InitializeSaveDirectory(){
 
 void AcquireISConstraints::Initialize(){
     InitializeSaveDirectory();
-    //for every date in base + "maps/";
-    string dir = base + "maps/";
+    //for every date in _results_dir + "maps/";
+    string dir = _results_dir + "maps/";
     if(FileParsing::DirectoryExists(dir)){
         vector<string> dates = FileParsing::ListFilesInDir(dir, "1");
         std::cout << "Loading map."<<std::endl;
@@ -121,13 +121,13 @@ void AcquireISConstraints::Initialize(){
 
         if(rf.size()>0) {
             //add the unoptimized survey. this is the last one in the set.
-            _maps.push_back( new Map(optimized_datasets));
+            _maps.push_back( new Map(_first_optimization_dir));
             _maps[_maps.size()-1]->LoadMap(_date);
             for(int i=0; i<nthreads; i++)
                 rf_latest.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
-            InitializeTrajEstimates(optimized_datasets, _date);
-            localizations = LocalizedPoseData::LoadAll(base + _date);
-            LocalizedPoseData::LoadAll(base + _date, "/unverified/");
+            InitializeTrajEstimates(_first_optimization_dir, _date);
+            localizations = LocalizedPoseData::LoadAll(_results_dir + _date);
+            LocalizedPoseData::LoadAll(_results_dir + _date, "/unverified/");
             if(localizations.size()>0) {
                 int maxs1time = -1;
                 int maxs1idx = 0;
@@ -153,7 +153,7 @@ void AcquireISConstraints::Initialize(){
 
 ParseFeatureTrackFile AcquireISConstraints::LoadFTF(int survey, int time){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            siftloc + survey_est[survey].date,
+            _pftbase + survey_est[survey].date,
             survey_est[survey].por.ftfilenos[time]);
     if(pftf.time == -1) {
         cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << endl;
@@ -174,7 +174,7 @@ bool AcquireISConstraints::StoreLPD(LocalizedPoseData lpd){
     if(GetLPDIdx(lpd.s1time) < 0){
         localizations.push_back(lpd);
         lpdtable[lpd.s1time] = localizations.size()-1;
-        lpd.Save(base + _date);
+        lpd.Save(_results_dir + _date);
         return true;
     }
     return false;
@@ -249,7 +249,7 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
             refsurvidx = *iterator;
             SurveyData refsurvey = survey_est[refsurvidx];
             double ae;
-            por0time = ir.IdentifyClosestPose(query_loc + "/" + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &ae);
+            por0time = ir.IdentifyClosestPose(_query_loc + "/" + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &ae);
             if(por0time >= 0) {
                 withinthree.erase(iterator);
                 withinthree.push_front(refsurvidx);
@@ -365,7 +365,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
             back_two = StoreLPD(*toverify);
             StoreLPD(res[bestidx]);
             logdata[5] = 1.0;
-        } else res[bestidx].Save(base + _date, "/unverified/");
+        } else res[bestidx].Save(_results_dir + _date, "/unverified/");
         if(most_adv_lpd.s1time < res[bestidx].s1time) most_adv_lpd = res[bestidx];
     }
 
@@ -381,7 +381,7 @@ bool AcquireISConstraints::GetConstraints(int por1time, bool hasRF){
     SurveyData latest = survey_est[latestsurvey];
     vector<double> pose1_est = latest.por.boat[por1time];
     if(hasRF) pose1_est = EstimateNextPose(latestsurvey, por1time, por1time, false);
-    string image1 = ParseSurvey::GetImagePath(query_loc + "/" + latest.date, latest.por.cimage[por1time]);
+    string image1 = ParseSurvey::GetImagePath(_query_loc + "/" + latest.date, latest.por.cimage[por1time]);
     std::vector<std::vector<double> > topk = IdentifyClosestPose(pose1_est, image1, !hasRF);
 
     clock_gettime(CLOCK_MONOTONIC, &runir);

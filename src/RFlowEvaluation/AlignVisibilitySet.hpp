@@ -19,38 +19,34 @@
 #include <DataTypes/Map.hpp>
 #include "AlignImageMachine.hpp"
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-
 class AlignVisibilitySet {
 private:
     int _nthreads = 8;
-
+    
     int GetIndexFromImageNo(int imageno, ParseOptimizationResults& por);
-
+    
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
     std::vector<ParseOptimizationResults> por;
     std::vector<Map> maps;
-
+    
     Camera& _cam;
 public:
     std::string _date1, _date2;
-
+    std::string _results_dir, _visibility_dir;
+    
     //date1 is the reference survey.
-    AlignVisibilitySet(Camera cam, std::string date1, std::string date2):
-        _cam(cam), _date1(date1), _date2(date2) {
-
-        maps.push_back(Map(base + "maps/"));
-        maps.push_back(Map(base));// + "maps/"
+    AlignVisibilitySet(Camera cam, std::string date1, std::string date2, std::string results_dir, std::string visibility_dir):
+        _cam(cam), _date1(date1), _date2(date2), _results_dir(results_dir), _visibility_dir(visibility_dir) {
+        
+        maps.push_back(Map(_results_dir + "maps/"));
+        maps.push_back(Map(_results_dir));// + "maps/"
         maps[0].LoadMap(_date1);
         maps[1].LoadMap(_date2);
-
-        por.push_back(ParseOptimizationResults(base + "maps/" + _date1));
-        por.push_back(ParseOptimizationResults(base + _date2));// + "maps/"
-
+        
+        por.push_back(ParseOptimizationResults(_results_dir + "maps/" + _date1));
+        por.push_back(ParseOptimizationResults(_results_dir + _date2));// + "maps/"
+        
         for(int i=0; i<_nthreads; i++) {
             ws.push_back(new AlignImageMachine(_cam));
             man.AddMachine(ws[i]);

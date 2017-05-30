@@ -36,12 +36,6 @@
 #include <opencv2/highgui/highgui.hpp>
 
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-extern const std::string siftloc;
-
 /*
  * An implementation of SeqSLAM, based on Milford's 2014 paper for environmental and epidermal change monitoring.
  * */
@@ -67,10 +61,10 @@ private:
 	const int Ry = 32;
 	const int P = 8;
 	const int Rwindow = 10;
-
+    
 	//Intra params
 	const int NumGen = 20;
-
+    
 	void NormalizePatch(cv::Mat& image);
 	cv::Mat PatchNormalizedImage(cv::Mat& image);
 	double SumOfAbsDifference(cv::Mat& image1, cv::Mat& image2);
@@ -81,7 +75,7 @@ private:
 	std::vector<int> FillInBestMatches(std::vector<bool>& usable, std::vector<int>& topmatches);
 	std::vector<int> CountBestMatchCandidates(int idx, int n, int m, std::vector<int>& topmatches);
 	std::vector<std::vector<std::string> > GetMatchedImageList(ParseSurvey& ps1, ParseSurvey& ps2, std::vector<int>& best_matches);
-
+    
 	typedef struct{
 		double angle;
 		Point2f origin;
@@ -105,8 +99,9 @@ private:
 
 public:
 	std::string _date1, _date2;
-	BestMatchSeqSLAM(std::string date1, std::string date2):
-		_date1(date1), _date2(date2)
+    std::string _query_loc;
+    BestMatchSeqSLAM(std::string date1, std::string date2, std::string query_loc):
+		_date1(date1), _date2(date2), _query_loc(query_loc)
 	{}
 
 	std::vector<std::vector<std::string> > InterSurveyAlignment();

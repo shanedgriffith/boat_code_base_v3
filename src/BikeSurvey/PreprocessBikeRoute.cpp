@@ -6,15 +6,15 @@
  */
 
 
-#include "PreprocessBikeRoute.hpp"
+#include "ParseBikeRoute.hpp"
 
 #include <VisualOdometry/KLT.hpp>
 #include <Visualizations/IMDraw.hpp>
 #include <Visualizations/SLAMDraw.h>
+#include <FileParsing/ParseSurvey.h>
+#include "ParseBikeRoute.hpp"
 
 using namespace std;
-
-const string PreprocessBikeRoute::_auxfile = "/image_auxiliary.csv";
 
 void PreprocessBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
     if(lp.size()<11) return;
@@ -136,7 +136,7 @@ void PreprocessBikeRoute::MakeAux(){
     double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
     
     int idx = 0;
-    string saveto = _bdbase + _name + _auxfile;
+    string saveto = _bdbase + _name + ParseSurvey::_auxfile;
     FILE * fp = OpenFile(saveto, "w");
     for(int i=0; i<timings.size(); i++) {
         fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", timings[i],
@@ -255,7 +255,7 @@ void PreprocessBikeRoute::ProcessRawVideo(){
     
     ImageModification blurfaces(facedir); //directory with the xml files.
     
-    Camera cam = PreprocessBikeRoute::GetCamera();
+    Camera cam = ParseBikeRoute::GetCamera();
     KLT k(cam);
     std::vector<double> KLTparms = {18., 36., 600., 4., 100., 100., 100., 9., 125., 40.};
     k.SetSizes(KLTparms);
@@ -288,13 +288,6 @@ void PreprocessBikeRoute::ProcessRawVideo(){
     }
 
     std::cout << "saved " << savedimages << " images from the video file." << std::endl;
-}
-
-Camera PreprocessBikeRoute::GetCamera(){
-    Camera nexus(1206.41699, 1205.09164, 636.766777, 371.147712, 1280, 720);
-    nexus.SetDistortion(0.0817643033, 0.682168738, 0.00118562419, -0.00100627619, 0.0); //assume k3 is unused???
-    //0.0817643033, 0.682168738, 0.00118562419, -0.00100627619, -7.05688254
-    return nexus;
 }
 
 vector<LandmarkTrack> PreprocessBikeRoute::ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft) {
@@ -347,7 +340,7 @@ void PreprocessBikeRoute::FindKLTParams(){
     bool show = true;
     if(show) cv::namedWindow("klt points");
     
-    Camera cam = PreprocessBikeRoute::GetCamera();
+    Camera cam = ParseBikeRoute::GetCamera();
     string videofile = _bdbase + _name + "/" + _name + ".mp4";
     
     cv::VideoCapture vid(videofile);
@@ -423,7 +416,7 @@ void PreprocessBikeRoute::Play(){
     bool with_klt = true;
     cv::namedWindow("klt points");
     
-    Camera cam = PreprocessBikeRoute::GetCamera();
+    Camera cam = ParseBikeRoute::GetCamera();
     
     for(int i=0; i<timings.size(); i++){
         string impath = GetImagePath(i);

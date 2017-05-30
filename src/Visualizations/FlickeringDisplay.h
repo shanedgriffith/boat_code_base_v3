@@ -24,11 +24,6 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-
 class FlickeringDisplay{
 private:
     bool displayscore = false;
@@ -70,8 +65,7 @@ private:
 public:
     std::vector<char> labels;
     std::vector<double> timing;
-    std::string _date1, _date2;//_expbase, _surveybase,
-    std::string _expbase;
+    std::string _date1, _date2;
     bool debug = false;
     
     //use these to get a quick result
@@ -83,9 +77,8 @@ public:
     char FlickerImages(cv::Mat& im1, cv::Mat& im2);
     
     //use these to perform survey comparison on saved images.
-    FlickeringDisplay(std::string date1, std::string date2): _date1(date1), _date2(date2) {
-        _expbase = base + date2 + "-" + date1 + "/";
-    }
+    FlickeringDisplay(std::string date1, std::string date2):
+    _date1(date1), _date2(date2) {}
     
     void SetDisplayScore(){displayscore = true;}
     void DisplaySurveyComparison(bool save = false);

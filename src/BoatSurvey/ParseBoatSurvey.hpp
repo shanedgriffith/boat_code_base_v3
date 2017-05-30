@@ -50,6 +50,7 @@ public:
         }
     }
     
+    static Camera GetCamera();
     int GetImageNumber(int auxidx);
     int GetIndexOfImage(int image);
     double GetAvgAngularVelocity(int sidx, int eidx);

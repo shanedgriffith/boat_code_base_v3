@@ -38,12 +38,6 @@
 
 #include "LocalizedPoseData.hpp"
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-extern const std::string siftloc;
-
 class RFlowSurveyOptimizer: public SurveyOptimizer {
 protected:
     int MAX_ITERATIONS = 10;
@@ -77,14 +71,17 @@ protected:
     Camera& _cam;
 public:
     std::string _date;
+    std::string _results_dir;
+    std::string _first_optimization_dir;
+    std::string _pftbase;
 
 	/* date is the survey that's not yet consistent with the others.
-	 * the others are in folder   base + "maps/"
+	 * the others are in folder _results_dir + "maps/"
 	 * */
-    RFlowSurveyOptimizer(Camera& cam, std::string date):
-        POR(optimized_datasets + date),
-        _cam(cam), SurveyOptimizer(cam, rfFG, date, false), _date(date){
-            
+    RFlowSurveyOptimizer(Camera& cam, std::string date, std::string results_dir, std::string first_optimization_dir, std::string pftbase):
+        POR(_first_optimization_dir + date), _results_dir(results_dir), _first_optimization_dir(first_optimization_dir),
+        _pftbase(pftbase), _cam(cam), SurveyOptimizer(cam, rfFG, date, false), _date(date){
+        
         std::cout << "RFlow Optimization for : " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;

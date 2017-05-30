@@ -193,8 +193,8 @@ std::vector<std::vector<std::string> > BestMatchSeqSLAM::InterSurveyAlignment(){
 	//Note: the set of images to use may be different
 	//i.e., I may want to use only the set that's identified in the aux files as being part of the optimized set.
 	//e.g., run optimization on all those surveys.
-	ParseSurvey ps1(query_loc + "/" + _date1);
-	ParseSurvey ps2(query_loc + "/" + _date2);
+	ParseSurvey ps1(_query_loc + "/" + _date1);
+	ParseSurvey ps2(_query_loc + "/" + _date2);
 
 	std::vector<std::vector<double> > dm = BuildDifferenceMatrix(ps1, ps2);
 	std::vector<int> topmatches = FindTopRankedMatches(dm);

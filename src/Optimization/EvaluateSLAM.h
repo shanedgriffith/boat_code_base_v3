@@ -18,9 +18,6 @@
 #include <DataTypes/Camera.hpp>
 #include <FileParsing/FileParsing.hpp>
 
-extern const std::string base;
-extern const std::string siftloc;
-
 class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
@@ -33,16 +30,18 @@ public:
     double badthreshold; //values are for display only.
     double avgbadthreshold;
     std::string _date;
+    std::string _results_dir;
     
-    EvaluateSLAM(Camera& cam, std::string date):
-        debug(false), badthreshold(50), avgbadthreshold(15) , _cam(cam), _date(date){}
+    EvaluateSLAM(Camera& cam, std::string results_dir, std::string date):
+        debug(false), badthreshold(50), avgbadthreshold(15),
+    _cam(cam), _date(date), _results_dir(results_dir){}
     
     void Evaluate();
 
     std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p);
     std::vector<double> ErrorForSurvey();
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
-    static std::vector<double> LoadRerrorFile(std::string base, std::string date);
+    static std::vector<double> LoadRerrorFile();
 };
 
 #endif /* defined(__SIFTFlow__EvaluateSLAM__) */

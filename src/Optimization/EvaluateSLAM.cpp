@@ -18,12 +18,12 @@ using namespace std;
 
 const std::string EvaluateSLAM::reprofile = "/reprojection_error.csv";
 
-vector<double> EvaluateSLAM::LoadRerrorFile(std::string base, std::string date){
+vector<double> EvaluateSLAM::LoadRerrorFile(){
     std::cout <<"EvaluateSLAM::LoadRerrorFile() is DEPRECATED. SaveRerror now places entries on a newline."<<std::endl;
     exit(1);
     //using a different file reading technique for this file, since all the entries are placed on the same line.
     //returns everything after date,<blank>,
-    std::string fname = base + date + reprofile;
+    std::string fname = _results_dir + _date + reprofile;
     ifstream fin;
     fin.open(fname);
     std::vector<double> rerrors;
@@ -75,10 +75,10 @@ std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& 
     return res;
 }
 
-std::vector<double> EvaluateSLAM::ErrorForSurvey(){
+std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
     time_t start,interm,end;
     time (&start);
-    ParseOptimizationResults POR(base + _date);
+    ParseOptimizationResults POR(_results_dir + _date);
 
     std::vector<double> result(POR.boat.size(), 0.0);
     int countbad = 0;
@@ -86,7 +86,7 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(){
     double sum=0;
     int count=0;
     for(int i=0; i<POR.boat.size(); i++) {
-        ParseFeatureTrackFile PFT(_cam, siftloc + _date, POR.ftfilenos[i]);
+        ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
 
         std::vector<double> stats = MeasureReprojectionError(POR.boat[i], PFT.imagecoord, p_subset);
@@ -118,8 +118,8 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(){
 }
 
 void EvaluateSLAM::SaveEvaluation(std::vector<double> evaluation, std::string altname){
-    std::string filepath = base + _date + reprofile;
-    if(altname.length()>0) filepath = base + _date + altname;
+    std::string filepath = _results_dir + _date + reprofile;
+    if(altname.length()>0) filepath = _results_dir + _date + altname;
     FILE * fp = OpenFile(filepath, "w");
     fprintf(fp, "%s,0\n", _date.c_str());
     for(int i=0; i<evaluation.size(); i++){

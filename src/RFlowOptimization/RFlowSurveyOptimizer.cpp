@@ -22,7 +22,7 @@ const string RFlowSurveyOptimizer::_locoptname = "/locoptlist.csv";
 
 double RFlowSurveyOptimizer::LoadHopDistance(string path, string date) {
     //loads the average hop count of one map.
-    string fname = base + _date + _locoptname;
+    string fname = _results_dir + _date + _locoptname;
     FILE * fp = fopen(fname.c_str(), "r");
     double avg_hop_distance = 0.0;
     if(fp) {
@@ -38,7 +38,7 @@ double RFlowSurveyOptimizer::LoadHopDistance(string path, string date) {
 
 std::vector<double> RFlowSurveyOptimizer::GetAvgHopCounts() {
     //returns the average hop count of all previous maps.
-    string dir = base + "maps/";
+    string dir = _results_dir + "maps/";
     std::vector<double> ret;
     if(FileParsing::DirectoryExists(dir)){
         vector<string> dates = FileParsing::ListFilesInDir(dir, "1");
@@ -61,7 +61,7 @@ void RFlowSurveyOptimizer::SaveLocalLog(int numverified) {
     }
     double avg_hop_distance = 1 + sum/count;
 
-    string fname = base + _date + _locoptname;
+    string fname = _results_dir + _date + _locoptname;
     FILE * fp = fopen(fname.c_str(), "w");
     fprintf(fp, "%lf\n", avg_hop_distance);
     int countout = 0;
@@ -75,7 +75,7 @@ void RFlowSurveyOptimizer::SaveLocalLog(int numverified) {
 }
 
 void RFlowSurveyOptimizer::Initialize() {
-    vector<LocalizedPoseData> input = LocalizedPoseData::LoadAll(base + _date);
+    vector<LocalizedPoseData> input = LocalizedPoseData::LoadAll(_results_dir + _date);
     for(int i=0; i<input.size(); i++) {
         lpdtable[input[i].s1time] = localizations.size();
         localizations.push_back(input[i]);
@@ -94,7 +94,7 @@ void RFlowSurveyOptimizer::AddUnverified(){
     //if we only had unverified, a ransac approach might work better.
     std::cout << "DEPRECATED. Don't use this. The LPD threshold is used here, and I didn't get better performance." << std::endl;
     exit(-1);
-    /*vector<LocalizedPoseData> unverified = LocalizedPoseData::LoadAll(base + _date, "/unverified/");
+    /*vector<LocalizedPoseData> unverified = LocalizedPoseData::LoadAll(_results_dir + _date, "/unverified/");
     std::cout <<localizations.size() << " Verified LPD, "<<unverified.size() << " unverified LPD, ";
 
     EvaluateRFlow erf(_cam, _date);
@@ -126,7 +126,7 @@ int RFlowSurveyOptimizer::GetLPDIdx(int por1time){
 }
 
 ParseFeatureTrackFile RFlowSurveyOptimizer::LoadFTF(int time) {
-    ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam, siftloc + _date, POR.ftfilenos[time]);
+    ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam, _pftbase + _date, POR.ftfilenos[time]);
     if(pftf.time == -1) {
         cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << endl;
         exit(-1);
@@ -196,7 +196,7 @@ void RFlowSurveyOptimizer::SaveResults() {
 
 int RFlowSurveyOptimizer::UpdateError() {
     static vector<double> permerr(lpd_rerror.size(), 0);
-    static vector<double> rerrs = EvaluateSLAM::LoadRerrorFile(optimized_datasets, _date);
+    static vector<double> rerrs = EvaluateSLAM::LoadRerrorFile(_first_optimization_dir, _date);
     double mult = 3;
     EvaluateRFlow erf(_cam, _date);
     erf.debug = true;

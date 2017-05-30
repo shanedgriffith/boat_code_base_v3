@@ -29,7 +29,6 @@ protected:
     gtsam::Point3 default_start;
     
     bool constant_velocity;
-    static const std::string _auxfile;
     
     std::string _base;
     std::string _pftbase;
@@ -41,6 +40,7 @@ protected:
     virtual void ProcessLineEntries(int type, std::vector<std::string>& lp) = 0;
     virtual void ReadDelimitedFile(std::string file, int type) = 0;
 public:
+    static const std::string _auxfile;
     std::vector<double> timings;
 
     ParseSurvey(std::string base, std::string pftbase):
@@ -50,6 +50,7 @@ public:
     virtual int GetIndexOfImage(int image) = 0;
     virtual double GetAvgAngularVelocity(int sidx, int eidx) = 0;
     virtual bool Useable(int idx){return true;}
+    virtual static Camera GetCamera() = 0;
     
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
     ParseFeatureTrackFile GetFeatureTrackFile(Camera& _cam, int imageno);
@@ -64,7 +65,6 @@ public:
     std::vector<std::vector<double> >& Poses(){return poses;}
     gtsam::Pose3 CameraPose(int idx);
     
-    ParseFeatureTrackFile ActivePFT();
     bool CheckCameraTransition(int cidx, int lcidx);
     int FindSynchronizedAUXIndex(double querytime, int from_idx);
     ParseFeatureTrackFile LoadVisualFeatureTracks(Camera& _cam, int& index);

@@ -19,8 +19,6 @@
 #include <ImageAlignment/FlowFrameworks/GPSAlignment.hpp>
 #include <Optimization/SmallSectionOptimizer.hpp>
 
-#include <Clustering/TestXMeans.hpp>
-
 #include <Tests/TestMatchFlowFilter.hpp>
 
 #include <ImageAlignment/FlowFrameworks/ReprojectionAlignment.hpp>
@@ -33,38 +31,29 @@
 #include <Tests/CreateTimeLapse.hpp>
 
 #include <Evaluation/MultiManualCorrespondence.hpp>
+#include <BoatSurvey/ParseBoatSurvey.hpp>
 
 /*for the cluster.*/
-//extern const string base = "/home/shaneg/results/alignment/";
-//extern const string optimized_datasets = "/home/shaneg/results/VerifiedOpt/";
-//extern const string siftloc = "/home/shaneg/data/";
-//extern const string query_loc = "shaneg@tale.georgiatech-metz.fr:~/../cedricp/VBags";
-//extern const string poses_loc = "/home/shaneg/results/visibility_poses";
+//string base = "/home/shaneg/results/alignment/";
+//string optimized_datasets = "/home/shaneg/results/VerifiedOpt/";
+//string siftloc = "/home/shaneg/data/";
+//string query_loc = "shaneg@tale.georgiatech-metz.fr:~/../cedricp/VBags";
+//string poses_loc = "/home/shaneg/results/visibility_poses";
 
 /*for my computer.*/
-//extern const string base = "/Users/shane/Desktop/temp/csiftflow/ConsistencyExperiments/";
+//string base = "/Users/shane/Desktop/temp/csiftflow/ConsistencyExperiments/";
 
-extern const string base = "/home/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/";
-//extern const string query_loc = "/Users/shane/Documents/research - current stuff/data";
-extern const string query_loc = "/media/shane/SAMSUNG/Research/DREAM/VBags";
-//extern const string query_loc = "/media/shane/tale/cedricp/VBags";
-extern const string poses_loc = "/Users/shane/Desktop/temp/visibility_poses/all";
-extern const string siftloc = query_loc + "/";
-//extern const string siftloc = "/media/shane/tale/shaneg/Lakeshore_KLT/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/iros/small1411-section/";//for the nearby surveys with mostly consistent map.
-extern const string optimized_datasets = "/home/shane/Desktop/temp/iros/maps/small2030-section/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/opt/verified/";
+string base = "/home/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/";
+//string query_loc = "/Users/shane/Documents/research - current stuff/data";
+string query_loc = "/media/shane/SAMSUNG/Research/DREAM/VBags";
+//string query_loc = "/media/shane/tale/cedricp/VBags";
+string poses_loc = "/Users/shane/Desktop/temp/visibility_poses/all";
+string siftloc = query_loc + "/";
+//string siftloc = "/media/shane/tale/shaneg/Lakeshore_KLT/";
+//string optimized_datasets = "/Users/shane/Desktop/temp/iros/small1411-section/";//for the nearby surveys with mostly consistent map.
+string optimized_datasets = "/home/shane/Desktop/temp/iros/maps/small2030-section/";
+//string optimized_datasets = "/Users/shane/Desktop/temp/opt/verified/";
 
-
-
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/opt/cluster/";//"/Users/shane/Documents/research - current stuff/results/optimization/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/debug_optimization/";//opt/verified/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/140625-140613/";//"/Users/shane/Documents/research - current stuff/results/optimization/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/";
-//extern const string optimized_datasets = "/Users/shane/Desktop/temp/opt/verified/";
-//extern const string query_loc = "/Volumes/SAMSUNG/Research/DREAM/VBags";
-//extern const string query_loc = "shaneg@tale.georgiatech-metz.fr:~/../cedricp/VBags";
-//extern const string query_loc = "griffith_sha@172.21.15.144:/media/griffith_sha/SAMSUNG/Research/DREAM/VBags";//daubigney
 
 #include <Visualizations/ColoredMaps.hpp>
 
@@ -87,8 +76,7 @@ int main(int argc, char *argv[])
     vector<std::string> small = {"140528", "140606", "140613", "140625"};
     vector<std::string> consecutive = {"140502", "140528", "140625", "140730", "140812", "140926", "141003", "141029", "141128", "150216"};
 
-    Camera kingfisher(759.308012, 690.43984, 370.91545, 250.909693, 704, 480);
-    kingfisher.SetDistortion(-0.302805, 0.171088, 0.001151, -0.00038, 0.0);
+    Camera kingfisher = ParseBoatSurvey::GetCamera();
 
 //    MultiManualCorrespondence mmc("/home/shane/Desktop/temp/cvpr/labels/validation-align-jjm.txt");
 

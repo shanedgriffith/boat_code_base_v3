@@ -106,7 +106,7 @@ vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseDat
 //}
 
 vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations){
-    ParseOptimizationResults POR(base + _date);
+    ParseOptimizationResults POR(_results_dir + _date);
 
     vector<double> result(localizations.size(), 0.0);
     vector<double> tots(4, 0.0);
@@ -122,9 +122,9 @@ vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPo
 }
 
 void EvaluateRFlow::Evaluate() {
-    std::vector<LocalizedPoseData> localizations = LocalizedPoseData::LoadAll(base + _date);
-    ParseOptimizationResults POR(base + _date);
-    std::cout << "Evaluating " << base + _date << std::endl;
+    std::vector<LocalizedPoseData> localizations = LocalizedPoseData::LoadAll(_results_dir + _date);
+    ParseOptimizationResults POR(_results_dir + _date);
+    std::cout << "Evaluating " << _results_dir + _date << std::endl;
 
     vector<double> PostLocalizationRError = ErrorForLocalizations(localizations, POR.boat);
     SaveEvaluation(PostLocalizationRError, "/postlocalizationerror.csv");
@@ -172,7 +172,7 @@ void EvaluateRFlow::VisualizeDivergenceFromLocalizations(std::vector<LocalizedPo
 //    }
 
     //save the visualization
-    string visualization = base + _date + "/visual_LPD_check.jpg";
+    string visualization = _results_dir + _date + "/visual_LPD_check.jpg";
     draw.SaveDrawing(visualization);
 }
 
@@ -197,7 +197,7 @@ void EvaluateRFlow::VisualizeFrameChange(std::vector<std::vector<double> >& traj
     }
 
     //save the visualization
-    string visualization = base + _date + "/visual_offset_check.jpg";
+    string visualization = _results_dir + _date + "/visual_offset_check.jpg";
     draw.SaveDrawing(visualization);
 }
 

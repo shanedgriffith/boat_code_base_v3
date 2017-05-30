@@ -24,8 +24,6 @@
 
 class PreprocessBikeRoute: public FileParsing{
 private:
-    static const std::string _auxfile;
-    
     double move_avg_win = 20;
     int video_fps;
     gtsam::Point3 default_start;
@@ -49,11 +47,11 @@ public:
     std::string _bdbase;
     std::string _name;
     std::string _pftbase;
-
+    
     std::vector<double> timings;
     std::vector<std::vector<double> > arrs;
     std::vector<std::vector<double> > poses;
-
+    
     PreprocessBikeRoute(std::string bdbase, std::string name):
         _bdbase(bdbase), _name(name), video_fps(29)
     {
@@ -73,7 +71,6 @@ public:
     void FindKLTParams();
     std::string Base() {return _bdbase + _name + "/";}
     std::string GetImagePath(int number, bool makepath=false);
-    static Camera GetCamera();
 };
 
 

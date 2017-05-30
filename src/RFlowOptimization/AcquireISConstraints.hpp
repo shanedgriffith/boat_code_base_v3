@@ -39,12 +39,6 @@
 
 #include "LocalizedPoseData.hpp"
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-extern const std::string siftloc;
-
 class AcquireISConstraints{
 private:
     int MAX_NO_ALIGN = 2;//5;
@@ -73,7 +67,7 @@ private:
     int GetLPDIdx(int por1time);
     LocalizedPoseData* NearestLPD(int s1time);
     bool StoreLPD(LocalizedPoseData lpd);
-
+    
     typedef struct {
         std::string date;
         ParseOptimizationResults por;
@@ -92,10 +86,14 @@ private:
     Camera& _cam;
 public:
     std::string _date;
+    std::string _query_loc, _pftbase, _first_optimization_dir, _results_dir;
     bool debug = false;
     int nthreads = 8;
-
-    AcquireISConstraints(Camera& cam, std::string date): _cam(cam), _date(date){
+    
+    AcquireISConstraints(Camera& cam, std::string date, std::string query_loc, std::string pftbase,
+                         std::string first_optimization_dir, std::string results_dir):
+    _cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase),
+    _first_optimization_dir(first_optimization_dir), _results_dir(results_dir) {
         //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
         std::cout << "Adding IS constraints." << std::endl;
         Initialize();

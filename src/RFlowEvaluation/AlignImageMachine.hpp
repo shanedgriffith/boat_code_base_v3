@@ -16,29 +16,26 @@
 #include <ImageAlignment/FlowFrameworks/AlignmentMachine.h>
 #include <DataTypes/AlignmentResult.h>
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-extern const std::string siftloc;
-
 class AlignImageMachine: public AlignmentMachine {
 private:
-
+    
     ParseFeatureTrackFile LoadFTF(int survey, int time);
     AlignmentResult RunSFlowWithRF(std::vector<ReprojectionFlow*> rf, std::string image1, std::string image2);
-
+    
     std::vector<Map*> maps;
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
     int poseloc0;
-
+    
     Camera& _cam;
 public:
+    std::string _pftbase, _query_loc;
+    
     AlignImageMachine(Camera& cam):
         _cam(cam) {}
     void RunRFlow();
-
+    
+    void SetDirs(std::string pftbase, std::string query_loc, std::string results_dir);
     void Setup(int ploc0);
     void Reset();
     void * Run();

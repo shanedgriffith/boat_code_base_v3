@@ -119,3 +119,9 @@ bool ParseBoatSurvey::Useable(int idx){
     return (abs(cam_pan[idx])==1.569978);
 }
 
+Camera ParseBoatSurvey::GetCamera(){
+    Camera axisP5512e(759.308012, 690.43984, 370.91545, 250.909693, 704, 480);
+    axisP5512e.SetDistortion(-0.302805, 0.171088, 0.001151, -0.00038, 0.0);
+    return axisP5512e;
+}
+

@@ -23,7 +23,7 @@ using namespace cv;
 
 ParseFeatureTrackFile ImageToLocalization::LoadFTF(int survey, int time){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            siftloc + dates[survey],
+            pftbase + dates[survey],
             por[survey]->ftfilenos[time]);
     if(pftf.time == -1) {
         std::cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << std::endl;
@@ -197,7 +197,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
                 lpd.SetLocalizationQuality(perc_dc, candidates[2][3]);
 
                 DrawFlowPoints(ar.ref, ar.im2, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
-                string debugdir = base + dates[1] + "/debug/";
+                string debugdir = _results_dir + dates[1] + "/debug/";
                 FileParsing::MakeDir(debugdir);
                 ar.Save(debugdir + to_string(portimes[1]) + "/");
 
@@ -253,8 +253,8 @@ void * ImageToLocalization::Run(){
         rf[1]->CreateRestrictedSet(stoi(dates[1]), pftf1);
     }
 
-    string image0 = ParseSurvey::GetImagePath(query_loc + "/" + dates[0], por[0]->cimage[portimes[0]]);
-    string image1 = ParseSurvey::GetImagePath(query_loc + "/" + dates[1], por[1]->cimage[portimes[1]]);
+    string image0 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[0], por[0]->cimage[portimes[0]]);
+    string image1 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[1], por[1]->cimage[portimes[1]]);
     AlignmentResult ar = MatchToSet(image0, image1);
 
     if(debug) std::cout<<"alignment success check: "<<ar._height<<std::endl;

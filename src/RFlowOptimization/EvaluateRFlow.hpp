@@ -21,8 +21,6 @@
 #include <Optimization/EvaluateSLAM.h>
 #include "LocalizedPoseData.hpp"
 
-extern const std::string base;
-
 class EvaluateRFlow: public EvaluateSLAM {
 private:
     std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, std::vector<double>& rerror);
@@ -30,7 +28,10 @@ private:
     double UpdateTots(std::vector<double>& tots, std::vector<double>& stats);
     void PrintTots(std::vector<double> tots, std::string name);
 public:
-    EvaluateRFlow(Camera& cam, std::string date): EvaluateSLAM(cam, date) {}
+    std::string _results_dir;
+    EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
+    _results_dir(results_dir), 
+    EvaluateSLAM(cam, date) {}
 
     void Evaluate();
 

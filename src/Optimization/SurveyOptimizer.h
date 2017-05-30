@@ -29,12 +29,6 @@
 #include "GTSamInterface.h"
 #include "FactorGraph.hpp"
 
-extern const std::string base;
-extern const std::string optimized_datasets;
-extern const std::string query_loc;
-extern const std::string poses_loc;
-extern const std::string siftloc;
-
 class SurveyOptimizer {
 protected:
 	bool initialized = false;
@@ -75,22 +69,21 @@ protected:
 public:
     double percent_of_tracks = 100.0;
     std::string _date;
-
-    SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, bool print_data_increments=false):
-    	_cam(cam),
-    FG(_fg), _date(date), SOR(base + date), _print_data_increments(print_data_increments){}
-
-    SurveyOptimizer(Camera& cam, std::string date, bool print_data_increments=false):
-    	_cam(cam),
-    _date(date), SOR(base + date), _print_data_increments(print_data_increments){
+    std::string _results_dir;
+    
+    SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments=false):
+    _cam(cam), _results_dir(results_dir), FG(_fg), _date(date), SOR(results_dir + date), _print_data_increments(print_data_increments){}
+    
+    SurveyOptimizer(Camera& cam, std::string date, std::string results_dir, bool print_data_increments=false):
+    	_cam(cam), _results_dir(results_dir), _date(date), SOR(results_dir + date), _print_data_increments(print_data_increments){
     	FG = new FactorGraph();
     	clean_up = true;
     }
-
+    
     ~SurveyOptimizer() {
     	if(clean_up) delete(FG);
     }
-
+    
     void Initialize();
     void SetDryRun(){dry_run = true;}
     void SetVerbose(){verbose = true;}

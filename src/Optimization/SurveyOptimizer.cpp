@@ -103,16 +103,15 @@ void SurveyOptimizer::RunGTSAM(){
 
 void SurveyOptimizer::Initialize(){
 	initialized = true;
-
-	num_cameras_in_traj=0;
+    
+	num_cameras_in_traj = 0;
 	GTS = GTSamInterface(FG);
-	SaveParameters(base);
-	cout << "note. In SurveyOptimizer, parameters previously loaded from query_loc" << endl;
-
+	SaveParameters(_results_dir);
+    
 	GTS.SetupIncrementalSLAM();
 	if(debug)  GTS.SetPrintSymbols();
-
-	cout << "Optimizing " << _date << endl;
+    
+    std::cout << "Optimizing " << _date << std::endl;
 }
 
 void SurveyOptimizer::SaveParameters(string dir_of_param_file){
