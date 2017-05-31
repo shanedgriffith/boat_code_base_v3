@@ -253,8 +253,8 @@ void * ImageToLocalization::Run(){
         rf[1]->CreateRestrictedSet(stoi(dates[1]), pftf1);
     }
 
-    string image0 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[0], por[0]->cimage[portimes[0]]);
-    string image1 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[1], por[1]->cimage[portimes[1]]);
+    string image0 = ParseSurvey::GetImagePath(_query_loc + dates[0], por[0]->cimage[portimes[0]]);
+    string image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[portimes[1]]);
     AlignmentResult ar = MatchToSet(image0, image1);
 
     if(debug) std::cout<<"alignment success check: "<<ar._height<<std::endl;

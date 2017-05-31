@@ -14,7 +14,7 @@
 
 using namespace std;
 
-const string ParamsInterface::parmsfile = "/parms.csv";
+const string ParamsInterface::parmsfile = "parms.csv";
 
 void ParamsInterface::ProcessLineEntries(int type, vector<string> lp){
     if(lp.size() != 2) {cout <<"ParamsInterface Error: The param file is incorrectly formatted."<<endl; exit(-1);}

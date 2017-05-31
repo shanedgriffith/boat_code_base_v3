@@ -187,8 +187,8 @@ void FlickeringDisplay::LabelStats() {
 //
 //    cv::namedWindow(window_name);
 //    for(int i=0; i<log.Size() && !finished; i++) {
-//        string image1 = ParseSurvey::GetImagePath(query_loc + "/" + _date1, log.imgs[i]);
-//        string image2 = ParseSurvey::GetImagePath(query_loc + "/" + _date2, log.cimgs[i]);
+//        string image1 = ParseSurvey::GetImagePath(query_loc + _date1, log.imgs[i]);
+//        string image2 = ParseSurvey::GetImagePath(query_loc + _date2, log.cimgs[i]);
 //        string image2_warped = log.GetWarpedImageFile(i);
 //        cv::Mat im1 = cv::imread(image1);
 //        cv::Mat im2 = cv::imread(image2);
@@ -309,7 +309,7 @@ FlickeringDisplay::FlickeringDisplay() {
 //
 //    int count = 0;
 //    for(int i=0; i<log.Size(); i++) {
-//        string image1 = ParseSurvey::GetImagePath(query_loc + "/" + _date1, log.imgs[i]);
+//        string image1 = ParseSurvey::GetImagePath(query_loc + _date1, log.imgs[i]);
 //        string image2_warped = log.GetWarpedImageFile(i);
 //
 //        for(int j=0; j<times_shown; j++) {

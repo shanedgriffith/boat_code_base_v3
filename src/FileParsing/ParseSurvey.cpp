@@ -57,6 +57,7 @@ int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){
     double diff = timings[from_idx] - querytime;
     double epsilon = 0.02;
     //sanity check
+    if(query_time<=0) return -1;
     if(abs(diff)>5000){
         cout << "ParseSurvey::FindSynchronizedAUXIndex() Error: Incorrect set of feature tracking files." << endl;
         exit(-1);
@@ -113,7 +114,7 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
     while(PFT.time<=0) {
         if(!PFT.Exists(PFT.siftfile)) {
             nonexist++;
-            if(nonexist>60000) {
+            if(nonexist>50 && found || nonexist>50000) {
                 if(found) return PFT;
                 cout << "ParseSurvey::LoadVisualFeatureTracks() Error. There are no feature tracking files. Check directory: " << PFT.siftfile << endl;
                 exit(-1);

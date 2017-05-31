@@ -245,7 +245,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         //Log the data alignment.
         int imageno = PS.GetImageNumber(cidx);
         SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS.timings[cidx]);
-        if(debug) cout << "data: " << camera_key <<"," << i << ", "<<cidx<<", "<<imageno<<","<<PS.timings[cidx]<<endl;
+        if(debug) cout << "correspondence: " << camera_key <<" ," << i << ", "<<cidx<<", "<<imageno<<" ,"<<PS.timings[cidx]<<endl;
         
         lcidx = cidx;
     }

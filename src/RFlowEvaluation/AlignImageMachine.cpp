@@ -76,8 +76,8 @@ void AlignImageMachine::RunRFlow() {
     rf[0]->CreateRestrictedSet(stoi(dates[0]), pftf0);
     rf[1]->CreateRestrictedSet(stoi(dates[1]), pftf1);
 
-    string _image0 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[0], por[0]->cimage[poseloc0]);
-    string _image1 = ParseSurvey::GetImagePath(_query_loc + "/" + dates[1], por[1]->cimage[poseloc1]);
+    string _image0 = ParseSurvey::GetImagePath(_query_loc + dates[0], por[0]->cimage[poseloc0]);
+    string _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
     AlignmentResult ar = RunSFlowWithRF(rf, _image0, _image1);
     string saveloc =  _results_dir + dates[0] + "_to_" + dates[1] + "/" + to_string(poseloc0) + "/";
     ar.Save(saveloc);

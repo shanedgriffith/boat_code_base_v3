@@ -252,7 +252,7 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
             refsurvidx = *iterator;
             SurveyData refsurvey = survey_est[refsurvidx];
             double ae;
-            por0time = ir.IdentifyClosestPose(_query_loc + "/" + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &ae);
+            por0time = ir.IdentifyClosestPose(_query_loc + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &ae);
             if(por0time >= 0) {
                 withinthree.erase(iterator);
                 withinthree.push_front(refsurvidx);
@@ -384,7 +384,7 @@ bool AcquireISConstraints::GetConstraints(int por1time, bool hasRF){
     SurveyData latest = survey_est[latestsurvey];
     vector<double> pose1_est = latest.por.boat[por1time];
     if(hasRF) pose1_est = EstimateNextPose(latestsurvey, por1time, por1time, false);
-    string image1 = ParseSurvey::GetImagePath(_query_loc + "/" + latest.date, latest.por.cimage[por1time]);
+    string image1 = ParseSurvey::GetImagePath(_query_loc + latest.date, latest.por.cimage[por1time]);
     std::vector<std::vector<double> > topk = IdentifyClosestPose(pose1_est, image1, !hasRF);
 
     clock_gettime(CLOCK_MONOTONIC, &runir);
