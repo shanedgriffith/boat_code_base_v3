@@ -3,6 +3,8 @@
 
 using namespace std;
 
+const string ParseSurvey::_auxfile = "/image_auxiliary.csv";
+
 void ParseBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
     if(lp.size()<8)return;
     timings.push_back(stod(lp[0]));

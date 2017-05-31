@@ -246,7 +246,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         int imageno = PS.GetImageNumber(cidx);
         SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS.timings[cidx]);
         //if(debug)
-            cout << "correspondence: " << camera_key <<" ," << i << ", "<<cidx<<", "<<imageno<<" ,"<<PS.timings[cidx]<<endl;
+            cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<PS.timings[cidx]<<endl;
         
         lcidx = cidx;
     }

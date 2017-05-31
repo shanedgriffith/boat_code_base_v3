@@ -22,6 +22,7 @@ protected:
     void ReadDelimitedFile(std::string file, int type);
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
 public:
+    static const std::string _auxfile;
     ParseBikeRoute(std::string bdbase, std::string name):
     ParseSurvey(bdbase + name, bdbase + name) {
         constant_velocity = false;
