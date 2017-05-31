@@ -23,7 +23,7 @@ using namespace cv;
 
 ParseFeatureTrackFile ImageToLocalization::LoadFTF(int survey, int time){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            pftbase + dates[survey],
+            _pftbase + dates[survey],
             por[survey]->ftfilenos[time]);
     if(pftf.time == -1) {
         std::cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << std::endl;

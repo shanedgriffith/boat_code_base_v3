@@ -105,14 +105,14 @@ vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseDat
 //    return result;
 //}
 
-vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations){
+vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase){
     ParseOptimizationResults POR(_results_dir + _date);
 
     vector<double> result(localizations.size(), 0.0);
     vector<double> tots(4, 0.0);
     for(int i=0; i<localizations.size(); i++) {
         int idx = localizations[i].s1time;
-        ParseFeatureTrackFile PFT(_cam, siftloc + _date, POR.ftfilenos[idx]);
+        ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[idx]);
         vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
         vector<double> stats = EvaluateSLAM::MeasureReprojectionError(POR.boat[idx], PFT.imagecoord, p_subset);
         result[i] = UpdateTots(tots, stats);

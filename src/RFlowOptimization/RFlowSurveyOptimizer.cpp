@@ -207,7 +207,7 @@ int RFlowSurveyOptimizer::UpdateError() {
     int nchanges = 0;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     vector<double> next = erf.ErrorForLocalizations(localizations, poses);
-    vector<double> serror = erf.SurveyErrorAtLocalizations(localizations);
+    vector<double> serror = erf.SurveyErrorAtLocalizations(localizations, _pftbase);
     vector<double> both(next.size());
     int coutliers = 0;
     for(int j=0; j<next.size(); j++) {

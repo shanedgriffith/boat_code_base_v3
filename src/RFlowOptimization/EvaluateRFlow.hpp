@@ -36,7 +36,7 @@ public:
     void Evaluate();
 
     std::vector<double> ErrorForLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
-    std::vector<double> SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations);
+    std::vector<double> SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);
 };
