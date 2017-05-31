@@ -19,28 +19,19 @@ using namespace std;
 const std::string EvaluateSLAM::reprofile = "/reprojection_error.csv";
 
 vector<double> EvaluateSLAM::LoadRerrorFile(){
-    std::cout <<"EvaluateSLAM::LoadRerrorFile() is DEPRECATED. SaveRerror now places entries on a newline."<<std::endl;
-    exit(1);
-    //using a different file reading technique for this file, since all the entries are placed on the same line.
-    //returns everything after date,<blank>,
     std::string fname = _results_dir + _date + reprofile;
-    ifstream fin;
-    fin.open(fname);
     std::vector<double> rerrors;
-    int count = 0;
-    if(fin.is_open()) {
-        std::string lastLine;
-        while(getline(fin,lastLine,',')) {
-            if(count > 1){
-                double val = stod(lastLine);
-                if(std::isnan(val)) val = 0;
-                rerrors.push_back(val);
-            }
-            count++;
-        }
-
-        fin.close();
+    FILE * fp = OpenFile(filepath, "r");
+    int LINESIZE = 10000;
+    char line[LINESIZE]="";
+    fgets(line, LINESIZE-1, fp);
+    while(!feof(fp)){
+        double val=0;
+        fgets(line, LINESIZE-1, fp);
+        if(sscanf(line, "%lf",&val)!=1) break;
+        rerrors.push_back(val);
     }
+    fclose(fp);
     // std::cout << "Rerror file nentries: " << rerrors.size() << ", first and last entries: " << rerrors[0] << ", " << rerrors[rerrors.size()-1] << std::endl;
     return rerrors;
 }

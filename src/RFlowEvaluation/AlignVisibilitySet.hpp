@@ -51,7 +51,7 @@ public:
         
         for(int i=0; i<_nthreads; i++) {
             ws.push_back(new AlignImageMachine(_cam));
-            ws[i].SetDirs(_pftbase, _query_loc, _results_dir);
+            ws[i]->SetDirs(_pftbase, _query_loc, _results_dir);
             man.AddMachine(ws[i]);
         }
     }

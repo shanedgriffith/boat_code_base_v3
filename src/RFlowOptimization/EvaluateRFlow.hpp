@@ -31,7 +31,7 @@ public:
     std::string _results_dir;
     EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
     _results_dir(results_dir), 
-    EvaluateSLAM(cam, date) {}
+    EvaluateSLAM(cam, date, results_dir) {}
 
     void Evaluate();
 

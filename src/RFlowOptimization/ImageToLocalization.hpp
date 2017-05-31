@@ -63,12 +63,12 @@ private:
     
     Camera& _cam;
 public:
-    std::string _results_dir;
+    std::string _results_dir;
     std::string _query_loc;
     std::string _pftbase;
     
-    ImageToLocalization(Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
-    _cam(cam), _query_loc(query_loc), _pftbase(pftbase) _results_dir(results_dir) {Reset();}
+    ImageToLocalization(Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
+    _cam(cam), _query_loc(query_loc), _pftbase(pftbase) _results_dir(results_dir) {Reset();}
     void SetLastLPD(LocalizedPoseData * last){toverify = last;}
     void SetPoses(std::vector<std::vector<double> > p){poses = p;}
     void SetRF(std::vector<ReprojectionFlow*> rflow){rf = rflow; hasRF = true;}
@@ -78,7 +78,7 @@ public:
     void SetPORTimes(std::vector<int> ps){portimes = ps;}
     void SetVPose(gtsam::Pose3 p){p1_tm1 = p;}
     void Setup(LocalizedPoseData * res, double * perc_dc, bool * verified);
-
+    
     void Reset();
     void * Run();
     void LogResults();

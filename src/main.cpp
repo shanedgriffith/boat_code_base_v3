@@ -1,243 +1,143 @@
 #include <iostream>
 
-#include "Optimization/EvaluateSLAM.h"
-
-#include "ImageAlignment/FlowFrameworks/MultiThreadedAlignment.h"
-#include "Visualizations/FlickeringDisplay.h"
-#include "Visualizations/MapAlignmentAccuracy.h"
-#include "Visualizations/FeatureTracks.hpp"
-#include "Optimization/SurveyOptimizer.h"
-#include "Optimization/InterSurveyOptimizer.hpp"
-#include "Optimization/EvaluateSLAM.h"
-
-#include "ImageAlignment/ConsistentFlow/FlowWebFramework.hpp"
-#include "FileParsing/BruteForceMatchFile.hpp"
-
-#include "Tests/TestAlignmentEnergyThreshold.hpp"
-
-#include <ImageAlignment/FlowFrameworks/BruteForceAlignment.hpp>
-#include <ImageAlignment/FlowFrameworks/GPSAlignment.hpp>
-#include <Optimization/SmallSectionOptimizer.hpp>
-
-#include <Tests/TestMatchFlowFilter.hpp>
-
-#include <ImageAlignment/FlowFrameworks/ReprojectionAlignment.hpp>
-#include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
+#include <Optimization/SurveyOptimizer.h>
+#include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
+#include <FileParsing/FileParsing.hpp>
+//#include <Tests/TestRFlowOptimization.hpp>
 #include <DataTypes/Camera.hpp>
-
-#include <Tests/TestOptimizedPoses.hpp>
-#include <Tests/DebugMapFlowFiles.hpp>
-
-#include <Tests/CreateTimeLapse.hpp>
-
-#include <Evaluation/MultiManualCorrespondence.hpp>
+#include <RFlowOptimization/EvaluateRFlow.hpp>
+#include <RFlowOptimization/AcquireISConstraints.hpp>
+#include <RFlowEvaluation/AlignVisibilitySet.hpp>
+#include <Visualizations/FlickeringDisplay.h>
+#include <FileParsing/ParseSurvey.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
+#include <BikeSurvey/PreprocessBikeRoute.hpp>
+#include <BikeSurvey/ImageModification.hpp>
+
+using namespace std;
 
 /*for the cluster.*/
-//string base = "/home/shaneg/results/alignment/";
-//string optimized_datasets = "/home/shaneg/results/VerifiedOpt/";
-//string siftloc = "/home/shaneg/data/";
-//string query_loc = "shaneg@tale.georgiatech-metz.fr:~/../cedricp/VBags";
-//string poses_loc = "/home/shaneg/results/visibility_poses";
+extern const string results_dir = "/cs-share/dream/results_consecutive/";
+extern const string query_loc = "/mnt/tale/cedricp/VBags";
+extern const string aux_to_pft_dir = "/cs-share/dream/aux_to_pft/";
+extern const string siftloc = "/mnt/tale/shaneg/Lakeshore_KLT/";
+extern const string poses_loc = "/mnt/tale/shaneg/results/visibility_poses/all/";
+string visibility_dir = "/mnt/tale/shaneg/results/visibility_poses/all/";
+extern const string optimized_datasets = "/mnt/tale/shaneg/results/VerifiedOpt/";
 
-/*for my computer.*/
-//string base = "/Users/shane/Desktop/temp/csiftflow/ConsistencyExperiments/";
+int main(int argc, char *argv[]) {
+    if(argc<4){
+         std::cout << "need 3 input arguments" << std::endl;
+        //std::cout << "input the next survey date to optimize."<<std::endl;
+        exit(-1);
+    }
 
-string base = "/home/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/";
-//string query_loc = "/Users/shane/Documents/research - current stuff/data";
-string query_loc = "/media/shane/SAMSUNG/Research/DREAM/VBags";
-//string query_loc = "/media/shane/tale/cedricp/VBags";
-string poses_loc = "/Users/shane/Desktop/temp/visibility_poses/all";
-string siftloc = query_loc + "/";
-//string siftloc = "/media/shane/tale/shaneg/Lakeshore_KLT/";
-//string optimized_datasets = "/Users/shane/Desktop/temp/iros/small1411-section/";//for the nearby surveys with mostly consistent map.
-string optimized_datasets = "/home/shane/Desktop/temp/iros/maps/small2030-section/";
-//string optimized_datasets = "/Users/shane/Desktop/temp/opt/verified/";
+    //vector<std::string> all = {"140106", "140117", "140122", "140129", "140205", "140314", "140502", "140515", "140528", "140606", "140613", "140625", "140711", "140730", "140812", "140911", "140919", "140926", "141003", "141029", "141107", "141114", "141128", "150216"};
+
+    vector<std::string> all = {"140106", "140117", "140122", "140129", "140205", "140218", "140227", "140305", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222", "150111", "150216", "150226", "150305", "150312", "150320", "150327", "150401", "150408", "150414", "150421", "150429", "150505", "150522", "150608", "150620", "150625", "150701", "150708", "150723", "150730", "150806", "150813", "150820", "150827", "150902", "150910", "150918", "150929", "151008", "151019", "151027", "151105", "151111", "151118", "151127", "151209", "151214", "151221", "160201", "160211", "160216", "160305", "160314", "160321", "160401", "160407", "160411", "160418", "160426", "160502", "160524", "160601", "160606", "160616", "160620", "160715", "160719", "160725", "160801", "160808", "160816", "160821", "160829", "160906", "160912", "160923", "160927", "161003", "161010", "161018", "161114", "161123", "161127", "161216", "161223", "170217", "170223", "170303", "170307", "170313", "170320", "170327", "170403"};
 
 
-#include <Visualizations/ColoredMaps.hpp>
+    PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+    //pbr.FindKLTParams();
+    pbr.Preprocess();
+    //pbr.FindKLTParams();
+    //pbr.Play();
+    exit(1);
 
-int main(int argc, char *argv[])
-{
-    std::cout << "\n\n\n" << std::endl;
-    std::string date1="140613", date2="140625";
-    
-    vector<std::string> alldates = {"140106", "140117", "140122", "140129", "140205", "140314", "140502", "140515", "140528", "140606", "140613", "140625", "140711", "140730", "140812", "140911", "140919", "140926", "141003", "141029", "141107", "141114", "141128", "150216"};
-    
-    vector<std::string> sequence1 = {"140613", "140625"};
-    vector<std::string> lastdate = {"150216"};
-    vector<std::string> two = {"140122", "140129"};
-    vector<std::string> three = {"140911", "140919", "140926"};
-    vector<std::string> custom = {"140911", "140919", "140926", "141003"};
-    
-    vector<std::string> consist = {"140106", "140117", "140122", "140129", "140205", "140314"};// "140613", "140919", "141029", "141114", "141128", "150216"
-    
-    vector<std::string> all = {"140106", "140117", "140122", "140129", "140205", "140314", "140502", "140515", "140528", "140606", "140613", "140625", "140711", "140730", "140812", "140911", "140919", "140926", "141003", "141029", "141107", "141114", "141128", "150216"};
-    vector<std::string> small = {"140528", "140606", "140613", "140625"};
-    vector<std::string> consecutive = {"140502", "140528", "140625", "140730", "140812", "140926", "141003", "141029", "141128", "150216"};
+/*
+    int nimages = 0;
+    for(int i=0; i<all.size(); i++){
+    	ParseSurvey ps(query_loc + "/" + all[i]);
+        double sub = 0;
+        int img_jump = 0;
+        int sub_imgs=0;
+        for(int j=1; j<ps.timings.size(); j++){
+            double diff = ps.timings[j] - ps.timings[j-1];
+            if(diff > 1) sub += diff;
+            double jump = ps.imageno[j]-ps.imageno[j-1];
+            if(jump>1) sub_imgs += jump;
+            if(jump>500) {img_jump++; std::cout << "jump at " << ps.imageno[j] << std::endl;}
+        }
+	double seconds = ps.timings[ps.timings.size()-1] - ps.timings[0] - sub;
+        int hours = seconds/3600;
+        int minutes = (seconds-hours*3600)/60;
+        seconds = seconds-hours*3600- minutes*60;
+        string res = to_string(hours) + ":"+to_string(minutes)+":"+to_string(seconds);
+        int cur = ps.imageno[ps.imageno.size()-1] - ps.imageno[0] - sub_imgs;
+        nimages += cur;
+        //std::cout << "nimages[" << all[i] << "]: "<< cur << std::endl;
+        std::cout << "timing[" << all[i] <<"],"<< res << "," << cur << std::endl;
+    }
+    std::cout << "number of images: " << nimages << std::endl;
+    exit(1);*/
 
-    Camera kingfisher = ParseBoatSurvey::GetCamera();
+    //vector<std::string> all = {"140911", "140919", "140926", "141003"};
+//    TestRFlowOptimization trfo;
+//    trfo.TestNewImageAlignment();
+//    exit(1);
+    Camera kingfisher(759.308012, 690.43984, 370.91545, 250.909693, 704, 480);
+    kingfisher.SetDistortion(-0.302805, 0.171088, 0.001151, -0.00038, 0.0);
 
-//    MultiManualCorrespondence mmc("/home/shane/Desktop/temp/cvpr/labels/validation-align-jjm.txt");
+    FileParsing::MakeDir(results_dir);
+cout << "starting program" << endl;
+//    SurveyOptimizer so(d1, false);
+//    so.Initialize();
+//    so.Optimize();
+    int prog = atoi(argv[3]);
+    switch(prog){
+    case 0 :{
+      int start = -1;
+      if(argc == 5) start = atoi(argv[4]);
+      AcquireISConstraints acq(kingfisher, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
+      acq.Run(start); 
+      break;}
+    case 1 :{
+       RFlowSurveyOptimizer ra(kingfisher, argv[1], results_dir, optimized_datasets, pftbase);
+       ra.IterativeMerge();
+       break;}
+    case 2:{
+       AlignVisibilitySet avs(kingfisher, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
+       avs.Visibility();
+       break;}
+    case 3:{
+       FlickeringDisplay fd(argv[2], argv[1]);
+       string dir = results_dir + argv[2] + "_to_" + argv[1] + "/";
+       std::cout << "dir: " << dir << std::endl;
+       fd.CompareFromDir(dir);
+       break;}
+    case 7:{
+       SurveyOptimizer so(kingfisher, argv[1], results_dir);
+       ParseBoatSurvey PS(query_loc + "/" + argv[1], siftloc + argv[1]);
+       so.Initialize();
+       so.Optimize(PS);
+       EvaluateSLAM es(kingfisher, argv[1], results_dir);
+       es.debug=true;
+       es.Evaluate();
+       break;}
+    }
 
-    SurveyOptimizer so(kingfisher, "140911");
-    so.Initialize();
-    so.Optimize();
+/*    int start = -1;
+    if(argc>2) start = atoi(argv[2]);
+    AcquireISConstraints acq(kingfisher, argv[1]);
+    acq.Run(start);
+*/
+/*
+    RFlowSurveyOptimizer ra(kingfisher, argv[1]);
+    ra.IterativeMerge();
+exit(1);
+*/
+/*     string ref = "140625";
+      AlignVisibilitySet avs(kingfisher, ref, argv[1]);
+      avs.Visibility(); 
+     exit(1);
+*//*     
+      FlickeringDisplay fd(argv[1], argv[2]);
+      string dir = results_dir + argv[1] + "_to_" + argv[2];
+      fd.DisplaySurveyComparisonDir(dir);
+*/
+//    EvaluateRFlow erf(kingfisher, argv[1]);
+//    erf.debug = true;
+//    erf.Evaluate();
 
-//    ConsistencyThreshold(true);//
-//    AlignmentEnergy();
-
-//    CreateTimeLapse(0);
-//    CreateTimeLapse(25);
-//    CreateTimeLapse(75);
-//    CreateTimeLapse(128);
-//    CreateTimeLapse(175);
-//    CreateTimeLapse(225);
-//    CreateTimeLapse(275);
-//    CreateTimeLapse(325);
-//    CreateTimeLapse(375);
-//    CreateTimeLapse(425);
-//    CreateTimeLapse(475);
-//    CreateTimeLapse(525);
-//    CreateTimeLapse(575);
-//    CreateTimeLapse(625);
-//    CreateTimeLapse(645);
-    
-//    ColoredMaps cm;
-////    vector<string> forfig = {"140129", "140314", "140613", "140911"};
-////    vector<string> forfig = {"140129", "140911"};
-//    cm.CreateMap(all, "/Users/shane/Desktop/temp/iros/maps/small1-section/");
-//    cm.SaveMap("/Users/shane/Desktop/bmvcfig_all.vtp");
-    
-//    CreateTimeLapse(0);
-//    CreateTimeLapse(25);
-//    CreateTimeLapse(75);
-//    CreateTimeLapse(128);
-//    CreateTimeLapse(175);
-//    CreateTimeLapse(225);
-//    CreateTimeLapse(275);
-//    CreateTimeLapse(325);
-//    CreateTimeLapse(375);
-//    CreateTimeLapse(425);
-//    CreateTimeLapse(475);
-//    CreateTimeLapse(525);
-//    CreateTimeLapse(575);
-//    CreateTimeLapse(625);
-//    CreateTimeLapse(645);
-    
-//
-//    DebugMapFlowFiles dmff;
-//    dmff.CompareGeneratedFiles();
-    
-//        TestOptimizedPosees top;
-//        top.Displacement();
-
-//    GPSAlignment gpsa(base, 8);
-//    gpsa.AlignSurveys("140613", alldates, 1);
-
-    //    TestOptimizedPosees top;
-    //    top.Displacement();
-    
-//        ReprojectionAlignment ra(custom, "140911", "141003", 8);
-//        ra.EvaluateRFLowAndMaskAndEPIAndSFlow(custom);
-//        ra.EvaluateGStatistic(alldates);
-//        ra.DenseSurveyAlignment("140911", "141003");
-    
-    //    TestMatchFlowFilter::TestFeatureMatching(alldates);
-    //    TestMatchFlowFilter::TestFeatureElimination("140613", "140625");
-    
-    //    ReprojectionFlow::TestGstat();
-    
-    //TODO: this code should be part of ConsistentAlignmentLog
-    //    ConsistentAlignment ca(date1, date2, 8, 0);
-    //    vector<AlignmentResult> dataassociation = ca.TopLevelSurveyAlignment();
-    //    for(int i=0; i<dataassociation.size(); i++){
-    //        string directory = base + date2 + "-" + date1 + "/alignment_res/";
-    //        mkdir(directory.c_str(), (mode_t) (S_IRWXU | S_IRWXG | S_IRWXO));
-    //        directory += to_string(i) + "/";
-    //        dataassociation[i].Save(directory);
-    //    }
-    
-    //    FlowWebFramework fwf;
-    ////    fwf.MakeImageSet("140625", dates);
-    //    fwf.DisplayFlowWebTimeLapse("/Users/shane/Desktop/temp/iros/data/1/64/", "/Users/shane/Desktop/temp/iros/results/1/64/dsp_flows/");
-    
-    //    TestAlignmentEnergyThreshold taet("/Users/shane/Desktop/temp/sequence_alignment_results/sift_flow_results/");
-    //    taet.ViabilityOfThreshold(sequence1, 1150000);
-    
-    //    BruteForceAlignment::TestMappedFlowFile("/Users/shane/Desktop/temp/iros/iros_flows/flows_140625_140613/9555_43720.flow");
-    //    BruteForceAlignment::TestMappedFlowFile("/Users/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/flows_140625_140613/8955_43145.flow");//good
-    //    BruteForceAlignment::TestMappedFlowFile("/Users/shane/Desktop/temp/csiftflow/LakeshoreExperiments/55/flows_140613_140625/43145_8955.flow");
-    //    BruteForceAlignment bfa(base, 1);
-    //    bfa.AlignSurveys(date1, two);
-    
-    //    BruteForceMatchFile::DebugAlignmentThreshold(alldates, 1150000);
-    
-    //    SmallSectionOptimizer sso(3);
-    //
-    //    sso.SetDates(all);
-    ////    sso.OptimizeSurveySection();
-    //    sso.ReprojectionError();
-    //    sso.GetImageVariance();
-    //    sso.GetPointVariance();
-    ////    sso.OptimizeSurveysIndividually();
-    
-    //    sso.DisplayReprojectionError("140625", "140613", 570);
-    //    for(int i=0; i<sequence1.size(); i++){
-    //        EvaluateSLAM em(query_loc, base + "small-section/", sequence1[i]);
-    //        em.Evaluate();
-    //    }
-    
-    //    InterSurveyOptimizer vslam(date1, date2);
-    //    SurveyOptimizer vslam(date2);
-    //    vslam.Optimize();
-    
-    //    EvaluateSLAM es(query_loc, optimized_datasets, date2);
-    //    es.Evaluate();
-    
-    //    ConsistentAlignment ca(date1, date2, 1, 0);
-    //    ca.TestAlignmentMap();
-    
-    //    FeatureTrackAlignment fta(date1, date2, 1);
-    ////    fta.FindFeatureTrackForTest();
-    //    fta.ProjectionConstraintFlow();
-    
-    
-    //    FeatureTracks ft(date2);
-    //    ft.Run(10002, 5);
-    
-    //    GenerateTwoGroupsOfShifts("/Users/shane/Pictures/wallpapers/isle of skye- scotland.jpg");
-    //    TestKnownAlignmentCases("/Users/shane/Desktop/smalls/test/");
-    //    TestConsistencyMapping("/Users/shane/Desktop/smalls/test/");
-    //    TestConsistencyMappingDEBUG("/Users/shane/Desktop/smalls/test/");
-    //    TestNoisyConsolidation("/Users/shane/Desktop/smalls/test/");
-    //    TestIntraSurveyAlignmentAgreement(date1, date2);
-    
-    //    for(int i=0; i<lastdate.size(); i++){
-    //        std::string date1="140625";
-    //        std::string date2=lastdate[i];
-    //
-    //        ConsistentAlignment ca(date1, date2, 8, 5);
-    //        ca.EvaluateBundling();
-    //        FlickeringDisplay fd(date1, date2);
-    //        fd.DisplaySurveyComparisonCustom(true);//false);//
-    //    }
-    
-    //    SFlowBones sf;
-    //    AlignmentResult ar = sf.AlignImages("/Users/shane/Desktop/temp/comparison/temp/0-0006174.jpg",
-    //                                        "/Users/shane/Desktop/temp/comparison/temp/2-0006174.jpg", {},
-    //                                        "/Users/shane/Desktop/temp/comparison/temp/SFLOW_BRIEF.jpg", "", false);
-    
-    
-    //    ca.AlignSurveys();
-    
-    //        MultiThreadedAlignment mta(date1, date2, 8);
-    //        mta.Visibility(true);
-    
-    //    FlickeringDisplay fd(date1, date2);
-    ////    fd.DisplaySurveyComparison();
-    //    fd.DisplaySurveyComparisonCustom(true);//false);//
-    
-    cout << "\nFinished!" << endl;
     return 0;
 }

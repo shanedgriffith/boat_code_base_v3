@@ -32,16 +32,16 @@ public:
     std::string _date;
     std::string _results_dir;
     
-    EvaluateSLAM(Camera& cam, std::string results_dir, std::string date):
+    EvaluateSLAM(Camera& cam, std::string date, std::string results_dir):
         debug(false), badthreshold(50), avgbadthreshold(15),
     _cam(cam), _date(date), _results_dir(results_dir){}
     
     void Evaluate();
-
+    
     std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p);
     std::vector<double> ErrorForSurvey();
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
-    static std::vector<double> LoadRerrorFile();
+    std::vector<double> LoadRerrorFile();
 };
 
 #endif /* defined(__SIFTFlow__EvaluateSLAM__) */

@@ -24,9 +24,12 @@ double RFlowSurveyOptimizer::LoadHopDistance(string path, string date) {
     //loads the average hop count of one map.
     string fname = _results_dir + _date + _locoptname;
     FILE * fp = fopen(fname.c_str(), "r");
+    int LINESIZE = 10000;
+    char line[LINESIZE]="";
+    fgets(line, LINESIZE-1, fp);
     double avg_hop_distance = 0.0;
     if(fp) {
-        if(fscanf(fp, "%lf\n", &avg_hop_distance)!=1){
+        if(sscanf(line, "%lf\n", &avg_hop_distance)!=1){
             std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
             exit(-1);
         }
@@ -200,7 +203,7 @@ int RFlowSurveyOptimizer::UpdateError() {
     double mult = 3;
     EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;
-
+    
     int nchanges = 0;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     vector<double> next = erf.ErrorForLocalizations(localizations, poses);
@@ -215,14 +218,14 @@ int RFlowSurveyOptimizer::UpdateError() {
         if(std::isnan(serror[j])) inlier = false;
         if(LPD_RERROR_THRESHOLD <= serror[j]) permerr[j] = 1;
         if(permerr[j]>0) inlier = false;
-
+        
         if((inlier && lpd_rerror[j] <= 0) || (!inlier && lpd_rerror[j]> 0)) nchanges++;
-
+        
         lpd_rerror[j] = 1;
         if(!inlier) {lpd_rerror[j] = -1; coutliers++;}
     }
     std::cout << "number of outliers: " << coutliers << std::endl;
-
+    
     return nchanges;
 }
 
