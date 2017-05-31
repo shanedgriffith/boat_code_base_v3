@@ -209,7 +209,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N
     	if(HasResult(s)){
     	    pose = MAPPoseEstimate(s);
     	} else {
-    		cout<<"GTSamInterface WARNING: Symbol ("<<(int)s.chr()<<", "<<s.index() << ") isn't in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
+    		cout<<"GTSamInterface WARNING: Symbol ("<<(char)s.chr()<<", "<<s.index() << ") isn't in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
     		pose = {0,0,0,0,0,0,(double)i};
     	}
         vel[i] = pose;
