@@ -52,15 +52,18 @@ int main(int argc, char *argv[]) {
     case 0 :{
       int start = -1;
       if(argc == 5) start = atoi(argv[4]);
-      AcquireISConstraints acq(kingfisher, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
+      Camera axisptz = ParseBoatSurvey::GetCamera();
+      AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
       acq.Run(start); 
       break;}
     case 1 :{
-       RFlowSurveyOptimizer ra(kingfisher, argv[1], results_dir, optimized_datasets, pftbase);
+    Camera axisptz = ParseBoatSurvey::GetCamera();
+       RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, optimized_datasets, pftbase);
        ra.IterativeMerge();
        break;}
     case 2:{
-       AlignVisibilitySet avs(kingfisher, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
+       Camera axisptz = ParseBoatSurvey::GetCamera();
+       AlignVisibilitySet avs(axisptz, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
        avs.Visibility();
        break;}
     case 3:{
@@ -86,7 +89,7 @@ int main(int argc, char *argv[]) {
         SurveyOptimizer so(axisptz, argv[1], results_dir);
         so.Initialize();
         so.Optimize(PS);
-        EvaluateSLAM es(kingfisher, argv[1], results_dir);
+        EvaluateSLAM es(axisptz, argv[1], results_dir);
         es.debug=true;
         es.Evaluate(pftbase);
         break;}

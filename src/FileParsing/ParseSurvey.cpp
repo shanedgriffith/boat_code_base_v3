@@ -57,7 +57,7 @@ int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){
     double diff = timings[from_idx] - querytime;
     double epsilon = 0.02;
     //sanity check
-    if(query_time<=0) return -1;
+    if(querytime<=0) return -1;
     if(abs(diff)>5000){
         cout << "ParseSurvey::FindSynchronizedAUXIndex() Error: Incorrect set of feature tracking files." << endl;
         exit(-1);
