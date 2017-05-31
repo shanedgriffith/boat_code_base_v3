@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <vector>
 
-#include <FileParsing/ParseSurvey.hpp>
+#include <FileParsing/ParseSurvey.h>
 
 #include <DataTypes/Camera.hpp>
 #include <FileParsing/ParseFeatureTrackFile.h>
@@ -26,8 +26,8 @@ public:
     ParseSurvey(base, pftbase) {
         constant_velocity = false;
         default_start = gtsam::Point3(296456.933, 5443544.892, 0);
-        string aux = _base + _auxfile;
-        if(!FileParsing.Exists(aux)){
+        std::string aux = _base + _auxfile;
+        if(!FileParsing::Exists(aux)){
             std::cout << "ParseBikeRoute Error: The aux file " << aux << " doesn't exist." << std::endl;
             exit(-1);
         }

@@ -47,10 +47,6 @@ Camera ParseBikeRoute::GetCamera(){
     return nexus;
 }
 
-string ParseBikeRoute::GetAuxPath(){
-    
-}
-
 
 
 

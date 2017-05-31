@@ -13,6 +13,7 @@
 #include <Visualizations/SLAMDraw.h>
 #include <FileParsing/ParseSurvey.h>
 #include "ParseBikeRoute.hpp"
+#include "PreprocessBikeRoute.hpp"
 
 using namespace std;
 
