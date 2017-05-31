@@ -122,7 +122,7 @@ void EvaluateSLAM::SaveEvaluation(std::vector<double> evaluation, std::string al
 }
 
 void EvaluateSLAM::Evaluate() {
-    std::vector<double> evaluation  = ErrorForSurvey();
+    std::vector<double> evaluation  = ErrorForSurvey(std::string _pftbase);
     SaveEvaluation(evaluation);
 }
 

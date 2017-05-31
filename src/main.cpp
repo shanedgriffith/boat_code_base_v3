@@ -107,12 +107,12 @@ cout << "starting program" << endl;
        break;}
     case 7:{
        SurveyOptimizer so(kingfisher, argv[1], results_dir);
-       ParseBoatSurvey PS(query_loc + "/" + argv[1], siftloc + argv[1]);
+       ParseBoatSurvey PS(query_loc + "/" + argv[1], pftbase + argv[1]);
        so.Initialize();
        so.Optimize(PS);
        EvaluateSLAM es(kingfisher, argv[1], results_dir);
        es.debug=true;
-       es.Evaluate();
+       es.Evaluate(pftbase);
        break;}
     }
 

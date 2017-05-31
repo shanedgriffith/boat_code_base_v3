@@ -36,7 +36,7 @@ public:
         debug(false), badthreshold(50), avgbadthreshold(15),
     _cam(cam), _date(date), _results_dir(results_dir){}
     
-    void Evaluate();
+    void Evaluate(std::string _pftbase);
     
     std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p);
     std::vector<double> ErrorForSurvey(std::string _pftbase);
