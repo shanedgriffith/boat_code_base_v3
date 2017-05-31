@@ -22,8 +22,8 @@ protected:
     void ReadDelimitedFile(std::string file, int type);
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
 public:
-    ParseBikeRoute(std::string base, std::string pftbase):
-    ParseSurvey(base, pftbase) {
+    ParseBikeRoute(std::string bdbase, std::string name):
+    ParseSurvey(bdbase + name, bdbase + name) {
         constant_velocity = false;
         default_start = gtsam::Point3(296456.933, 5443544.892, 0);
         std::string aux = _base + _auxfile;

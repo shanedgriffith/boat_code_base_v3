@@ -12,6 +12,7 @@
 #include <FileParsing/ParseSurvey.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
 #include <BikeSurvey/PreprocessBikeRoute.hpp>
+#include <BikeSurvey/ParseBikeRoute.hpp>
 #include <BikeSurvey/ImageModification.hpp>
 
 using namespace std;
@@ -37,12 +38,12 @@ int main(int argc, char *argv[]) {
     vector<std::string> all = {"140106", "140117", "140122", "140129", "140205", "140218", "140227", "140305", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222", "150111", "150216", "150226", "150305", "150312", "150320", "150327", "150401", "150408", "150414", "150421", "150429", "150505", "150522", "150608", "150620", "150625", "150701", "150708", "150723", "150730", "150806", "150813", "150820", "150827", "150902", "150910", "150918", "150929", "151008", "151019", "151027", "151105", "151111", "151118", "151127", "151209", "151214", "151221", "160201", "160211", "160216", "160305", "160314", "160321", "160401", "160407", "160411", "160418", "160426", "160502", "160524", "160601", "160606", "160616", "160620", "160715", "160719", "160725", "160801", "160808", "160816", "160821", "160829", "160906", "160912", "160923", "160927", "161003", "161010", "161018", "161114", "161123", "161127", "161216", "161223", "170217", "170223", "170303", "170307", "170313", "170320", "170327", "170403"};
 
 
-    PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
-    //pbr.FindKLTParams();
-    pbr.Preprocess();
-    //pbr.FindKLTParams();
-    //pbr.Play();
-    exit(1);
+//    PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+//    //pbr.FindKLTParams();
+//    pbr.Preprocess();
+//    //pbr.FindKLTParams();
+//    //pbr.Play();
+//    exit(1);
 
 /*
     int nimages = 0;
@@ -70,16 +71,16 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "number of images: " << nimages << std::endl;
     exit(1);*/
-
+    
     //vector<std::string> all = {"140911", "140919", "140926", "141003"};
 //    TestRFlowOptimization trfo;
 //    trfo.TestNewImageAlignment();
 //    exit(1);
     Camera kingfisher(759.308012, 690.43984, 370.91545, 250.909693, 704, 480);
     kingfisher.SetDistortion(-0.302805, 0.171088, 0.001151, -0.00038, 0.0);
-
+    
     FileParsing::MakeDir(results_dir);
-cout << "starting program" << endl;
+    cout << "starting program" << endl;
 //    SurveyOptimizer so(d1, false);
 //    so.Initialize();
 //    so.Optimize();
@@ -105,6 +106,17 @@ cout << "starting program" << endl;
        std::cout << "dir: " << dir << std::endl;
        fd.CompareFromDir(dir);
        break;}
+    case 5:{
+        PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+        pbr.Preprocess();
+        break;}
+    case 6:{
+        ParseBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+        Camera nexus = ParseBikeRoute::GetCamera();
+        SurveyOptimizer so(nexus, argv[1], results_dir);
+        so.Initialize();
+        so.Optimize(pbr);
+        break;}
     case 7:{
        SurveyOptimizer so(kingfisher, argv[1], results_dir);
        ParseBoatSurvey PS(query_loc + "/" + argv[1], pftbase + argv[1]);
