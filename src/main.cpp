@@ -20,7 +20,7 @@ using namespace std;
 extern const string results_dir = "/cs-share/dream/results_consecutive/";
 extern const string query_loc = "/mnt/tale/cedricp/VBags";
 extern const string aux_to_pft_dir = "/cs-share/dream/aux_to_pft/";
-extern const string siftloc = "/mnt/tale/shaneg/Lakeshore_KLT/";
+extern const string pftbase = "/mnt/tale/shaneg/Lakeshore_KLT/";
 extern const string poses_loc = "/mnt/tale/shaneg/results/visibility_poses/all/";
 string visibility_dir = "/mnt/tale/shaneg/results/visibility_poses/all/";
 extern const string optimized_datasets = "/mnt/tale/shaneg/results/VerifiedOpt/";

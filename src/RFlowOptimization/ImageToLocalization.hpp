@@ -68,7 +68,7 @@ public:
     std::string _pftbase;
     
     ImageToLocalization(Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
-    _cam(cam), _query_loc(query_loc), _pftbase(pftbase) _results_dir(results_dir) {Reset();}
+    _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _results_dir(results_dir) {Reset();}
     void SetLastLPD(LocalizedPoseData * last){toverify = last;}
     void SetPoses(std::vector<std::vector<double> > p){poses = p;}
     void SetRF(std::vector<ReprojectionFlow*> rflow){rf = rflow; hasRF = true;}

@@ -21,7 +21,7 @@ const std::string EvaluateSLAM::reprofile = "/reprojection_error.csv";
 vector<double> EvaluateSLAM::LoadRerrorFile(){
     std::string fname = _results_dir + _date + reprofile;
     std::vector<double> rerrors;
-    FILE * fp = OpenFile(filepath, "r");
+    FILE * fp = OpenFile(fname, "r");
     int LINESIZE = 10000;
     char line[LINESIZE]="";
     fgets(line, LINESIZE-1, fp);

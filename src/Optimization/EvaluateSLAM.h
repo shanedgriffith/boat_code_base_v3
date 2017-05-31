@@ -39,7 +39,7 @@ public:
     void Evaluate();
     
     std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p);
-    std::vector<double> ErrorForSurvey();
+    std::vector<double> ErrorForSurvey(std::string _pftbase);
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
 };
