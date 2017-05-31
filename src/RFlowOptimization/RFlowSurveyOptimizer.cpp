@@ -199,7 +199,8 @@ void RFlowSurveyOptimizer::SaveResults() {
 
 int RFlowSurveyOptimizer::UpdateError() {
     static vector<double> permerr(lpd_rerror.size(), 0);
-    static vector<double> rerrs = EvaluateSLAM::LoadRerrorFile(_first_optimization_dir, _date);
+    EvaluateSLAM ESlam(_cam, _date, _first_optimization_dir);
+    static vector<double> rerrs = ESlam.LoadRerrorFile();
     double mult = 3;
     EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;

@@ -22,7 +22,7 @@ void AlignImageMachine::Setup(int ploc0) {
     poseloc0 = ploc0;
 }
 
-void SetDirs(std::string pftbase, std::string query_loc, std::string results_dir) {
+void AlignImageMachine::SetDirs(std::string pftbase, std::string query_loc, std::string results_dir) {
     _pftbase = pftbase;
     _query_loc = query_loc;
     _results_dir = results_dir;
@@ -48,7 +48,7 @@ AlignmentResult AlignImageMachine::RunSFlowWithRF(vector<ReprojectionFlow*> rf, 
 
 ParseFeatureTrackFile AlignImageMachine::LoadFTF(int survey, int idx){
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            siftloc + dates[survey],
+            _pftbase + dates[survey],
             por[survey]->ftfilenos[idx]);
     if(pftf.time == -1) {
         std::cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << std::endl;
