@@ -50,28 +50,28 @@ int main(int argc, char *argv[]) {
     int prog = atoi(argv[3]);
     switch(prog){
     case 0 :{
-      int start = -1;
-      if(argc == 5) start = atoi(argv[4]);
-      Camera axisptz = ParseBoatSurvey::GetCamera();
-      AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
-      acq.Run(start); 
-      break;}
+        int start = -1;
+        if(argc == 5) start = atoi(argv[4]);
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
+        acq.Run(start);
+        break;}
     case 1 :{
-    Camera axisptz = ParseBoatSurvey::GetCamera();
-       RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, optimized_datasets, pftbase);
-       ra.IterativeMerge();
-       break;}
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, optimized_datasets, pftbase);
+        ra.IterativeMerge();
+        break;}
     case 2:{
-       Camera axisptz = ParseBoatSurvey::GetCamera();
-       AlignVisibilitySet avs(axisptz, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
-       avs.Visibility();
-       break;}
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        AlignVisibilitySet avs(axisptz, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
+        avs.Visibility();
+        break;}
     case 3:{
-       FlickeringDisplay fd(argv[2], argv[1]);
-       string dir = results_dir + argv[2] + "_to_" + argv[1] + "/";
-       std::cout << "dir: " << dir << std::endl;
-       fd.CompareFromDir(dir);
-       break;}
+        FlickeringDisplay fd(argv[2], argv[1]);
+        string dir = results_dir + argv[2] + "_to_" + argv[1] + "/";
+        std::cout << "dir: " << dir << std::endl;
+        fd.CompareFromDir(dir);
+        break;}
     case 5:{
         PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
         pbr.Preprocess();
@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
         SurveyOptimizer so(nexus, argv[1], results_dir);
         so.Initialize();
         so.Optimize(pbr);
+        EvaluateSLAM es(nexus, argv[1], results_dir);
+        es.debug=true;
+        es.Evaluate("/mnt/tale/shaneg/bike_datasets/" + argv[1] + "/");
         break;}
     case 7:{
         ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);
