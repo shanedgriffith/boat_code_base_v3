@@ -273,7 +273,7 @@ void PreprocessBikeRoute::ProcessRawVideo(){
             exit(-1);
         }
         
-        double imtime = timings[0] + nimages/video_fps;
+        double imtime = timings[0] + (1.*nimages)/video_fps;
         nimages++;
         if(imtime < starttime) continue;
         if(imtime >= endtime) break;
@@ -374,7 +374,7 @@ void PreprocessBikeRoute::FindKLTParams(){
     while(vid.grab()) {
         cv::Mat image;
         if(!vid.retrieve(image)) {
-            std::cout << "couldn't retrive the image." << std::endl;
+            std::cout << "couldn't retrieve the image." << std::endl;
             exit(-1);
         }
         counter++;
@@ -398,7 +398,7 @@ void PreprocessBikeRoute::FindKLTParams(){
             count += inactive.size();
             std::cout << "KLT track "<<counter<<": " << 1.0*suml/inactive.size() << ", [" << minl << ", " << maxl << "] all avg: " << 1.0*sumall/count << ", num > " << gttrack << " of " << inactive.size() << std::endl;
         }
-
+        
         if(show){
             IMDraw art(image);
             for(int j=0; j<PFT.ids.size(); j++){
