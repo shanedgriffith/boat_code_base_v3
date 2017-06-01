@@ -47,7 +47,7 @@ protected:
     void AddLandmarkTracks(std::vector<LandmarkTrack> inactive, int survey=-1);
     std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
     bool OptimizeThisIteration(int camera_key);
-    void SaveResults(int iteration = -1, double percent_completed = -1, vector<double> drawscale);
+    void SaveResults(int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
     void RunGTSAM();
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped);
