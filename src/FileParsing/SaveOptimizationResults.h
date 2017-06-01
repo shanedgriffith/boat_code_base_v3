@@ -47,9 +47,9 @@ public:
     void SaveLandmarks(std::vector<std::vector<double> >& landmarks);
     void SavePoses(std::string file, std::vector<std::vector<double> >& traj);
     
-    void SaveVisualization(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj);
+    void SaveVisualization(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<double> drawscale);
     
-    void PlotAndSaveCurrentEstimate(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<std::vector<double> >& vels);
+    void PlotAndSaveCurrentEstimate(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<std::vector<double> >& vels, std::vector<double> drawscale);
     
     void SaveDataCorrespondence(int camera_key, int sift_file_no, int aux_file_idx, int imageno, double timestamp);
     

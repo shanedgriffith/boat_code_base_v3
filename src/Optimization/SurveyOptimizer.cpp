@@ -84,12 +84,12 @@ bool SurveyOptimizer::OptimizeThisIteration(int camera_key){
     return camera_key > vals[Param::OPT_OFFSET] && camera_key % (int) vals[Param::OPT_SKIP] == 0;
 }
 
-void SurveyOptimizer::SaveResults(int iteration, double percent_completed){
+void SurveyOptimizer::SaveResults(int iteration, double percent_completed, vector<double> drawscale){
     if(_print_data_increments || percent_completed == 100){
         vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
         vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], num_cameras_in_traj);
         vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], num_cameras_in_traj);
-        SOR.PlotAndSaveCurrentEstimate(ls, ts, vs);
+        SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, drawscale);
     }
     SOR.StatusMessage(iteration, percent_completed);
 }
@@ -239,7 +239,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         //Optimize the graph
         if(OptimizeThisIteration(camera_key)){
             RunGTSAM();
-            SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000));
+            SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
         }
         
         //Log the data alignment.
@@ -259,7 +259,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     
     //Final optimization
     RunGTSAM();
-    SaveResults(0, 100.0);
+    SaveResults(0, 100.0, PS.GetDrawScale());
 }
 
 

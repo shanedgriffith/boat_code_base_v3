@@ -49,14 +49,14 @@ int main(int argc, char *argv[]) {
     
     int prog = atoi(argv[3]);
     switch(prog){
-    case 0 :{
+    case 0:{
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
         AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
         acq.Run(start);
         break;}
-    case 1 :{
+    case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, optimized_datasets, pftbase);
         ra.IterativeMerge();
@@ -84,7 +84,8 @@ int main(int argc, char *argv[]) {
         so.Optimize(pbr);
         EvaluateSLAM es(nexus, argv[1], results_dir);
         es.debug=true;
-        es.Evaluate("/mnt/tale/shaneg/bike_datasets/" + argv[1] + "/");
+        std::string input = argv[1];
+        es.Evaluate("/mnt/tale/shaneg/bike_datasets/" + input + "/");
         break;}
     case 7:{
         ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);

@@ -50,6 +50,7 @@ public:
     virtual int GetIndexOfImage(int image) = 0;
     virtual double GetAvgAngularVelocity(int sidx, int eidx) = 0;
     virtual bool Useable(int idx){return true;}
+    virtual std::vector<double> GetDrawScale()=0;
     
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
     ParseFeatureTrackFile GetFeatureTrackFile(Camera& _cam, int imageno);

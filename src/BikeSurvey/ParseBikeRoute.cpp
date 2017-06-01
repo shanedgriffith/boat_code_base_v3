@@ -49,7 +49,9 @@ Camera ParseBikeRoute::GetCamera(){
     return nexus;
 }
 
-
+vector<double> ParseBikeRoute::GetDrawScale(){
+    return {-2000,400,-500,1500};
+}
 
 
 

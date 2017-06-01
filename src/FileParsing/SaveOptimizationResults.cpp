@@ -12,13 +12,13 @@
 
 using namespace std;
 
-void SaveOptimizationResults::SaveVisualization(vector<vector<double> >& landmarks, vector<vector<double> >& traj) {
+void SaveOptimizationResults::SaveVisualization(vector<vector<double> >& landmarks, vector<vector<double> >& traj, vector<double> drawscale) {
 	if(traj.size() == 0 || landmarks.size() == 0){
 		cout << "SaveOptimizationResults::SaveVisualization() Error. Vector sizes are zero, which means optimization didn't run."<<endl;
 		exit(-1);
 	}
     SLAMDraw draw;
-    draw.SetScale(-300,300,-300,300);
+    draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);//-300,300,-300,300);
     draw.ResetCanvas();
     
     //draw the estimated landmark points
@@ -62,11 +62,11 @@ void SaveOptimizationResults::SavePoses(string file, vector<vector<double> >& po
     fclose(boat_f);
 }
 
-void SaveOptimizationResults::PlotAndSaveCurrentEstimate(vector<vector<double> >& landmarks, vector<vector<double> >& traj, vector<vector<double> >& vels){
+void SaveOptimizationResults::PlotAndSaveCurrentEstimate(vector<vector<double> >& landmarks, vector<vector<double> >& traj, vector<vector<double> >& vels, std::vector<double> drawscale){
     if(landmarks.size()>0) SaveLandmarks(landmarks);
     if(traj.size()>0) SavePoses(_base + boatfile, traj);
     if(vels.size()>0) SavePoses(_base + velocityfile, vels);
-    if(draw_map) SaveVisualization(landmarks, traj);
+    if(draw_map) SaveVisualization(landmarks, traj, drawscale);
 }
 
 void SaveOptimizationResults::SaveDataCorrespondence(int camera_key, int sift_file_no, int aux_file_idx, int imageno, double timestamp){

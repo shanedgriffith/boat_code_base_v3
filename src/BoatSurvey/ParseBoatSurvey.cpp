@@ -125,3 +125,6 @@ Camera ParseBoatSurvey::GetCamera(){
     return axisP5512e;
 }
 
+vector<double> ParseBoatSurvey::GetDrawScale(){
+    return {300,300,300,300};
+}

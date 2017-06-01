@@ -40,6 +40,7 @@ public:
     int GetIndexOfImage(int image){return image;}
     double GetAvgAngularVelocity(int sidx, int eidx);
     bool Useable(int idx){return true;}
+    std::vector<double> GetDrawScale();
 };
 
 
