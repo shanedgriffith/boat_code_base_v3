@@ -9,6 +9,7 @@
 #include <gtsam/base/Matrix.h>
 
 #include "GeometricComputerVision.h"
+#include "TestBikeSurvey.h"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ void TestBikeSurvey::TestTriangulation(){
     string name = "20160831_171816";
     ParseBikeRoute pbr(bdbase, name);
     Camera _cam = ParseBikeRoute::GetCamera();
-    gtsam::Cal3_S2::shared_ptr gtcam = GetGTSAMCam();
+    gtsam::Cal3_S2::shared_ptr gtcam = _cam.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->Matrix();
     
     gtsam::Pose3 u = pbr.CameraPose(500);
