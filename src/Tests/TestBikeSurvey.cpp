@@ -38,7 +38,7 @@ void TestBikeSurvey::TestTriangulation(){
             if(PFT0.ids[i] == PFT1.ids[j]){
                 last = j;
                 gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[j], v, gtmat);
-                printf("(%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf)\n",
+                printf("(%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf)\n",
                        up[0],up[1],up[2],up[3],up[4],up[5],vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],pw.x(),pw.y(),pw.z());
                 break;
             }
