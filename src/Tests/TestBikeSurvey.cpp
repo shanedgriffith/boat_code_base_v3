@@ -6,6 +6,7 @@
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
+#include <gtsam/base/Matrix.h>
 
 #include "GeometricComputerVision.h"
 
@@ -15,9 +16,9 @@ void TestBikeSurvey::TestTriangulation(){
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
     ParseBikeRoute pbr(bdbase, name);
-    Camera cam = ParseBikeRoute::GetCamera();
+    Camera _cam = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = GetGTSAMCam();
-    Matrix gtmat = gtcam->Matrix();
+    gtsam::Matrix gtmat = gtcam->Matrix();
     
     gtsam::Pose3 u = pbr.CameraPose(500);
     gtsam::Pose3 v = pbr.CameraPose(501);
@@ -31,7 +32,7 @@ void TestBikeSurvey::TestTriangulation(){
     int last = 0;
     for(int i=0; i<PFT0.ids.size(); i++){
         for(int j=0; j<PFT1.ids.size(); j++){
-            if(PFT0.ids[i] == PFT.ids[j]){
+            if(PFT0.ids[i] == PFT1.ids[j]){
                 last = j;
                 gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[j], v, gtmat);
                 printf("(%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf)\n",
