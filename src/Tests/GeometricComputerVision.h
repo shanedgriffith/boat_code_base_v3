@@ -42,8 +42,8 @@ cv::Mat_<double> IterativeLinearLSTriangulation(cv::Point3d u,          //homoge
                                             cv::Matx34d P1          //camera 2 matrix
 );
 
-gtsam::Point3 ProjectImageToWorld(gtsam::Point2 u, gtsam::Pose3 ucam, gtsam::Point2 v, gtsam::Pose3 vcam, 	);
-gtsam::Point2 ProjectWorldToImage(gtsam::Pose3 cam, cv::Matx33d calib, gtsam::Point3 pw);
+gtsam::Point3 ProjectImageToWorld(gtsam::Point2 u, gtsam::Pose3 ucam, gtsam::Point2 v, gtsam::Pose3 vcam, gtsam::Matrix calib);
+gtsam::Point2 ProjectWorldToImage(gtsam::Pose3 cam, cv::Matx33d calib,  gtsam::Point3 pw);
 cv::Matx34d GetCameraMatrix(gtsam::Pose3 cam, cv::Matx33d calib);
 cv::Matx33d GetRotationMatrix(cv::Point3d rotation);
 cv::Point3d GetEulerAngles(cv::Matx33d rmatrix);
