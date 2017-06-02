@@ -167,7 +167,6 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
     }
 }
 
-//int SurveyOptimizer::ConstructGraph(gtsam::Pose3 cam, ParseFeatureTrackFile& PFT, double av, double time){
 int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx){
     //Construct the graph (camera, visual landmarks, velocity, and time)
     static double last_time = -1;
@@ -209,9 +208,9 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
             double delta_t = PS.timings[cidx]-PS.timings[lcidx];
             gtsam::Pose3 vel_est = gtsam::Pose3(gtsam::Rot3::ypr(av*delta_t, 0, 0), gtsam::Point3(btwn_pos.x(), btwn_pos.y(), btwn_pos.z()));
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, flipped);
+        } else {
+            FG->AddOdomFactor(camera_key, btwn_pos);
         }
-        
-        FG->AddOdomFactor(camera_key, btwn_pos);
     }
     
     return camera_key;
@@ -225,6 +224,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     
     int cidx = 0, lcidx=0;
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
+        if(i>1000) break;
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
         ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i);
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
@@ -245,7 +245,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         //Log the data alignment.
         int imageno = PS.GetImageNumber(cidx);
         SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS.timings[cidx]);
-        //if(debug)
+        if(debug)
             cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<PS.timings[cidx]<<endl;
         
         lcidx = cidx;

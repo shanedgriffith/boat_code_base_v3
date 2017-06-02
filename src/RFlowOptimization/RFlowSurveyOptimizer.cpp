@@ -194,7 +194,7 @@ void RFlowSurveyOptimizer::SaveResults() {
     vector<vector<double> > vs;
     SOR.SetSaveStatus();
     SOR.SetDrawMap();
-    SOR.PlotAndSaveCurrentEstimate(ls, ts, vs);
+    SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, {});
 }
 
 int RFlowSurveyOptimizer::UpdateError() {

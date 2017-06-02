@@ -8,7 +8,7 @@ const string ParseBikeRoute::_auxfile = "/image_auxiliary.csv";
 void ParseBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
     if(lp.size()<8)return;
     timings.push_back(stod(lp[0]));
-    vector<double> p = {stod(lp[1]), stod(lp[2]), stod(lp[3]), stod(lp[4]), stod(lp[5]), stod(lp[6])};
+    vector<double> p = {stod(lp[1]), stod(lp[2]), stod(lp[3]), stod(lp[4]), stod(lp[5])+M_PI_2, stod(lp[6])};
     poses.push_back(p);
     omega.push_back(stod(lp[7]));
 }
