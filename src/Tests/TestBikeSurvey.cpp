@@ -25,8 +25,8 @@ void TestBikeSurvey::TestTriangulation(){
     vector<double> up = pbr.GetPose(500);
     vector<double> vp = pbr.GetPose(500);
     
-    ParseFeatureTrackFile PFT0 = PS.LoadVisualFeatureTracks(_cam, 500);
-    ParseFeatureTrackFile PFT1 = PS.LoadVisualFeatureTracks(_cam, 501);
+    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(_cam, 500);
+    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(_cam, 501);
     
     int last = 0;
     for(int i=0; i<PFT0.ids.size(); i++){

@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     
     TestBikeSurvey tbs;
     tbs.TestTriangulation();
+    exit(1);
     
     //vector<std::string> all = {"140911", "140919", "140926", "141003"};
 //    TestRFlowOptimization trfo;

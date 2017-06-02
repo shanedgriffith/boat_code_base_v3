@@ -11,6 +11,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace gtsam;
 
 /**
  From "Triangulation", Hartley, R.I. and Sturm, P., Computer vision and image understanding, 1997
