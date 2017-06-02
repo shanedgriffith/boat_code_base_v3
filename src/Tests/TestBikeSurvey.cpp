@@ -19,7 +19,7 @@ void TestBikeSurvey::TestTriangulation(){
     ParseBikeRoute pbr(bdbase, name);
     Camera _cam = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = _cam.GetGTSAMCam();
-    gtsam::Matrix gtmat = gtcam->Matrix();
+    gtsam::Matrix gtmat = gtcam->matrix();
     
     gtsam::Pose3 u = pbr.CameraPose(500);
     gtsam::Pose3 v = pbr.CameraPose(501);
@@ -27,8 +27,10 @@ void TestBikeSurvey::TestTriangulation(){
     vector<double> up = pbr.GetPose(500);
     vector<double> vp = pbr.GetPose(500);
     
-    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(_cam, 500);
-    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(_cam, 501);
+    int one = 500;
+    int two = 501;
+    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(_cam, one);
+    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(_cam, two);
     
     int last = 0;
     for(int i=0; i<PFT0.ids.size(); i++){
