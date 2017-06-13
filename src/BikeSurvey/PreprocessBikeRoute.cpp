@@ -145,6 +145,50 @@ void PreprocessBikeRoute::MakeAux(){
     std::cout << "Aux file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
 }
 
+std::vector<double> PreprocessBikeRoute::GetRotationMatrix(double X, double Y, double Z) {
+    /*Converts the three orientation angles into a rotation matrix.
+     see http://www.songho.ca/opengl/gl_anglestoaxes.html
+     */
+    
+    std::vector<double> R = {cos(Y)*cos(Z), -cos(Y)*sin(Z), sin(Y),
+        sin(X)*sin(Y)*cos(Z) + cos(X)*sin(Z), -sin(X)*sin(Y)*sin(Z)+cos(X)*cos(Z), -sin(X)*cos(Y),
+        -cos(X)*sin(Y)*cos(Z)+sin(X)*sin(Z), cos(X)*sin(Y)*sin(Z)+sin(X)*cos(Z), cos(X)*cos(Y)};
+    
+    return R;
+}
+
+std::vector<double> PreprocessBikeRoute::ComposeRotationMatrices(std::vector<double> A, std::vector<double> B){
+    std::vector<double> R = {
+        A[0]*B[0]+A[1]*B[3]+A[2]*B[6],
+        A[0]*B[1]+A[1]*B[4]+A[2]*B[7],
+        A[0]*B[2]+A[1]*B[5]+A[2]*B[8],
+        A[3]*B[0]+A[4]*B[3]+A[5]*B[6],
+        A[3]*B[1]+A[4]*B[4]+A[5]*B[7],
+        A[3]*B[2]+A[4]*B[5]+A[5]*B[8],
+        A[6]*B[0]+A[7]*B[3]+A[8]*B[6],
+        A[6]*B[1]+A[7]*B[4]+A[8]*B[7],
+        A[6]*B[2]+A[7]*B[5]+A[8]*B[8]};
+    return R;
+}
+
+double PreprocessBikeRoute::CombineAngles(double a1, double a2, double w){
+    while(a1<-M_PI) a1 += 2*M_PI;
+    while(a2<-M_PI) a2 += 2*M_PI;
+    while(a1>M_PI) a1 -= 2*M_PI;
+    while(a2>M_PI) a2 -= 2*M_PI;
+    
+    double m1 = min(a1, a2);
+    double m2 = max(a1, a2);
+    if(m1==a2) w = 1-w;
+    
+    if(abs(m2-m1)>M_PI){
+        if(m1<0) m1 += 2*M_PI;
+        else m2 -= 2*M_PI;
+    }
+    
+    return (1-w)*m1 + w*m2;
+}
+
 void PreprocessBikeRoute::GetPoses() {
     //see p.9 of 'Tilt Sensing Using a Three-Axis Accelerometer' for these equations.
     //and this post: https://theccontinuum.com/2012/09/24/arduino-imu-pitch-roll-from-accelerometer/
@@ -176,9 +220,10 @@ void PreprocessBikeRoute::GetPoses() {
         double r_acc = sqrt(pow(arrs[3][i],2.)+pow(arrs[4][i],2.)+pow(arrs[5][i],2.));
         std::vector<double> n_acc = {arrs[3][i]/r_acc, arrs[4][i]/r_acc, arrs[5][i]/r_acc};
         std::vector<double> acc_angles(2,0.);
-        double heading = arrs[6][i]; //-1*(arrs[6][i] - M_PI);
         acc_angles[0] = atan(n_acc[1]/((n_acc[2]/abs(n_acc[2]))*sqrt(pow(n_acc[0],2.)+pow(n_acc[2],2.))));
         acc_angles[1] = atan2(-1.*n_acc[0],sqrt(pow(n_acc[1],2.)+pow(n_acc[2],2.)));
+        double cam_yaw_from_compass = -1 * arrs[6][i]-M_PI_2;
+        res[2] = cam_yaw_from_compass;
         
         if(i>0){
             double dx = arrs[0][i] - arrs[0][i-1];
@@ -187,7 +232,10 @@ void PreprocessBikeRoute::GetPoses() {
             if(d>0){
                 dx /= d;
                 dy /= d;
-                heading = (heading + arrs[2][i]*atan2(dy,dx))/(1+arrs[2][i]) - M_PI_2;
+                
+                double cam_yaw_from_gps = -atan2(dx,dy);
+                double weight = arrs[2][i]/(1+arrs[2][i]);
+                res[2] = CombineAngles(cam_yaw_from_compass, cam_yaw_from_gps, weight);
             }
             
             for(int i=0; i<2; i++)
@@ -197,7 +245,10 @@ void PreprocessBikeRoute::GetPoses() {
         }
         
         //a height of 0 is inaccurate, but optimization may be able to compensate.
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, acc_angles[0], acc_angles[1], heading});
+        vector<double> cam = GetRotationMatrix(res[0], res[1], res[2]);
+        vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
+        std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, R[0], R[1], R[2]});
     }
 }
 
@@ -208,8 +259,8 @@ void PreprocessBikeRoute::PlayPoses(){
     art.SetScale(-2000,400,-500,1500);
     art.ResetCanvas();
     
-    for(int i=0; i<poses.size(); i=i+video_fps){
-        //std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
+    for(int i=0; ; i=i+video_fps){
+        if(i>=poses.size()) i -= video_fps;
         printf("%lf,%lf,%lf,%lf,%lf\n",poses[i][0],poses[i][1],poses[i][3]*180/M_PI,poses[i][4]*180/M_PI,poses[i][5]*180/M_PI);
         for(int j=0; j<=i; j++)
             art.AddShape(SLAMDraw::shape::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);

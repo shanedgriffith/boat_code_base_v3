@@ -126,7 +126,7 @@ Camera ParseBoatSurvey::GetCamera(){
 }
 
 vector<double> ParseBoatSurvey::GetDrawScale(){
-    return {300,300,300,300};
+    return {-300,300,-300,300};
 }
 
 void ParseBoatSurvey::PlayPoses(){

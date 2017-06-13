@@ -30,6 +30,9 @@ private:
     gtsam::Point3 end_pos;
     std::vector<LandmarkTrack> active;
 
+    std::vector<double> GetRotationMatrix(double X, double Y, double Z);
+    std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
+    
     void WriteImage(cv::Mat image, std::string filepath);
     std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
     double GetNearestTimeToPosition(double x, double y);
