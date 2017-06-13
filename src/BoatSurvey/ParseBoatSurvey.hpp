@@ -56,6 +56,7 @@ public:
     double GetAvgAngularVelocity(int sidx, int eidx);
     bool Useable(int idx);
     std::vector<double> GetDrawScale();
+    void PlayPoses();
 };
 
 

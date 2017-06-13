@@ -133,8 +133,6 @@ void PreprocessBikeRoute::MakeAux(){
         std::cout << "ParseBikeRoute::MakeAux() no data."<<std::endl;
         exit(1);
     }
-    double curtime = GetNearestTimeToPosition(0, 0);
-    double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
     
     int idx = 0;
     string saveto = _bdbase + _name + ParseSurvey::_auxfile;
@@ -211,7 +209,8 @@ void PreprocessBikeRoute::PlayPoses(){
     art.ResetCanvas();
     
     for(int i=0; i<poses.size(); i=i+video_fps){
-        std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
+        //std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
+        printf("%lf,%lf,%lf,%lf,%lf\n",poses[i][0],poses[i][1],poses[i][3]*180/M_PI,poses[i][4]*180/M_PI,poses[i][5]*180/M_PI);
         for(int j=0; j<=i; j++)
             art.AddShape(SLAMDraw::shape::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);
         art.DrawSight(poses[i][0], poses[i][1], poses[i][3], 0.838, 255, 0, 0);
@@ -232,14 +231,14 @@ void PreprocessBikeRoute::Preprocess(){
         if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
     }
     
-    ProcessRawVideo(); //run this before cropping.
+//    ProcessRawVideo(); //run this before cropping.
     
     AlignDataToImages();
     
     //get RPY
     GetPoses();
-//    PlayPoses();
-//    exit(1);
+    PlayPoses();
+    exit(1);
     
     MakeAux();
 }

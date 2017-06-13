@@ -224,7 +224,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     
     int cidx = 0, lcidx=0;
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
-        if(i>1000) break;
+        if(i>2000) break;
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
         ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i);
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);

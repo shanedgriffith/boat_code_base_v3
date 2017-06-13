@@ -128,3 +128,34 @@ Camera ParseBoatSurvey::GetCamera(){
 vector<double> ParseBoatSurvey::GetDrawScale(){
     return {300,300,300,300};
 }
+
+void ParseBoatSurvey::PlayPoses(){
+    //unit test the poses.
+    
+    vector<double> scale = GetDrawScale();
+    
+    SLAMDraw art;
+    art.SetScale(scale[0],scale[1],scale[2],scale[3]);
+    art.ResetCanvas();
+    
+    for(int i=0; i<poses.size(); i=i+50){
+        //std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
+        printf("%lf,%lf,%lf,%lf,%lf\n",poses[i][0],poses[i][1],poses[i][3]*180/M_PI,poses[i][4]*180/M_PI,poses[i][5]*180/M_PI);
+        for(int j=0; j<=i; j++)
+            art.AddShape(SLAMDraw::shape::CIRCLE, poses[j][0], poses[j][1], 0, 0, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][3], 0.838, 255, 0, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][4], 0.838, 0, 255, 0);
+        art.DrawSight(poses[i][0], poses[i][1], poses[i][5], 0.838, 0, 0, 255);
+        char c = art.Display();
+        if(c==83) i = (i>=2*video_fps)?i-2*video_fps:i-video_fps;
+        art.ResetCanvas();
+    }
+}
+
+
+
+
+
+
+
+

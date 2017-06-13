@@ -25,7 +25,7 @@ void TestBikeSurvey::TestTriangulation(){
     gtsam::Pose3 v = pbr.CameraPose(501);
     
     vector<double> up = pbr.GetPose(500);
-    vector<double> vp = pbr.GetPose(500);
+    vector<double> vp = pbr.GetPose(501);
     
     int one = 500;
     int two = 501;
