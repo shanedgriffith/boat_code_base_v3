@@ -7,7 +7,7 @@
 //
 
 #include "ParseBoatSurvey.hpp"
-
+#include <Visualizations/SLAMDraw.h>
 
 using namespace std;
 
@@ -137,8 +137,8 @@ void ParseBoatSurvey::PlayPoses(){
     SLAMDraw art;
     art.SetScale(scale[0],scale[1],scale[2],scale[3]);
     art.ResetCanvas();
-    
-    for(int i=0; i<poses.size(); i=i+50){
+    int skip = 50;
+    for(int i=0; i<poses.size(); i=i+skip){
         //std::cout << i<<":"<<poses[i][0] << ", " << poses[i][1] << ", " << poses[i][5] << std::endl;
         printf("%lf,%lf,%lf,%lf,%lf\n",poses[i][0],poses[i][1],poses[i][3]*180/M_PI,poses[i][4]*180/M_PI,poses[i][5]*180/M_PI);
         for(int j=0; j<=i; j++)
@@ -147,7 +147,7 @@ void ParseBoatSurvey::PlayPoses(){
         art.DrawSight(poses[i][0], poses[i][1], poses[i][4], 0.838, 0, 255, 0);
         art.DrawSight(poses[i][0], poses[i][1], poses[i][5], 0.838, 0, 0, 255);
         char c = art.Display();
-        if(c==83) i = (i>=2*video_fps)?i-2*video_fps:i-video_fps;
+        if(c==83) i = (i>=2*skip)?i-2*skip:i-skip;
         art.ResetCanvas();
     }
 }
