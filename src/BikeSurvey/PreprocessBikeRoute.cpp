@@ -215,7 +215,7 @@ void PreprocessBikeRoute::GetPoses() {
         
         if(i>0){
             double dx = arrs[0][i] - arrs[0][i-1];
-         /Users/shane/git_repos/boat_code_base_v2/src/BikeSurvey/PreprocessBikeRoute.cpp   double dy = arrs[1][i] - arrs[1][i-1];
+            double dy = arrs[1][i] - arrs[1][i-1];
             double d = sqrt(pow(dx,2.)+pow(dy,2.));
             if(d>0){
                 dx /= d;
