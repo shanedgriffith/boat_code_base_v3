@@ -215,7 +215,7 @@ void PreprocessBikeRoute::GetPoses() {
         
         if(i>0){
             double dx = arrs[0][i] - arrs[0][i-1];
-            double dy = arrs[1][i] - arrs[1][i-1];
+         /Users/shane/git_repos/boat_code_base_v2/src/BikeSurvey/PreprocessBikeRoute.cpp   double dy = arrs[1][i] - arrs[1][i-1];
             double d = sqrt(pow(dx,2.)+pow(dy,2.));
             if(d>0){
                 dx /= d;
@@ -237,7 +237,7 @@ void PreprocessBikeRoute::GetPoses() {
         vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
         std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
         vector<double> RPY = RotationMatrixToRPY(R);
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, RPY[0], RPY[1], RPY[2]});
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, res[0], res[1], res[2]);//RPY[0], RPY[1], RPY[2]});
     }
 }
 
@@ -271,14 +271,14 @@ void PreprocessBikeRoute::Preprocess(){
         if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
     }
     
-    ProcessRawVideo(); //run this before cropping.
+//    ProcessRawVideo(); //run this before cropping.
     
     AlignDataToImages();
     
     //get RPY
     GetPoses();
-    PlayPoses();
-    exit(1);
+//    PlayPoses();
+//    exit(1);
     
     MakeAux();
 }
