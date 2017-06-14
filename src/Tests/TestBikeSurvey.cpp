@@ -16,7 +16,7 @@
 using namespace std;
 
 cv::Scalar TestBikeSurvey::ColorByDistance(double dist){
-    int val = 255-min(5*dist,255.);
+    int val = 255-min(10*dist,255.);
     return CV_RGB(val, val, val);
 }
 
@@ -62,7 +62,7 @@ void TestBikeSurvey::TestTriangulation(){
         cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
         double dist = u.range(pw);
         
-        circle(img, p, 5, ColorByHeight(dist), -1, 8, 0);
+        circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0);
         circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
         printf("%lf,%lf,%lf; dist: %lf\n",pw.x(), pw.y(), pw.z(), dist);
     }
