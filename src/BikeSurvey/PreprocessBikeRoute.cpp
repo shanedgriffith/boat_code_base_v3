@@ -237,7 +237,7 @@ void PreprocessBikeRoute::GetPoses() {
         vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
         std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
         vector<double> RPY = RotationMatrixToRPY(R);
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, res[0], res[1], res[2]);//RPY[0], RPY[1], RPY[2]});
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, res[0], res[1], res[2]});//RPY[0], RPY[1], RPY[2]});
     }
 }
 

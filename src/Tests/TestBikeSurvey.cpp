@@ -61,7 +61,7 @@ gtsam::Pose3 TestBikeSurvey::CameraPose(std::vector<double> p){
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
-std:vector<double> TestBikeSurvey::TransformPose(std::vector<double> p){
+std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p){
     vector<double> cam = GetRotationMatrix(p[3], p[4], p[5]);
     vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
     std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
