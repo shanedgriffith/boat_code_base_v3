@@ -171,6 +171,11 @@ std::vector<double> PreprocessBikeRoute::ComposeRotationMatrices(std::vector<dou
     return R;
 }
 
+std::vector<double> ParseBoatSurvey::RotationMatrixToRPY(std::vector<double> R){
+    std::vector<double> rpy = {atan2(R[7], R[8]), atan2(-1*R[6], sqrt(R[7]*R[7]+R[8]*R[8])), atan2(R[3],R[0])};
+    return rpy;
+}
+
 double PreprocessBikeRoute::CombineAngles(double a1, double a2, double w){
     while(a1<-M_PI) a1 += 2*M_PI;
     while(a2<-M_PI) a2 += 2*M_PI;
@@ -248,7 +253,8 @@ void PreprocessBikeRoute::GetPoses() {
         vector<double> cam = GetRotationMatrix(res[0], res[1], res[2]);
         vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
         std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, R[0], R[1], R[2]});
+        vector<double> RPY = RotationMatrixToRPY(R);
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, RPY[0], RPY[1], RPY[2]});
     }
 }
 
