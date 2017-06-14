@@ -114,7 +114,7 @@ void AcquireISConstraints::Initialize(){
         vector<string> dates = FileParsing::ListFilesInDir(dir, "1");
         std::cout << "Loading map."<<std::endl;
         for(int i=0; i<dates.size(); i++){
-            if(dates[i].length()!=6) continue;          //TODO: fix for bike surveys
+            if(dates[i].length()!=6) continue;          //TODO: fix.
             std::cout<<"  survey "<<dates[i]<<std::endl;
             _maps.push_back( new Map(dir));
             _maps[_maps.size()-1]->LoadMap(dates[i]);
@@ -329,8 +329,6 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         }
 
         ws[tidx]->SetPOR({&survey_est[s0].por, &survey_est[latestsurvey].por});
-        
-        ws[tidx]->SetPS({});
         ws[tidx]->SetDates({survey_est[s0].date, _date});
         ws[tidx]->SetSurveyIDs({s0, latestsurvey});
         ws[tidx]->SetPORTimes({por0time, por1time});
