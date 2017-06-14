@@ -21,9 +21,9 @@ cv::Scalar TestBikeSurvey::ColorByDistance(double dist){
 }
 
 cv::Scalar TestBikeSurvey::ColorByHeight(double z){
-    int val = min(abs(5*z),255.);
     if(z<0) return CV_RGB(255, 0, 0);
-    else return CV_RGB(0, val, 0);
+    int val = min(abs(10*z),255.);
+    return CV_RGB(0, val, 0);
 }
 
 void TestBikeSurvey::TestTriangulation(){
@@ -45,7 +45,7 @@ void TestBikeSurvey::TestTriangulation(){
     ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
     ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
     
-    std::string imagepath = ParseSurvey::GetImagePath(bdbase + name + "/images", one);
+    std::string imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
     cv::Mat img = ImageOperations::Load(imagepath);
     
     const char* window_name = "test poses using point triangulation";
@@ -64,6 +64,7 @@ void TestBikeSurvey::TestTriangulation(){
         
         circle(img, p, 5, ColorByHeight(dist), -1, 8, 0);
         circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
+        printf("%lf,%lf,%lf; dist: %lf\n",pw.x(), pw.y(), pw.z(), dist);
     }
     
     imshow(window_name, img);

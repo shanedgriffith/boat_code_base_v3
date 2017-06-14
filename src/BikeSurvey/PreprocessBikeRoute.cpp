@@ -271,7 +271,7 @@ void PreprocessBikeRoute::Preprocess(){
         if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
     }
     
-//    ProcessRawVideo(); //run this before cropping.
+    ProcessRawVideo(); //run this before cropping.
     
     AlignDataToImages();
     
