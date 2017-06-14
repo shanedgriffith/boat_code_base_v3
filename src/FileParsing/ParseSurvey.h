@@ -30,8 +30,6 @@ protected:
     
     bool constant_velocity;
     
-    std::string _base;
-    std::string _pftbase;
     
     double AngleDistance(double a, double b);
     
@@ -40,9 +38,11 @@ protected:
     virtual void ProcessLineEntries(int type, std::vector<std::string>& lp) = 0;
     virtual void ReadDelimitedFile(std::string file, int type) = 0;
 public:
+    std::string _base;
+    std::string _pftbase;
     static const std::string _auxfile;
     std::vector<double> timings;
-
+    
     ParseSurvey(std::string base, std::string pftbase):
     _base(base), _pftbase(pftbase) {}
     
@@ -55,9 +55,9 @@ public:
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
     ParseFeatureTrackFile GetFeatureTrackFile(Camera& _cam, int imageno);
     
-    static std::string GetImagePath(std::string base, int no, bool makedir=false);
     static int GetImageNumberFromImagePath(std::string imagepath);
     static std::vector<double> PoseToVector(gtsam::Pose3& cam);
+    static std::string GetImagePath(std::string base, int no, bool makedir=false);
     
     bool ConstantVelocity(){return constant_velocity;}
     int NumPoses() {return poses.size();}

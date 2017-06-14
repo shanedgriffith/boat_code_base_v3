@@ -43,6 +43,7 @@ public:
     ParseSurvey(base, pftbase) {
         constant_velocity = true;
         default_start = gtsam::Point3(296866.7554855264, 5442698.88922645, 0);
+        
         ReadDelimitedFile(_base + _auxfile, 0);
         
         if(timings.size() == 0) {

@@ -61,7 +61,7 @@ std::vector<int> ImageRetrieval::IdentifyNeighborPoses(std::vector<std::vector<d
 }
 
 
-std::vector<double> ImageRetrieval::NaiveSearch(string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses){
+std::vector<double> ImageRetrieval::NaiveSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses){
 	SFlowDREAM sf(_cam);
 	sf.SetDryRun();
 	sf.SetVerifyAlignment();
@@ -91,7 +91,7 @@ std::vector<double> ImageRetrieval::NaiveSearch(string base, std::vector<int>& i
  * 				  Experimentally determined.
  * 				  For efficiency purposes and not necessary for the correct function of the algorithm.
  * */
-std::vector<double> ImageRetrieval::DirectionalSearch(string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses){
+std::vector<double> ImageRetrieval::DirectionalSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses){
 	SFlowDREAM sf(_cam);
 	sf.SetDryRun();
 	sf.SetVerifyAlignment();
@@ -108,7 +108,7 @@ std::vector<double> ImageRetrieval::DirectionalSearch(string base, std::vector<i
     		int off = neighbor_poses.size()/2 + i*neg;
     		if(off < 0 || off > neighbor_poses.size()-1) continue;
     		int idx = neighbor_poses[off];
-
+            
             std::string image1 = ParseSurvey::GetImagePath(base, imageno[idx]);
     		sf.ConstructImagePyramid(image1, image2);
     		sf.AlignImages();
@@ -130,7 +130,7 @@ std::vector<double> ImageRetrieval::DirectionalSearch(string base, std::vector<i
     return min_vals;
 }
 
-int ImageRetrieval::IdentifyClosestPose(string base, std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double> pose2, string image2, double * ae) {
+int ImageRetrieval::IdentifyClosestPose(std::string base, std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double> pose2, string image2, double * ae) {
 	std::vector<int> neighbor_poses = IdentifyNeighborPoses(poses, imageno, pose2);
     std::vector<double> minvals = {-1, 1000000000};
     if(neighbor_poses.size()>0){
@@ -191,7 +191,7 @@ bool ImageRetrieval::HaveVerified(int i, std::vector<double>& ver){
     return false;
 }
 
-std::vector<double> ImageRetrieval::MultiThreadedSearch(string base, std::vector<int>& imageno, string image2, std::vector<int>& neighbor_poses){
+std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::vector<int>& imageno, string image2, std::vector<int>& neighbor_poses){
     //Something like 3.2x faster than sequential directional search (when all the threads can be used).
     bool left = true, right = true;
     std::vector<double> res(neighbor_poses.size(), 0);
@@ -231,7 +231,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(string base, std::vector
             else break;
         }
     }
-
+    
     //given all the boundaries, now check that the points between the boundaries are filled in.
     while(!ArrayMatchesSignal010(res) && man.WaitForAnotherMachine());
 //    while(!verified && !HaveVerified(ws.size(),ver) && !ArrayMatchesSignal010(res) && man.WaitForAnotherMachine());

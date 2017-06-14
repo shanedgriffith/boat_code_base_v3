@@ -56,7 +56,6 @@ double ReprojectionFlow::GStatistic(vector<int>& ct){
     return 2*sum;
 }
 
-
 vector<int> ReprojectionFlow::ExtractContingencyTable(vector<bool>& vi1, vector<bool>& vi2){
     if(vi1.size() != vi2.size()){
         cout << "ReprojectionFlow::ExtractContingencyTable() Error: Incorrect input to ExtractContingencyTable()." << endl;
@@ -73,7 +72,6 @@ vector<int> ReprojectionFlow::ExtractContingencyTable(vector<bool>& vi1, vector<
     return contingency_table;
 }
 
-
 void ReprojectionFlow::TestGstat(){
     vector<int> contingency_table1 = {2,45,0,55};
     vector<int> contingency_table2 = {36,11,0,55};
@@ -85,14 +83,12 @@ void ReprojectionFlow::TestGstat(){
     cout << "results: "<< one << ", "<<two<<", "<<three<<endl;
 }
 
-
 double ReprojectionFlow::GStatisticForPose(vector<double>& camA, vector<double>& camB){
 	double g=0;
 	vector<vector<double> > _camA = {camA};
 	IdentifyClosestPose(_camA, camB, &g);
 	return g;
 }
-
 
 vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vector<bool>& valid_indices){
     if(boat.size()<6){
@@ -110,12 +106,10 @@ vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vect
     return validset;
 }
 
-
 void ReprojectionFlow::Reset(){
 	viewset.clear();
 	restrictedset.clear();
 }
-
 
 void ReprojectionFlow::SparseFlow(vector<bool>& iA, vector<bool>& iB, vector<gtsam::Point2>& rpA, vector<gtsam::Point2>& rpB){
 	Reset();
@@ -126,7 +120,6 @@ void ReprojectionFlow::SparseFlow(vector<bool>& iA, vector<bool>& iB, vector<gts
 		viewset.push_back(rfp);
     }
 }
-
 
 void ReprojectionFlow::ComputeFlow(vector<double>& camA, vector<double>& camB){
     vector<bool> valid_indicesA(_map.map.size(), false);
@@ -190,7 +183,6 @@ int ReprojectionFlow::IdentifyClosestPose(vector<vector<double> >& camA, vector<
     return closest;
 }
 
-
 void ReprojectionFlow::CreateRestrictedSet(int survey, ParseFeatureTrackFile& pft, bool forward){
 	//Find the subset of points that match those of the pft file. This limits
 	//reprojection error to a single direction.
@@ -236,7 +228,6 @@ void ReprojectionFlow::CreateRestrictedSet(int survey, ParseFeatureTrackFile& pf
     if(debug) std::cout<<"num found: " << count <<", after removing outliers: " << restrictedset[restrictedset.size()-1].size()<<std::endl;
 }
 
-
 void ReprojectionFlow::CreateMirroredRestrictedSet(int res_set, int src_set){
 	restrictedset[res_set].clear();
 	for(int  i=0; i<restrictedset[src_set].size(); i++){
@@ -249,7 +240,6 @@ void ReprojectionFlow::CreateMirroredRestrictedSet(int res_set, int src_set){
 		restrictedset[res_set].push_back(rfp);
 	}
 }
-
 
 bool ReprojectionFlow::HaveTwoSets(){
 	//creates a mirrored set if needed, or returns false if neither one can be used.
@@ -275,7 +265,6 @@ bool ReprojectionFlow::HaveTwoSets(){
 	return true;
 }
 
-
 void ReprojectionFlow::EliminateOutliers(int active_set){
 	//Remove outliers according to epipolar constraints.
 	FeatureMatchElimination fme;
@@ -297,7 +286,6 @@ void ReprojectionFlow::EliminateOutliers(int active_set){
     }
     if(debug) std::cout<<"num remaining after: " <<restrictedset[active_set].size()<<std::endl;
 }
-
 
 vector<cv::Point2f> ReprojectionFlow::GetRestrictedSetOrig(int active_set){
 	vector<cv::Point2f> orig(restrictedset[active_set].size(), cv::Point2f());
@@ -394,7 +382,6 @@ Point2f ReprojectionFlow::Scale(Point2f p, bool up){
     return Point2f(p.x*xscale, p.y*yscale);
 }
 
-
 vector<double> ReprojectionFlow::MeasureFlowAgreement(cv::Mat& flow, int active_set){
     /*Measure the average distance between the flow result and the projected flow.*/
 	//Useful as a sanity check and for comparison with other dense correspondence methods.
@@ -417,7 +404,6 @@ vector<double> ReprojectionFlow::MeasureFlowAgreement(cv::Mat& flow, int active_
     
     return res;
 }
-
 
 vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
 //    cout <<"Large deviations from points from one survey but not others may indicate a change"<<endl;
@@ -450,7 +436,6 @@ vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
     if(debug) cout << "average re: " << res[2*_map.num_surveys]/res[2*_map.num_surveys+1] << endl;
     return res;
 }
-
 
 /******************************** DRAWING RELATED (for visualization and debugging) *******************************/
 void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
@@ -487,7 +472,6 @@ void ReprojectionFlow::DrawFlowSurvey(cv::Mat& imageB, int survey){
         art.DrawPoint(viewset[i].pim1.x(), viewset[i].pim1.y());
     }
 }
-
 
 void ReprojectionFlow::DrawFlowSurvey(cv::Mat& imageB, int survey, ParseFeatureTrackFile& pft){
     if(viewset.size()==0){

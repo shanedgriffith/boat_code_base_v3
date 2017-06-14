@@ -97,5 +97,3 @@ vector<double> ParseBikeRoute::GetDrawScale(){
 
 
 
-
-

@@ -23,18 +23,6 @@ int ParseSurvey::GetImageNumberFromImagePath(string imagepath) {
     return stod(mil)*1000+stod(imgno);
 }
 
-string ParseSurvey::GetImagePath(string base, int no, bool makedir) {
-    char imgfile[100];
-    if(makedir){
-        sprintf(imgfile, "%s", base.c_str());
-        MakeDir(imgfile);
-        sprintf(imgfile, "%s/%04d", base.c_str(), (((int) no)/1000));
-        MakeDir(imgfile);
-    }
-    sprintf(imgfile, "%s/%04d/%04d.jpg", base.c_str(), (((int) no)/1000), (((int) no)%1000));
-    return string(imgfile);
-}
-
 vector<double> ParseSurvey::PoseToVector(gtsam::Pose3& cam) {
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
@@ -138,7 +126,18 @@ std::vector<double> ParseSurvey::GetPose(int i){
     return poses[i];
 }
 
-
+string ParseSurvey::GetImagePath(string base, int no, bool makedir) {
+    char imgfile[100];
+    if(makedir){
+        //although an 'images' directory makes sense, adding it would require updating the VBags structure (which probably should be upgraded..)
+        sprintf(imgfile, "%s", base.c_str());
+        MakeDir(imgfile);
+        sprintf(imgfile, "%s/%04d", base.c_str(), (((int) no)/1000));
+        MakeDir(imgfile);
+    }
+    sprintf(imgfile, "%s/%04d/%04d.jpg", base.c_str(), (((int) no)/1000), (((int) no)%1000));
+    return string(imgfile);
+}
 
 
 

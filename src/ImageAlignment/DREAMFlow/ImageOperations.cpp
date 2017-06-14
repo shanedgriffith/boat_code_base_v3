@@ -225,12 +225,10 @@ Mat ImageOperations::derivative(Mat& source, bool horizontal)
     return der;
 }
 
-
 //------------------------------------------------------------------------------------------------------------
 //  horizontal direction filtering
 //------------------------------------------------------------------------------------------------------------
-void ImageOperations::filtering(Mat& source,Mat& pDstImage,double* pfilter1D,int fsize, bool horizontal)
-{
+void ImageOperations::filtering(Mat& source,Mat& pDstImage,double* pfilter1D,int fsize, bool horizontal) {
     int width=source.cols;
     int height=source.rows;
     int nChannels=source.channels();
@@ -257,9 +255,7 @@ void ImageOperations::filtering(Mat& source,Mat& pDstImage,double* pfilter1D,int
                 }
 }
 
-
-Mat ImageOperations::CreateWarpedImage(Mat& image, Mat& v)
-{
+Mat ImageOperations::CreateWarpedImage(Mat& image, Mat& v){
     /*Warp the input image using the provided flow.*/
     if(image.rows != v.rows){
         cout << "ImageOperations: Couldn't warp the image. Mismatched image sizes." << endl;
@@ -270,9 +266,7 @@ Mat ImageOperations::CreateWarpedImage(Mat& image, Mat& v)
     return warped;
 }
 
-
-inline void ImageOperations::BilinearInterpolate(Mat& image, double x, double y, unsigned char* result)
-{
+inline void ImageOperations::BilinearInterpolate(Mat& image, double x, double y, unsigned char* result){
     int width = image.cols;
     int height = image.rows;
     int nChannels = image.channels();
@@ -301,9 +295,7 @@ inline void ImageOperations::BilinearInterpolate(Mat& image, double x, double y,
         }
 }
 
-
-void ImageOperations::warpImage(Mat& image, Mat& imgdata, Mat& pV)
-{
+void ImageOperations::warpImage(Mat& image, Mat& imgdata, Mat& pV){
     /*
      Maps image[p] to imgdata[p+w(p)]
      */
@@ -326,7 +318,6 @@ void ImageOperations::warpImage(Mat& image, Mat& imgdata, Mat& pV)
         }
 }
 
-
 Mat ImageOperations::Load(string path)
 {
     /*Loads an image and returns it as a 3 channel double image.
@@ -346,7 +337,6 @@ void ImageOperations::Undistort(Camera& _cam, Mat& img){
     Mat temp = img.clone();
     undistort(temp, img, _cam.IntrinsicMatrix(), _cam.Distortion());
 }
-
 
 bool ImageOperations::writeUncompressedImage(Mat& im, string path) {
     //DATATYPE * ref, int cols, int rows, int channels, int type) {
@@ -385,7 +375,6 @@ bool ImageOperations::writeUncompressedImage(Mat& im, string path) {
     fclose(file);
     return true;
 }
-
 
 Mat ImageOperations::readUncompressedImage(string filename) {
     FILE * file = fopen(filename.c_str(), "r");
@@ -463,7 +452,6 @@ Mat ImageOperations::readUncompressedImage(string filename) {
 }
  */
 
-
 void ImageOperations::Save(Mat im, string path) {
     /*Converts a double image to a 3 channel unsigned char image.
      * */
@@ -475,7 +463,6 @@ void ImageOperations::Save(Mat im, string path) {
     }
 }
 
-
 Mat ImageOperations::HalveImage(Mat& im, int g_hsize, double g_sigma) {
     Mat cvimg = Mat(im.rows, im.cols, im.type(), Scalar::all(0));
     Mat cvimghalf = Mat(cvimg.rows/2.0, cvimg.cols/2.0, im.type(), Scalar::all(0));
@@ -485,7 +472,6 @@ Mat ImageOperations::HalveImage(Mat& im, int g_hsize, double g_sigma) {
     
     return cvimghalf;
 }
-
 
 void ImageOperations::DoubleImage(Mat& src, Mat& dest) {
     cv::resize(src, dest, Size(src.cols*2, src.rows*2), 0, 0, CV_INTER_CUBIC);

@@ -31,21 +31,21 @@ private:
     double POSE_RANGE_THRESHOLD = 3.0;
 	double pose_distance_threshold = 5.0; //meters
 	double pose_angle_threshold = 20.0; //degrees.
-
+    
 	int CAM_SKIP = 0;
 	double ALIGN_ENERGY_THRESHOLD = 1120000; //energy of the low-res alignment
 	double ALIGN_CONSISTENCY_THRESHOLD = 0.95; //consistency of forward-backward alignment.
 	double DELTA = 70000; //for image retrieval search: a jump in alignment energy by this much indicates the images no longer capture the same scene.
-
+    
 	double verification_threshold = 0.4;
-
+    
 	void InitializeMachine(int nthreads);
-
+    
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
 	std::vector<int> IdentifyNeighborPoses(std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double>& p2);
 	std::vector<double> DirectionalSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
 	std::vector<double> NaiveSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses);
-
+    
     int GetMin(std::vector<double>& res);
     int GetMax(std::vector<double>& ver);
     bool HaveVerified(int i, std::vector<double>& ver);

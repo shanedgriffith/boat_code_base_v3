@@ -73,7 +73,7 @@ private:
         ParseOptimizationResults por;
         double avg_hop_distance;
     } SurveyData;
-
+    
     int latestsurvey;
     bool back_two = false;
     std::vector<LocalizedPoseData> localizations;
@@ -98,7 +98,7 @@ public:
         std::cout << "Adding IS constraints." << std::endl;
         Initialize();
     }
-
+    
     void Run(int start=-1);
 };
 

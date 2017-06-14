@@ -92,17 +92,17 @@ std::vector<double> BestMatchSeqSLAM::LocalConstrastEnhancement(std::vector<doub
 std::vector<std::vector<double> > BestMatchSeqSLAM::BuildDifferenceMatrix(ParseSurvey ps1, ParseSurvey ps2){
 	int max1 = ps1.imageno.size()/CAM_SKIP;
 	int max2 = ps2.imageno.size()/CAM_SKIP;
-
+    
 	std::vector<std::vector<double> > difference_matrix(max1, std::vector<double>(max2, 0.0));
-
+    
 	for(int i=0; i<max1; i=i+CAM_SKIP){
-		string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i]);
+        string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i]);
 		cv::Mat Im1 = ImageOperations::Load(fim1);
 		cv::Mat pn1 = PatchNormalizedImage(Im1);
 		std::vector<double> difference_vector(max2, 0.0);
-
+        
 		for(int j=0; j<max2; j=j+CAM_SKIP){
-			string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[j]);
+            string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[j]);
 			cv::Mat Im2 = ImageOperations::Load(fim2);
 			cv::Mat pn2 = PatchNormalizedImage(Im2);
 
@@ -182,8 +182,8 @@ std::vector<int> BestMatchSeqSLAM::FillInBestMatches(std::vector<bool>& usable, 
 std::vector<std::vector<std::string> > BestMatchSeqSLAM::GetMatchedImageList(ParseSurvey& ps1, ParseSurvey& ps2, std::vector<int>& best_matches){
 	std::vector<std::vector<std::string> > ret;
 	for(int i=0; i<best_matches.size(); i++){
-		string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i*5]);
-		string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[best_matches[i]*5]);
+        string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i*5]);
+        string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[best_matches[i]*5]);
 		ret.push_back({fim1, fim2});
 	}
 	return ret;

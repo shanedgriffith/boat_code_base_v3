@@ -1,12 +1,9 @@
 /*
- * ParseBikeRoute.cpp
+ * PreprocessBikeRoute.cpp
  *
  *  Created on: May 1, 2017
  *      Author: shane
  */
-
-
-#include "ParseBikeRoute.hpp"
 
 #include <VisualOdometry/KLT.hpp>
 #include <Visualizations/IMDraw.hpp>
@@ -56,31 +53,17 @@ void PreprocessBikeRoute::LowPassFilter(std::vector<double>& arr, double std){
 
 void PreprocessBikeRoute::WriteImage(cv::Mat image, string filepath){
     static vector<int> compression_params;
-    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    compression_params.push_back(9);
+    /*compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(9);*/
+    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(99);
     
     try {
         cv::imwrite(filepath.c_str(), image, compression_params);
     } catch (runtime_error& ex) {
-        fprintf(stderr, "ParseBikeRoute::ReadVideo Error. Exception converting image to PNG format: %s\n", ex.what());
+        fprintf(stderr, "PreprocessBikeRoute::ReadVideo Error. Exception converting image to JPG format: %s\n", ex.what());
         exit(-1);
     }
-}
-
-string PreprocessBikeRoute::GetImagePath(int number, bool makepath){
-    char imagefile[100];
-    if(makepath){
-        if(number%1000==0) {
-            if(number == 0) {
-                sprintf(imagefile, "%s%s/images/", _bdbase.c_str(), _name.c_str());
-                FileParsing::MakeDir(imagefile);
-            }
-            sprintf(imagefile, "%s%s/images/%04d/", _bdbase.c_str(), _name.c_str(), number/1000);
-            FileParsing::MakeDir(imagefile);
-        }
-    }
-    sprintf(imagefile, "%s%s/images/%04d/%04d.png", _bdbase.c_str(), _name.c_str(), number/1000, number%1000);
-    return imagefile;
 }
 
 double PreprocessBikeRoute::GetNearestTimeToPosition(double x, double y){
@@ -130,7 +113,7 @@ void PreprocessBikeRoute::AlignDataToImages() {
 
 void PreprocessBikeRoute::MakeAux(){
     if(timings.size() == 0){
-        std::cout << "ParseBikeRoute::MakeAux() no data."<<std::endl;
+        std::cout << "PreprocessBikeRoute::MakeAux() no data."<<std::endl;
         exit(1);
     }
     
@@ -336,7 +319,7 @@ void PreprocessBikeRoute::ProcessRawVideo(){
         
         ParseFeatureTrackFile PFT = k.TrackKLTFeatures(image, _bdbase + _name, savedimages, imtime);
         blurfaces.DetectFacesAndBlur(image);
-        string imagepath = GetImagePath(savedimages++, true);
+        string imagepath = ParseSurvey::GetImagePath(_bdbase + _name, savedimages++, true);
         WriteImage(image, imagepath);
         PFT.WriteFeatureTrackFile();
         
@@ -402,7 +385,7 @@ void PreprocessBikeRoute::FindKLTParams(){
     
     cv::VideoCapture vid(videofile);
     if(!vid.isOpened()){
-        std::cout << "ParseBikeRoute::ReadVideo Error. Couldn't open " << videofile << std::endl;
+        std::cout << "PreprocessBikeRoute::ReadVideo Error. Couldn't open " << videofile << std::endl;
         exit(-1);
     }
     
@@ -476,7 +459,7 @@ void PreprocessBikeRoute::Play(){
     Camera cam = ParseBikeRoute::GetCamera();
     
     for(int i=0; i<timings.size(); i++){
-        string impath = GetImagePath(i);
+        string impath = ParseSurvey::GetImagePath(_bdbase + _name, i);
         cv::Mat image = cv::imread(impath.c_str());
         string ftfname = ParseFeatureTrackFile::GetFeatureTrackFilePath(_bdbase + _name, i);
         ParseFeatureTrackFile PFT(cam, ftfname);
