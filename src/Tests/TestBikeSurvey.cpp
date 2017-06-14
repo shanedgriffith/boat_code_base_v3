@@ -79,15 +79,15 @@ void TestBikeSurvey::TestTriangulation(){
     
     int one = 500;
     int two = 501;
-//    gtsam::Pose3 u = pbr.CameraPose(one);
-//    gtsam::Pose3 v = pbr.CameraPose(two);
+    gtsam::Pose3 u = pbr.CameraPose(one);
+    gtsam::Pose3 v = pbr.CameraPose(two);
     
     vector<double> up = pbr.GetPose(one);
     vector<double> vp = pbr.GetPose(two);
-    up = TransformPose(up);
-    vp = TransformPose(vp);
-    u = CameraPose(up);
-    v = CameraPose(vp);
+//    up = TransformPose(up);
+//    vp = TransformPose(vp);
+//    u = CameraPose(up);
+//    v = CameraPose(vp);
     
     ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
     ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);

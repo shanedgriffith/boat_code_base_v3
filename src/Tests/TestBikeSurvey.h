@@ -9,6 +9,8 @@
 #ifndef TestBikeSurvey_h
 #define TestBikeSurvey_h
 
+#include <vector>
+
 class TestBikeSurvey{
 protected:
     
@@ -18,7 +20,7 @@ protected:
     std::vector<double> GetRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
-    std:vector<double> TransformPose(std::vector<double> p);
+    std::vector<double> TransformPose(std::vector<double> p);
     
     gtsam::Pose3 CameraPose(std::vector<double> p);
 public:
