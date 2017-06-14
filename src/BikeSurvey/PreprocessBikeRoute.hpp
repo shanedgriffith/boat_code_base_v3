@@ -45,8 +45,6 @@ private:
     void GetPoses();
     void MakeAux();
     void ProcessRawVideo();
-    
-    ParseBikeRoute PBR;
 protected:
     void ReadDelimitedFile(std::string file, int type);
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
@@ -59,7 +57,7 @@ public:
     std::vector<std::vector<double> > poses;
     
     PreprocessBikeRoute(std::string bdbase, std::string name):
-        _bdbase(bdbase), _name(name), video_fps(29), PBR(bdbase, name, false)
+        _bdbase(bdbase), _name(name), video_fps(29)
     {
         //296695.69732963, 5442567.53375366, 0); //location of GTL.
         default_start = gtsam::Point3(296456.933, 5443544.892, 0); //location of survey start.
