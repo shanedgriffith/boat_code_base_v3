@@ -61,9 +61,9 @@ gtsam::Pose3 TestBikeSurvey::CameraPose(std::vector<double> p){
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
-std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p){
+std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p, int m1, int m2, int m3) {
     vector<double> cam = GetRotationMatrix(p[3], p[4], p[5]);
-    vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
+    vector<double> align_with_world = GetRotationMatrix(m1*M_PI_2, m2*M_PI_2, m3*M_PI_2);
     std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
     vector<double> RPY = RotationMatrixToRPY(R);
     return {p[0], p[1], p[2], RPY[0], RPY[1], RPY[2]};
@@ -79,46 +79,74 @@ void TestBikeSurvey::TestTriangulation(){
     
     int one = 500;
     int two = 501;
-    gtsam::Pose3 u = pbr.CameraPose(one);
-    gtsam::Pose3 v = pbr.CameraPose(two);
     
-    vector<double> up = pbr.GetPose(one);
-    vector<double> vp = pbr.GetPose(two);
-//    up = TransformPose(up);
-//    vp = TransformPose(vp);
-//    u = CameraPose(up);
-//    v = CameraPose(vp);
+    vector<double> ub = pbr.GetPose(one);
+    vector<double> vb = pbr.GetPose(two);
+    printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+    printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
     
+    vector<gtsam::Point3> pws;
+    vector<cv::Point2f> ps;
     ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
     ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
     
     std::string imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
-    cv::Mat img = ImageOperations::Load(imagepath);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
-    int last = 0;
-    int ci = 0;
-    for(int i=0; i<PFT0.ids.size(); i++){
-        while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
-        if(PFT1.ids[ci] != PFT0.ids[i]) continue;
-
-        gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
+    int m1=0;
+    int m2=0;
+    int m3=0;
+    while(1){
+        vector<double> up = TransformPose(up, m1, m2, m3);
+        vector<double> vp = TransformPose(vp, m1, m2, m3);
+        gtsam::Pose3 u = CameraPose(up);
+        gtsam::Pose3 v = CameraPose(vp);
+        printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
+        printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         
-        cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
-        double dist = u.range(pw);
+        cv::Mat img = ImageOperations::Load(imagepath);
+        int ci = 0;
+        for(int i=0; i<PFT0.ids.size(); i++){
+            while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
+            if(PFT1.ids[ci] != PFT0.ids[i]) continue;
+            
+            gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
+            cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
+            double dist = u.range(pw);
+            circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0);
+            circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
+            //printf("%lf,%lf,%lf; dist: %lf\n",pws[i].x(), pws[i].y(), pws[i].z(), dist);
+        }
         
-        circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0);
-        circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
-        printf("%lf,%lf,%lf; dist: %lf\n",pw.x(), pw.y(), pw.z(), dist);
-    }
-    
-    imshow(window_name, img);
-    char c = cvWaitKey();
-    if(c=='q') {
-        cvDestroyAllWindows();
-        exit(0);
+        imshow(window_name, img);
+        char c = cvWaitKey();
+        switch(c){
+            case 'q':
+                cvDestroyAllWindows();
+                exit(0);
+                break;
+            case '1':
+                m1++;
+                break;
+            case '2':
+                m2++;
+                break;
+            case '3':
+                m3++;
+                break;
+            case '4':
+                m1--;
+                break;
+            case '5':
+                m2--;
+                break;
+            case '6':
+                m3--;
+                break;
+        }
+        printf("using transform: (%d,%d,%d)\n", m1, m2, m3);
     }
     
     cvDestroyAllWindows();
