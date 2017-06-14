@@ -45,9 +45,10 @@ void TestBikeSurvey::TestTriangulation(){
     ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
     ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
     
-    cv::string imagepath = pbr.GetImagePath("bdbase" + name, one);
+    std::string imagepath = pbr.GetImagePath("bdbase" + name, one);
     cv::Mat img = ImageOperations::Load(imagepath);
     
+    std::string window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
     int last = 0;
@@ -56,7 +57,7 @@ void TestBikeSurvey::TestTriangulation(){
         while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
         if(PFT1.ids[ci] != PFT0.ids[i]) continue;
 
-        gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[j], v, gtmat);
+        gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
         
         cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
         double dist = u.range(PFT0.imagecoord[i]);

@@ -12,6 +12,9 @@
 class TestBikeSurvey{
 protected:
     
+    cv::Scalar ColorByDistance(double dist);
+    cv::Scalar ColorByHeight(double z);
+    
     
 public:
     TestBikeSurvey(){}
