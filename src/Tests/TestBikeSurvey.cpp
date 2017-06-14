@@ -16,12 +16,12 @@
 using namespace std;
 
 cv::Scalar TestBikeSurvey::ColorByDistance(double dist){
-    int val = 255-min(5*dist,255);
+    int val = 255-min(5*dist,255.);
     return CV_RGB(val, val, val);
 }
 
 cv::Scalar TestBikeSurvey::ColorByHeight(double z){
-    int val = min(abs(5*z),255);
+    int val = min(abs(5*z),255.);
     if(z<0) return CV_RGB(255, 0, 0);
     else return CV_RGB(0, val, 0);
 }
@@ -48,7 +48,7 @@ void TestBikeSurvey::TestTriangulation(){
     std::string imagepath = pbr.GetImagePath("bdbase" + name, one);
     cv::Mat img = ImageOperations::Load(imagepath);
     
-    std::string window_name = "test poses using point triangulation";
+    const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
     int last = 0;
