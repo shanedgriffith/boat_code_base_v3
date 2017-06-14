@@ -171,7 +171,7 @@ std::vector<double> PreprocessBikeRoute::ComposeRotationMatrices(std::vector<dou
     return R;
 }
 
-std::vector<double> ParseBoatSurvey::RotationMatrixToRPY(std::vector<double> R){
+std::vector<double> PreprocessBikeRoute::RotationMatrixToRPY(std::vector<double> R){
     std::vector<double> rpy = {atan2(R[7], R[8]), atan2(-1*R[6], sqrt(R[7]*R[7]+R[8]*R[8])), atan2(R[3],R[0])};
     return rpy;
 }

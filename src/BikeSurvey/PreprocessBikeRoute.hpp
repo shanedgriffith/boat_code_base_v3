@@ -29,10 +29,11 @@ private:
     gtsam::Point3 default_start;
     gtsam::Point3 end_pos;
     std::vector<LandmarkTrack> active;
-
+    
     std::vector<double> GetRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     double CombineAngles(double a1, double a2, double w);
+    std::vector<double> RotationMatrixToRPY(std::vector<double> R);
     
     void WriteImage(cv::Mat image, std::string filepath);
     std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
