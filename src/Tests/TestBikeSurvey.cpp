@@ -16,13 +16,13 @@
 using namespace std;
 
 cv::Scalar TestBikeSurvey::ColorByDistance(double dist){
-    int val = 255-min(10*dist,255.);
+    int val = 255-min(255./10*dist,255.);
     return CV_RGB(val, val, val);
 }
 
 cv::Scalar TestBikeSurvey::ColorByHeight(double z){
-    if(z<0) return CV_RGB(255, 0, 0);
-    int val = min(abs(10*z),255.);
+    int val = min(abs(255./10*z),255.);
+    if(z<0) return CV_RGB(val, 0, 0);
     return CV_RGB(0, val, 0);
 }
 
