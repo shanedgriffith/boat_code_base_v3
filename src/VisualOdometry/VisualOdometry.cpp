@@ -171,7 +171,7 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& latest){
     //using the method to recover the pose from the essential matrix. (for the initial poses)
     std::vector<cv::Point2f> p2d0;
     std::vector<cv::Point2f> p2d1;
-
+    
     int next=latest.ids[0];
     for(int i=0; i<lastPFT.ids.size(); i++){
         if(lastPFT.ids[i]<latest.ids[next]) continue;
@@ -183,13 +183,13 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& latest){
         p2d1.push_back(cv::Point2f(latest.imagecoord[next].x(), latest.imagecoord[next].y()));
         next++;
     }
-
+    
     if(p2d0.size() < 15)
         return gtsam::Pose3::identity();
-
+    
     double focal = 1.0;
     cv::Point2d pp(0, 0);
-
+    
     cv::Mat E, R, t, mask;
     std::vector<cv::Point2f> p0(p2d0.size());
     std::vector<cv::Point2f> p1(p2d1.size());
@@ -201,7 +201,7 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& latest){
     //alternatively, using the IMU, the absolute translation can be recovered.
     //the camera height is useful if the points are triangulated, but that's a lot of error. it's useful if the ground plane is estimated, but that is also prone to error.
     //TBD.
-
+    
     gtsam::Rot3 rot(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2),
             R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2),
             R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2));
@@ -209,7 +209,9 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& latest){
     return gtsam::Pose3(rot, trans);
 }
 
-gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseFeatureTrackFile& latest){
+gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseFeatureTrackFile& latest) {
+    /* Use the solution from optimization to determine the location of the next pose.
+     */
     if(latest.ids.size() < 8) return est; //too few points.
     
     std::vector<gtsam::Point3> p3d;

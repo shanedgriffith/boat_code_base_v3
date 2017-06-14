@@ -11,41 +11,68 @@
 #include "GeometricComputerVision.h"
 #include "TestBikeSurvey.h"
 
+#include <ImageAlignment/DREAMFlow/ImageOperations.h>
+
 using namespace std;
+
+cv::Scalar TestBikeSurvey::ColorByDistance(double dist){
+    int val = 255-min(5*dist,255);
+    return CV_RGB(val, val, val);
+}
+
+cv::Scalar TestBikeSurvey::ColorByHeight(double z){
+    int val = min(abs(5*z),255);
+    if(z<0) return CV_RGB(255, 0, 0);
+    else return CV_RGB(0, val, 0);
+}
 
 void TestBikeSurvey::TestTriangulation(){
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
     ParseBikeRoute pbr(bdbase, name);
-    Camera _cam = ParseBikeRoute::GetCamera();
-    gtsam::Cal3_S2::shared_ptr gtcam = _cam.GetGTSAMCam();
+    Camera nexus = ParseBikeRoute::GetCamera();
+    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
-    
-    gtsam::Pose3 u = pbr.CameraPose(500);
-    gtsam::Pose3 v = pbr.CameraPose(501);
-    
-    vector<double> up = pbr.GetPose(500);
-    vector<double> vp = pbr.GetPose(501);
     
     int one = 500;
     int two = 501;
-    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(_cam, one);
-    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(_cam, two);
+    gtsam::Pose3 u = pbr.CameraPose(one);
+    gtsam::Pose3 v = pbr.CameraPose(two);
+    
+    vector<double> up = pbr.GetPose(one);
+    vector<double> vp = pbr.GetPose(two);
+    
+    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
+    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
+    
+    cv::string imagepath = pbr.GetImagePath("bdbase" + name, one);
+    cv::Mat img = ImageOperations::Load(imagepath);
+    
+    cvNamedWindow(window_name);
     
     int last = 0;
+    int ci = 0;
     for(int i=0; i<PFT0.ids.size(); i++){
-        for(int j=0; j<PFT1.ids.size(); j++){
-            if(PFT0.ids[i] == PFT1.ids[j]){
-                last = j;
-                gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[j], v, gtmat);
-                printf("(%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf) (%.2lf,%.2lf,%.2lf)\n",
-                       up[0],up[1],up[2],up[3],up[4],up[5],vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],pw.x(),pw.y(),pw.z());
-                break;
-            }
-        }
+        while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
+        if(PFT1.ids[ci] != PFT0.ids[i]) continue;
+
+        gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[j], v, gtmat);
         
+        cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
+        double dist = u.range(PFT0.imagecoord[i]);
+        
+        circle(img, p, 5, ColorByHeight(dist), -1, 8, 0);
+        circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
     }
     
+    imshow(window_name, img);
+    char c = cvWaitKey();
+    if(c=='q') {
+        cvDestroyAllWindows();
+        exit(0);
+    }
+    
+    cvDestroyAllWindows();
 }
 
 
