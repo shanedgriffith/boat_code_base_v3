@@ -17,10 +17,10 @@ protected:
     cv::Scalar ColorByDistance(double dist);
     cv::Scalar ColorByHeight(double z);
     
-    std::vector<double> GetRotationMatrix(double X, double Y, double Z);
+    std::vector<double> YPRToRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
-    std::vector<double> TransformPose(std::vector<double> p);
+    std::vector<double> TransformPose(std::vector<double> p, int m1, int m2, int m3);
     
     gtsam::Pose3 CameraPose(std::vector<double> p);
 public:

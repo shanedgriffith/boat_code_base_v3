@@ -128,15 +128,14 @@ void PreprocessBikeRoute::MakeAux(){
     std::cout << "Aux file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
 }
 
-std::vector<double> PreprocessBikeRoute::GetRotationMatrix(double X, double Y, double Z) {
-    /*Converts the three orientation angles into a rotation matrix.
-     see http://www.songho.ca/opengl/gl_anglestoaxes.html
+std::vector<double> PreprocessBikeRoute::YPRToRotationMatrix(double y, double p, double r){
+    /*Converts ypr to a rotation matrix.
+     see http://planning.cs.uiuc.edu/node102.html
      */
     
-    std::vector<double> R = {cos(Y)*cos(Z), -cos(Y)*sin(Z), sin(Y),
-        sin(X)*sin(Y)*cos(Z) + cos(X)*sin(Z), -sin(X)*sin(Y)*sin(Z)+cos(X)*cos(Z), -sin(X)*cos(Y),
-        -cos(X)*sin(Y)*cos(Z)+sin(X)*sin(Z), cos(X)*sin(Y)*sin(Z)+sin(X)*cos(Z), cos(X)*cos(Y)};
-    
+    std::vector<double> R = {cos(y)*cos(p), cos(y)*sin(p)*sin(r)-sin(y)*cos(r), cos(y)*sin(p)*cos(r)+sin(y)*sin(r),
+        sin(y)*cos(p), sin(y)*sin(p)*sin(r)+cos(y)*cos(r), sin(y)*sin(p)*cos(r)-cos(y)*sin(r),
+        -sin(p), cos(p)*sin(r), cos(p)*cos(r)};
     return R;
 }
 
@@ -233,11 +232,11 @@ void PreprocessBikeRoute::GetPoses() {
         }
         
         //a height of 0 is inaccurate, but optimization may be able to compensate.
-        vector<double> cam = GetRotationMatrix(res[0], res[1], res[2]);
-        vector<double> align_with_world = GetRotationMatrix(0, M_PI_2, -M_PI_2);
+        vector<double> cam = YPRToRotationMatrix(res[2], res[1], res[0]);
+        vector<double> align_with_world = YPRToRotationMatrix(M_PI_2, 0, -M_PI_2);
         std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
         vector<double> RPY = RotationMatrixToRPY(R);
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, res[0], res[1], res[2]});//RPY[0], RPY[1], RPY[2]});
+        poses.push_back({arrs[0][i], arrs[1][i], 0.0, RPY[0], RPY[1], RPY[2]}); //res[0], res[1], res[2]});//
     }
 }
 

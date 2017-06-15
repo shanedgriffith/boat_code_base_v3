@@ -26,15 +26,14 @@ cv::Scalar TestBikeSurvey::ColorByHeight(double z){
     return CV_RGB(0, val, 0);
 }
 
-std::vector<double> TestBikeSurvey::GetRotationMatrix(double X, double Y, double Z) {
-    /*Converts the three orientation angles into a rotation matrix.
-     see http://www.songho.ca/opengl/gl_anglestoaxes.html
+std::vector<double> TestBikeSurvey::YPRToRotationMatrix(double y, double p, double r){
+    /*Converts ypr to a rotation matrix.
+     see http://planning.cs.uiuc.edu/node102.html
      */
     
-    std::vector<double> R = {cos(Y)*cos(Z), -cos(Y)*sin(Z), sin(Y),
-        sin(X)*sin(Y)*cos(Z) + cos(X)*sin(Z), -sin(X)*sin(Y)*sin(Z)+cos(X)*cos(Z), -sin(X)*cos(Y),
-        -cos(X)*sin(Y)*cos(Z)+sin(X)*sin(Z), cos(X)*sin(Y)*sin(Z)+sin(X)*cos(Z), cos(X)*cos(Y)};
-    
+    std::vector<double> R = {cos(y)*cos(p), cos(y)*sin(p)*sin(r)-sin(y)*cos(r), cos(y)*sin(p)*cos(r)+sin(y)*sin(r),
+                            sin(y)*cos(p), sin(y)*sin(p)*sin(r)+cos(y)*cos(r), sin(y)*sin(p)*cos(r)-cos(y)*sin(r),
+                            -sin(p), cos(p)*sin(r), cos(p)*cos(r)};
     return R;
 }
 
@@ -62,8 +61,8 @@ gtsam::Pose3 TestBikeSurvey::CameraPose(std::vector<double> p){
 }
 
 std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p, int m1, int m2, int m3) {
-    vector<double> cam = GetRotationMatrix(p[3], p[4], p[5]);
-    vector<double> align_with_world = GetRotationMatrix(m1*M_PI_2, m2*M_PI_2, m3*M_PI_2);
+    vector<double> cam = YPRToRotationMatrix(p[5], p[4], p[3]);
+    vector<double> align_with_world = YPRToRotationMatrix(m1*M_PI_2, m2*M_PI_2, m3*M_PI_2);
     std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
     vector<double> RPY = RotationMatrixToRPY(R);
     return {p[0], p[1], p[2], RPY[0], RPY[1], RPY[2]};
@@ -85,8 +84,6 @@ void TestBikeSurvey::TestTriangulation(){
     printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
     printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
     
-    vector<gtsam::Point3> pws;
-    vector<cv::Point2f> ps;
     ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
     ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
     
@@ -98,9 +95,10 @@ void TestBikeSurvey::TestTriangulation(){
     int m1=0;
     int m2=0;
     int m3=0;
-    while(1){
-        vector<double> up = TransformPose(up, m1, m2, m3);
-        vector<double> vp = TransformPose(vp, m1, m2, m3);
+    while(1) {
+        printf("using transform: (%d,%d,%d)\n", m1, m2, m3);
+        vector<double> up = TransformPose(ub, m1, m2, m3);
+        vector<double> vp = TransformPose(vb, m1, m2, m3);
         gtsam::Pose3 u = CameraPose(up);
         gtsam::Pose3 v = CameraPose(vp);
         printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
@@ -112,11 +110,13 @@ void TestBikeSurvey::TestTriangulation(){
             while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
             if(PFT1.ids[ci] != PFT0.ids[i]) continue;
             
-            gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
+            //gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
+            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], u, gtmat);
             cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
             double dist = u.range(pw);
-            circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0);
-            circle(img, p, 3, ColorByDistance(dist), -1, 8, 0);
+            circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
+            circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
+            //printf("(%lf,%lf) ", dist, pw.z());
             //printf("%lf,%lf,%lf; dist: %lf\n",pws[i].x(), pws[i].y(), pws[i].z(), dist);
         }
         
@@ -146,7 +146,6 @@ void TestBikeSurvey::TestTriangulation(){
                 m3--;
                 break;
         }
-        printf("using transform: (%d,%d,%d)\n", m1, m2, m3);
     }
     
     cvDestroyAllWindows();
