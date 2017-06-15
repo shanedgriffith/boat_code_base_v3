@@ -80,6 +80,8 @@ void TestBikeSurvey::TestTriangulation(){
     int two = 761;
     vector<double> ub, vb;
     std::string imagepath;
+    ParseFeatureTrackFile PFT0(nexus);
+    ParseFeatureTrackFile PFT1(nexus);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
