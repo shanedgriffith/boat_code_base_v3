@@ -76,26 +76,30 @@ void TestBikeSurvey::TestTriangulation(){
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
     
-    int one = 500;
-    int two = 501;
-    
-    vector<double> ub = pbr.GetPose(one);
-    vector<double> vb = pbr.GetPose(two);
-    printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
-    printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
-    
-    ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
-    ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
-    
-    std::string imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
+    int one = 750;
+    int two = 761;
+    vector<double> ub, vb;
+    std::string imagepath;
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
+    bool updateset=false;
     int m1=0;
     int m2=0;
     int m3=0;
     while(1) {
+        if(updateset){
+            ub = pbr.GetPose(one);
+            vb = pbr.GetPose(two);
+            printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+            printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+            
+            ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
+            ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
+            
+            imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
+        }
         printf("using transform: (%d,%d,%d)\n", m1, m2, m3);
         vector<double> up = TransformPose(ub, m1, m2, m3);
         vector<double> vp = TransformPose(vb, m1, m2, m3);
@@ -144,6 +148,16 @@ void TestBikeSurvey::TestTriangulation(){
                 break;
             case '6':
                 m3--;
+                break;
+            case 'f':
+                one+=5;
+                two+=5;
+                updateset=true;
+                break;
+            case 'b':
+                one-=5;
+                two-=5;
+                updateset=true;
                 break;
         }
     }
