@@ -232,7 +232,7 @@ void PreprocessBikeRoute::GetPoses() {
         }
         
         //a height of 0 is inaccurate, but optimization may be able to compensate.
-        vector<double> cam = YPRToRotationMatrix(res[2], 0,0);//res[1], res[0]);
+        vector<double> cam = YPRToRotationMatrix(res[2], res[1], res[0]);
         vector<double> align_with_world = YPRToRotationMatrix(-M_PI_2, 0, M_PI_2);
         std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
         vector<double> RPY = RotationMatrixToRPY(R);

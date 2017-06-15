@@ -26,6 +26,14 @@ cv::Scalar TestBikeSurvey::ColorByHeight(double z){
     return CV_RGB(0, val, 0);
 }
 
+cv::Scalar TestBikeSurvey::GetLandmarkColor(int id){
+    if(id==-1) return default_color;
+    int red = (71*(id%10) + id%255)%255;
+    int green = (111*(id%10) + (2*id)%255)%255;
+    int blue = (27*(id%10) + (3*id)%255)%255;
+    return CV_RGB(red, green, blue);
+}
+
 std::vector<double> TestBikeSurvey::YPRToRotationMatrix(double y, double p, double r){
     /*Converts ypr to a rotation matrix.
      see http://planning.cs.uiuc.edu/node102.html
@@ -76,17 +84,17 @@ void TestBikeSurvey::TestTriangulation(){
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
     
-    int one = 750;
-    int two = 761;
+    int one = 1275;
+    int two = 1277;
     vector<double> ub, vb;
     std::string imagepath;
-    ParseFeatureTrackFile PFT0(nexus);
-    ParseFeatureTrackFile PFT1(nexus);
+    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
+    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
-    bool updateset=false;
+    bool updateset=true;
     int m1=0;
     int m2=0;
     int m3=0;
@@ -97,12 +105,14 @@ void TestBikeSurvey::TestTriangulation(){
             printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
             printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
             
-            ParseFeatureTrackFile PFT0 = pbr.LoadVisualFeatureTracks(nexus, one);
-            ParseFeatureTrackFile PFT1 = pbr.LoadVisualFeatureTracks(nexus, two);
+            PFT0.Next(one);
+            PFT1.Next(two);
             
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
+            updateset = false;
         }
-        printf("using transform: (%d,%d,%d)\n", m1, m2, m3);
+        
+        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
         vector<double> up = TransformPose(ub, m1, m2, m3);
         vector<double> vp = TransformPose(vb, m1, m2, m3);
         gtsam::Pose3 u = CameraPose(up);
@@ -116,12 +126,12 @@ void TestBikeSurvey::TestTriangulation(){
             while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
             if(PFT1.ids[ci] != PFT0.ids[i]) continue;
             
-            //gtsam::Point3 pw = ProjectImageToWorld(PFT0.imagecoord[i], u, PFT1.imagecoord[ci], v, gtmat);
             gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], u, gtmat);
             cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
             double dist = u.range(pw);
             circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
-            circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
+            //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
+            circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
             //printf("(%lf,%lf) ", dist, pw.z());
             //printf("%lf,%lf,%lf; dist: %lf\n",pws[i].x(), pws[i].y(), pws[i].z(), dist);
         }

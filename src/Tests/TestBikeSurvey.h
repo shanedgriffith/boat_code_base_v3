@@ -16,6 +16,7 @@ protected:
     
     cv::Scalar ColorByDistance(double dist);
     cv::Scalar ColorByHeight(double z);
+    cv::Scalar GetLandmarkColor(int id);
     
     std::vector<double> YPRToRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
