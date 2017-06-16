@@ -68,7 +68,6 @@ protected:
     void AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess);
     void AddOdom(gtsam::Symbol symb0, gtsam::Pose3 pguess0, gtsam::Symbol symb1, gtsam::Pose3 pguess1);
     
-    gtsam::Pose3 PoseFromEssential(ParseFeatureTrackFile& latest);
     gtsam::Pose3 PnP(gtsam::Values& result, gtsam::Pose3 est, ParseFeatureTrackFile& latest);
     
     int num_cameras_in_traj = 0;
@@ -107,6 +106,7 @@ public:
     //this method assumes the image_auxiliary file starts before the csv sift file.
     void SetPrior(gtsam::Pose3 p){_prior = p;}
     gtsam::Pose3 GetNextOdom(ParseFeatureTrackFile& PFT);
+    gtsam::Pose3 PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest);
 };
 
 

@@ -167,19 +167,19 @@ void VisualOdometry::Reset() {
     initEst.clear();
 }
 
-gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& latest){
+gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest){
     //using the method to recover the pose from the essential matrix. (for the initial poses)
     std::vector<cv::Point2f> p2d0;
     std::vector<cv::Point2f> p2d1;
     
     int next=latest.ids[0];
-    for(int i=0; i<lastPFT.ids.size(); i++){
-        if(lastPFT.ids[i]<latest.ids[next]) continue;
-        if(lastPFT.ids[i]>latest.ids[next]){
+    for(int i=0; i<last.ids.size(); i++){
+        if(last.ids[i]<latest.ids[next]) continue;
+        if(last.ids[i]>latest.ids[next]){
             printf("(shouldn't happen) something went wrong with the intersection..\n");
             exit(1);
         }
-        p2d0.push_back(cv::Point2f(lastPFT.imagecoord[i].x(), lastPFT.imagecoord[i].y()));
+        p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
         p2d1.push_back(cv::Point2f(latest.imagecoord[next].x(), latest.imagecoord[next].y()));
         next++;
     }
@@ -258,16 +258,14 @@ gtsam::Pose3 VisualOdometry::GetNextOdom(ParseFeatureTrackFile& PFT){
     if(posenum > 0) est = poses[poses.size()-1].compose(last_odom);
     else est = _prior;
     if(posenum > 1) {
-        estnewpose = PoseFromEssential(PFT);
+        estnewpose = PoseFromEssential(lastPFT, PFT);
         //Xiao: this method still has a scale ambiguity. How you want to solve it is still TBD.
         last_odom = poses[poses.size()-1].between(estnewpose);
-    }
-    else if(posenum > 1) {
+    } else if(posenum > 1) {
         //for PnP to work, the initial estimates have to be close.
         estnewpose = PnP(result, est, PFT); //note, there's a chance PnP could fail.
         last_odom = poses[poses.size()-1].between(estnewpose);
-    }
-    else last_odom = gtsam::Pose3::identity();
+    } else last_odom = gtsam::Pose3::identity();
     
     Reset();
     ConstructGraph(estnewpose, PFT);

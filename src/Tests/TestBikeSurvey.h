@@ -23,11 +23,14 @@ protected:
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
     std::vector<double> TransformPose(std::vector<double> p, int m1, int m2, int m3);
     
+    std::vector<double> PoseToVector(gtsam::Pose3& cam);
+    
     gtsam::Pose3 CameraPose(std::vector<double> p);
 public:
     TestBikeSurvey(){}
     
     void TestTriangulation();
+    void TestVisualOdometry();
 };
 
 

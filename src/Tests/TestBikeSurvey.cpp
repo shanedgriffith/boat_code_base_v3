@@ -12,6 +12,8 @@
 #include "TestBikeSurvey.h"
 
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
+#include <VisualOdometry/VisualOdometry.hpp>
+
 
 using namespace std;
 
@@ -27,7 +29,7 @@ cv::Scalar TestBikeSurvey::ColorByHeight(double z){
 }
 
 cv::Scalar TestBikeSurvey::GetLandmarkColor(int id){
-    if(id==-1) return default_color;
+    if(id==-1) id=0;
     int red = (71*(id%10) + id%255)%255;
     int green = (111*(id%10) + (2*id)%255)%255;
     int blue = (27*(id%10) + (3*id)%255)%255;
@@ -177,7 +179,39 @@ void TestBikeSurvey::TestTriangulation(){
     cvDestroyAllWindows();
 }
 
+std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){
+    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
+}
 
+void TestBikeSurvey::TestVisualOdometry() {
+    string bdbase = "/mnt/tale/shaneg/bike_datasets/";
+    string name = "20160831_171816";
+    ParseBikeRoute pbr(bdbase, name);
+    Camera nexus = ParseBikeRoute::GetCamera();
+    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
+    gtsam::Matrix gtmat = gtcam->matrix();
+
+    int one = 1275;
+    int two = 1277;
+    vector<double> ub, vb;
+    std::string imagepath;
+    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
+    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
+    
+    VisualOdometry vo(nexus);
+    gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+    vector<double> vp = PoseToVector(vop);
+    printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5])
+    ub = pbr.GetPose(one);
+    vb = pbr.GetPose(two);
+    printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+    printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+    
+    gtsam::Pose3 u = CameraPose(up);
+    gtsam::Pose3 vpu = u.compose(vop);
+    vector<double> vvpu = PoseToVector(vpu);
+    printf("pose u+odom (%lf,%lf,%lf,%lf,%lf,%lf)\n",vvpu[0],vvpu[1],vvpu[2],vvpu[3],vvpu[4],vvpu[5])
+}
 
 
 
