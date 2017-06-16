@@ -86,6 +86,7 @@ void TestBikeSurvey::TestTriangulation(){
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
     
+    VisualOdometry vo(nexus);
     int one = 1275;
     int two = 1277;
     vector<double> ub, vb;
@@ -110,17 +111,22 @@ void TestBikeSurvey::TestTriangulation(){
             PFT0.Next(one);
             PFT1.Next(two);
             
+            
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
             updateset = false;
         }
         
-        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
-        vector<double> up = TransformPose(ub, m1, m2, m3);
-        vector<double> vp = TransformPose(vb, m1, m2, m3);
-        gtsam::Pose3 u = CameraPose(up);
-        gtsam::Pose3 v = CameraPose(vp);
-        printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
-        printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        gtsam::Pose3 u = pbr.CameraPose(one);
+        gtsam::Pose3 v = vop.compose(u);
+        
+//        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
+//        vector<double> up = TransformPose(ub, m1, m2, m3);
+//        vector<double> vp = TransformPose(vb, m1, m2, m3);
+//        gtsam::Pose3 u = CameraPose(up);
+//        gtsam::Pose3 v = CameraPose(vp);
+//        printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
+//        printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         
         cv::Mat img = ImageOperations::Load(imagepath);
         int ci = 0;
@@ -183,14 +189,14 @@ std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-void TestBikeSurvey::TestVisualOdometry() {
+void TestBikeSurvey::TestVisualOdometry(Camera& nexus, ParseFeatureTrackFile& PFT0, ParseFeatureTrackFile& PFT1) {
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
     ParseBikeRoute pbr(bdbase, name);
     Camera nexus = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
-
+    
     int one = 1275;
     int two = 1277;
     std::string imagepath;
