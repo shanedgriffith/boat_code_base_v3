@@ -172,13 +172,10 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, Pars
     std::vector<cv::Point2f> p2d0;
     std::vector<cv::Point2f> p2d1;
     
-    int next=latest.ids[0];
+    int ci = 0;
     for(int i=0; i<last.ids.size(); i++){
-        if(last.ids[i]<latest.ids[next]) continue;
-        if(last.ids[i]>latest.ids[next]){
-            printf("(shouldn't happen) something went wrong with the intersection..\n");
-            exit(1);
-        }
+        while(latest.ids[ci]<last.ids[i]) ci++;
+        if(latest.ids[ci] != last.ids[i]) continue;
         p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
         p2d1.push_back(cv::Point2f(latest.imagecoord[next].x(), latest.imagecoord[next].y()));
         next++;
