@@ -177,8 +177,7 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, Pars
         while(latest.ids[ci]<last.ids[i]) ci++;
         if(latest.ids[ci] != last.ids[i]) continue;
         p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
-        p2d1.push_back(cv::Point2f(latest.imagecoord[next].x(), latest.imagecoord[next].y()));
-        next++;
+        p2d1.push_back(cv::Point2f(latest.imagecoord[ci].x(), latest.imagecoord[ciß].y()));
     }
     
     if(p2d0.size() < 15)
