@@ -235,8 +235,10 @@ void TestBikeSurvey::TestVO(){
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> up = TransformPose(ub, m1, m2, m3);
         gtsam::Pose3 cur = VectorToPose(up);
-        v = vop.compose(cur);
+        v = cur.compose(vop);
         vector<double> vb = PoseToVector(v);
+        vector<double> a = pbr.GetPose(one);
+        printf("pose actual (%lf,%lf,%lf,%lf,%lf,%lf)\n",a[0],a[1],a[2],a[3],a[4],a[5]);
         printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
         printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
         
