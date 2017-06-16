@@ -205,7 +205,7 @@ void TestBikeSurvey::TestVO(){
     VisualOdometry vo(nexus);
     int one = 1275;
     int two = 1277;
-    std::string imagepath;
+    std::string imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
     ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
     ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
     
@@ -218,7 +218,7 @@ void TestBikeSurvey::TestVO(){
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
     
-    bool updateset=true;
+    bool updateset=false;
     int m1=0;
     int m2=0;
     int m3=0;
