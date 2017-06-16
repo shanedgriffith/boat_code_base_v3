@@ -233,7 +233,7 @@ gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseF
     if(p3d.size() - nnonzero == 0) {
         std::cout << "Points are zero. cannot run pnp." << std::endl;
         std::cout << "Estimating pose from the essential matrix instead." << std::endl;
-        return PoseFromEssential(latest);
+        return PoseFromEssential(lastPFT, latest);
     }
     if(p3d.size() < 8) return est; //too few points.
     
