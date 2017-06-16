@@ -86,7 +86,7 @@ void TestBikeSurvey::TestTriangulation(){
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
     
-    VisualOdometry vo(nexus);
+//    VisualOdometry vo(nexus);
     int one = 1275;
     int two = 1277;
     vector<double> ub, vb;
@@ -105,8 +105,8 @@ void TestBikeSurvey::TestTriangulation(){
         if(updateset){
             ub = pbr.GetPose(one);
             vb = pbr.GetPose(two);
-//            printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
-//            printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+            printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+            printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
             
             PFT0.Next(one);
             PFT1.Next(two);
@@ -116,22 +116,21 @@ void TestBikeSurvey::TestTriangulation(){
             updateset = false;
         }
         
-        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        gtsam::Pose3 u = pbr.CameraPose(one);
-        gtsam::Pose3 v = vop.compose(u);
-        vector<double> ub = PoseToVector(u);
-        vector<double> vb = PoseToVector(v);
-        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
-        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+//        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+//        gtsam::Pose3 u = pbr.CameraPose(one);
+//        gtsam::Pose3 v = vop.compose(u);
+//        vector<double> ub = PoseToVector(u);
+//        vector<double> vb = PoseToVector(v);
+//        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+//        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
         
-        
-//        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
-//        vector<double> up = TransformPose(ub, m1, m2, m3);
-//        vector<double> vp = TransformPose(vb, m1, m2, m3);
-//        gtsam::Pose3 u = CameraPose(up);
-//        gtsam::Pose3 v = CameraPose(vp);
-//        printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
-//        printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
+        vector<double> up = TransformPose(ub, m1, m2, m3);
+        vector<double> vp = TransformPose(vb, m1, m2, m3);
+        gtsam::Pose3 u = CameraPose(up);
+        gtsam::Pose3 v = CameraPose(vp);
+        printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
+        printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         
         cv::Mat img = ImageOperations::Load(imagepath);
         int ci = 0;
@@ -232,9 +231,11 @@ void TestBikeSurvey::TestVO(){
             updateset = false;
         }
         
-        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        v = vop.compose(u);
         vector<double> ub = PoseToVector(u);
+        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> up = TransformPose(ub, m1, m2, m3);
+        gtsam::Pose3 cur = VectorToPose(up);
+        v = vop.compose(cur);
         vector<double> vb = PoseToVector(v);
         printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
         printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
@@ -245,9 +246,9 @@ void TestBikeSurvey::TestVO(){
             while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
             if(PFT1.ids[ci] != PFT0.ids[i]) continue;
             
-            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], u, gtmat);
+            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], cur, gtmat);
             cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
-            double dist = u.range(pw);
+            double dist = cur.range(pw);
             circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
             //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
             circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
