@@ -214,7 +214,7 @@ void TestBikeSurvey::TestVO(){
     ub[0] = 0;
     ub[1] = 0;
     ub[2] = 0;
-    gtsam::Pose3 last = VectorToPose(ub);
+    gtsam::Pose3 u = VectorToPose(ub);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
@@ -223,8 +223,10 @@ void TestBikeSurvey::TestVO(){
     int m1=0;
     int m2=0;
     int m3=0;
+    gtsam::Pose3 v;
     while(1) {
         if(updateset){
+            u = v;
             PFT0.Next(one);
             PFT1.Next(two);
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
@@ -232,9 +234,8 @@ void TestBikeSurvey::TestVO(){
         }
         
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        gtsam::Pose3 u = last;
-        gtsam::Pose3 v = vop.compose(last);
-        vector<double> ub = PoseToVector(last);
+        v = vop.compose(u);
+        vector<double> ub = PoseToVector(u);
         vector<double> vb = PoseToVector(v);
         printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
         printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
