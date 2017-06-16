@@ -105,8 +105,8 @@ void TestBikeSurvey::TestTriangulation(){
         if(updateset){
             ub = pbr.GetPose(one);
             vb = pbr.GetPose(two);
-            printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
-            printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+//            printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+//            printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
             
             PFT0.Next(one);
             PFT1.Next(two);
@@ -119,6 +119,11 @@ void TestBikeSurvey::TestTriangulation(){
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         gtsam::Pose3 u = pbr.CameraPose(one);
         gtsam::Pose3 v = vop.compose(u);
+        vector<double> ub = PoseToVector(u);
+        vector<double> vb = PoseToVector(v);
+        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+        
         
 //        printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
 //        vector<double> up = TransformPose(ub, m1, m2, m3);
@@ -185,11 +190,115 @@ void TestBikeSurvey::TestTriangulation(){
     cvDestroyAllWindows();
 }
 
+gtsam::Pose3 TestBikeSurvey::VectorToPose(std::vector<double>& p){
+    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
+void TestBikeSurvey::TestVO(){
+    string bdbase = "/mnt/tale/shaneg/bike_datasets/";
+    string name = "20160831_171816";
+    ParseBikeRoute pbr(bdbase, name);
+    Camera nexus = ParseBikeRoute::GetCamera();
+    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
+    gtsam::Matrix gtmat = gtcam->matrix();
+    
+    VisualOdometry vo(nexus);
+    int one = 1275;
+    int two = 1277;
+    vector<double> ub, vb;
+    std::string imagepath;
+    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
+    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
+    
+    vector<double> ub = pbr.GetPose(one);
+    ub[0] = 0;
+    ub[1] = 0;
+    ub[2] = 0;
+    gtsam::Pose3 last = VectorToPose(ub);
+    
+    const char* window_name = "test poses using point triangulation";
+    cvNamedWindow(window_name);
+    
+    bool updateset=true;
+    int m1=0;
+    int m2=0;
+    int m3=0;
+    while(1) {
+        if(updateset){
+            PFT0.Next(one);
+            PFT1.Next(two);
+            imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
+            updateset = false;
+        }
+        
+        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        gtsam::Pose3 u = last;
+        gtsam::Pose3 v = vop.compose(last);
+        vector<double> ub = PoseToVector(last);
+        vector<double> vb = PoseToVector(v);
+        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
+        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
+        
+        cv::Mat img = ImageOperations::Load(imagepath);
+        int ci = 0;
+        for(int i=0; i<PFT0.ids.size(); i++){
+            while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
+            if(PFT1.ids[ci] != PFT0.ids[i]) continue;
+            
+            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], u, gtmat);
+            cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
+            double dist = u.range(pw);
+            circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
+            //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
+            circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
+        }
+        
+        imshow(window_name, img);
+        char c = cvWaitKey();
+        switch(c){
+            case 'q':
+                cvDestroyAllWindows();
+                exit(0);
+                break;
+            case '1':
+                m1++;
+                break;
+            case '2':
+                m2++;
+                break;
+            case '3':
+                m3++;
+                break;
+            case '4':
+                m1--;
+                break;
+            case '5':
+                m2--;
+                break;
+            case '6':
+                m3--;
+                break;
+            case 'f':
+                one+=5;
+                two+=5;
+                updateset=true;
+                break;
+            case 'b':
+                one-=5;
+                two-=5;
+                updateset=true;
+                break;
+        }
+    }
+    
+    cvDestroyAllWindows();
+}
+
 std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-void TestBikeSurvey::TestVisualOdometry(Camera& nexus, ParseFeatureTrackFile& PFT0, ParseFeatureTrackFile& PFT1) {
+void TestBikeSurvey::TestVisualOdometry() {
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
     ParseBikeRoute pbr(bdbase, name);

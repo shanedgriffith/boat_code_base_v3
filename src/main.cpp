@@ -104,8 +104,9 @@ int main(int argc, char *argv[]) {
         break;}
     case 9:{
         TestBikeSurvey tbs;
+        tbs.TestVO();
         //tbs.TestVisualOdometry();
-        tbs.TestTriangulation();
+        //tbs.TestTriangulation();
         break;}
     }
 
