@@ -205,16 +205,15 @@ void TestBikeSurvey::TestVO(){
     VisualOdometry vo(nexus);
     int one = 1275;
     int two = 1277;
-    vector<double> ub, vb;
     std::string imagepath;
     ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
     ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
     
-    vector<double> ub = pbr.GetPose(one);
-    ub[0] = 0;
-    ub[1] = 0;
-    ub[2] = 0;
-    gtsam::Pose3 u = VectorToPose(ub);
+    vector<double> start = pbr.GetPose(one);
+    start[0] = 0;
+    start[1] = 0;
+    start[2] = 0;
+    gtsam::Pose3 u = VectorToPose(start);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
@@ -280,13 +279,13 @@ void TestBikeSurvey::TestVO(){
                 m3--;
                 break;
             case 'f':
-                one+=5;
-                two+=5;
+                one=two;
+                two+=2;
                 updateset=true;
                 break;
             case 'b':
-                one-=5;
-                two-=5;
+                one-=2;
+                two=one;
                 updateset=true;
                 break;
         }
