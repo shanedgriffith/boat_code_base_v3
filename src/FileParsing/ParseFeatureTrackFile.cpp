@@ -24,8 +24,54 @@ void ParseFeatureTrackFile::ProcessLineEntries(int type, vector<string> lp){
 }
 
 
-//This version is less buggy, in some way due to lack of reliance on string, which uses dynamic memory.
 void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
+    char line[LINESIZE]="";
+    char l3[LINESIZE];
+    int entry;
+    int id;
+    double x, y;
+    double fill1, fill2;
+    
+    bool success = false;
+    while(!success) {
+        success = true;
+        FILE * fp = OpenFile(file,"r");
+        if(fp==NULL){
+            printf("ParseFeatureTrackFile: NULL file %s", file.c_str());
+            sleep(1);
+            success = false;
+            continue;
+        }
+        
+        fgets(line, LINESIZE-1, fp); //do nothing with the first line.
+        while (fgets(line, LINESIZE-1, fp)) {
+            int ret = sscanf(line,"%d,%lf,%[^,],[%d;%lf;%lf;%lf;%lf]",
+                             &entry, &time, (char *) l3, &id, &x, &y, &fill1, &fill2);
+            if (ret!=8) {
+                success = false;
+                cout << "Problematic file: " << file << ". Note: if using NFS, try unmounting and remounting." << endl;
+                printf("ParseFeatureTrackFile: Parsed %d of8 arguments of '%s' of file %s\nFull line:%s", ret, l3, file.c_str(), line);
+                sleep(1);
+                ids.clear();
+                imagecoord.clear();
+                break;
+            }
+            if(x < 0) x=0;
+            if(y < 0) y=0;
+            if(x >= _cam.w()) x = _cam.w()-1;
+            if(y >= _cam.h()) y = _cam.h()-1;
+            ids.push_back(id);
+            imagecoord.push_back(gtsam::Point2(x, y));
+            //cout << "line: "<<time << ", "<<id << ", "<<x<<", "<<y<<endl;
+        }
+        if(fp != NULL)
+            fclose(fp);
+    }
+    //cout <<"Finished reading file: "<<file.c_str() <<endl;
+}
+
+//This version is less buggy, in some way due to lack of reliance on string, which uses dynamic memory.
+/*void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
     char line[LINESIZE]="";
     char l3[LINESIZE];
     int entry;
@@ -77,7 +123,7 @@ void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
         if(fp != NULL)
             fclose(fp);
     }
-}
+}*/
 
 string ParseFeatureTrackFile::GetFeatureTrackFilePath(string base, int no, bool makedir){
     char imgfile[100];
