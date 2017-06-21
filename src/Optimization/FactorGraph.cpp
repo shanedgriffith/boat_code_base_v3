@@ -71,7 +71,8 @@ void FactorGraph::InitializeNoiseModels(){
 
     dVNoise = gtsam::noiseModel::Diagonal::Sigmas(v6d);
 
-    double deviation = 3.0;//vals[Param::LANDMARK_DEVIATION];
+    double deviation = vals[Param::LANDMARK_DEVIATION]; //for intra-survey
+    //double deviation = 3.0; //for inter-survey
 	double dimensions = 2.0; //there are two dimensions to an image observation
 	pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, deviation);
 }

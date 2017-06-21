@@ -251,7 +251,7 @@ void TestBikeSurvey::TestVO(){
             gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], cur, gtmat);
             cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
             double dist = cur.range(pw);
-            circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
+            circle(img, p, 5, ColorByHeight(pw.z()-vb[2]), -1, 8, 0); //green for >0 red for <0
             //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
             circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
         }
