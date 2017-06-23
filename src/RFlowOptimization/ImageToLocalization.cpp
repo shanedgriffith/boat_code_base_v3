@@ -98,7 +98,7 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
         }
     }
     else sf.SetVerifyAlignment();
-//    sf.ContinueOnConsistency(); //images align well if the verification threshold passed, apparently. The consistency can be low yet have many points in the image that align well.
+//    sf.ContinueOnConsistency(); //images align well if the verification threshold passed, apparently. The consistency can be low yet have many points in the image that align well. As long as points are only taken from the consistent set (which they are, in MapPoints()).
     sf.SetEpipolar();
     sf.SetTwoCycleConsistency();
     sf.ConstructImagePyramid(image1, image2);
@@ -108,6 +108,7 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
     //this consistency check can be integrated into SFlowDREAM for streamlined code, but leave it for now.
     // && ar.consistency > ALIGN_CONSISTENCY_THRESHOLD && ar.verified_ratio > ALIGN_VERIFICATION_RATIO //these don't appear to be needed.
     //std::cout << "ImageToLocalization::MatchToSet() (Check for > thresholds). consistency: " << ar.consistency << ", verification ratio: " << ar.verified_ratio << std::endl;
+    //discard the result if alignment verification failed.
     if(sf.term_layer <= 1) return ar;
 
     AlignmentResult ret;

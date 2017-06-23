@@ -72,7 +72,6 @@ int FeatureMatchElimination::IdentifyInliersAndOutliers(Camera& _cam,
     cv::undistortPoints(points1, p1, _cam.IntrinsicMatrix(), _cam.Distortion());
     cv::undistortPoints(points2, p2, _cam.IntrinsicMatrix(), _cam.Distortion());
 
-
     //the use of both estimation methods to get F and E shouldn't be necessary, but
     //for some reason E = K.t() * F * K; doesn't work.
     //Could be due to the distortion coefficients. TODO

@@ -139,7 +139,7 @@ std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0,
 bool LocalizePose::DualBA(double val,
         gtsam::Pose3 p0, gtsam::Pose3& p1frame0, std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
         gtsam::Pose3 p1, gtsam::Pose3& p0frame1, std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1){
-
+    
     gtsam::Symbol symb1('x', 0);
     gtsam::Symbol symb3('x', 1);
     
@@ -157,7 +157,7 @@ bool LocalizePose::DualBA(double val,
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
     graph.add(VirtualBetweenFactor(symb1, symb3, p0, p1, btwnnoise));
-
+    
     gtsam::Values result = RunBA();
     if(result.size()==0) return false;
     
