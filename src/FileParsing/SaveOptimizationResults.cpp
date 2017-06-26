@@ -18,7 +18,8 @@ void SaveOptimizationResults::SaveVisualization(vector<vector<double> >& landmar
 		exit(-1);
 	}
     SLAMDraw draw;
-    if(drawscale.size()>0) draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);//-300,300,-300,300);
+    if(drawscale.size()>0) draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);
+    else draw.SetScale(-300,300,-300,300);
     draw.ResetCanvas();
     
     //draw the estimated landmark points

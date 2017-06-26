@@ -79,7 +79,7 @@ public:
 	 * the others are in folder _results_dir + "maps/"
 	 * */
     RFlowSurveyOptimizer(Camera& cam, std::string date, std::string results_dir, std::string first_optimization_dir, std::string pftbase):
-        POR(_first_optimization_dir + date), _results_dir(results_dir), _first_optimization_dir(first_optimization_dir),
+        POR(first_optimization_dir + date), _results_dir(results_dir), _first_optimization_dir(first_optimization_dir),
         _pftbase(pftbase), _cam(cam), SurveyOptimizer(cam, rfFG, date, results_dir, false), _date(date){
         
         std::cout << "RFlow Optimization for : " << date << std::endl;

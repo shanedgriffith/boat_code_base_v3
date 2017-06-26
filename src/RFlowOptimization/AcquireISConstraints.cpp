@@ -66,21 +66,21 @@ int AcquireISConstraints::FindRestart() {
     return res+1;
 }
 
-double AcquireISConstraints::LoadHopDistance(string path, string date) {
-    string fname = _results_dir + _date + _locoptname;
+double AcquireISConstraints::LoadHopDistance(string path, string hopdate) {
+    string fname = _results_dir + "maps/" + hopdate + _locoptname;
     FILE * fp = fopen(fname.c_str(), "r");
-    int LINESIZE = 10000;
-    char line[LINESIZE]="";
-    fgets(line, LINESIZE-1, fp);
     double avg_hop_distance = 0.0;
     if(fp) {
-        if(sscanf(line, "%lf\n", &avg_hop_distance)!=1){
-            std::cout << "AcquireISConstraints::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
+        int LINESIZE = 10000;
+        char line[LINESIZE]="";
+        fgets(line, LINESIZE-1, fp);
+        if(sscanf(line, "%lf\n", &avg_hop_distance)!=1) {
+            std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
             exit(-1);
         }
         fclose(fp);
     }
-
+    
     return avg_hop_distance;
 }
 

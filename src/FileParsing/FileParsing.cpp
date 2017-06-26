@@ -36,6 +36,7 @@ std::vector<std::string> FileParsing::ListFilesInDir(std::string dir_name, std::
         perror ("");
         exit(-1);
     }
+    std::sort(files.begin(), files.end());
     return files;
 }
 

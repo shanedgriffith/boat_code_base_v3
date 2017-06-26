@@ -20,16 +20,16 @@ using namespace std;
 
 const string RFlowSurveyOptimizer::_locoptname = "/locoptlist.csv";
 
-double RFlowSurveyOptimizer::LoadHopDistance(string path, string date) {
+double RFlowSurveyOptimizer::LoadHopDistance(string path, string hopdate) {
     //loads the average hop count of one map.
-    string fname = _results_dir + _date + _locoptname;
+    string fname = _results_dir + "maps/" + hopdate + _locoptname;
     FILE * fp = fopen(fname.c_str(), "r");
-    int LINESIZE = 10000;
-    char line[LINESIZE]="";
-    fgets(line, LINESIZE-1, fp);
     double avg_hop_distance = 0.0;
     if(fp) {
-        if(sscanf(line, "%lf\n", &avg_hop_distance)!=1){
+        int LINESIZE = 10000;
+        char line[LINESIZE]="";
+        fgets(line, LINESIZE-1, fp);
+        if(sscanf(line, "%lf\n", &avg_hop_distance)!=1) {
             std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
             exit(-1);
         }
@@ -43,9 +43,9 @@ std::vector<double> RFlowSurveyOptimizer::GetAvgHopCounts() {
     //returns the average hop count of all previous maps.
     string dir = _results_dir + "maps/";
     std::vector<double> ret;
-    if(FileParsing::DirectoryExists(dir)){
+    if(FileParsing::DirectoryExists(dir)) {
         vector<string> dates = FileParsing::ListFilesInDir(dir, "1");
-        for(int i=0; i<dates.size(); i++){
+        for(int i=0; i<dates.size(); i++) {
             double avghop = LoadHopDistance(dir, dates[i]);
             ret.push_back(avghop);
         }
