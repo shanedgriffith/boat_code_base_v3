@@ -102,7 +102,9 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
         if(dirs.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
         std::vector<string> files = ListFilesInDir(_pftbase + "/sift/" + dirs[0], ".csv");
         if(files.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
-        index = stoi(dirs[0])*1000 + stoi(files[0].substr(0,files[0].length()-4));
+        int start = stoi(dirs[0])*1000 + stoi(files[0].substr(0,files[0].length()-4));
+        if(start > index) index = start;
+        std::cout << "First PFT file at " << index << std::endl;
     }
     
     ParseFeatureTrackFile PFT(_cam, _pftbase, index);

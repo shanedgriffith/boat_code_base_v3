@@ -55,7 +55,7 @@ public:
     int GetImageNumber(int auxidx);
     int GetIndexOfImage(int image);
     double GetAvgAngularVelocity(int sidx, int eidx);
-    bool Useable(int idx);
+    bool Useable(int cidx, int lcidx);
     std::vector<double> GetDrawScale();
     void PlayPoses();
 };

@@ -36,6 +36,7 @@ bool SurveyOptimizer::CheckImageDuplication(ParseFeatureTrackFile& pft){
     int next_entry = 0;
     for(int i=0; i<pft.ids.size(); i++){
         if(pft.ids[i] != active[next_entry].key) return false;
+        if(pft.imagecoord[i].distance(active[next_entry].points[active[next_entry].Length()-1]) > 0.0000001) return false;
         next_entry++;
     }
     return true;
@@ -242,7 +243,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.
         if(!PS.Useable(cidx)) continue; //the camera is being adjusted, don't use the data.
-        
+        if(i>30658) break;
         //Construct the graph (camera, visual landmarks, velocity, and time)
         //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
         int camera_key = ConstructGraph(PS, PFT, cidx, lcidx);

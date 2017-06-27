@@ -86,8 +86,9 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
             result[i] = stats[0]/stats[1];
             if(result[i] > avgbadthreshold) {
                 avgbadness++;
-            }
-            sum += result[i];
+                sum += avgbadthreshold;
+            } else
+                sum += result[i];
             count++;
         }
         else avgbadness++;
