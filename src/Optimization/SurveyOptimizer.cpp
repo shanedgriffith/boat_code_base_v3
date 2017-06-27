@@ -202,18 +202,13 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     if(!CheckImageDuplication(PFT)){
         vector<LandmarkTrack> inactive = ProcessNewPoints(camera_key, PFT);
         
-        //add the landmark measurement
+        //add the landmark measurement to the graph
         if(cache_landmarks) CacheLandmarks(inactive);
         else AddLandmarkTracks(inactive);
     }
     
+    //add the kinematic constraints.
     if(camera_key != 0) {
-        //added for debugging the visualization
-        if(debug) {
-            cout << "iter: " << camera_key << " sift file: " << PFT.siftfile << endl;
-            cout << "num inactive: " << inactive.size() << endl;
-        }
-        
         gtsam::Pose3 btwn_pos = last_cam.between(cam);
         
         if(PS.ConstantVelocity()){
