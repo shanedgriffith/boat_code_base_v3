@@ -116,11 +116,11 @@ double ParseBoatSurvey::GetAvgAngularVelocity(int sidx, int eidx) {
 }
 
 bool ParseBoatSurvey::Useable(int cidx, int lcidx){
-    bool good_cam_pan = (abs(cam_pan[idx])==1.569978);
+    bool good_cam_pan = (abs(cam_pan[cidx])==1.569978);
     bool good_gps = true;
     if(cidx >= 0 && lcidx >= 0 && cidx<poses.size() && lcidx<poses.size())
         good_gps = !((poses[cidx][0] == poses[lcidx][0]) && (poses[cidx][1] == poses[lcidx][1]));
-    if(!good_gps) std::cout << "bad gps detected at " << cidx << ", " << lcidx << std::endl;
+    if(!good_gps) std::cout << "bad gps detected at (image indices) " << imageno[lcidx] << ", " << imageno[cidx] << std::endl;
     return good_cam_pan && good_gps;
 }
 

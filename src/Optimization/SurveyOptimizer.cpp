@@ -242,7 +242,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.
-        if(!PS.Useable(cidx)) continue; //the camera is being adjusted, don't use the data.
+        if(!PS.Useable(cidx, lcidx)) continue; //the camera is being adjusted, don't use the data.
         if(i>30658) break;
         //Construct the graph (camera, visual landmarks, velocity, and time)
         //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
