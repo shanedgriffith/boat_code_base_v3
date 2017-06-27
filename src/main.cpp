@@ -82,10 +82,6 @@ int main(int argc, char *argv[]) {
         SurveyOptimizer so(nexus, argv[1], results_dir);
         so.Initialize();
         so.Optimize(pbr);
-        EvaluateSLAM es(nexus, argv[1], results_dir);
-        es.debug=true;
-        std::string input = argv[1];
-        es.Evaluate("/mnt/tale/shaneg/bike_datasets/");
         break;}
     case 7:{
         ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);
@@ -93,9 +89,6 @@ int main(int argc, char *argv[]) {
         SurveyOptimizer so(axisptz, argv[1], results_dir);
         so.Initialize();
         so.Optimize(PS);
-        EvaluateSLAM es(axisptz, argv[1], results_dir);
-        es.debug=true;
-        es.Evaluate(pftbase);
         break;}
     case 8:{
         ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);

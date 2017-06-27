@@ -97,6 +97,14 @@ bool ParseSurvey::CheckCameraTransition(int cidx, int lcidx){
 ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& index){
     /*Proceed when the visual feature track file is good.*/
     static bool found = false;
+    if(!found){
+        std::vector<string> dirs = ListDirsInDir(_pftbase + "/sift");
+        if(dirs.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
+        std::vector<string> files = ListFilesInDir(_pftbase + "/sift/" + dirs[0], ".csv");
+        if(files.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
+        index = stoi(dirs[0])*1000 + stoi(files[0].substr(0,files[0].length()-4));
+    }
+    
     ParseFeatureTrackFile PFT(_cam, _pftbase, index);
     int nonexist=0;
     while(PFT.time<=0) {

@@ -23,7 +23,7 @@ void ParseFeatureTrackFile::ProcessLineEntries(int type, vector<string> lp){
     imagecoord.push_back(gtsam::Point2(x, y));
 }
 
-
+/*
 void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
     char line[LINESIZE]="";
     char l3[LINESIZE];
@@ -69,9 +69,10 @@ void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
     }
     //cout <<"Finished reading file: "<<file.c_str() <<endl;
 }
+ */
 
 //This version is less buggy, in some way due to lack of reliance on string, which uses dynamic memory.
-/*void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
+void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
     char line[LINESIZE]="";
     char l3[LINESIZE];
     int entry;
@@ -123,7 +124,7 @@ void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
         if(fp != NULL)
             fclose(fp);
     }
-}*/
+}
 
 string ParseFeatureTrackFile::GetFeatureTrackFilePath(string base, int no, bool makedir){
     char imgfile[100];

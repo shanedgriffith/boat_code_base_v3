@@ -47,7 +47,7 @@ std::vector<std::string> FileParsing::ListDirsInDir(std::string dir_name) {
     if ((directory = opendir(dir_name.c_str())) != NULL) {
         /* store all the files and directories within directory */
         while ((ent = readdir(directory)) != NULL) {
-            if(ent->d_type == DT_DIR && strstr(ent->d_name, ".")==NULL) {
+            if((ent->d_type == DT_UNKNOWN || ent->d_type == DT_DIR) && strstr(ent->d_name, ".")==NULL) {
                 dirs.push_back(ent->d_name);
             }
 //            cout << "name: " << ent->d_name << endl;

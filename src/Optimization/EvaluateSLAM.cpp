@@ -77,15 +77,18 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
     double sum=0;
     int count=0;
     for(int i=0; i<POR.boat.size(); i++) {
-        ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[i]);
+        ParseFeatureTrackFile PFT(_cam, _pftbase, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
 
         std::vector<double> stats = MeasureReprojectionError(POR.boat[i], PFT.imagecoord, p_subset);
         if(stats[1] > 0) {
             result[i] = stats[0]/stats[1];
+            if(result[i] > avgbadthreshold) {
+                avgbadness++;
+                result[i] = avgbadthreshold;
+            }
             sum += result[i];
             count++;
-            if(result[i] > avgbadthreshold) avgbadness++;
         }
         else avgbadness++;
         countbad += stats[2];

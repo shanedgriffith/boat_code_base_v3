@@ -219,6 +219,9 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
 void SurveyOptimizer::Optimize(ParseSurvey& PS){
 	if(!initialized){cout << "check initialization"<<endl; exit(1);}
     
+    EvaluateSLAM es(_cam, _date, _results_dir);
+    es.debug=true;
+    
     SOR.SetSaveStatus();
     SOR.SetDrawMap();
     
@@ -240,6 +243,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         if(OptimizeThisIteration(camera_key)){
             RunGTSAM();
             SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
+            es.Evaluate(PS._pftbase);
         }
         
         //Log the data alignment.
@@ -260,6 +264,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     //Final optimization
     RunGTSAM();
     SaveResults(0, 100.0, PS.GetDrawScale());
+    es.Evaluate(PS._pftbase);
 }
 
 
