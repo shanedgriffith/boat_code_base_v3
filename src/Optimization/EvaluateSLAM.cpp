@@ -55,6 +55,7 @@ std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& 
         
         gtsam::Point3 res = tf.transform_to(p[j]);
         gtsam::Point2 twodim = _cam.ProjectToImage(res);
+        if(!_cam.InsideImage(twodim)) continue;
         gtsam::Point2 orig = orig_imagecoords[j];
         
         double error = pow(pow(twodim.x() - orig.x(), 2)+pow(twodim.y() - orig.y(), 2),0.5);
@@ -85,7 +86,6 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
             result[i] = stats[0]/stats[1];
             if(result[i] > avgbadthreshold) {
                 avgbadness++;
-                result[i] = avgbadthreshold;
             }
             sum += result[i];
             count++;

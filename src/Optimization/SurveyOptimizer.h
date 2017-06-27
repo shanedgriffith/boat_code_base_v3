@@ -45,6 +45,7 @@ protected:
     
     void RemoveLandmarkFromList(int list_idx);
     void AddLandmarkTracks(std::vector<LandmarkTrack> inactive, int survey=-1);
+    bool CheckImageDuplication(ParseFeatureTrackFile& pft);
     std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});

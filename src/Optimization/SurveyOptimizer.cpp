@@ -13,6 +13,7 @@
 #include <gtsam/geometry/Point2.h>
 
 #include "FileParsing/ParseSurvey.h"
+#include "EvaluateSLAM.h"
 
 using namespace std;
 
@@ -28,6 +29,16 @@ void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks, int sur
     for(int i=0; i<landmarks.size(); i++){
         FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used, survey);
     }
+}
+
+bool SurveyOptimizer::CheckImageDuplication(ParseFeatureTrackFile& pft){
+    if(pft.ids.size() != active.size()) return false;
+    int next_entry = 0;
+    for(int i=0; i<pft.ids.size(); i++){
+        if(pft.ids[i] != active[next_entry].key) return false;
+        next_entry++;
+    }
+    return true;
 }
 
 vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft) {
@@ -176,6 +187,9 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     gtsam::Pose3 cam = PS.CameraPose(cidx);
     gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
     
+    //add the camera
+    int camera_key = AddCamera(cam);
+    
     //check for camera transitions
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
     if(flipped){
@@ -184,15 +198,14 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     	active.clear();
     }
     
-    //add the camera
-    int camera_key = AddCamera(cam);
-    
     //process the landmark measurement
-    vector<LandmarkTrack> inactive = ProcessNewPoints(camera_key, PFT);
-    
-    //add the landmark measurement
-    if(cache_landmarks) CacheLandmarks(inactive);
-    else AddLandmarkTracks(inactive);
+    if(!CheckImageDuplication(PFT)){
+        vector<LandmarkTrack> inactive = ProcessNewPoints(camera_key, PFT);
+        
+        //add the landmark measurement
+        if(cache_landmarks) CacheLandmarks(inactive);
+        else AddLandmarkTracks(inactive);
+    }
     
     if(camera_key != 0) {
         //added for debugging the visualization

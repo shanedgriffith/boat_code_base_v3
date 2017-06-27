@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     case 7:{
         ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        SurveyOptimizer so(axisptz, argv[1], results_dir);
+        SurveyOptimizer so(axisptz, argv[1], results_dir, true);
         so.Initialize();
         so.Optimize(PS);
         break;}
