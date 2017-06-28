@@ -21,17 +21,6 @@
 using namespace std;
 using namespace cv;
 
-ParseFeatureTrackFile ImageToLocalization::LoadFTF(int survey, int time){
-    ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            _pftbase + dates[survey],
-            por[survey]->ftfilenos[time]);
-    if(pftf.time == -1) {
-        std::cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << std::endl;
-        exit(-1);
-    }
-    return pftf;
-}
-
 gtsam::Pose3 ImageToLocalization::CameraPose(std::vector<double>& p) {
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
@@ -244,8 +233,8 @@ void ImageToLocalization::Reset(){
 
 void * ImageToLocalization::Run(){
     thread_state = state::RUNNING;
-    ParseFeatureTrackFile pftf0 = LoadFTF(0, portimes[0]);
-    ParseFeatureTrackFile pftf1 = LoadFTF(1, portimes[1]);
+    ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[0]->ftfilenos[portimes[0]]);
+    ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[1]->ftfilenos[portimes[1]]);
 
     if(hasRF) {
         rf[0]->ComputeFlow(poses[1], por[0]->boat[portimes[0]]);//map points of survey 0 onto pose1_est.

@@ -275,6 +275,25 @@ void ParseFeatureTrackFile::Reset(){
     time = -1;
 }
 
+ParseFeatureTrackFile ParseFeatureTrackFile::LoadFTF(Camera& _cam, string base, int ftfileno) {
+    ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam, base, ftfileno);
+    if(pftf.time == -1) {
+        cout << "ParseFeatureTrackFile::LoadFTF() Error. Couldn't open: " << pftf.siftfile << endl;
+        exit(-1);
+    }
+    return pftf;
+}
 
-
-
+void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3> p3d){
+    //Finds and keeps only the landmarks that were good in the stand-alone optimization.
+    //vector<gtsam::Point3> p3d = POR.GetSubsetOf3DPoints(pftf.ids);
+    vector<int> subset_ids;
+    vector<gtsam::Point2> subset_p2d;
+    for(int i=0; i<p3d.size(); i++){
+        if(p3d[i].x()==0 && p3d[i].y()==0 && p3d[i].z()==0) continue;
+        subset_ids.push_back(ids[i]);
+        subset_p2d.push_back(imagecoord[i]);
+    }
+    ids = subset_ids;
+    imagecoord = subset_p2d;
+}

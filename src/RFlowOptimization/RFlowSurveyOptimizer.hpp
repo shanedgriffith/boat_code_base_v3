@@ -42,20 +42,11 @@ class RFlowSurveyOptimizer: public SurveyOptimizer {
 protected:
     int MAX_ITERATIONS = 10;
 
-    static const std::string _locoptname;
-
-    double LoadHopDistance(std::string path, std::string date);
-    std::vector<double> GetAvgHopCounts();
-    void SaveLocalLog(int numverified);
-
     void Initialize();
-    int GetLPDIdx(int por1time);
-    ParseFeatureTrackFile LoadFTF(int time);
-    void ModifyFTF(ParseFeatureTrackFile& pftf);
 
     void SaveResults();
     int UpdateError();
-    void AddUnverified();
+    void LoadUnverified();
     
     void AddLocalizations();
     void StandAloneFactorGraph();
@@ -63,23 +54,18 @@ protected:
     ParseOptimizationResults POR;
     int latestsurvey;
     std::vector<double> lpd_rerror;
-    std::vector<LocalizedPoseData> localizations;
-    std::unordered_map<int, int> lpdtable;
-
+    LPDInterface lpdi;
+    
 	RFlowFactorGraph* rfFG;
     
     Camera& _cam;
 public:
     std::string _date;
-    std::string _results_dir;
-    std::string _first_optimization_dir;
+    std::string _map_dir;
     std::string _pftbase;
     
-	/* date is the survey that's not yet consistent with the others.
-	 * the others are in folder _results_dir + "maps/"
-	 * */
-    RFlowSurveyOptimizer(Camera& cam, std::string date, std::string results_dir, std::string first_optimization_dir, std::string pftbase):
-        POR(first_optimization_dir + date), _results_dir(results_dir), _first_optimization_dir(first_optimization_dir),
+    RFlowSurveyOptimizer(Camera& cam, std::string date, std::string results_dir, std::string pftbase):
+        POR(first_optimization_dir + date), _map_dir(results_dir + "maps/"),
         _pftbase(pftbase), _cam(cam), SurveyOptimizer(cam, rfFG, date, results_dir, false), _date(date){
         
         std::cout << "RFlow Optimization for : " << date << std::endl;

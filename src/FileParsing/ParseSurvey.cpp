@@ -27,15 +27,6 @@ vector<double> ParseSurvey::PoseToVector(gtsam::Pose3& cam) {
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-ParseFeatureTrackFile ParseSurvey::GetFeatureTrackFile(Camera& _cam, int imageno){
-	int idx = GetIndexOfImage(imageno);
-	if(idx==-1){
-		cout << "No such image" << endl;
-		return ParseFeatureTrackFile(_cam);
-	}
-	return ParseFeatureTrackFile(_cam, _pftbase, imageno);
-}
-
 gtsam::Pose3 ParseSurvey::CameraPose(int idx){
         return gtsam::Pose3(gtsam::Rot3::ypr(poses[idx][5], poses[idx][4], poses[idx][3]), gtsam::Point3(poses[idx][0], poses[idx][1], poses[idx][2]));
 }

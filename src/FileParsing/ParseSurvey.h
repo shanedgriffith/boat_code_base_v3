@@ -53,7 +53,6 @@ public:
     virtual std::vector<double> GetDrawScale()=0;
     
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
-    ParseFeatureTrackFile GetFeatureTrackFile(Camera& _cam, int imageno);
     
     static int GetImageNumberFromImagePath(std::string imagepath);
     static std::vector<double> PoseToVector(gtsam::Pose3& cam);

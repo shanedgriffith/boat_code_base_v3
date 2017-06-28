@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         break;}
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, optimized_datasets, pftbase);
+        RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, pftbase);
         ra.IterativeMerge();
         break;}
     case 2:{

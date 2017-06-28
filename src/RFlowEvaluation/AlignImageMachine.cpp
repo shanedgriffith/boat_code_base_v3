@@ -46,17 +46,6 @@ AlignmentResult AlignImageMachine::RunSFlowWithRF(vector<ReprojectionFlow*> rf, 
     return sf.GetAlignmentResult();
 }
 
-ParseFeatureTrackFile AlignImageMachine::LoadFTF(int survey, int idx){
-    ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam,
-            _pftbase + dates[survey],
-            por[survey]->ftfilenos[idx]);
-    if(pftf.time == -1) {
-        std::cout << "Error. GetConstraints() couldn't open: " << pftf.siftfile << std::endl;
-        exit(-1);
-    }
-    return pftf;
-}
-
 void AlignImageMachine::RunRFlow() {
     vector<ReprojectionFlow*> rf;
     ReprojectionFlow r1(_cam, *maps[0]);
@@ -68,8 +57,8 @@ void AlignImageMachine::RunRFlow() {
     int poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
     if(poseloc1 == -1)  return;
 
-    ParseFeatureTrackFile pftf0 = LoadFTF(0, poseloc0);
-    ParseFeatureTrackFile pftf1 = LoadFTF(1, poseloc1);
+    ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[survey]->ftfilenos[poseloc0]);
+    ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[survey]->ftfilenos[poseloc1]);
 
     rf[0]->ComputeFlow(por[1]->boat[poseloc1], por[0]->boat[poseloc0]); //map points of survey 0 onto pose1_est.
     rf[1]->ComputeFlow(por[0]->boat[poseloc0], por[1]->boat[poseloc1]); //map points of survey 1 onto pose0_est.

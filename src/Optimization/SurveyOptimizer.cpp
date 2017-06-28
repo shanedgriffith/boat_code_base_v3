@@ -226,7 +226,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
 }
 
 void SurveyOptimizer::Optimize(ParseSurvey& PS){
-	if(!initialized){cout << "check initialization"<<endl; exit(1);}
+	if(!initialized){cout << "SurveyOptimizer::Optimize() check initialization"<<endl; exit(1);}
     
     EvaluateSLAM es(_cam, _date, _results_dir);
     es.debug=true;

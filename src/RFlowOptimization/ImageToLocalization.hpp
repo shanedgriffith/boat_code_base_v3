@@ -29,7 +29,6 @@ class ImageToLocalization : public AlignmentMachine{
 private:
     double PERCENT_DENSE_CORRESPONDENCES = 0.4;
     
-    ParseFeatureTrackFile LoadFTF(int survey, int time);
     gtsam::Pose3 CameraPose(std::vector<double>& p);
     
     CvScalar GetLandmarkColor(int id);

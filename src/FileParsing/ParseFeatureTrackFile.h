@@ -74,6 +74,9 @@ public:
     gtsam::Point2 GetAverageOpticalFlowFrom(ParseFeatureTrackFile& compared);
     void WriteFeatureTrackFile();
     void SetPFTContents(std::string base, int ftnum, double timestamp, std::vector<int>& _ids, std::vector<cv::Point2f>& _points);
+    void ModifyFTFData(std::vector<gtsam::Point3> p3d);
+    
+    static ParseFeatureTrackFile LoadFTF(Camera& _cam, std::string base, int ftfileno);
 };
 
 

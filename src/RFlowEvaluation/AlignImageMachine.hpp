@@ -18,8 +18,6 @@
 
 class AlignImageMachine: public AlignmentMachine {
 private:
-    
-    ParseFeatureTrackFile LoadFTF(int survey, int time);
     AlignmentResult RunSFlowWithRF(std::vector<ReprojectionFlow*> rf, std::string image1, std::string image2);
     
     std::vector<Map*> maps;
