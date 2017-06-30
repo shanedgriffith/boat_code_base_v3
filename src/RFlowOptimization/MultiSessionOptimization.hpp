@@ -38,45 +38,45 @@
 
 #include "LocalizedPoseData.hpp"
 
-class RFlowSurveyOptimizer: public SurveyOptimizer {
+class MultiSessionOptimization: public SurveyOptimizer {
 protected:
-    int MAX_ITERATIONS = 10;
-
-    void Initialize();
-
-    void SaveResults();
-    int UpdateError();
-    void LoadUnverified();
+    //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.
+    const int K = 5;
     
+//    std::unordered_map<std::string, int> datetable;
+    int optstart;
+    std::vector<std::string> dates;
+    std::vector<LPDInterface> lpdi;
+    std::vector<std::vector<double>> lpd_rerror;
+    std::vector<ParseOptimizationResults> POR;
+    std::vector<unordered_map<int, int>> lmap;
+    
+    void IdentifyOptimizationRange();
+    void UpdateLandmarkMap(std::vector<LandmarkTrack> tracks);
+    void StandAloneFactorGraph(int survey, bool firstiter);
+    void ConstructFactorGraph(bool firstiter);
+    void AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1);
     void AddLocalizations();
-    void StandAloneFactorGraph();
+    void AddAllTheLandmarkTracks();
     
-    ParseOptimizationResults POR;
-    int latestsurvey;
-    std::vector<double> lpd_rerror;
-    LPDInterface lpdi;
-    
-	RFlowFactorGraph* rfFG;
-    
-    Camera& _cam;
+    RFlowFactorGraph* rfFG;
 public:
-    std::string _date;
     std::string _map_dir;
     std::string _pftbase;
     
-    RFlowSurveyOptimizer(Camera& cam, std::string date, std::string results_dir, std::string pftbase):
-        POR(results_dir + "maps/" + date), _map_dir(results_dir + "maps/"),
-        _pftbase(pftbase), _cam(cam), SurveyOptimizer(cam, rfFG, date, results_dir + "maps/", false), _date(date){
+    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase):
+        _map_dir(results_dir + "maps/"), _pftbase(pftbase), _cam(cam),
+        SurveyOptimizer(cam, rfFG, date, results_dir, false) {
         
         std::cout << "RFlow Optimization for : " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
-        FG.SetLandmarkDeviation(3.0);
         SurveyOptimizer::Initialize();
+        IdentifyOptimizationRange();
         Initialize();
     }
 
-    ~RFlowSurveyOptimizer(){
+    ~MultiSessionOptimization(){
         delete(rfFG);
     }
 

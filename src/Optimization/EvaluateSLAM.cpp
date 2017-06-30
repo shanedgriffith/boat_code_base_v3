@@ -36,6 +36,24 @@ vector<double> EvaluateSLAM::LoadRerrorFile(){
     return rerrors;
 }
 
+double EvaluateSLAM::GetAverageRerror(){
+    static double avg_rerror=0.0;
+    if(avg_rerror > 0.0001) return avg_rerror;
+    double sum=0;
+    int count=0;
+    for(int i=0; i<rerrors.size(); i++){
+        if(rerrors[i]<=0.0001) continue;
+        count++;
+        sum += rerrors[i];
+    }
+    if(count == 0){
+        std::cout << "EvaluateSLAM::GetAverageRerror() Something went wrong with rerror file processing."<<std::endl;
+        exit(1);
+    }
+    avg_rerror = sum/count;
+    return avg_rerror;
+}
+
 std::string EvaluateSLAM::formattime(double seconds) {
     int hours = seconds/3600;
     int minutes = (seconds-hours*3600)/60;

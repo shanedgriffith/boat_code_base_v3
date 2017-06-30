@@ -44,7 +44,7 @@ void LocalizedPoseData::Save(string toppath, string altpath){
     memset(allpoints, 0, lastl);
     lastl=0;
     for(int i=0; i<p3d0.size(); i++) {
-        sprintf(allpoints+lastl, "%lf, %lf, %lf, %lf, %lf, %lf\n", p3d0[i].x(), p3d0[i].y(), p3d0[i].z(), p2d1[i].x(), p2d1[i].y(), rerrorp[i]);
+        sprintf(allpoints+lastl, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", pids[i], p3d0[i].x(), p3d0[i].y(), p3d0[i].z(), p2d1[i].x(), p2d1[i].y(), rerrorp[i]);
         lastl += strlen(allpoints+lastl);
     }
     fprintf(fp, "%s", allpoints);
@@ -60,7 +60,7 @@ void LocalizedPoseData::Save(string toppath, string altpath){
     memset(allpoints, 0, lastl);
     lastl=0;
     for(int i=0; i<b3d1.size(); i++) {
-        sprintf(allpoints+lastl, "%lf, %lf, %lf, %lf, %lf, %lf\n", b3d1[i].x(), b3d1[i].y(), b3d1[i].z(), b2d0[i].x(), b2d0[i].y(), rerrorb[i]);
+        sprintf(allpoints+lastl, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", bids[i], b3d1[i].x(), b3d1[i].y(), b3d1[i].z(), b2d0[i].x(), b2d0[i].y(), rerrorb[i]);
         lastl += strlen(allpoints+lastl);
     }
     fprintf(fp, "%s", allpoints);
@@ -84,12 +84,13 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
 
     char line[LINESIZE]="";
     int d0, d1;
-    std::vector<int> expectedperline = {8, 4, 2, 6, 6, 4, 3, 6, 3, 6};
+    std::vector<int> expectedperline = {8, 4, 2, 6, 6, 4, 3, 7, 3, 7};
     std::vector<int> numofline = {1, 1, 1, 1, 1, 1, -1, -1, -1, -1};
     int countofline = 0;
     int nump=0;
     int curset=0;
     double x, y, z, p1, p2, r;
+    int id;
     FILE * fp = OpenFile(filepath,"r");
     while (fgets(line, LINESIZE-1, fp)) {
         int ret = 0;
@@ -109,9 +110,9 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
                break;
         case 5: ret = sscanf(line, "%d, %d, %d, %d\n", &numofline[6], &numofline[7], &numofline[8], &numofline[9]); break;
         case 6: ret = sscanf(line, "%lf, %lf, %lf\n", &x, &y, &z); break;
-        case 7: ret = sscanf(line, "%lf, %lf, %lf, %lf, %lf, %lf\n", &x, &y, &z, &p1, &p2, &r); break;
+        case 7: ret = sscanf(line, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", &id, &x, &y, &z, &p1, &p2, &r); break;
         case 8: ret = sscanf(line, "%lf, %lf, %lf\n", &x, &y, &z); break;
-        case 9: ret = sscanf(line, "%lf, %lf, %lf, %lf, %lf, %lf\n", &x, &y, &z, &p1, &p2, &r); break;
+        case 9: ret = sscanf(line, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", &id, &x, &y, &z, &p1, &p2, &r); break;
         case 10: std::cout << "LocalizedPoseData Error. Too many lines. Or some other formatting error that lead to this.\n File "<<filepath << std::endl;
                 exit(-1);
         }
@@ -128,11 +129,13 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
                 l.b2d0 = std::vector<gtsam::Point2>(numofline[9]);
                 l.rerrorb = std::vector<double>(numofline[9]); break;
         case 6: l.p3d[nump] = gtsam::Point3(x, y, z); break;
-        case 7: l.p3d0[nump] = gtsam::Point3(x, y, z);
+        case 7: l.pids[nump] = id;
+                l.p3d0[nump] = gtsam::Point3(x, y, z);
                 l.p2d1[nump] = gtsam::Point2(p1, p2);
                 l.rerrorp[nump] = r; break;
         case 8: l.b3d[nump] = gtsam::Point3(x, y, z); break;
-        case 9: l.b3d1[nump] = gtsam::Point3(x, y, z);
+        case 9: l.bids[nump] = id;
+                l.b3d1[nump] = gtsam::Point3(x, y, z);
                 l.b2d0[nump] = gtsam::Point2(p1, p2);
                 l.rerrorb[nump] = r; break;
         default : break;
@@ -190,6 +193,8 @@ void swap(LocalizedPoseData& first, LocalizedPoseData& second){
     swap(first.p0frame1, second.p0frame1);
     swap(first.p3d, second.p3d);
     swap(first.b3d, second.b3d);
+    swap(first.pids, second.pids);
+    swap(first.bids, second.bids);
     swap(first.p3d0, second.p3d0);
     swap(first.p2d1, second.p2d1);
     swap(first.rerrorp, second.rerrorp);
@@ -214,29 +219,33 @@ bool LocalizedPoseData::operator<(const LocalizedPoseData& str) const {
     return (s1time < str.s1time);
 }
 
-void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gtsam::Point2>& p2d, vector<gtsam::Point3>& p3d, int bot, int top){
+void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gtsam::Point2>& p2d, vector<gtsam::Point3>& p3d, vector<int> ids, int bot, int top){
     int nin=0;
     for(int i=bot; i<top; i++)
         nin += (int) inliers[i];
 
     std::vector<gtsam::Point3>* points3d;
     vector<gtsam::Point2>* points2d;
-    if(bot==0){
+    vector<int>* pointids;
+    if(bot==0) {
         p3d0 = std::vector<gtsam::Point3>(nin);
         p2d1 = std::vector<gtsam::Point2>(nin);
         rerrorp = std::vector<double>(nin, ACCEPTABLE_RERROR);
         points3d = &p3d0;
         points2d = &p2d1;
+        pointids = &pids;
     } else {
         b3d1 = std::vector<gtsam::Point3>(nin);
         b2d0 = std::vector<gtsam::Point2>(nin);
         rerrorb = std::vector<double>(nin, ACCEPTABLE_RERROR);
         points3d = &b3d1;
         points2d = &b2d0;
+        pointids = &bids;
     }
 
     for(int i=bot, idx=0; i<top; i++){
         if(!inliers[i]) continue;
+        (*pointids)[idx] = ids[i];
         (*points2d)[idx] = p2d[i];
         (*points3d)[idx++] = p3d[i];
     }

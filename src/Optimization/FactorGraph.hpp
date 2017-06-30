@@ -48,8 +48,6 @@ protected:
     gtsam::noiseModel::Diagonal::shared_ptr dVNoise;
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise;
 
-    void CacheLandmark(int landmark_key, gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf);
-
     //true if the survey landmark tracks haven't been filtered out yet. sppf is set to filter bad points.
     bool sppf_prune = true;
 public:
@@ -82,6 +80,7 @@ public:
     void AddSmoothVelocityConstraint(int camera_key);
     void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, std::vector<gtsam::Point2> points,
                           std::vector<int> camera_keys, bool used=true, int survey=-1);
+    void SetLandmarkDeviation(double dev);
     
     void Clear();
     void PrintFactorGraph();

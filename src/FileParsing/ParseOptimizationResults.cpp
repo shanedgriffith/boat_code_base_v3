@@ -12,6 +12,17 @@
 
 using namespace std;
 
+void ParseOptimizationResults::LoadOptimizationResult(){
+    ReadDelimitedFile(_base + boatfile, LINETYPE::pose);
+    if(Exists(_base + velocityfile)) ReadDelimitedFile(_base + velocityfile, LINETYPE::vels);
+    ReadDelimitedFile(_base + correspondencefile, LINETYPE::corres);
+    ReadDelimitedFile(_base + pointsfile, LINETYPE::point);
+    RemoveTransitionEntries();
+    
+    if(verbose) printf("ParseOptimizationResults::LoadOptimizationResult() Read %d points.\n", (int) p.size());
+    if(sorted) SortPoints();
+}
+
 void ParseOptimizationResults::ProcessPoseEntries(vector<string> lp, vector<vector<double> >& poses){
     if(lp.size()<7) return;
     vector<double> pose(lp.size()-1, 0.0);

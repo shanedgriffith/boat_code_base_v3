@@ -42,6 +42,7 @@ public:
     std::vector<double> ErrorForSurvey(std::string _pftbase);
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
+    double GetAverageRerror();
 };
 
 #endif /* defined(__SIFTFlow__EvaluateSLAM__) */

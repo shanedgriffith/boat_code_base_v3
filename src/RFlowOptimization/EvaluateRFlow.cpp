@@ -105,6 +105,64 @@ vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseDat
 //    return result;
 //}
 
+
+int EvaluateRFlow::GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id) {
+    int bot = 0;
+    int top = p.size();
+    while(bot < top) {
+        int mid = bot + (top-bot)/2;
+        if(((int)landmarks[mid][3]) > id) top = mid;
+        else if(((int)landmarks[mid][3]) < id) bot = mid+1;
+        else return mid;
+    }
+    return -1;
+}
+
+vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, vector<int>& ids_subset) {
+    vector<gtsam::Point3> pset;
+    if(ids_subset.size() == 0) return pset;
+    
+    int iter = -1;
+    int countfound = 0;
+    for(int i=0; i < ids_subset.size(); i++) {
+        bool found = false;
+        if(iter==-1) iter = GetIndexOfFirstPoint(landmarks, ids_subset[i]);
+        
+        if(iter>=0){
+            for(int j=iter; j < p.size(); j++) {
+                if(((int)landmarks[j][3])==ids_subset[i]) {
+                    gtsam::Point3 p3(landmarks[j][0], landmarks[j][1], landmarks[j][2]);
+                    pset.push_back(p3);
+                    iter = j;
+                    countfound++;
+                    found = true;
+                    break;
+                } else if(((int) landmarks[j][3]) > ids_subset[i]){
+                    break;
+                }
+            }
+        }
+        
+        if(!found) pset.push_back(gtsam::Point3(0,0,0));
+    }
+    if(debug) cout << "Found " << countfound << " of " << ids_subset.size() << " points." << endl;
+    return pset;
+}
+
+vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<std::vector<double> > poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase){
+    vector<double> result(localizations.size(), 0.0);
+    vector<double> tots(4, 0.0);
+    for(int i=0; i<localizations.size(); i++) {
+        int idx = localizations[i].s1time;
+        ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[idx]);
+        vector<gtsam::Point3> p_subset = GetSubsetOf3DPoints(landmarks, PFT.ids);
+        vector<double> stats = EvaluateSLAM::MeasureReprojectionError(poses[idx], PFT.imagecoord, p_subset);
+        result[i] = UpdateTots(tots, stats);
+    }
+    PrintTots(tots, "");
+    return result;
+}
+
 vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase){
     ParseOptimizationResults POR(_results_dir + _date);
 

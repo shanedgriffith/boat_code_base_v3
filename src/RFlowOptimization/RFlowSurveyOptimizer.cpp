@@ -31,33 +31,6 @@ void RFlowSurveyOptimizer::Initialize() {
     latestsurvey = lpdi.localizations[0].s1;
 }
 
-void RFlowSurveyOptimizer::LoadUnverified(){
-    //if we only had unverified, a ransac approach might work better.
-    std::cout << "DEPRECATED. Don't use this. The LPD threshold is used here, and I didn't get better performance." << std::endl;
-    exit(-1);
-    /*vector<LocalizedPoseData> unverified = LocalizedPoseData::LoadAll(_results_dir + _date, "/unverified/");
-    std::cout <<lpdi.localizations.size() << " Verified LPD, "<<unverified.size() << " unverified LPD, ";
-
-    EvaluateRFlow erf(_cam, _date, _results_dir);
-    erf.debug = true;
-    vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> unext = erf.ErrorForLocalizations(unverified, poses);
-    int nadded = 0;
-    for(int i=0; i<unverified.size(); i++) {
-        if(lpdi.GetLPDIdx(unverified[i].s1time)<0 && unext[i] < LPD_RERROR_THRESHOLD){
-            lpdtable[unverified[i].s1time] = lpdi.localizations.size();
-            lpdi.localizations.push_back(unverified[i]);
-            nadded++;
-        }
-    }
-    std::cout <<lpdi.localizations.size() << " combined LPD (added "<<nadded << ")"<<std::endl;
-
-    //keep the lpd_rerror of the old set of poses, and add the new poses with an lpd_rerror of -1.0.
-    vector<double> new_error(lpdi.localizations.size(), -1.0);
-    new_error.assign(lpd_rerror.begin(), lpd_rerror.end());
-    lpd_rerror = new_error;*/
-}
-
 void RFlowSurveyOptimizer::StandAloneFactorGraph() {
     LocalizePose lp(_cam);
     for(int i=0; i<POR.boat.size(); i++) {
@@ -121,6 +94,13 @@ int RFlowSurveyOptimizer::UpdateError() {
     for(int j=0; j<next.size(); j++) {
         //adaptive threshold.
         double LPD_RERROR_THRESHOLD = rerrs[lpdi.localizations[j].s1time]*mult;
+        if(LPD_RERROR_THRESHOLD < 0) {
+            std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
+            exit(1);
+        } else if (LPD_RERROR_THRESHOLD == 0) {
+            LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror()*mult;
+        }
+        
         bool inlier = true;
         if(std::isnan(next[j]) || LPD_RERROR_THRESHOLD <= next[j]) inlier = false;
         if(std::isnan(serror[j])) inlier = false;
@@ -139,7 +119,6 @@ int RFlowSurveyOptimizer::UpdateError() {
 
 void RFlowSurveyOptimizer::IterativeMerge() {
     LocalizePose lp(_cam);
-//    LoadUnverified();
     int numverified = lpdi.localizations.size();
     for(int i=0, nchanges=100; nchanges>0 && i<MAX_ITERATIONS; i++) {
         std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;

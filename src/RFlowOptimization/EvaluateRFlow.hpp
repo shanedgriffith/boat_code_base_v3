@@ -27,16 +27,19 @@ private:
     std::vector<double> MeasureReprojectionError(gtsam::Pose3 tf, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, std::vector<double>& rerror);
     double UpdateTots(std::vector<double>& tots, std::vector<double>& stats);
     void PrintTots(std::vector<double> tots, std::string name);
+    vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, vector<int>& ids_subset);
+    int GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id);
 public:
     std::string _results_dir;
     EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
     _results_dir(results_dir), 
     EvaluateSLAM(cam, date, results_dir) {}
-
+    
     void Evaluate();
-
+    
     std::vector<double> ErrorForLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
     std::vector<double> SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
+    vector<double> SurveyErrorAtLocalizations(std::vector<std::vector<double> > poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);
 };

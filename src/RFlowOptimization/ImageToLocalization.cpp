@@ -107,8 +107,8 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
     return ret;
 }
 
-int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& imagecoord, vector<gtsam::Point3>& p3d,
-                                    vector<gtsam::Point2>& p1, vector<gtsam::Point2>& p2, vector<gtsam::Point3>& subset3d, bool forward){
+int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& imagecoord, vector<int> ids, vector<gtsam::Point3>& p3d,
+                                    vector<gtsam::Point2>& p1, vector<gtsam::Point2>& p2, vector<gtsam::Point3>& subset3d, vector<int> subsetids, bool forward){
     int imset = forward?0:1;
     int count = 0;
     int countbad3d=0, countinconsistent=0, countoutsideimage=0;
@@ -126,6 +126,7 @@ int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& i
         p1.push_back(imagecoord[i]);
         p2.push_back(p);
         subset3d.push_back(p3d[i]);
+        subsetids.push_back(ids[i]);
         count++;
     }
     if(debug) std::cout << "MapPoints: "<<count << " good points. bad ("<<countbad3d<<", "<<countoutsideimage<< ", " <<countinconsistent<<")"<<std::endl;
@@ -137,7 +138,7 @@ bool ImageToLocalization::ApplyEpipolarConstraints(vector<gtsam::Point2>& p0, ve
     fme.debug = true;
     vector<cv::Point2f> cvp0(p0.size());
     vector<cv::Point2f> cvp1(p1.size());
-    for(int i=0; i<p0.size();i++){
+    for(int i=0; i<p0.size();i++) {
         cvp0[i] = cv::Point2f(p0[i].x(), p0[i].y());
         cvp1[i] = cv::Point2f(p1[i].x(), p1[i].y());
     }
@@ -158,8 +159,9 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     vector<gtsam::Point2> p0;
     vector<gtsam::Point2> p1;
     vector<gtsam::Point3> subset3d;
-    int count1 = MapPoints(ar, pftf0.imagecoord, lpd.p3d, p0, p1, subset3d, true);
-    int count2 = MapPoints(ar, pftf1.imagecoord, lpd.b3d, p1, p0, subset3d, false);
+    vector<int> subsetids;
+    int count1 = MapPoints(ar, pftf0.imagecoord, pftf0.ids, lpd.p3d, p0, p1, subset3d, subsetids, true);
+    int count2 = MapPoints(ar, pftf1.imagecoord, pftf1.ids, lpd.b3d, p1, p0, subset3d, subsetids, false);
 
     //Failure here is typically due to a lack of alignment consistency.
     // An image can have high consistency %, yet few consistent points because the %
@@ -168,8 +170,8 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     if(count1+count2 > 7){
         std::vector<unsigned char> inliers(p0.size(),1);
         if(ApplyEpipolarConstraints(p0, p1, inliers)){
-            lpd.SetPoints(inliers, p1, subset3d, 0, count1);
-            lpd.SetPoints(inliers, p0, subset3d, count1, count1+count2);
+            lpd.SetPoints(inliers, p1, subset3d, subsetids, 0, count1);
+            lpd.SetPoints(inliers, p0, subset3d, subsetids, count1, count1+count2);
 
             //Expectation Maximization with Bundle Adjustment to get the localized pose and identify inliers.
             LocalizePose lp(_cam);
@@ -178,7 +180,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
                                                                              lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
             if(candidates.size()==0) return -1;
 
-            perc_dc = candidates[2][1]/(lpd.p3d0.size()+lpd.b3d1.size());
+            perc_dc = candidates[2][1]/(count1+count2);
             if(debug) std::cout<<"localization quality check: \n\tForward and Backward:  "
                     <<((int)1000*perc_dc)/10.0 << "% inliers with "
                     << candidates[2][3] << " avg reprojection error" << std::endl;

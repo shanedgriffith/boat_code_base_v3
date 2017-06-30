@@ -44,10 +44,12 @@ public:
     int s1time=0;
     std::vector<double> p1frame0;
     std::vector<double> p0frame1;
+    std::vector<int> pids;
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point3> p3d0;
     std::vector<gtsam::Point2> p2d1;
     std::vector<double> rerrorp;
+    std::vector<int> bids;
     std::vector<gtsam::Point3> b3d;
     std::vector<gtsam::Point3> b3d1;
     std::vector<gtsam::Point2> b2d0;
@@ -71,6 +73,7 @@ public:
         date0(l.date0), date1(l.date1), tf_p0_to_p1frame0(6),
         s0(l.s0), s1(l.s1), s0time(l.s0time), s1time(l.s1time),
         p1frame0(6), p0frame1(6), p3d(l.p3d.size()), b3d(l.b3d.size()),
+        pids(l.pids.size()), bids(l.bids.size(),
         p3d0(l.p3d0.size()), p2d1(l.p2d1.size()), rerrorp(l.rerrorp.size()),
         b3d1(l.b3d1.size()), b2d0(l.b2d0.size()), rerrorb(l.rerrorb.size()),
         perc_dc(l.perc_dc), avg_rerror_inl(l.avg_rerror_inl){
@@ -80,6 +83,8 @@ public:
         p0frame1.assign(l.p0frame1.begin(), l.p0frame1.end());
         p3d.assign(l.p3d.begin(), l.p3d.end());
         b3d.assign(l.b3d.begin(), l.b3d.end());
+        pids.assign(l.pids.begin(), l.pids.end());
+        bids.assign(l.bids.begin(), l.bids.end());
         p3d0.assign(l.p3d0.begin(), l.p3d0.end());
         p2d1.assign(l.p2d1.begin(), l.p2d1.end());
         rerrorp.assign(l.rerrorp.begin(), l.rerrorp.end());
@@ -95,7 +100,7 @@ public:
     gtsam::Pose3 GetP0frame1();
     gtsam::Pose3 GetP1frame0();
 
-    void SetPoints(std::vector<unsigned char>& inliers, std::vector<gtsam::Point2>& p2d, std::vector<gtsam::Point3>& p3d, int bot, int top);
+    void SetPoints(std::vector<unsigned char>& inliers, std::vector<gtsam::Point2>& p2d, std::vector<gtsam::Point3>& p3d, std::vector<int> ids, int bot, int top);
     void SetPoses(std::vector<double> p0, std::vector<double> p1frame0_, std::vector<double> p0frame1_);
     void SetLocalizationQuality(double pdc, double rerror);
 

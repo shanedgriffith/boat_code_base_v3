@@ -71,7 +71,9 @@ void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<Loca
     fclose(fp);
 }
 
-
+bool HopcountLog::LogExists(std::string basepath, std::string hopdate){
+    return FileParsing::Exists(basepath + hopdate + _locoptname);
+}
 
 
 

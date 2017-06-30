@@ -33,6 +33,7 @@ public:
     HopcountLog(std::string basepath):
     path(basepath) {}
     
+    static bool LogExists(std::string basepath, std::string hopdate);
     double LoadHopDistance(std::string hopdate);
     std::vector<double> GetAvgHopCounts();
     void SaveLocalLog(std::string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations);

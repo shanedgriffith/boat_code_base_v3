@@ -46,13 +46,8 @@ public:
 	    sppf_prune = false; //keep all the landmark tracks.
 	}
 
-//	void AddAnchorConstraint(gtsam::Symbol a2, gtsam::Symbol p1, gtsam::Symbol p2, gtsam::Pose3 measured);//gtsam::Symbol a, gtsam::Symbol c, gtsam::Pose3 p1frame1);
-//	void AddAnchor2Constraint(gtsam::Symbol a1, gtsam::Symbol a2, gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 offset);
-//	void AddAnchor3Constraint(gtsam::Symbol a1, gtsam::Symbol a2, gtsam::Pose3 p1, gtsam::Symbol p2, gtsam::Pose3 offset);
-//    void AddAnchorNeighbor(gtsam::Symbol a0, gtsam::Symbol a1);
-
-	bool AddPose(gtsam::Symbol s, gtsam::Pose3 p); //, bool loc
-	bool AddPose(int survey, int pnum, gtsam::Pose3 p);//, bool loc=false);
+	bool AddPose(gtsam::Symbol s, gtsam::Pose3 p);
+	bool AddPose(int survey, int pnum, gtsam::Pose3 p);
 	void AddVirtualBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 p0, gtsam::Pose3 p1, double val=0.001);
 	void AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
 	void AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom);

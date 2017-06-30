@@ -71,16 +71,14 @@ bool RFlowFactorGraph::VariableExists(int survey, int pnum) {
     return false;
 }
 
-bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p) { //, bool loc
+bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p) {
     //only the p1frame0 poses are added, and only if they're not already added.
     if(VariableExists(survey, pnum)) return false;
     gtsam::Symbol s = GetSymbol(survey, pnum);
     return AddPose(s, p); //, loc
 }
 
-bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) { //, bool loc
-//    if(loc) graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoise0));
-//    else
+bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoise));
     return true;
 }
@@ -89,6 +87,7 @@ void RFlowFactorGraph::AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int 
     gtsam::Symbol symb = GetSymbol(survey, pnum);
     for(int i=0; i<p2d.size(); i++) {
         if(inliers[i]<0.001 || inliers[i]>6.0) continue;
+        if(p3d[i].x() == 0.0 && p3d[i].y()==0.0 && p3d[i].z()==0.0) continue;
         gtsam::noiseModel::Isotropic::shared_ptr measurementNoise1 = gtsam::noiseModel::Isotropic::Sigma(2, 1.0);//inliers[i]);
         graph.push_back(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d[i], p3d[i], measurementNoise1, symb, k));
     }

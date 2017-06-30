@@ -70,11 +70,12 @@ void FactorGraph::InitializeNoiseModels(){
     v6d(5,0) = vals[Param::DELTA_V_YAW];
 
     dVNoise = gtsam::noiseModel::Diagonal::Sigmas(v6d);
+    SetLandmarkDeviation(vals[Param::LANDMARK_DEVIATION]);
+}
 
-    double deviation = vals[Param::LANDMARK_DEVIATION]; //for intra-survey
-    //double deviation = 3.0; //for inter-survey
-	double dimensions = 2.0; //there are two dimensions to an image observation
-	pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, deviation);
+void FactorGraph::SetLandmarkDeviation(double dev) {
+    double dimensions = 2.0; //there are two dimensions to an image observation
+    pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
 }
 
 void FactorGraph::AddCamera(int camera_key, gtsam::Pose3 cam_est){

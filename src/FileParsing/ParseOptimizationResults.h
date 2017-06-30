@@ -55,19 +55,15 @@ public:
     std::vector<int> ftfilenos;//feature track file correspondences (in the sift dir)
     std::vector<double> timings;
     std::vector<point_obj> p;
-
-    ParseOptimizationResults(std::string base, bool sorted = true){
-        _base = base;
-        ReadDelimitedFile(_base + boatfile, LINETYPE::pose);
-        if(Exists(_base + velocityfile)) ReadDelimitedFile(_base + velocityfile, LINETYPE::vels);
-        ReadDelimitedFile(_base + correspondencefile, LINETYPE::corres);
-        ReadDelimitedFile(_base + pointsfile, LINETYPE::point);
-        RemoveTransitionEntries();
-
-        if(verbose) printf("Optimization Result. Read %d points.\n", (int) p.size());
-        if(sorted) SortPoints();
+    
+    ParseOptimizationResults(){};
+    
+    ParseOptimizationResults(std::string base, bool sorted = true):
+    _base(base) {
+        LoadOptimizationResult();
     }
     
+    void LoadOptimizationResult();
     int GetNumberOfPoses(){return (int) boat.size();}
     
     //meant to be called with the feature tracking ids
