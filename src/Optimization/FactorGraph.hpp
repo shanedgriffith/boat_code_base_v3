@@ -1,5 +1,5 @@
-#ifndef __BundleAdjustOneDataset__FactorGraph__
-#define __BundleAdjustOneDataset__FactorGraph__
+#ifndef SRC_OPTIMIZATION_FACTORGRAPH_HPP_
+#define SRC_OPTIMIZATION_FACTORGRAPH_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -92,4 +92,4 @@ public:
 };
 
 
-#endif /* defined(__BundleAdjustOneDataset__FactorGraph__) */
+#endif /* SRC_OPTIMIZATION_FACTORGRAPH_HPP_ */

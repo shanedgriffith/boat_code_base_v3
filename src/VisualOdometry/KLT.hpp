@@ -4,8 +4,8 @@
 //  This version created by Shane Griffith on 3/20/17.
 //
 
-#ifndef KLT_hpp
-#define KLT_hpp
+#ifndef SRC_VISUALODOMETRY_KLT_HPP_
+#define SRC_VISUALODOMETRY_KLT_HPP_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,35 +116,9 @@ public:
 };
 
 
+#endif /* SRC_VISUALODOMETRY_KLT_HPP_ */
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif /* KLT_hpp */

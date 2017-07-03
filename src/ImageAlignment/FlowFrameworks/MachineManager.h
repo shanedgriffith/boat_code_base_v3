@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__MachineManager__
-#define __SIFTFlow__MachineManager__
+#ifndef SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_MACHINEMANAGER_H_
+#define SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_MACHINEMANAGER_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -48,4 +48,4 @@ public:
 
 
 
-#endif /* defined(__SIFTFlow__MachineManager__) */
+#endif /* SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_MACHINEMANAGER_H_ */

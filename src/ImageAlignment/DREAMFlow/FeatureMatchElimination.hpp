@@ -6,8 +6,8 @@
 //  Copyright © 2016 shane. All rights reserved.
 //
 
-#ifndef FeatureMatchElimination_hpp
-#define FeatureMatchElimination_hpp
+#ifndef SRC_IMAGEALIGNMENT_DREAMFLOW_FEATUREMATCHELIMINATION_HPP_
+#define SRC_IMAGEALIGNMENT_DREAMFLOW_FEATUREMATCHELIMINATION_HPP_
 
 #include <stdio.h>
 
@@ -49,4 +49,4 @@ public:
     
     FeatureMatchElimination(){}
 };
-#endif /* FeatureMatchElimination_hpp */
+#endif /* SRC_IMAGEALIGNMENT_DREAMFLOW_FEATUREMATCHELIMINATION_HPP_ */

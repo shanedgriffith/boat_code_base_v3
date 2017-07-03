@@ -6,8 +6,8 @@
 //  Copyright © 2016 shane. All rights reserved.
 //
 
-#ifndef OptimizationResults_hpp
-#define OptimizationResults_hpp
+#ifndef SRC_FILEPARSING_OPTIMIZATIONRESULTS_HPP_
+#define SRC_FILEPARSING_OPTIMIZATIONRESULTS_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -33,4 +33,4 @@ public:
 
 };
 
-#endif /* OptimizationResults_hpp */
+#endif /* SRC_FILEPARSING_OPTIMIZATIONRESULTS_HPP_ */

@@ -19,8 +19,8 @@
  * @author Shane Griffith (small modifications)
  */
 
-#ifndef __LocalizationFactor__
-#define __LocalizationFactor__
+#ifndef SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_
+#define SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_
 
 #include <gtsam/geometry/SimpleCamera.h>
 #include <gtsam/geometry/Point2.h>
@@ -196,4 +196,4 @@ private:
     }
 };
 
-#endif /* defined(__LocalizationFactor__) */
+#endif /* SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_ */

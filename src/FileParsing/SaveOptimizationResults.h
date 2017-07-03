@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __BundleAdjustOneDataset__SaveOptimizationResults__
-#define __BundleAdjustOneDataset__SaveOptimizationResults__
+#ifndef SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_
+#define SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -57,4 +57,4 @@ public:
 };
 
 
-#endif /* defined(__BundleAdjustOneDataset__SaveOptimizationResults__) */
+#endif /* SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_ */

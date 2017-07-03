@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef SIFTFlow_AlignmentResult_h
-#define SIFTFlow_AlignmentResult_h
+#ifndef SRC_DATATYPES_ALIGNMENTRESULT_H_
+#define SRC_DATATYPES_ALIGNMENTRESULT_H_
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
@@ -395,9 +395,5 @@ public:
         return stats;
     }
 };
-
-
-
-
 
 #endif

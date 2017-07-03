@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __VisualizationCode__ParseOptimizationResults__
-#define __VisualizationCode__ParseOptimizationResults__
+#ifndef SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_
+#define SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -82,4 +82,4 @@ public:
 };
 
 
-#endif /* defined(__VisualizationCode__ParseOptimizationResults__) */
+#endif /* SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_ */

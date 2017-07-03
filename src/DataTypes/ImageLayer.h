@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__ImageLayer__
-#define __SIFTFlow__ImageLayer__
+#ifndef SRC_DATATYPES_IMAGELAYER_H_
+#define SRC_DATATYPES_IMAGELAYER_H_
 
 #include <stdio.h>
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
@@ -54,4 +54,4 @@ public:
     }
 };
 
-#endif /* defined(__SIFTFlow__ImageLayer__) */
+#endif /* SRC_DATATYPES_IMAGELAYER_H_ */

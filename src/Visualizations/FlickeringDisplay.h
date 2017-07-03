@@ -12,8 +12,8 @@
  effectiveness of this approach, it may look weak for an evaluation.
  */
 
-#ifndef __SIFTFlow__FlickeringDisplay__
-#define __SIFTFlow__FlickeringDisplay__
+#ifndef SRC_VISUALIZATIONS_FLICKERINGDISPLAY_H_
+#define SRC_VISUALIZATIONS_FLICKERINGDISPLAY_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -89,7 +89,7 @@ public:
 //    vector<int> FlickerDisplayMany(vector<ParseExperiment>& exps);
 };
 
-#endif /* defined(__SIFTFlow__FlickeringDisplay__) */
+#endif /* SRC_VISUALIZATIONS_FLICKERINGDISPLAY_H_ */
 
 
 //TODO: judge the time for each.

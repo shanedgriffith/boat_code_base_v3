@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __VisualizationCode__ParseSurvey__
-#define __VisualizationCode__ParseSurvey__
+#ifndef SRC_FILEPARSING_PARSESURVEY_H_
+#define SRC_FILEPARSING_PARSESURVEY_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -73,4 +73,4 @@ public:
 
 
 
-#endif /* defined(__VisualizationCode__ParseSurvey__) */
+#endif /* SRC_FILEPARSING_PARSESURVEY_H_ */

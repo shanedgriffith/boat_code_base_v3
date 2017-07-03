@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__EvaluateSLAM__
-#define __SIFTFlow__EvaluateSLAM__
+#ifndef SRC_OPTIMIZATION_EVALUATESLAM_H_
+#define SRC_OPTIMIZATION_EVALUATESLAM_H_
 
 #include <dirent.h>
 #include <stdio.h>
@@ -45,4 +45,4 @@ public:
     double GetAverageRerror();
 };
 
-#endif /* defined(__SIFTFlow__EvaluateSLAM__) */
+#endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */

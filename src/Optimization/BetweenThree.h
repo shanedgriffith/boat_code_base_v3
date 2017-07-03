@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#ifndef __BundleAdjustOneDataset__BetweenThree__
-#define __BundleAdjustOneDataset__BetweenThree__
+#ifndef SRC_OPTIMIZATION_BETWEENTHREE_H_
+#define SRC_OPTIMIZATION_BETWEENTHREE_H_
 
 #include <gtsam/inference/Key.h>
 #include <gtsam/slam/BetweenFactor.h>
@@ -77,4 +77,4 @@ public:
     }
 };
 
-#endif /* defined(__BundleAdjustOneDataset__BetweenThree__) */
+#endif /* SRC_OPTIMIZATION_BETWEENTHREE_H_ */

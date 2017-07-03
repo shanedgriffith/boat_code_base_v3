@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__AlignmentMachine__
-#define __SIFTFlow__AlignmentMachine__
+#ifndef SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_ALIGNMENTMACHINE_H_
+#define SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_ALIGNMENTMACHINE_H_
 
 #include <stdio.h>
 #include <unistd.h>
@@ -39,4 +39,4 @@ protected:
 
 
 
-#endif /* defined(__SIFTFlow__AlignmentMachine__) */
+#endif /* SRC_IMAGEALIGNMENT_FLOWFRAMEWORKS_ALIGNMENTMACHINE_H_ */

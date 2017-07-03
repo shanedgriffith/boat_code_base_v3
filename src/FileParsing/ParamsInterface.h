@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __BundleAdjustOneDataset__ParamsInterface__
-#define __BundleAdjustOneDataset__ParamsInterface__
+#ifndef SRC_FILEPARSING_PARAMSINTERFACE_H_
+#define SRC_FILEPARSING_PARAMSINTERFACE_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -56,4 +56,4 @@ public:
 
 
 
-#endif /* defined(__BundleAdjustOneDataset__ParamsInterface__) */
+#endif /* SRC_FILEPARSING_PARAMSINTERFACE_H_ */

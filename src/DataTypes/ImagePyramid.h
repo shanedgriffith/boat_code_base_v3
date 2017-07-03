@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef SIFTFlow_ImagePyramid_h
-#define SIFTFlow_ImagePyramid_h
+#ifndef SRC_DATATYPES_IMAGEPYRAMID_H_
+#define SRC_DATATYPES_IMAGEPYRAMID_H_
 
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
@@ -133,4 +133,4 @@ public:
     
 };
 
-#endif
+#endif /* SRC_DATATYPES_IMAGEPYRAMID_H_ */

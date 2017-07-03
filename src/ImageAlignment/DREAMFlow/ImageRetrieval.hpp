@@ -23,8 +23,6 @@
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
 #include <ImageAlignment/DREAMFlow/IRMachine.hpp>
 
-//#include <gtsam/geometry/Pose3.h>
-
 class ImageRetrieval {
 private:
     bool debug = false;

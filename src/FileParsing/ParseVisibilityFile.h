@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__ParseVisibilityFile__
-#define __SIFTFlow__ParseVisibilityFile__
+#ifndef SRC_FILEPARSING_PARSEVISIBILITYFILE_H_
+#define SRC_FILEPARSING_PARSEVISIBILITYFILE_H_
 
 
 #include <stdio.h>
@@ -38,4 +38,4 @@ public:
 
 
 
-#endif /* defined(__SIFTFlow__ParseVisibilityFile__) */
+#endif /* SRC_FILEPARSING_PARSEVISIBILITYFILE_H_ */

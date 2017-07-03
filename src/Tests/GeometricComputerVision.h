@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Shane Griffith. All rights reserved.
 //
 
-#ifndef __BeginningSLAM__GeometricComputerVision__
-#define __BeginningSLAM__GeometricComputerVision__
+#ifndef SRC_TESTS_GEOMETRICCOMPUTERVISION_H_
+#define SRC_TESTS_GEOMETRICCOMPUTERVISION_H_
 
 //#include <iostream>
 

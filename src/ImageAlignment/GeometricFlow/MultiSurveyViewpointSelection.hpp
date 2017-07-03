@@ -6,8 +6,8 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#ifndef MultiSurveyViewpointSelection_hpp
-#define MultiSurveyViewpointSelection_hpp
+#ifndef SRC_GEOMETRICFLOW_MULTISURVEYVIEWPOINTSELECTION_HPP_
+#define SRC_GEOMETRICFLOW_MULTISURVEYVIEWPOINTSELECTION_HPP_
 
 #include <stdio.h>
 #include "ViewpointMachine.hpp"
@@ -53,4 +53,4 @@ public:
 
 
 
-#endif /* MultiSurveyViewpointSelection_hpp */
+#endif /* SRC_GEOMETRICFLOW_MULTISURVEYVIEWPOINTSELECTION_HPP_ */

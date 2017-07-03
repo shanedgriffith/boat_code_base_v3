@@ -6,8 +6,8 @@
 //  Copyright © 2016 shane. All rights reserved.
 //
 
-#ifndef ImagePose_h
-#define ImagePose_h
+#ifndef SRC_DATATYPES_IMAGEPOSE_H_
+#define SRC_DATATYPES_IMAGEPOSE_H_
 #include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseSurvey.h>
 #include <FileParsing/ParseOptimizationResults.h>
@@ -223,4 +223,4 @@ public:
     }
 };
 
-#endif /* ImagePose_h */
+#endif /* SRC_DATATYPES_IMAGEPOSE_H_ */

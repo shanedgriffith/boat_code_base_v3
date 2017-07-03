@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __VisualizationCode__ParseBoatSurvey__
-#define __VisualizationCode__ParseBoatSurvey__
+#ifndef SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_
+#define SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +60,13 @@ public:
     void PlayPoses();
 };
 
+#endif /* SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_ */
 
 
 
-#endif /* defined(__VisualizationCode__ParseBoatSurvey__) */
+
+
+
+
+
+

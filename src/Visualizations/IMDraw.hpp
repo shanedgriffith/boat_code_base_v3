@@ -5,8 +5,8 @@
  *      Author: shane
  */
 
-#ifndef SRC_VISUALIZATIONS_IMDraw_HPP_
-#define SRC_VISUALIZATIONS_IMDraw_HPP_
+#ifndef SRC_VISUALIZATIONS_IMDRAW_HPP_
+#define SRC_VISUALIZATIONS_IMDRAW_HPP_
 
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
@@ -29,4 +29,4 @@ public:
 
 
 
-#endif /* SRC_VISUALIZATIONS_IMDraw_HPP_ */
+#endif /* SRC_VISUALIZATIONS_IMDRAW_HPP_ */

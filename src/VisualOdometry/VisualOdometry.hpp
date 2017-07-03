@@ -6,8 +6,8 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#ifndef VisualOdometry_hpp
-#define VisualOdometry_hpp
+#ifndef SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_
+#define SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -110,4 +110,4 @@ public:
 };
 
 
-#endif /* VisualOdometry_hpp */
+#endif /* SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_ */

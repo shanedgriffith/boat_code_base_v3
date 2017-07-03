@@ -6,8 +6,8 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#ifndef ViewpointMachine_hpp
-#define ViewpointMachine_hpp
+#ifndef SRC_GEOMETRICFLOW_VIEWPOINTMACHINE_HPP_
+#define SRC_GEOMETRICFLOW_VIEWPOINTMACHINE_HPP_
 
 #include <stdio.h>
 #include "ReprojectionFlow.hpp"
@@ -33,4 +33,4 @@ public:
 
 
 
-#endif /* ViewpointMachine_hpp */
+#endif /* SRC_GEOMETRICFLOW_VIEWPOINTMACHINE_HPP_ */

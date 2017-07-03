@@ -6,8 +6,8 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#ifndef IRMachine_hpp
-#define IRMachine_hpp
+#ifndef SRC_IMAGEALIGNMENT_DREAMFLOW_IRMACHINE_HPP_
+#define SRC_IMAGEALIGNMENT_DREAMFLOW_IRMACHINE_HPP_
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
@@ -36,4 +36,4 @@ public:
 
 
 
-#endif /* IRMachine_hpp */
+#endif /* SRC_IMAGEALIGNMENT_DREAMFLOW_IRMACHINE_HPP_ */

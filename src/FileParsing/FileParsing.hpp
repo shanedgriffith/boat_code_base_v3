@@ -6,8 +6,8 @@
 //  Copyright © 2016 shane. All rights reserved.
 //
 
-#ifndef FileParsing_hpp
-#define FileParsing_hpp
+#ifndef SRC_FILEPARSING_FILEPARSING_HPP_
+#define SRC_FILEPARSING_FILEPARSING_HPP_
 
 #include <stdio.h>
 #include <string>
@@ -48,4 +48,4 @@ public:
 };
 
 
-#endif /* FileParsing_hpp */
+#endif /* SRC_FILEPARSING_FILEPARSING_HPP_ */

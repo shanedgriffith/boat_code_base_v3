@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#ifndef __BundleAdjustOneDataset__GTSamInterface__
-#define __BundleAdjustOneDataset__GTSamInterface__
+#ifndef SRC_OPTIMIZATION_GTSAMINTERFACE_H_
+#define SRC_OPTIMIZATION_GTSAMINTERFACE_H_
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
@@ -115,4 +115,4 @@ public:
 
 
 
-#endif /* defined(__BundleAdjustOneDataset__GTSamInterface__) */
+#endif /* SRC_OPTIMIZATION_GTSAMINTERFACE_H_ */

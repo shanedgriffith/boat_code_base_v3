@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#ifndef __BundleAdjustOneDataset__BAOne__
-#define __BundleAdjustOneDataset__BAOne__
+#ifndef SRC_DATATYPES_LANDMARKTRACK_H_
+#define SRC_DATATYPES_LANDMARKTRACK_H_
 
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
@@ -47,4 +47,4 @@ public:
 
 
 
-#endif /* defined(__BundleAdjustOneDataset__BAOne__) */
+#endif /* SRC_DATATYPES_LANDMARKTRACK_H_ */

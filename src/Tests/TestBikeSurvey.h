@@ -6,8 +6,8 @@
 //  Copyright © 2017 Shane. All rights reserved.
 //
 
-#ifndef TestBikeSurvey_h
-#define TestBikeSurvey_h
+#ifndef SRC_TESTS_TESTBIKESURVEY_H_
+#define SRC_TESTS_TESTBIKESURVEY_H_
 
 #include <vector>
 
@@ -37,4 +37,4 @@ public:
 
 
 
-#endif /* TestBikeSurvey_h */
+#endif /* SRC_TESTS_TESTBIKESURVEY_H_ */

@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Shane Griffith. All rights reserved.
 //
 
-#ifndef __BeginningSLAM__SLAMDraw__
-#define __BeginningSLAM__SLAMDraw__
+#ifndef SRC_VISUALIZATIONS_SLAMDRAW_H_
+#define SRC_VISUALIZATIONS_SLAMDRAW_H_
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -109,4 +109,4 @@ public:
     void PutText(double x, double y, std::string text);
 };
 
-#endif /* defined(__BeginningSLAM__SLAMDraw__) */
+#endif /* SRC_VISUALIZATIONS_SLAMDRAW_H_ */

@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __VisualizationCode__ParseSurvey__
-#define __VisualizationCode__ParseSurvey__
+#ifndef SRC_RFLOWOPTIMIZATION_HOPCOUNTLOG_HPP_
+#define SRC_RFLOWOPTIMIZATION_HOPCOUNTLOG_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -43,4 +43,4 @@ public:
 
 
 
-#endif /* defined(__VisualizationCode__ParseSurvey__) */
+#endif /* SRC_RFLOWOPTIMIZATION_HOPCOUNTLOG_HPP_ */

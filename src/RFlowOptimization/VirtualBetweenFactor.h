@@ -7,8 +7,8 @@
 
 
 
-#ifndef __VirtualBetweenFactor__
-#define __VirtualBetweenFactor__
+#ifndef SRC_RFLOWOPTIMIZATION_VIRTUALBETWEENFACTOR_H_
+#define SRC_RFLOWOPTIMIZATION_VIRTUALBETWEENFACTOR_H_
 
 #include <gtsam/inference/Key.h>
 #include <gtsam/slam/BetweenFactor.h>
@@ -96,4 +96,4 @@ public:
     }
 };
 
-#endif /* defined(__VirtualBetweenFactor__) */
+#endif /* SRC_RFLOWOPTIMIZATION_VIRTUALBETWEENFACTOR_H_ */

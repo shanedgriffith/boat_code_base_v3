@@ -6,8 +6,8 @@
 //  Copyright © 2016 shane. All rights reserved.
 //
 
-#ifndef PointMap_hpp
-#define PointMap_hpp
+#ifndef SRC_FILEPARSING_POINTMAP_HPP_
+#define SRC_FILEPARSING_POINTMAP_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -59,4 +59,4 @@ public:
 
 
 
-#endif /* PointMap_hpp */
+#endif /* SRC_FILEPARSING_POINTMAP_HPP_ */

@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef __SIFTFlow__ImageOperations__
-#define __SIFTFlow__ImageOperations__
+#ifndef SRC_IMAGEALIGNMENT_DREAMFLOW_IMAGEOPERATIONS_H_
+#define SRC_IMAGEALIGNMENT_DREAMFLOW_IMAGEOPERATIONS_H_
 
 #include <stdio.h>
 
@@ -71,4 +71,4 @@ public:
 
 
 
-#endif /* defined(__SIFTFlow__ImageOperations__) */
+#endif /* SRC_IMAGEALIGNMENT_DREAMFLOW_IMAGEOPERATIONS_H_ */
