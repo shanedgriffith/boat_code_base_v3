@@ -50,6 +50,7 @@ protected:
     std::vector<std::vector<double>> lpd_rerror;
     std::vector<ParseOptimizationResults> POR;
     std::vector<unordered_map<int, int>> lmap;
+    std::vector<double> inlier_ratios;
     
     void IdentifyOptimizationDates();
     void UpdateLandmarkMap(std::vector<LandmarkTrack> tracks);
@@ -64,11 +65,11 @@ public:
     std::string _map_dir;
     std::string _pftbase;
     
-    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase):
+    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = ""):
         _map_dir(results_dir + "maps/"), _pftbase(pftbase), _cam(cam),
         SurveyOptimizer(cam, rfFG, date, results_dir, false) {
         
-        std::cout << "RFlow Optimization for : " << date << std::endl;
+        std::cout << "Multi-Session Optimization up to " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
         cout << "  Initializing.."<<endl;

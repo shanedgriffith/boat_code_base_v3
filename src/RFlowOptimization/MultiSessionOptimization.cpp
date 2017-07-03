@@ -27,9 +27,10 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
     
     dates = FileParsing::ListDirsInDir(_map_dir);
     for(int i=0; i<dates.size(); i++){
-        if(!HopcountLog::LogExists(_map_dir, alldates[i])) break; //this fails on the first date. also, skip 1? And finally, if I need to re-run, is this method of checking going to fail?
-        ParseOptimizationResults datePOR(_map_dir + date);
+        ParseOptimizationResults datePOR(_map_dir + dates[i]);
         POR.push_back(datePOR);
+        if(_date.compare(dates[i])==0) break;
+        if(i>0 && !HopcountLog::LogExists(_map_dir, alldates[i])) break; //if I need to re-run, won't this method fail?
     }
     
     optstart = min(POR.size()-K-1, 0);
@@ -50,11 +51,17 @@ void MultiSessionOptimization::Initialize() {
             exit(-1);
         }
         
+        std::vector<LandmarkTrack> clset;
+        cached_landmarks.push_back(clset);
+        
         HopcountLog hlog(_map_dir);
         vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], count);
         lpd_rerror.push_back(rerror_set);
-        std::vector<LandmarkTrack> clset;
-        cached_landmarks.push_back(clset);
+        
+        int ninliers = 0;
+        for(int i=0; i<rerror_set.size(); i++)
+            ninliers += (rerror_set[i]==1)?1:0;
+        inlier_ratios.push_back(1.*ninliers/rerror_set.size());
     }
 }
 
@@ -219,12 +226,20 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         }
         totchanges += nchanges;
         std::cout << "number of outliers: " << coutliers << std::endl;
+        inlier_ratio[sidx] = 1.0-(1.*coutliers/inter_error.size());
     }
     
     return 1.0*totchanges/(dates.size()-optstart);
 }
 
 void MultiSessionOptimization::SaveResults() {
+    
+    for(int i=0; i<inlier_ratio.size(); i++)
+        if(inlier_ratio[i] < 0.9){
+            std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[i+optstart] << inlier_ratio[sidx] << std::endl;
+            return;
+        }
+    
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(sidx);
@@ -272,9 +287,10 @@ void MultiSessionOptimization::IterativeMerge() {
         nchanges = UpdateError(i==0);
     }
     
-    //only overwrite the localizations if the error is low enough, otherwise write everything to a dump folder?
-    std::cout << "  Saving.." << std::endl;
-    SaveResults();
+    if(!dry_run){
+        std::cout << "  Saving.." << std::endl;
+        SaveResults();
+    }
 }
 
 
