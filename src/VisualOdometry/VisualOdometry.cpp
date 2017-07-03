@@ -52,7 +52,7 @@ vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int survey, int ckey, Par
             exit(-1);
         } else if(pft.ids[i] == active[next_entry].key) {
             //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
+            active[next_entry].AddToTrack(pft.imagecoord[i], survey, ckey);
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             //inc next_entry.
             next_entry++;
@@ -65,7 +65,7 @@ vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int survey, int ckey, Par
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = true;//(rand()%100 < percent_of_tracks);
         LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
+        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
         active.push_back(lt);
     }
     return inactive;

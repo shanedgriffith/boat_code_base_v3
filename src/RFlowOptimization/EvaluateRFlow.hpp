@@ -37,9 +37,10 @@ public:
     
     void Evaluate();
     
-    std::vector<double> ErrorForLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
-    std::vector<double> SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
-    vector<double> SurveyErrorAtLocalizations(std::vector<std::vector<double> > poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
+    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
+    vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, vector<vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
+    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
+    vector<double> IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);
 };

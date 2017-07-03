@@ -55,7 +55,7 @@ protected:
     void UpdateLandmarkMap(std::vector<LandmarkTrack> tracks);
     void StandAloneFactorGraph(int survey, bool firstiter);
     void ConstructFactorGraph(bool firstiter);
-    void AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1);
+    void AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1, bool on);
     void AddLocalizations();
     void AddAllTheLandmarkTracks();
     

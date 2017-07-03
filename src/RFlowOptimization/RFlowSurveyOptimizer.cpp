@@ -87,11 +87,10 @@ int RFlowSurveyOptimizer::UpdateError() {
     
     int nchanges = 0;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> next = erf.ErrorForLocalizations(lpdi.localizations, poses);
-    vector<double> serror = erf.SurveyErrorAtLocalizations(lpdi.localizations, _pftbase);
-    vector<double> both(next.size());
+    vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi.localizations, poses);
+    vector<double> intra_error = erf.IntraSurveyErrorAtLocalizations(lpdi.localizations, _pftbase);
     int coutliers = 0;
-    for(int j=0; j<next.size(); j++) {
+    for(int j=0; j<inter_error.size(); j++) {
         //adaptive threshold.
         double LPD_RERROR_THRESHOLD = rerrs[lpdi.localizations[j].s1time]*mult;
         if(LPD_RERROR_THRESHOLD < 0) {
@@ -102,9 +101,9 @@ int RFlowSurveyOptimizer::UpdateError() {
         }
         
         bool inlier = true;
-        if(std::isnan(next[j]) || LPD_RERROR_THRESHOLD <= next[j]) inlier = false;
-        if(std::isnan(serror[j])) inlier = false;
-        if(LPD_RERROR_THRESHOLD <= serror[j]) permerr[j] = 1;
+        if(std::isnan(inter_error[j]) || LPD_RERROR_THRESHOLD <= inter_error[j]) inlier = false;
+        if(std::isnan(intra_error[j])) inlier = false;
+        if(LPD_RERROR_THRESHOLD <= intra_error[j]) permerr[j] = 1;
         if(permerr[j]>0) inlier = false;
         
         if((inlier && lpd_rerror[j] <= 0) || (!inlier && lpd_rerror[j]> 0)) nchanges++;
@@ -147,7 +146,7 @@ void RFlowSurveyOptimizer::IterativeMerge() {
     erf.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
 
     HopcountLog hlog(_map_dir);
-    hlog.SaveLocalLog(_date, numverified, lpdi.localizations);
+    hlog.SaveLocalLog(_date, numverified, lpdi.localizations, lpd_rerror);
 }
 
 

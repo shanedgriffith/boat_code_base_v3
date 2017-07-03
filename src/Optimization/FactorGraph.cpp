@@ -124,7 +124,7 @@ gtsam::Symbol FactorGraph::GetSymbol(int survey, int pnum){
     return gtsam::Symbol(survey, pnum);
 }
 
-void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<gtsam::Point2> points, vector<gtsam::Symbol> camera_keys, bool used){
+void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<bool> constraint_on, vector<gtsam::Point2> points, vector<gtsam::Symbol> camera_keys, bool used){
     /*Add the landmark track to the graph.*/    
 
     //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
@@ -142,7 +142,8 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_ke
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
     for(int i=0; i<points.size(); i++) {
-        sppf.add(points[i], camera_keys[i], pixelNoise, k);
+        if(constraint_on[i])
+            sppf.add(points[i], camera_keys[i], pixelNoise, k);
     }
     
     landmark_factors[active_landmark_set].push_back(sppf);

@@ -26,9 +26,8 @@ void SurveyOptimizer::RemoveLandmarkFromList(int list_idx) {
 }
 
 void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks){
-    for(int i=0; i<landmarks.size(); i++){
-        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used);
-    }
+    for(int i=0; i<landmarks.size(); i++)
+        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
 }
 
 bool SurveyOptimizer::CheckImageDuplication(ParseFeatureTrackFile& pft){
@@ -72,7 +71,7 @@ vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int survey, int ckey, Pa
             //exit(-1);
         } else if(pft.ids[i] == active[next_entry].key) {
             //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
+            active[next_entry].AddToTrack(pft.imagecoord[i], survey, ckey);
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             //inc next_entry.
             next_entry++;
@@ -85,7 +84,7 @@ vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int survey, int ckey, Pa
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = (rand()%100 < percent_of_tracks);
         LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
+        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
         active.push_back(lt);
     }
     return inactive;

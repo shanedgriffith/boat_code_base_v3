@@ -27,7 +27,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
     
     dates = FileParsing::ListDirsInDir(_map_dir);
     for(int i=0; i<dates.size(); i++){
-        if(!HopcountLog::LogExists(_map_dir, alldates[i])) break;
+        if(!HopcountLog::LogExists(_map_dir, alldates[i])) break; //this fails on the first date. also, skip 1? And finally, if I need to re-run, is this method of checking going to fail?
         ParseOptimizationResults datePOR(_map_dir + date);
         POR.push_back(datePOR);
     }
@@ -50,9 +50,11 @@ void MultiSessionOptimization::Initialize() {
             exit(-1);
         }
         
-        lpd_rerror.push_back(vector<double>(nloaded, 0.0));
-        std::vector<LandmarkTrack> set;
-        cached_landmarks.push_back(set);
+        HopcountLog hlog(_map_dir);
+        vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], count);
+        lpd_rerror.push_back(rerror_set);
+        std::vector<LandmarkTrack> clset;
+        cached_landmarks.push_back(clset);
     }
 }
 
@@ -70,7 +72,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
     for(int i=0; i<POR[survey].boat.size(); i++) {
         gtsam::Pose3 traj = POR[survey].CameraPose(i);
         int lpdcur = lpdi[survey].GetLPDIdx(i);
-        if(!latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
+        if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
             traj = lp.VectorToPose(lpdi[survey].localizations[lpdcur].p1frame0);
         }
         rfFG->AddPose(survey, i, traj);
@@ -114,7 +116,7 @@ void MultiSessionOptimization::ConstructFactorGraph(bool firstiter){
     }
 }
 
-void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1){
+void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1, bool on){
     int sidx = s0-optstart;
     for(int i=0; i<pids.size(); i++){
         auto search = lmap[sidx].find(pids[i]);
@@ -123,7 +125,7 @@ void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std:
             exit(-1);
         }
         int lidx = search->second;
-        cached_landmarks[sidx][lidx].AddToTrack(0.0, p2d1[i], s1, s1time); //TODO: fix. s1time isn't the camera_key.
+        cached_landmarks[sidx][lidx].AddToTrack(p2d1[i], s1, s1time, on); //none are used by default.
     }
 }
 
@@ -131,14 +133,14 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
-            if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
+                if(lpd_rerror[i][j] < 0) continue;
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
             } else if(firstiter) { //add ISCs for the remaining surveys
-                AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
-                AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
+                AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
+                AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
             }
         }
     }
@@ -146,6 +148,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
 
 void MultiSessionOptimization::AddAllTheLandmarkTracks(){
     cout << "   adding the landmark tracks."<<endl;
+    
     //add all the landmark tracks to the factor graph.
     for(int i=0; i<cached_landmarks.size(); i++){
         rfFG->ChangeLandmarkSet(i);
@@ -153,10 +156,30 @@ void MultiSessionOptimization::AddAllTheLandmarkTracks(){
     }
 }
 
+void MultiSessionOptimization::ToggleLandmarkConstraints(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1){
+    int sidx = s0-optstart;
+    for(int i=0; i<pids.size(); i++){
+        auto search = lmap[sidx].find(pids[i]);
+        if(search==lmap[sidx].end()){
+            std::cout << "MultiSessionOptimization::AddAdjustableISC() Warning. The pid wasn't found in the map. ISC: " << s0 <<", " << s1 << ", "<<s1time << ", " << pids[i] << std::endl;
+            exit(-1);
+        }
+        int lidx = search->second;
+        cached_landmarks[sidx][lidx].Toggle(s1, s1time);
+    }
+}
+
 double MultiSessionOptimization::UpdateError(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     static vector<vector<double> > rerrs;
+    
+    vector<vector<vector<double> > > landmarks;
+    for(int i=optstart; i<dates.size(); i++){
+        rfFG->ChangeLandmarkSet(sidx);
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        landmarks.push_back(landmarkset);
+    }
     
     double totchanges = 0;
     for(int i=optstart; i<dates.size(); i++){
@@ -169,24 +192,27 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
 
         EvaluateRFlow erf(_cam, dates[i], _map_dir);
         erf.debug = true;
-        
-        rfFG->ChangeLandmarkSet(sidx);
-        vector<vector<double> > landmarks = GTS.GetOptimizedLandmarks();
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
-        vector<double> serror = erf.SurveyErrorAtLocalizations(poses, landmarks, lpdi[sidx].localizations, POR[i], _pftbase);
-        vector<double> next = erf.ErrorForLocalizations(lpdi[sidx].localizations, poses);
+        vector<double> intra_error = erf.IntraSurveyErrorAtLocalizations(poses, landmarks[sidx], lpdi[sidx].localizations, POR[i], _pftbase);
+        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks[sidx], optstart);
         int nchanges = 0;
         int coutliers = 0;
-        for(int j=0; j<next.size(); j++) {
+        for(int j=0; j<inter_error.size(); j++) {
             //adaptive threshold.
             double LPD_RERROR_THRESHOLD = rerrs[sidx][lpdi[sidx].localizations[j].s1time]*mult;
             bool inlier = true;
-            if(std::isnan(next[j]) || next[j] > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(serror[j])) inlier = false;
-            if(serror[j] > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
+            if(std::isnan(next[j]) || inter_error[j] > LPD_RERROR_THRESHOLD) inlier = false;
+            if(std::isnan(intra_error[j])) inlier = false;
+            if(intra_error[j] > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
             if(permerr[sidx][j] > 0) inlier = false;
             
-            if((inlier && lpd_rerror[sidx][j] <= 0) || (!inlier && lpd_rerror[sidx][j] > 0)) nchanges++;
+            if((inlier && lpd_rerror[sidx][j] < 0) || (!inlier && lpd_rerror[sidx][j] > 0)) {
+                nchanges++;
+                if(lpd.s0 >= optstart) {
+                    ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
+                    ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
+                }
+            }
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
@@ -199,16 +225,30 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
 }
 
 void MultiSessionOptimization::SaveResults() {
+    vector<vector<vector<double> > > landmarks;
+    for(int i=optstart; i<dates.size(); i++){
+        rfFG->ChangeLandmarkSet(sidx);
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        landmarks.push_back(landmarkset);
+    }
+    
     for(int i=optstart; i<dates.size(); i++){
         SaveOptimizationResults curSOR(_map_dir + dates[i]);
         int sidx = i-optstart;
-        rfFG->ChangeLandmarkSet(sidx);
-        vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
         vector<vector<double> > ts = GTS.GetOptimizedTrajectory(i, POR.boat.size());
         vector<vector<double> > vs;
         curSOR.SetSaveStatus();
         curSOR.SetDrawMap();
-        curSOR.PlotAndSaveCurrentEstimate(ls, ts, vs, {});
+        curSOR.PlotAndSaveCurrentEstimate(landmarks[sidx], ts, vs, {});
+        
+        EvaluateRFlow erf(_cam, dates[i], _map_dir);
+        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR.boat.size());
+        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks[sidx], optstart);
+        erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
+        erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
+        
+        HopcountLog hlog(_map_dir);
+        hlog.SaveLocalLog(dates[i], numverified, lpdi[sidx].localizations, lpd_rerror[sidx]);
     }
 }
 
@@ -232,19 +272,9 @@ void MultiSessionOptimization::IterativeMerge() {
         nchanges = UpdateError(i==0);
     }
     
-    EvaluateRFlow erf(_cam, _date, _map_dir);
-    erf.debug = true;
-    vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> rerror_localizations = erf.ErrorForLocalizations(lpdi.localizations, poses);
-    erf.SaveEvaluation(rerror_localizations, "/postlocalizationerror.csv");
-    erf.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
-    
     //only overwrite the localizations if the error is low enough, otherwise write everything to a dump folder?
     std::cout << "  Saving.." << std::endl;
     SaveResults();
-    
-    HopcountLog hlog(_map_dir);
-    hlog.SaveLocalLog(_date, numverified, lpdi.localizations);
 }
 
 

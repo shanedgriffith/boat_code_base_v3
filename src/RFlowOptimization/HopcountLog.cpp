@@ -33,6 +33,35 @@ double HopcountLog::LoadHopDistance(string hopdate) {
     return avg_hop_distance;
 }
 
+std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count){
+    std::vector<double> rerror_set(count, 0.0);
+    string fname = _path + hopdate + _locoptname;
+    FILE * fp = OpenFile(fname.c_str(), "r");
+    int idx = 0;
+    if(fp){
+        int a, b, rerr;
+        double c;
+        int LINESIZE = 10000;
+        char line[LINESIZE]="";
+        fgets(line, LINESIZE-1, fp);//skip the first line
+        while(fgets(line, LINESIZE-1, fp)!=EOF){
+            
+            int ret = sscanf(line, "%d, %d, %d, %lf", &a, &b, &rerr, &c);
+            if(ret != 4){
+                std::cout << "HopcountLog::LoadPriorRerror() error. Line formatting. " << ret << " entries in "<< line << std::endl;
+                exit(-1);
+            }
+            rerror_set[idx++] = (double) rerr;
+        }
+        fclose(fp);
+        if(count != idx-1){
+            std::cout << "HopcountLog::LoadPriorRerror() error. The number of lines in the file is unexpected. Got " << count << std::endl;
+            exit(-1);
+        }
+    }
+    return rerror_set;
+}
+
 std::vector<double> HopcountLog::GetAvgHopCounts() {
     //returns the average hop count of all previous maps.
     //string dir = _results_dir + "maps/";
@@ -47,7 +76,7 @@ std::vector<double> HopcountLog::GetAvgHopCounts() {
     return ret;
 }
 
-void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations) {
+void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations, std::vector<double> lpd_rerror) {
     std::vector<double> hopcounts = GetAvgHopCounts(_path);
     double sum = 0.0;
     int count = 0;

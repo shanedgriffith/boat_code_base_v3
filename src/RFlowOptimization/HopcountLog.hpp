@@ -35,8 +35,9 @@ public:
     
     static bool LogExists(std::string basepath, std::string hopdate);
     double LoadHopDistance(std::string hopdate);
+    vector<double> LoadPriorRerror(std::string hopdate, int count);
     std::vector<double> GetAvgHopCounts();
-    void SaveLocalLog(std::string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations);
+    void SaveLocalLog(std::string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations, std::vector<double> lpd_rerror);
 };
 
 

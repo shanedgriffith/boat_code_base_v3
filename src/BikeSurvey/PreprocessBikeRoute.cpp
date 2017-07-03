@@ -357,7 +357,7 @@ vector<LandmarkTrack> PreprocessBikeRoute::ProcessNewPoints(int ckey, ParseFeatu
             continue;
         } else if(pft.ids[i] == active[next_entry].key) {
             //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], ckey);
+            active[next_entry].AddToTrack(pft.imagecoord[i], (int)'x', ckey);
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             next_entry++;
         }
@@ -369,7 +369,7 @@ vector<LandmarkTrack> PreprocessBikeRoute::ProcessNewPoints(int ckey, ParseFeatu
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = true;
         LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.time, pft.imagecoord[i], ckey);
+        lt.AddToTrack(pft.imagecoord[i], (int)'x', ckey);
         active.push_back(lt);
     }
     return inactive;

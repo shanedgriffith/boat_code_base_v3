@@ -67,7 +67,7 @@ void EvaluateRFlow::PrintTots(vector<double> tots, string name){
     }
 }
 
-vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseData>& localizations, vector<vector<double> >& traj){
+vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, vector<vector<double> >& traj){
     vector<double> result(localizations.size(), 0.0);
     vector<double> tots(6, 0.0);
     for(int i=0; i<localizations.size(); i++) {
@@ -80,7 +80,27 @@ vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseDat
     return result;
 }
 
-//vector<double> EvaluateRFlow::ErrorForLocalizations(std::vector<LocalizedPoseData>& localizations, vector<Anchors>& anch, vector<vector<double> >& traj) {
+vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, vector<vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart){
+    vector<double> result(localizations.size(), 0.0);
+    vector<double> tots(6, 0.0);
+    for(int i=0; i<localizations.size(); i++) {
+        vector<double> boat = traj[localizations[i].s1time];
+        vector<double> stats;
+        if(localizations[i].s0 < optstart)
+            stats = MeasureReprojectionError(boat, localizations[i].p2d1, localizations[i].p3d0, localizations[i].rerrorp);
+        else {
+            vector<gtsam::Point3> p3d0 = GetSubsetOf3DPoints(landmarks[localizations[i].s0 - optstart], localizations[i].pids);
+            stats = MeasureReprojectionError(boat, localizations[i].p2d1, p3d0, localizations[i].rerrorp);
+        }
+            
+        result[i] = UpdateTots(tots, stats);
+    }
+    
+    PrintTots(tots, "LPD");
+    return result;
+}
+
+//vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, vector<Anchors>& anch, vector<vector<double> >& traj) {
 //    ParseOptimizationResults por0(anch[0]._base + anch[0]._date);
 //    ParseOptimizationResults por1(anch[1]._base + anch[1]._date);
 //    vector<double> result(localizations.size(), 0.0);
@@ -149,7 +169,7 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
     return pset;
 }
 
-vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<std::vector<double> > poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase){
+vector<double> EvaluateRFlow::IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase){
     vector<double> result(localizations.size(), 0.0);
     vector<double> tots(4, 0.0);
     for(int i=0; i<localizations.size(); i++) {
@@ -163,7 +183,7 @@ vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<std::vector
     return result;
 }
 
-vector<double> EvaluateRFlow::SurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase){
+vector<double> EvaluateRFlow::IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase){
     ParseOptimizationResults POR(_results_dir + _date);
 
     vector<double> result(localizations.size(), 0.0);
@@ -233,7 +253,6 @@ void EvaluateRFlow::VisualizeDivergenceFromLocalizations(std::vector<LocalizedPo
     string visualization = _results_dir + _date + "/visual_LPD_check.jpg";
     draw.SaveDrawing(visualization);
 }
-
 
 void EvaluateRFlow::VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations) {
     if(localizations.size() == 0){
