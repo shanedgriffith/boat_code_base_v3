@@ -25,9 +25,9 @@ void SurveyOptimizer::RemoveLandmarkFromList(int list_idx) {
     active.erase(active.begin() + list_idx, active.begin() + list_idx + 1);
 }
 
-void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks, int survey){
+void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks){
     for(int i=0; i<landmarks.size(); i++){
-        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used, survey);
+        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used);
     }
 }
 
@@ -42,7 +42,7 @@ bool SurveyOptimizer::CheckImageDuplication(ParseFeatureTrackFile& pft){
     return true;
 }
 
-vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft) {
+vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft) {
     vector<LandmarkTrack> inactive;
     static int last_skipped = 0;
     int next_entry = 0;
@@ -72,7 +72,7 @@ vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int ckey, ParseFeatureTr
             //exit(-1);
         } else if(pft.ids[i] == active[next_entry].key) {
             //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], ckey);
+            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             //inc next_entry.
             next_entry++;
@@ -85,7 +85,7 @@ vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int ckey, ParseFeatureTr
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = (rand()%100 < percent_of_tracks);
         LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.time, pft.imagecoord[i], ckey);
+        lt.AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
         active.push_back(lt);
     }
     return inactive;
@@ -201,7 +201,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     
     //process the landmark measurement
     if(!CheckImageDuplication(PFT)){
-        vector<LandmarkTrack> inactive = ProcessNewPoints(camera_key, PFT);
+        vector<LandmarkTrack> inactive = ProcessNewPoints((int) 'x', camera_key, PFT);
         
         //add the landmark measurement to the graph
         if(cache_landmarks) CacheLandmarks(inactive);

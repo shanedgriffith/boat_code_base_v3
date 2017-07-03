@@ -79,7 +79,7 @@ public:
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
     void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, std::vector<gtsam::Point2> points,
-                          std::vector<int> camera_keys, bool used=true, int survey=-1);
+                          std::vector<gtsam::Symbol> camera_keys, bool used=true);
     void SetLandmarkDeviation(double dev);
     
     void Clear();

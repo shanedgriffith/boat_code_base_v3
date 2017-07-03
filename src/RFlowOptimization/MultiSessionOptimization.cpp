@@ -21,8 +21,9 @@
 
 using namespace std;
 
-void MultiSessionOptimization::IdentifyOptimizationRange(){
+void MultiSessionOptimization::IdentifyOptimizationDates(){
     /*The dates in datetable*/
+    cout << "   parsing the optimization results."<<endl;
     
     dates = FileParsing::ListDirsInDir(_map_dir);
     for(int i=0; i<dates.size(); i++){
@@ -37,7 +38,7 @@ void MultiSessionOptimization::IdentifyOptimizationRange(){
 
 void MultiSessionOptimization::Initialize() {
      /*Load the lpd data for each one.*/
-
+    cout << "   loading the localizations."<<endl;
     cache_landmarks = true;
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
@@ -85,7 +86,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         if(firstiter){
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
-            vector<LandmarkTrack> tracks = ProcessNewPoints(i, pftf);
+            vector<LandmarkTrack> tracks = ProcessNewPoints(survey, i, pftf);
             UpdateLandmarkMap(tracks);
             CacheLandmarks(tracks);
         }
@@ -100,17 +101,16 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
 }
 
 void MultiSessionOptimization::ConstructFactorGraph(bool firstiter){
-    cout <<"\nConstructing the Factor Graph:" << endl;
     cout << "   adding the surveys"<<endl;
     
-    //add all the surveys to the graph
-    for(int i=optstart; i<dates.size(); i++){
-        cache_set = i-optstart;
+    //add the latest K surveys to the graph
+    for(int survey=optstart; survey<dates.size(); survey++){
+        cache_set = survey-optstart; //update the parent class variable
         if(firstiter){
             unordered_map<int, int> landmark_id_to_cache_idx;
             lmap.push_back(landmark_id_to_cache_idx);
         }
-        StandAloneFactorGraph(i, firstiter);
+        StandAloneFactorGraph(survey, firstiter);
     }
 }
 
@@ -119,23 +119,24 @@ void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std:
     for(int i=0; i<pids.size(); i++){
         auto search = lmap[sidx].find(pids[i]);
         if(search==lmap[sidx].end()){
-            std::cout << "Warning. The pid wasn't found in the map." << std::endl;
-            continue;
+            std::cout << "MultiSessionOptimization::AddAdjustableISC() Warning. The pid wasn't found in the map. ISC: " << s0 <<", " << s1 << ", "<<s1time << ", " << pids[i] << std::endl;
+            exit(-1);
         }
         int lidx = search->second;
-        cached_landmarks[sidx][lidx].AddToTrack(0.0, p2d1[i], s1time); //TODO: fix. s1time isn't the camera_key.
+        cached_landmarks[sidx][lidx].AddToTrack(0.0, p2d1[i], s1, s1time); //TODO: fix. s1time isn't the camera_key.
     }
 }
 
-void MultiSessionOptimization::AddLocalizations(){
+void MultiSessionOptimization::AddLocalizations(bool firstiter){
+    cout << "   adding the localizations."<<endl;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
-            if(lpd.s0 < optstart) { //localization factors are only added for locked-in surveys
+            if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
-            } else {
+            } else if(firstiter) { //add ISCs for the remaining surveys
                 AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
                 AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
             }
@@ -144,7 +145,7 @@ void MultiSessionOptimization::AddLocalizations(){
 }
 
 void MultiSessionOptimization::AddAllTheLandmarkTracks(){
-    cout << "Adding the landmark tracks."<<endl;
+    cout << "   adding the landmark tracks."<<endl;
     //add all the landmark tracks to the factor graph.
     for(int i=0; i<cached_landmarks.size(); i++){
         rfFG->ChangeLandmarkSet(i);
@@ -169,30 +170,29 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         EvaluateRFlow erf(_cam, dates[i], _map_dir);
         erf.debug = true;
         
-        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         rfFG->ChangeLandmarkSet(sidx);
         vector<vector<double> > landmarks = GTS.GetOptimizedLandmarks();
-        vector<double> next = erf.ErrorForLocalizations(lpdi[sidx].localizations, poses);
+        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         vector<double> serror = erf.SurveyErrorAtLocalizations(poses, landmarks, lpdi[sidx].localizations, POR[i], _pftbase);
+        vector<double> next = erf.ErrorForLocalizations(lpdi[sidx].localizations, poses);
         int nchanges = 0;
         int coutliers = 0;
         for(int j=0; j<next.size(); j++) {
             //adaptive threshold.
-            double LPD_RERROR_THRESHOLD = rerrs[lpdi[sidx].localizations[j].s1time]*mult;
+            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpdi[sidx].localizations[j].s1time]*mult;
             bool inlier = true;
-            if(std::isnan(next[j]) || LPD_RERROR_THRESHOLD <= next[j]) inlier = false;
+            if(std::isnan(next[j]) || next[j] > LPD_RERROR_THRESHOLD) inlier = false;
             if(std::isnan(serror[j])) inlier = false;
-            if(LPD_RERROR_THRESHOLD <= serror[j]) permerr[j] = 1;
-            if(permerr[j]>0) inlier = false;
+            if(serror[j] > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
+            if(permerr[sidx][j] > 0) inlier = false;
             
-            if((inlier && lpd_rerror[sidx][j] <= 0) || (!inlier && lpd_rerror[sidx][j]> 0)) nchanges++;
+            if((inlier && lpd_rerror[sidx][j] <= 0) || (!inlier && lpd_rerror[sidx][j] > 0)) nchanges++;
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
         }
         totchanges += nchanges;
         std::cout << "number of outliers: " << coutliers << std::endl;
-        
     }
     
     return 1.0*totchanges/(dates.size()-optstart);
@@ -219,7 +219,7 @@ void MultiSessionOptimization::IterativeMerge() {
         std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
-        AddLocalizations();
+        AddLocalizations(i==0);
         AddAllTheLandmarkTracks();
         
         std::cout << "  Optimizing..." << std::endl;

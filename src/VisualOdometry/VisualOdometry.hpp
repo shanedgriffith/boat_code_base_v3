@@ -47,9 +47,9 @@ protected:
     
     double AngleDistance(double a, double b);
     void RemoveLandmarkFromList(int list_idx);
-    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, std::vector<gtsam::Point2>& points, std::vector<int> camera_keys, bool used, int survey);
-    void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive, int survey=-1);
-    std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
+    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, std::vector<gtsam::Point2>& points, std::vector<gtsam::Symbol> camera_keys, bool used);
+    void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive);
+    std::vector<LandmarkTrack> ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(int iteration = -1, double percent_completed = -1);
     void RunGTSAM();

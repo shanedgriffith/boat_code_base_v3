@@ -18,14 +18,15 @@ public:
     bool used;
     std::vector<double> active_times;
     std::vector<gtsam::Point2> points;
-    std::vector<int> camera_keys;
+    std::vector<gtsam::Symbol> camera_keys;
     
-    LandmarkTrack(int k, bool touse=true):key(k), used(touse){}
+    LandmarkTrack(int k, bool touse=true):key(k), used(touse), hasSymbols(false){}
     
-    void AddToTrack(double t, gtsam::Point2 p, int ckey) {
+    void AddToTrack(double t, gtsam::Point2 p, int survey, int ckey) {
         active_times.push_back(t);
         points.push_back(p);
-        camera_keys.push_back(ckey);
+        gtsam::Symbol S((char) survey, ckey);
+        camera_keys.push_back(S);
     }
     
     int GetKey(){return key;}

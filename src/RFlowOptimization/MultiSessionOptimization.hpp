@@ -51,7 +51,7 @@ protected:
     std::vector<ParseOptimizationResults> POR;
     std::vector<unordered_map<int, int>> lmap;
     
-    void IdentifyOptimizationRange();
+    void IdentifyOptimizationDates();
     void UpdateLandmarkMap(std::vector<LandmarkTrack> tracks);
     void StandAloneFactorGraph(int survey, bool firstiter);
     void ConstructFactorGraph(bool firstiter);
@@ -71,8 +71,9 @@ public:
         std::cout << "RFlow Optimization for : " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
+        cout << "  Initializing.."<<endl;
         SurveyOptimizer::Initialize();
-        IdentifyOptimizationRange();
+        IdentifyOptimizationDates();
         Initialize();
     }
 

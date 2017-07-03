@@ -22,13 +22,13 @@ void VisualOdometry::RemoveLandmarkFromList(int list_idx) {
     active.erase(active.begin() + list_idx, active.begin() + list_idx + 1);
 }
 
-void VisualOdometry::AddLandmarkTracks(vector<LandmarkTrack>& landmarks, int survey){
+void VisualOdometry::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
     for(int i=0; i<landmarks.size(); i++){
-        AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used, survey);
+        AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used);
     }
 }
 
-vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft) {
+vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft) {
     vector<LandmarkTrack> inactive;
     
     int next_entry = 0;
@@ -52,7 +52,7 @@ vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int ckey, ParseFeatureTra
             exit(-1);
         } else if(pft.ids[i] == active[next_entry].key) {
             //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], ckey);
+            active[next_entry].AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             //inc next_entry.
             next_entry++;
@@ -65,7 +65,7 @@ vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int ckey, ParseFeatureTra
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = true;//(rand()%100 < percent_of_tracks);
         LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.time, pft.imagecoord[i], ckey);
+        lt.AddToTrack(pft.time, pft.imagecoord[i], survey, ckey);
         active.push_back(lt);
     }
     return inactive;
@@ -86,7 +86,7 @@ void VisualOdometry::ConstructGraph(gtsam::Pose3 cam, ParseFeatureTrackFile& PFT
     }
     
     //process the landmark measurement
-    vector<LandmarkTrack> inactive = ProcessNewPoints(posenum, PFT);
+    vector<LandmarkTrack> inactive = ProcessNewPoints((int)'x', posenum, PFT);
     landmark_sets.push_back(inactive);
     for(int i=0; i<landmark_sets.size(); i++) {
         AddLandmarkTracks(landmark_sets[i]);
@@ -110,7 +110,7 @@ void VisualOdometry::AddOdom(gtsam::Symbol symb0, gtsam::Pose3 pguess0, gtsam::S
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise));
 }
 
-void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<gtsam::Point2>& points, vector<int> camera_keys, bool used, int survey){
+void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<gtsam::Point2>& points, vector<gtsam::Symbol> camera_keys, bool used){
     /*Add the landmark track to the graph.*/
     
     //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
@@ -133,8 +133,9 @@ void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark
         tosub = posenum - N_PAST_SETS;
 //    int base_num = poses.size() - posenum - 1; //max(posenum, N_PAST_SETS);
     for(int i=0; i<points.size(); i++) {
-        if(camera_keys[i] < posenum) continue;
-        gtsam::Symbol s('x', camera_keys[i]-tosub);
+        int idx  = camera_keys[i].index();
+        if(idx < posenum) continue;
+        gtsam::Symbol s(camera_keys[i].chr(), idx-tosub);
         sppf.add(points[i], s, pixelNoise, k);
     }
     
