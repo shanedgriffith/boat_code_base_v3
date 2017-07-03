@@ -21,78 +21,29 @@ const vector<string> SurveyOptimizer::keys = {
     "OPT_OFFSET", "OPT_SKIP", "CAM_OFFSET", "CAM_SKIP"
 };
 
-void SurveyOptimizer::RemoveLandmarkFromList(int list_idx) {
-    active.erase(active.begin() + list_idx, active.begin() + list_idx + 1);
-}
-
-void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks){
-    for(int i=0; i<landmarks.size(); i++)
-        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
-}
-
-bool SurveyOptimizer::CheckImageDuplication(ParseFeatureTrackFile& pft){
-    if(pft.ids.size() != active.size()) return false;
-    int next_entry = 0;
-    for(int i=0; i<pft.ids.size(); i++){
-        if(pft.ids[i] != active[next_entry].key) return false;
-        if(pft.imagecoord[i].distance(active[next_entry].points[active[next_entry].Length()-1]) > 0.0000001) return false;
-        next_entry++;
-    }
-    return true;
-}
-
-vector<LandmarkTrack> SurveyOptimizer::ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft) {
-    vector<LandmarkTrack> inactive;
-    static int last_skipped = 0;
-    int next_entry = 0;
-    int lasti=0;
-    for(int i=0; i<pft.ids.size(); i++) {
-        //remove features that aren't tracked anymore
-        //add to the entry using the info from the new frame.
-        while(active.size() > next_entry && active[next_entry].GetKey() < pft.ids[i]) {
-            if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
-            if(active[next_entry].Length()>1) inactive.push_back(active[next_entry]);
-            RemoveLandmarkFromList(next_entry);
-        }
-        
-        //create a new entry if its key is greater than anything that's active
-        if(active.size() == next_entry) {
-            lasti=i;
-            break;
-        } else if(pft.ids[i] < active[next_entry].key) {
-            if(last_skipped < pft.ids[i]){
-                last_skipped = pft.ids[i];
-                num_landmarks_skipped++;
-            }
-            //cout << "ActiveFactors Error: skipped " << pft.ids[i] << endl;
-            continue;
-            //cout << "ActiveFactors Error: Something is wrong with " << pft.siftfile << ". Landmark " << pft.ids[i] << " wasn't tracked in at least one frame before this." << endl;
-            //cout << " Alternatively, the rest of the active factors may not have been added before adding the next survey."<<endl;
-            //exit(-1);
-        } else if(pft.ids[i] == active[next_entry].key) {
-            //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.imagecoord[i], survey, ckey);
-            if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
-            //inc next_entry.
-            next_entry++;
-        }
-    }
+void SurveyOptimizer::Initialize(){
+    initialized = true;
     
-    //add the rest
-    srand(time(NULL));
-    for(int i=lasti; i<pft.ids.size(); i++) {
-        //used to limit the size of the optimization problem for inter-survey optimization
-        bool used = (rand()%100 < percent_of_tracks);
-        LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
-        active.push_back(lt);
-    }
-    return inactive;
+    num_cameras_in_traj = 0;
+    GTS = GTSamInterface(FG);
+    SaveParameters(_results_dir);
+    
+    GTS.SetupIncrementalSLAM();
+    if(debug)  GTS.SetPrintSymbols();
+    
+    std::cout << "Optimizing " << _date << std::endl;
 }
 
 bool SurveyOptimizer::OptimizeThisIteration(int camera_key){
     //determine whether optimization should be run this iteration.
     return camera_key > vals[Param::OPT_OFFSET] && camera_key % (int) vals[Param::OPT_SKIP] == 0;
+}
+
+void SurveyOptimizer::RunGTSAM(){
+    /*Running GTSAM consumes a lot of time in the update and in computing the MAP value for the saved variables*/
+    if(!initialized){cout << "check initialization"<<endl; exit(1);}
+    if(!dry_run) GTS.RunBundleAdjustment(); //GTS.Update();
+    if(verbose) FG->PrintFactorGraph();
 }
 
 void SurveyOptimizer::SaveResults(int iteration, double percent_completed, vector<double> drawscale){
@@ -103,26 +54,6 @@ void SurveyOptimizer::SaveResults(int iteration, double percent_completed, vecto
         SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, drawscale);
     }
     SOR.StatusMessage(iteration, percent_completed);
-}
-
-void SurveyOptimizer::RunGTSAM(){
-    /*Running GTSAM consumes a lot of time in the update and in computing the MAP value for the saved variables*/
-    if(!initialized){cout << "check initialization"<<endl; exit(1);}
-    if(!dry_run) GTS.RunBundleAdjustment(); //GTS.Update();
-    if(verbose) FG->PrintFactorGraph();
-}
-
-void SurveyOptimizer::Initialize(){
-	initialized = true;
-    
-	num_cameras_in_traj = 0;
-	GTS = GTSamInterface(FG);
-	SaveParameters(_results_dir);
-    
-	GTS.SetupIncrementalSLAM();
-	if(debug)  GTS.SetPrintSymbols();
-    
-    std::cout << "Optimizing " << _date << std::endl;
 }
 
 void SurveyOptimizer::SaveParameters(string dir_of_param_file){
@@ -139,6 +70,11 @@ void SurveyOptimizer::SaveParameters(string dir_of_param_file){
     PI.AddParams(GTSamInterface::Keys(), GTS.Params());
     PI.AddParams(FactorGraph::Keys(), FG->Params());
     PI.SaveParams(SOR.GetParmsFileName());
+}
+
+void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks){
+    for(int i=0; i<landmarks.size(); i++)
+        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
 }
 
 void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped){
@@ -199,14 +135,12 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     }
     
     //process the landmark measurement
-    if(!CheckImageDuplication(PFT)){
-        vector<LandmarkTrack> inactive = ProcessNewPoints((int) 'x', camera_key, PFT);
-        
-        //add the landmark measurement to the graph
-        if(cache_landmarks) CacheLandmarks(inactive);
-        else AddLandmarkTracks(inactive);
-    }
+    vector<LandmarkTrack> inactive = PFT.ProcessNewPoints((int) 'x', camera_key, active, percent_of_tracks);
     
+    //add the landmark measurement to the graph
+    if(cache_landmarks) CacheLandmarks(inactive);
+    else AddLandmarkTracks(inactive);
+
     //add the kinematic constraints.
     if(camera_key != 0) {
         gtsam::Pose3 btwn_pos = last_cam.between(cam);
@@ -242,6 +176,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.
         if(!PS.Useable(cidx, lcidx)) continue; //the camera is being adjusted, don't use the data.
+        if(PFT.CheckImageDuplication(active)) continue; //the image was duplicated, so the tracking data is unhelpful, don't use the data.
         if(i>30658) break;
         //Construct the graph (camera, visual landmarks, velocity, and time)
         //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
@@ -266,8 +201,6 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     //Add the remaining landmarks
     AddLandmarkTracks(active);
     active.clear();
-    
-    std::cout << "Skipped " << num_landmarks_skipped << " landmarks." << std::endl;
     
     //Final optimization
     RunGTSAM();

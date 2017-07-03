@@ -51,7 +51,7 @@ void RFlowSurveyOptimizer::StandAloneFactorGraph() {
 
         ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + _date, POR.ftfilenos[i]);
         pftf1.ModifyFTFData(POR.GetSubsetOf3DPoints(pftf1.ids));
-        vector<LandmarkTrack> tracks = ProcessNewPoints(latestsurvey, i, pftf1);
+        vector<LandmarkTrack> tracks = pftf1.ProcessNewPoints(latestsurvey, i, active);
         AddLandmarkTracks(tracks);
     }
 

@@ -297,3 +297,61 @@ void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3> p3d){
     ids = subset_ids;
     imagecoord = subset_p2d;
 }
+
+vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ckey, vector<LandmarkTrack>& active, double percent_of_tracks) {
+    vector<LandmarkTrack> inactive;
+    static int last_skipped = 0;
+    int next_entry = 0;
+    int num_landmarks_skipped=0;
+    int lasti=0;
+    for(int i=0; i<ids.size(); i++) {
+        //remove features that aren't tracked anymore
+        //add to the entry using the info from the new frame.
+        while(active.size() > next_entry && active[next_entry].GetKey() < ids[i]) {
+            if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
+            if(active[next_entry].Length()>1) inactive.push_back(active[next_entry]);
+            active.erase(active.begin() + next_entry, active.begin() + next_entry + 1);
+        }
+        
+        //create a new entry if its key is greater than anything that's active
+        if(active.size() == next_entry) {
+            lasti=i;
+            break;
+        } else if(ids[i] < active[next_entry].key) {
+            if(last_skipped < ids[i]){
+                last_skipped = ids[i];
+                num_landmarks_skipped++;
+                cout << "ParseFeatureTrackFile::ProcessNewPoints() Skipped a landmark" << endl;
+            }
+            continue;
+        } else if(ids[i] == active[next_entry].key) {
+            //accumulate info about the landmark (should be the only remaining case)
+            active[next_entry].AddToTrack(imagecoord[i], survey, ckey);
+            if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
+            //inc next_entry.
+            next_entry++;
+        }
+    }
+    
+    //add the rest
+    srand(time(NULL));
+    for(int i=lasti; i<pft.ids.size(); i++) {
+        //used to limit the size of the optimization problem for inter-survey optimization
+        bool used = (rand()%100 < percent_of_tracks);
+        LandmarkTrack lt(pft.ids[i], used);
+        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
+        active.push_back(lt);
+    }
+    return inactive;
+}
+
+bool ParseFeatureTrackFile::CheckImageDuplication(vector<LandmarkTrack>& active){
+    if(ids.size() != active.size()) return false;
+    int next_entry = 0;
+    for(int i=0; i<ids.size(); i++){
+        if(ids[i] != active[next_entry].key) return false;
+        if(imagecoord[i].distance(active[next_entry].points[active[next_entry].Length()-1]) > 0.0000001) return false;
+        next_entry++;
+    }
+    return true;
+}

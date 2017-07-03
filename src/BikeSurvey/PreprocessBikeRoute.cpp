@@ -329,52 +329,6 @@ void PreprocessBikeRoute::ProcessRawVideo(){
     std::cout << "saved " << savedimages << " images from the video file." << std::endl;
 }
 
-vector<LandmarkTrack> PreprocessBikeRoute::ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft) {
-    vector<LandmarkTrack> inactive;
-    int num_landmarks_skipped = 0;
-    static int last_skipped = 0;
-    int next_entry = 0;
-    int lasti=0;
-    for(int i=0; i<pft.ids.size(); i++) {
-        //remove features that aren't tracked anymore
-        //add to the entry using the info from the new frame.
-        while(active.size() > next_entry && active[next_entry].GetKey() < pft.ids[i]) {
-            if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
-            if(active[next_entry].Length()>1) inactive.push_back(active[next_entry]);
-            active.erase(active.begin() + next_entry, active.begin() + next_entry + 1);
-        }
-
-        //create a new entry if its key is greater than anything that's active
-        if(active.size() == next_entry) {
-            lasti=i;
-            break;
-        } else if(pft.ids[i] < active[next_entry].key) {
-            if(last_skipped < pft.ids[i]){
-                last_skipped = pft.ids[i];
-                num_landmarks_skipped++;
-            }
-            //cout << "ActiveFactors Error: skipped " << pft.ids[i] << endl;
-            continue;
-        } else if(pft.ids[i] == active[next_entry].key) {
-            //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.imagecoord[i], (int)'x', ckey);
-            if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
-            next_entry++;
-        }
-    }
-
-    //add the rest
-    srand(time(NULL));
-    for(int i=lasti; i<pft.ids.size(); i++) {
-        //used to limit the size of the optimization problem for inter-survey optimization
-        bool used = true;
-        LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.imagecoord[i], (int)'x', ckey);
-        active.push_back(lt);
-    }
-    return inactive;
-}
-
 void PreprocessBikeRoute::FindKLTParams(){
     bool show = true;
     if(show) cv::namedWindow("klt points");
@@ -420,7 +374,7 @@ void PreprocessBikeRoute::FindKLTParams(){
         std::cout << std::endl;
         
         ParseFeatureTrackFile PFT = k.TrackKLTFeatures(image, _bdbase + _name, 0, 0);
-        vector<LandmarkTrack> inactive = ProcessNewPoints(counter, PFT);
+        vector<LandmarkTrack> inactive = PFT.ProcessNewPoints((int) 'x', counter, active);
         if(inactive.size() > 0) {
             int suml = 0;
             int minl = 10000000;

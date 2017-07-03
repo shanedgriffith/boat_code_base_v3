@@ -36,7 +36,6 @@ private:
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
     
     void WriteImage(cv::Mat image, std::string filepath);
-    std::vector<LandmarkTrack> ProcessNewPoints(int ckey, ParseFeatureTrackFile& pft);
     double GetNearestTimeToPosition(double x, double y);
     double InterpolateValue(double t, double vals, double vale, double s, double e);
     void LowPassFilter(std::vector<double>& arr, double std);

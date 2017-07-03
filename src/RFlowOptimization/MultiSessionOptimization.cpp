@@ -95,7 +95,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         if(firstiter){
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
-            vector<LandmarkTrack> tracks = ProcessNewPoints(survey, i, pftf);
+            vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active);
             UpdateLandmarkMap(tracks);
             CacheLandmarks(tracks);
         }

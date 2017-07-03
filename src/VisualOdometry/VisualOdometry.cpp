@@ -18,57 +18,10 @@
 
 using namespace std;
 
-void VisualOdometry::RemoveLandmarkFromList(int list_idx) {
-    active.erase(active.begin() + list_idx, active.begin() + list_idx + 1);
-}
-
 void VisualOdometry::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
     for(int i=0; i<landmarks.size(); i++){
         AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i].key, landmarks[i].points, landmarks[i].camera_keys, landmarks[i].used);
     }
-}
-
-vector<LandmarkTrack> VisualOdometry::ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft) {
-    vector<LandmarkTrack> inactive;
-    
-    int next_entry = 0;
-    int lasti=0;
-    for(int i=0; i<pft.ids.size(); i++) {
-        //remove features that aren't tracked anymore
-        //add to the entry using the info from the new frame.
-        while(active.size() > next_entry && active[next_entry].GetKey() < pft.ids[i]) {
-            if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
-            if(active[next_entry].Length()>1) inactive.push_back(active[next_entry]);
-            RemoveLandmarkFromList(next_entry);
-        }
-        
-        //create a new entry if its key is greater than anything that's active
-        if(active.size() == next_entry) {
-            lasti=i;
-            break;
-        } else if(pft.ids[i] < active[next_entry].key) {
-            cout << "ActiveFactors Error: Something is wrong with " << pft.siftfile << ". Landmark " << pft.ids[i] << " wasn't tracked in at least one frame before this." << endl;
-            cout << " Alternatively, the rest of the active factors may not have been added before adding the next survey."<<endl;
-            exit(-1);
-        } else if(pft.ids[i] == active[next_entry].key) {
-            //accumulate info about the landmark (should be the only remaining case)
-            active[next_entry].AddToTrack(pft.imagecoord[i], survey, ckey);
-            if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
-            //inc next_entry.
-            next_entry++;
-        }
-    }
-    
-    //add the rest
-    srand(time(NULL));
-    for(int i=lasti; i<pft.ids.size(); i++) {
-        //used to limit the size of the optimization problem for inter-survey optimization
-        bool used = true;//(rand()%100 < percent_of_tracks);
-        LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
-        active.push_back(lt);
-    }
-    return inactive;
 }
 
 void VisualOdometry::ConstructGraph(gtsam::Pose3 cam, ParseFeatureTrackFile& PFT) {
@@ -86,7 +39,7 @@ void VisualOdometry::ConstructGraph(gtsam::Pose3 cam, ParseFeatureTrackFile& PFT
     }
     
     //process the landmark measurement
-    vector<LandmarkTrack> inactive = ProcessNewPoints((int)'x', posenum, PFT);
+    vector<LandmarkTrack> inactive = PFT.ProcessNewPoints((int)'x', posenum, active);
     landmark_sets.push_back(inactive);
     for(int i=0; i<landmark_sets.size(); i++) {
         AddLandmarkTracks(landmark_sets[i]);

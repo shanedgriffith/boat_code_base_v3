@@ -37,16 +37,12 @@ protected:
     bool verbose = false;
     bool _print_data_increments = false;
     bool cache_landmarks = false;
-    int num_landmarks_skipped = 0;
     
     static const std::vector<std::string> keys;
     enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
     std::vector<double> vals = {  0, 100, 0, 5 }; //defaults
     
-    void RemoveLandmarkFromList(int list_idx);
     void AddLandmarkTracks(std::vector<LandmarkTrack> inactive);
-    bool CheckImageDuplication(ParseFeatureTrackFile& pft);
-    std::vector<LandmarkTrack> ProcessNewPoints(int survey, int ckey, ParseFeatureTrackFile& pft);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
     void RunGTSAM();
