@@ -14,6 +14,7 @@
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 #include <gtsam/slam/SmartProjectionPoseFactor.h>
 #include <DataTypes/Camera.hpp>
+#include <DataTypes/LandmarkTrack.h>
 
 #define GPS_NOISE 10 //10 meters deviation from actual position.
 #define COMPASS_NOISE 0.1745 //10 degrees deviation from actual yaw angle. (noise for the measurements of change in yaw)
@@ -78,8 +79,7 @@ public:
     void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose);
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
-    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, std::vector<gtsam::Point2> points,
-                          std::vector<gtsam::Symbol> camera_keys, bool used=true);
+    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
     void SetLandmarkDeviation(double dev);
     
     void Clear();

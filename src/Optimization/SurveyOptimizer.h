@@ -42,7 +42,7 @@ protected:
     enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
     std::vector<double> vals = {  0, 100, 0, 5 }; //defaults
     
-    void AddLandmarkTracks(std::vector<LandmarkTrack> inactive);
+    void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
     void RunGTSAM();

@@ -124,7 +124,7 @@ gtsam::Symbol FactorGraph::GetSymbol(int survey, int pnum){
     return gtsam::Symbol(survey, pnum);
 }
 
-void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<bool> constraint_on, vector<gtsam::Point2> points, vector<gtsam::Symbol> camera_keys, bool used){
+void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark){
     /*Add the landmark track to the graph.*/    
 
     //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
@@ -141,14 +141,14 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_ke
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
-    for(int i=0; i<points.size(); i++) {
-        if(constraint_on[i])
-            sppf.add(points[i], camera_keys[i], pixelNoise, k);
+    for(int i=0; i<landmark.points.size(); i++) {
+        if(landmark.constraint_on[i])
+            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
     }
     
     landmark_factors[active_landmark_set].push_back(sppf);
-    landmark_keys[active_landmark_set].push_back(landmark_key);
-    if(used) graph.add(sppf);
+    landmark_keys[active_landmark_set].push_back(landmark.key);
+    if(landmark.used) graph.add(sppf);
 }
 
 void FactorGraph::Clear(){

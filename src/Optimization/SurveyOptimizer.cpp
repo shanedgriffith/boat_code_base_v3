@@ -72,11 +72,6 @@ void SurveyOptimizer::SaveParameters(string dir_of_param_file){
     PI.SaveParams(SOR.GetParmsFileName());
 }
 
-void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack> landmarks){
-    for(int i=0; i<landmarks.size(); i++)
-        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
-}
-
 void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped){
     static bool transition = true;
     
@@ -108,18 +103,18 @@ int SurveyOptimizer::AddCamera(gtsam::Pose3 cam){
     return camera_key;
 }
 
+void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
+    for(int i=0; i<landmarks.size(); i++)
+        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+}
+
 void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
-    for(int i=0; i<inactive.size(); i++){
+    for(int i=0; i<inactive.size(); i++)
         cached_landmarks[cache_set].push_back(inactive[i]);
-    }
 }
 
 int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx){
-    //Construct the graph (camera, visual landmarks, velocity, and time)
-    static double last_time = -1;
-    
-    //Estimate the angular velocity of the boat.
-    double av = PS.GetAvgAngularVelocity(lcidx, cidx);
+    //get the poses
     gtsam::Pose3 cam = PS.CameraPose(cidx);
     gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
     
@@ -134,10 +129,8 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     	active.clear();
     }
     
-    //process the landmark measurement
+    //process the landmark measurement and add it to the graph
     vector<LandmarkTrack> inactive = PFT.ProcessNewPoints((int) 'x', camera_key, active, percent_of_tracks);
-    
-    //add the landmark measurement to the graph
     if(cache_landmarks) CacheLandmarks(inactive);
     else AddLandmarkTracks(inactive);
 
@@ -147,7 +140,8 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
         
         if(PS.ConstantVelocity()){
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
-            double delta_t = PS.timings[cidx]-PS.timings[lcidx];
+            double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
+            double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
             gtsam::Pose3 vel_est = gtsam::Pose3(gtsam::Rot3::ypr(av*delta_t, 0, 0), gtsam::Point3(btwn_pos.x(), btwn_pos.y(), btwn_pos.z()));
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, flipped);
         } else {
@@ -169,7 +163,6 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     
     int cidx = 0, lcidx=0;
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
-        //if(i>2000) break;
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
         ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i);
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
@@ -177,7 +170,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.
         if(!PS.Useable(cidx, lcidx)) continue; //the camera is being adjusted, don't use the data.
         if(PFT.CheckImageDuplication(active)) continue; //the image was duplicated, so the tracking data is unhelpful, don't use the data.
-        if(i>30658) break;
+        
         //Construct the graph (camera, visual landmarks, velocity, and time)
         //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
         int camera_key = ConstructGraph(PS, PFT, cidx, lcidx);
