@@ -335,11 +335,11 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
     
     //add the rest
     srand(time(NULL));
-    for(int i=lasti; i<pft.ids.size(); i++) {
+    for(int i=lasti; i<ids.size(); i++) {
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = (rand()%100 < percent_of_tracks);
-        LandmarkTrack lt(pft.ids[i], used);
-        lt.AddToTrack(pft.imagecoord[i], survey, ckey);
+        LandmarkTrack lt(ids[i], used);
+        lt.AddToTrack(imagecoord[i], survey, ckey);
         active.push_back(lt);
     }
     return inactive;

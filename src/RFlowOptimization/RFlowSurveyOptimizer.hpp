@@ -36,6 +36,7 @@
 #include <DataTypes/LandmarkTrack.h>
 #include <DataTypes/ImagePose.h>
 
+#include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 
 class RFlowSurveyOptimizer: public SurveyOptimizer {

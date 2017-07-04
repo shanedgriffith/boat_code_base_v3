@@ -11,6 +11,7 @@
 
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
+#include <gtsam/nonlinear/Symbol.h>
 
 class LandmarkTrack {
 public:
@@ -23,7 +24,6 @@ public:
     LandmarkTrack(int k, bool touse=true):key(k), used(touse), hasSymbols(false){}
     
     void AddToTrack(gtsam::Point2 p, int survey, int ckey, bool use_constraint = true) {
-        active_times.push_back(t);
         points.push_back(p);
         gtsam::Symbol S((char) survey, ckey);
         camera_keys.push_back(S);
@@ -31,7 +31,7 @@ public:
     }
     
     void Toggle(int survey, int ckey){
-        for(int i=camera_keys.size(); i>=0; i--){
+        for(int i=camera_keys.size()-1; i>=0; i--){
             if(camera_keys[i].index()==ckey && camera_keys[i].chr() == (char) survey){
                 constraint_on = !constraint_on;
                 return;
@@ -42,7 +42,7 @@ public:
     }
     
     int GetKey(){return key;}
-    int Length() {return active_times.size();}
+    int Length() {return points.size();}
 };
 
 

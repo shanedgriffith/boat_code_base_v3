@@ -36,6 +36,7 @@
 #include <DataTypes/LandmarkTrack.h>
 #include <DataTypes/ImagePose.h>
 
+#include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 
 class MultiSessionOptimization: public SurveyOptimizer {
@@ -43,7 +44,6 @@ protected:
     //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.
     const int K = 5;
     
-//    std::unordered_map<std::string, int> datetable;
     int optstart;
     std::vector<std::string> dates;
     std::vector<LPDInterface> lpdi;
