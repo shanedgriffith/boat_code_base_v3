@@ -245,13 +245,13 @@ void MultiSessionOptimization::SaveResults() {
     
     for(int i=0; i<inlier_ratio.size(); i++)
         if(inlier_ratio[i] < 0.9){
-            std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[i+optstart] << inlier_ratio[sidx] << std::endl;
+            std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[i+optstart] << " with ratio " << inlier_ratio[i] << std::endl;
             return;
         }
     
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
-        rfFG->ChangeLandmarkSet(sidx);
+        rfFG->ChangeLandmarkSet(i-optstart);
         vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
         landmarks.push_back(landmarkset);
     }
@@ -259,14 +259,14 @@ void MultiSessionOptimization::SaveResults() {
     for(int i=optstart; i<dates.size(); i++){
         SaveOptimizationResults curSOR(_map_dir + dates[i]);
         int sidx = i-optstart;
-        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(i, POR.boat.size());
+        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         vector<vector<double> > vs;
         curSOR.SetSaveStatus();
         curSOR.SetDrawMap();
         curSOR.PlotAndSaveCurrentEstimate(landmarks[sidx], ts, vs, {});
         
         EvaluateRFlow erf(_cam, dates[i], _map_dir);
-        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR.boat.size());
+        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks[sidx], optstart);
         erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
