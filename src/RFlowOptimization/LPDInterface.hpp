@@ -38,6 +38,7 @@ public:
     int LoadLocalizations(std::string path);
     int GetStartingPoint();
     int GetStartingPoint(FROM u, DIRECTION d);
+    void SetMostAdvLPD(LocalizedPoseData lpd);
 };
 
 

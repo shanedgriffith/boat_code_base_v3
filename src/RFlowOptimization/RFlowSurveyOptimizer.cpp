@@ -141,7 +141,7 @@ void RFlowSurveyOptimizer::IterativeMerge() {
     EvaluateRFlow erf(_cam, _date, _results_dir);
     erf.debug = true;
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> rerror_localizations = erf.ErrorForLocalizations(lpdi.localizations, poses);
+    vector<double> rerror_localizations = erf.InterSurveyErrorAtLocalizations(lpdi.localizations, poses);
     erf.SaveEvaluation(rerror_localizations, "/postlocalizationerror.csv");
     erf.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
 

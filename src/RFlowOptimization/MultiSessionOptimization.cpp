@@ -6,7 +6,7 @@
  */
 
 
-#include "RFlowSurveyOptimizer.hpp"
+#include "MultiSessionOptimization.hpp"
 
 #include <random>
 #include <string>
