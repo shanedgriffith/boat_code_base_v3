@@ -73,7 +73,7 @@ public:
         date0(l.date0), date1(l.date1), tf_p0_to_p1frame0(6),
         s0(l.s0), s1(l.s1), s0time(l.s0time), s1time(l.s1time),
         p1frame0(6), p0frame1(6), p3d(l.p3d.size()), b3d(l.b3d.size()),
-        pids(l.pids.size()), bids(l.bids.size(),
+        pids(l.pids.size()), bids(l.bids.size()),
         p3d0(l.p3d0.size()), p2d1(l.p2d1.size()), rerrorp(l.rerrorp.size()),
         b3d1(l.b3d1.size()), b2d0(l.b2d0.size()), rerrorb(l.rerrorb.size()),
         perc_dc(l.perc_dc), avg_rerror_inl(l.avg_rerror_inl){

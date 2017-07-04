@@ -334,7 +334,7 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
     }
     
     //add the rest
-    srand(time(NULL));
+    srand(time(0));
     for(int i=lasti; i<ids.size(); i++) {
         //used to limit the size of the optimization problem for inter-survey optimization
         bool used = (rand()%100 < percent_of_tracks);

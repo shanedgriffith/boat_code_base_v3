@@ -38,7 +38,7 @@ public:
     void Evaluate();
     
     std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
-    std::vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
+    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
     std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
     std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);

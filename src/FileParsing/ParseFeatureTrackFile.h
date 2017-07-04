@@ -16,6 +16,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <vector>
+#include <cstdlib>
+#include <iostream>
+#include <ctime>
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point2.h>
