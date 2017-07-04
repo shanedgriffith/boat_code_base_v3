@@ -72,7 +72,7 @@ public:
         std::cout << "RFlow Optimization for : " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
-        FG.SetLandmarkDeviation(3.0);
+        FG->SetLandmarkDeviation(3.0);
         SurveyOptimizer::Initialize();
         Initialize();
     }

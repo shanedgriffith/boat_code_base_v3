@@ -72,6 +72,7 @@ public:
         std::cout << "Multi-Session Optimization up to " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
+        FG->SetLandmarkDeviation(3.0);
         cout << "  Initializing.."<<endl;
         SurveyOptimizer::Initialize();
         IdentifyOptimizationDates();
