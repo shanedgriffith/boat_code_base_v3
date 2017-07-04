@@ -128,7 +128,7 @@ vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<Locali
 
 int EvaluateRFlow::GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id) {
     int bot = 0;
-    int top = p.size();
+    int top = landmarks.size();
     while(bot < top) {
         int mid = bot + (top-bot)/2;
         if(((int)landmarks[mid][3]) > id) top = mid;
@@ -149,7 +149,7 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
         if(iter==-1) iter = GetIndexOfFirstPoint(landmarks, ids_subset[i]);
         
         if(iter>=0){
-            for(int j=iter; j < p.size(); j++) {
+            for(int j=iter; j < landmarks.size(); j++) {
                 if(((int)landmarks[j][3])==ids_subset[i]) {
                     gtsam::Point3 p3(landmarks[j][0], landmarks[j][1], landmarks[j][2]);
                     pset.push_back(p3);
@@ -204,7 +204,7 @@ void EvaluateRFlow::Evaluate() {
     ParseOptimizationResults POR(_results_dir + _date);
     std::cout << "Evaluating " << _results_dir + _date << std::endl;
 
-    vector<double> PostLocalizationRError = ErrorForLocalizations(localizations, POR.boat);
+    vector<double> PostLocalizationRError = InterSurveyErrorAtLocalizations(localizations, POR.boat);
     SaveEvaluation(PostLocalizationRError, "/postlocalizationerror.csv");
 
 //    vector<double> rerror = ErrorForSurvey();

@@ -19,6 +19,7 @@
 #include <DataTypes/Camera.hpp>
 
 #include <Optimization/EvaluateSLAM.h>
+#include <FileParsing/ParseOptimizationResults.h>
 #include "LocalizedPoseData.hpp"
 
 class EvaluateRFlow: public EvaluateSLAM {
