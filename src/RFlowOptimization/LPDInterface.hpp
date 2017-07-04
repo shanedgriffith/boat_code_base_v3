@@ -24,8 +24,8 @@ protected:
 public:
     bool debug = false;
     
-    enum DIRECTION{Backward, Forward}
-    enum FROM{CurLPD, LastLPD}
+    enum class DIRECTION{Backward, Forward};
+    enum class FROM{CurLPD, LastLPD};
     
     std::vector<LocalizedPoseData> localizations;
     LocalizedPoseData most_adv_lpd;

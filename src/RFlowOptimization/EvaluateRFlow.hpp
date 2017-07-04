@@ -27,7 +27,7 @@ private:
     std::vector<double> MeasureReprojectionError(gtsam::Pose3 tf, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, std::vector<double>& rerror);
     double UpdateTots(std::vector<double>& tots, std::vector<double>& stats);
     void PrintTots(std::vector<double> tots, std::string name);
-    vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, vector<int>& ids_subset);
+    std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, std::vector<int>& ids_subset);
     int GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id);
 public:
     std::string _results_dir;
@@ -38,9 +38,9 @@ public:
     void Evaluate();
     
     std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
-    vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, vector<vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
+    std::vector<double> EvaluateRFlow::InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
     std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
-    vector<double> IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
+    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);
 };
