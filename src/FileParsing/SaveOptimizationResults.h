@@ -35,9 +35,9 @@ public:
     filter_null_points(true), save_status(false), draw_map(false), _base(base)
     {
         MakeDir(_base);
-        time (&start);
     }
     
+    void StartTimer();
     void SetSaveDir(std::string dir){_base = dir; MakeDir(_base); started_correspondence = false;}
     void SetDrawMap() {MakeDir(_base + drawdir); draw_map = true;}
     void SetSaveStatus() {FILE * bts = OpenFile(_base + statusfile, "w"); fclose(bts); save_status = true;}

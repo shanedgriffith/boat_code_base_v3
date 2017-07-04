@@ -177,6 +177,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         
         //Optimize the graph
         if(OptimizeThisIteration(camera_key)){
+            SOR.StartTimer();
             RunGTSAM();
             SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
             es.Evaluate(PS._pftbase);
@@ -196,6 +197,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     active.clear();
     
     //Final optimization
+    SOR.StartTimer();
     RunGTSAM();
     SaveResults(0, 100.0, PS.GetDrawScale());
     es.Evaluate(PS._pftbase);

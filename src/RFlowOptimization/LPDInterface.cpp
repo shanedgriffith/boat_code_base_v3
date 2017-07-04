@@ -36,7 +36,7 @@ LocalizedPoseData* LPDInterface::NearestLPD(int s1time){
     return NULL;
 }
 
-int LPDInterface::LoadLocalizations(string path){
+int LPDInterface::LoadLocalizations(std::string path){
     localizations = LocalizedPoseData::LoadAll(path); //load existing data.
     if(localizations.size()>0) most_adv_lpd = localizations[localizations.size()-1];
     for(int i=0; i<localizations.size(); i++)

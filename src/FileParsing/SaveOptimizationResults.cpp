@@ -89,12 +89,15 @@ void SaveOptimizationResults::SaveDataCorrespondence(int camera_key, int sift_fi
     fclose(bts);
 }
 
+void SaveOptimizationResults::StartTimer(){
+    time (&start);
+}
+
 void SaveOptimizationResults::StatusMessage(int iteration, double percent_completed){
     if(!save_status) return;
-    
-    FILE * fp = OpenFile(_base + statusfile, "a");
     time (&end);
     double dif = difftime (end,start);
+    FILE * fp = OpenFile(_base + statusfile, "a");
     char buf[LINESIZE];
     sprintf(buf, "ITERATION %d. Percent complete %lf. Total run time (HH:MM:SS) %s\n", iteration, percent_completed, formattime(dif).c_str());
     fprintf(fp, "%s", buf);
