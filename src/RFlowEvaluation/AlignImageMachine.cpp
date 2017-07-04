@@ -57,8 +57,8 @@ void AlignImageMachine::RunRFlow() {
     int poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
     if(poseloc1 == -1)  return;
 
-    ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[survey]->ftfilenos[poseloc0]);
-    ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[survey]->ftfilenos[poseloc1]);
+    ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[0]->ftfilenos[poseloc0]);
+    ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[1]->ftfilenos[poseloc1]);
 
     rf[0]->ComputeFlow(por[1]->boat[poseloc1], por[0]->boat[poseloc0]); //map points of survey 0 onto pose1_est.
     rf[1]->ComputeFlow(por[0]->boat[poseloc0], por[1]->boat[poseloc1]); //map points of survey 1 onto pose0_est.

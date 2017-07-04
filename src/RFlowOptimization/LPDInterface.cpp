@@ -15,7 +15,7 @@ int LPDInterface::GetLPDIdx(int por1time){
     return -1;
 }
 
-bool LPDInterface::StoreLPD(string path, LocalizedPoseData lpd){
+bool LPDInterface::StoreLPD(std::string path, LocalizedPoseData lpd){
     if(GetLPDIdx(lpd.s1time) < 0){
         localizations.push_back(lpd);
         lpdtable[lpd.s1time] = localizations.size()-1;
