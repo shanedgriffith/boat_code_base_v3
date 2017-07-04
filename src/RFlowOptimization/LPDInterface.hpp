@@ -37,7 +37,7 @@ public:
     LocalizedPoseData* NearestLPD(int s1time);
     int LoadLocalizations(std::string path);
     int GetStartingPoint();
-    int GetStartingPoint(DIRECTION d, FROM u);
+    int GetStartingPoint(FROM u, DIRECTION d);
 };
 
 

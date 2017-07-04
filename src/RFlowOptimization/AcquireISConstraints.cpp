@@ -15,6 +15,7 @@
 
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
 #include "SFlowDREAM2RF.hpp"
+#include "HopcountLog.hpp"
 #include "LocalizePose.hpp"
 #include "ImageToLocalization.hpp"
 
@@ -67,7 +68,7 @@ int AcquireISConstraints::FindRestart() {
 
 void AcquireISConstraints::Initialize(){
     if(!FileParsing::DirectoryExists(_map_dir)){
-        std::cout << "AcquireISConstraints::Initialize() Error: Setup 'maps/'." << dir << std::endl;
+        std::cout << "AcquireISConstraints::Initialize() Error: Setup 'maps/'." << _map_dir << std::endl;
         exit(-1);
     }
     
@@ -85,7 +86,7 @@ void AcquireISConstraints::Initialize(){
         _maps[_maps.size()-1]->LoadMap(dates[i]);
         
         //initialize trajectory estimates (the odom used by RF)
-        ParseOptimizationResults por(path + dates[i]);
+        ParseOptimizationResults por(_map_dir + dates[i]);
         SurveyData sd = { dates[i], por, 0.0 };
         sd.avg_hop_distance = hlog.LoadHopDistance(dates[i]);
         survey_est.push_back(sd);

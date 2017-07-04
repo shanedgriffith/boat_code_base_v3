@@ -50,7 +50,7 @@ int LPDInterface::GetStartingPoint(){
     return 0;
 }
 
-int LPDInterface::GetStartingPoint(DIRECTION d, FROM u){
+int LPDInterface::GetStartingPoint(FROM u, DIRECTION d){
     int lcuridx = localizations.size()-1;
     int direc = (d==DIRECTION::Foward)?-1:1;
     int ref = (u==FROM::CurLPD)?0:1;

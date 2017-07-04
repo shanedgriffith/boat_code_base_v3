@@ -44,7 +44,7 @@ std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count)
         int LINESIZE = 10000;
         char line[LINESIZE]="";
         fgets(line, LINESIZE-1, fp);//skip the first line
-        while(fgets(line, LINESIZE-1, fp)!=EOF){
+        while(fgets(line, LINESIZE-1, fp)){
             
             int ret = sscanf(line, "%d, %d, %d, %lf", &a, &b, &rerr, &c);
             if(ret != 4){

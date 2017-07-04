@@ -17,7 +17,7 @@
 #include "EvaluateRFlow.hpp"
 #include "HopcountLog.hpp"
 #include <FileParsing/FileParsing.hpp>
-#include <DataTypes/LandmarkTrack.hpp>
+#include <DataTypes/LandmarkTrack.h>
 
 using namespace std;
 
