@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <vector>
+#include <unordered_map>
 
 #include "RFlowFactorGraph.hpp"
 
@@ -53,12 +54,16 @@ protected:
     std::vector<double> inlier_ratios;
     
     void IdentifyOptimizationDates();
-    void UpdateLandmarkMap(std::vector<LandmarkTrack> tracks);
+    void Initialize();
+    void UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks);
     void StandAloneFactorGraph(int survey, bool firstiter);
     void ConstructFactorGraph(bool firstiter);
     void AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1, bool on);
-    void AddLocalizations();
+    void AddLocalizations(bool firstiter);
     void AddAllTheLandmarkTracks();
+    void ToggleLandmarkConstraints(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1);
+    double UpdateError(bool firstiter);
+    void SaveResults();
     
     RFlowFactorGraph* rfFG;
 public:
@@ -66,14 +71,14 @@ public:
     std::string _pftbase;
     
     MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = ""):
-        _map_dir(results_dir + "maps/"), _pftbase(pftbase), _cam(cam),
+        _map_dir(results_dir + "maps/"), _pftbase(pftbase),
         SurveyOptimizer(cam, rfFG, date, results_dir, false) {
         
         std::cout << "Multi-Session Optimization up to " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
         FG->SetLandmarkDeviation(3.0);
-        cout << "  Initializing.."<<endl;
+        std::cout << "  Initializing.."<<std::endl;
         SurveyOptimizer::Initialize();
         IdentifyOptimizationDates();
         Initialize();

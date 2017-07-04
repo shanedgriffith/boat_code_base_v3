@@ -33,7 +33,7 @@ public:
     LPDInterface(){}
     
     int GetLPDIdx(int por1time);
-    bool StoreLPD(LocalizedPoseData lpd);
+    bool StoreLPD(std::string _map_dir, LocalizedPoseData lpd);
     LocalizedPoseData* NearestLPD(int s1time);
     int LoadLocalizations(std::string path);
     int GetStartingPoint();

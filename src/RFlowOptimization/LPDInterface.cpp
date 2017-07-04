@@ -15,11 +15,11 @@ int LPDInterface::GetLPDIdx(int por1time){
     return -1;
 }
 
-bool LPDInterface::StoreLPD(LocalizedPoseData lpd){
+bool LPDInterface::StoreLPD(string path, LocalizedPoseData lpd){
     if(GetLPDIdx(lpd.s1time) < 0){
         localizations.push_back(lpd);
         lpdtable[lpd.s1time] = localizations.size()-1;
-        lpd.Save(_map_dir + _date);
+        lpd.Save(path + lpd.date1);
         return true;
     }
     return false;

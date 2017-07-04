@@ -30,7 +30,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
         ParseOptimizationResults datePOR(_map_dir + dates[i]);
         POR.push_back(datePOR);
         if(_date.compare(dates[i])==0) break;
-        if(i>0 && !HopcountLog::LogExists(_map_dir, alldates[i])) break; //if I need to re-run, won't this method fail?
+        if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
     optstart = min(POR.size()-K-1, 0);
@@ -65,7 +65,7 @@ void MultiSessionOptimization::Initialize() {
     }
 }
 
-void MultiSessionOptimization::UpdateLandmarkMap(std::vector<LandmarkTrack> tracks){
+void MultiSessionOptimization::UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks){
     int curlength = cached_landmarks[cache_set].size();
     for(int i=0; i<tracks.size(); i++) {
         lmap[lmap.size()-1].insert({tracks[i].key, curlength + i});
@@ -77,6 +77,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
 
     LocalizePose lp(_cam);
     for(int i=0; i<POR[survey].boat.size(); i++) {
+        int sidx = survey - optstart;
         gtsam::Pose3 traj = POR[survey].CameraPose(i);
         int lpdcur = lpdi[survey].GetLPDIdx(i);
         if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
@@ -103,7 +104,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
 
     if(firstiter){
         //add the rest of the landmarks
-        UpdateLandmarkMap(tracks);
+        UpdateLandmarkMap(active);
         CacheLandmarks(active);
         active.clear();
     }

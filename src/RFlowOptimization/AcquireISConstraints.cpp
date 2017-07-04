@@ -282,8 +282,8 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         logdata[2] = res[bestidx].s0time;
         logdata[4] = perc_dc[bestidx];
         if(hasverified) {
-            back_two = lpdi.StoreLPD(*toverify);
-            lpdi.StoreLPD(res[bestidx]);
+            back_two = lpdi.StoreLPD(_map_dir, *toverify);
+            lpdi.StoreLPD(_map_dir, res[bestidx]);
             logdata[5] = 1.0;
         } else res[bestidx].Save(_map_dir + _date, "/unverified/");
         lpdi.SetMostAdvLPD(res[bestidx]);
