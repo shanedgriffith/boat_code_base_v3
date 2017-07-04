@@ -97,7 +97,7 @@ int RFlowSurveyOptimizer::UpdateError() {
             std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
             exit(1);
         } else if (LPD_RERROR_THRESHOLD == 0) {
-            LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror()*mult;
+            LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror(rerrs)*mult;
         }
         
         bool inlier = true;

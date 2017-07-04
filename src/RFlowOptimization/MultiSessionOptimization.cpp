@@ -207,6 +207,13 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         for(int j=0; j<inter_error.size(); j++) {
             //adaptive threshold.
             double LPD_RERROR_THRESHOLD = rerrs[sidx][lpdi[sidx].localizations[j].s1time]*mult;
+            if(LPD_RERROR_THRESHOLD < 0) {
+                std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
+                exit(1);
+            } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
+                LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror(rerrs)*mult;
+            }
+            
             bool inlier = true;
             if(std::isnan(next[j]) || inter_error[j] > LPD_RERROR_THRESHOLD) inlier = false;
             if(std::isnan(intra_error[j])) inlier = false;

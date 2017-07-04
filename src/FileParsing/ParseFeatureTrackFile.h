@@ -19,6 +19,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <ctime>
+#include <time.h>
+#include <stdlib.h>
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point2.h>

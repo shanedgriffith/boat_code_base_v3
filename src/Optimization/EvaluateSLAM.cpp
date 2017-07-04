@@ -36,7 +36,7 @@ vector<double> EvaluateSLAM::LoadRerrorFile(){
     return rerrors;
 }
 
-double EvaluateSLAM::GetAverageRerror(){
+double EvaluateSLAM::GetAverageRerror(vector<double> rerrors){
     static double avg_rerror=0.0;
     if(avg_rerror > 0.0001) return avg_rerror;
     double sum=0;

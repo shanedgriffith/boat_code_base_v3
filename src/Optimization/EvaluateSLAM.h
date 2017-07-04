@@ -42,7 +42,7 @@ public:
     std::vector<double> ErrorForSurvey(std::string _pftbase);
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
-    double GetAverageRerror();
+    double GetAverageRerror(std::vector<double> rerrors);
 };
 
 #endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */
