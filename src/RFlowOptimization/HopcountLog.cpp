@@ -69,7 +69,7 @@ std::vector<double> HopcountLog::GetAvgHopCounts() {
     if(FileParsing::DirectoryExists(_path)) {
         vector<string> dates = FileParsing::ListFilesInDir(_path, "1");
         for(int i=0; i<dates.size(); i++) {
-            double avghop = LoadHopDistance(_path, dates[i]);
+            double avghop = LoadHopDistance(dates[i]);
             ret.push_back(avghop);
         }
     }
@@ -77,7 +77,7 @@ std::vector<double> HopcountLog::GetAvgHopCounts() {
 }
 
 void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<LocalizedPoseData>& localizations, std::vector<double> lpd_rerror) {
-    std::vector<double> hopcounts = GetAvgHopCounts(_path);
+    std::vector<double> hopcounts = GetAvgHopCounts();
     double sum = 0.0;
     int count = 0;
     for(int i=0; i<localizations.size(); i++){
