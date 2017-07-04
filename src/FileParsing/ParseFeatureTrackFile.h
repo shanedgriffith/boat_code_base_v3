@@ -25,7 +25,7 @@
 #include "opencv2/core/core.hpp"
 
 #include <DataTypes/Camera.hpp>
-#include <DataTypes/LandmarkTack.h>
+#include <DataTypes/LandmarkTrack.h>
 
 #include "FileParsing.hpp"
 

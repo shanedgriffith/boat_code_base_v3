@@ -33,6 +33,7 @@ private:
     std::vector<double> LoadReprojectionErrorFile(std::string evalfile);
     void SortPoints();
     int GetIndexOfFirstPoint(int id);
+    void LoadOptimizationResult(bool sorted);
 
     void RemoveTransitionEntries();
     std::vector<int> to_remove;
@@ -60,10 +61,9 @@ public:
     
     ParseOptimizationResults(std::string base, bool sorted = true):
     _base(base) {
-        LoadOptimizationResult();
+        LoadOptimizationResult(sorted);
     }
     
-    void LoadOptimizationResult();
     int GetNumberOfPoses(){return (int) boat.size();}
     
     //meant to be called with the feature tracking ids

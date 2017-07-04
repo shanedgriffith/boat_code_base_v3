@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void ParseOptimizationResults::LoadOptimizationResult(){
+void ParseOptimizationResults::LoadOptimizationResult(bool sorted){
     ReadDelimitedFile(_base + boatfile, LINETYPE::pose);
     if(Exists(_base + velocityfile)) ReadDelimitedFile(_base + velocityfile, LINETYPE::vels);
     ReadDelimitedFile(_base + correspondencefile, LINETYPE::corres);
