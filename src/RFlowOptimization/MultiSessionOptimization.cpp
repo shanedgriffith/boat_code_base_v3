@@ -202,7 +202,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         erf.debug = true;
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         vector<double> intra_error = erf.IntraSurveyErrorAtLocalizations(poses, landmarks[sidx], lpdi[sidx].localizations, POR[i], _pftbase);
-        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks[sidx], optstart);
+        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks, optstart);
         int nchanges = 0;
         int coutliers = 0;
         for(int j=0; j<inter_error.size(); j++) {
@@ -267,7 +267,7 @@ void MultiSessionOptimization::SaveResults() {
         
         EvaluateRFlow erf(_cam, dates[i], _map_dir);
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
-        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks[sidx], optstart);
+        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks, optstart);
         erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
         
@@ -278,7 +278,6 @@ void MultiSessionOptimization::SaveResults() {
 
 void MultiSessionOptimization::IterativeMerge() {
     LocalizePose lp(_cam);
-    int numverified = lpdi.localizations.size();
     for(int i=0, nchanges=100; nchanges>1.0 && i<MAX_ITERATIONS; i++) {
         std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
