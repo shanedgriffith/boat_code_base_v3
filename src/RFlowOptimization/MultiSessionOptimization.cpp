@@ -61,7 +61,7 @@ void MultiSessionOptimization::Initialize() {
         int ninliers = 0;
         for(int i=0; i<rerror_set.size(); i++)
             ninliers += (rerror_set[i]==1)?1:0;
-        inlier_ratios.push_back(1.*ninliers/rerror_set.size());
+        inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
 }
 
@@ -184,7 +184,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
-        rfFG->ChangeLandmarkSet(sidx);
+        rfFG->ChangeLandmarkSet(i-optstart);
         vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
         landmarks.push_back(landmarkset);
     }
@@ -212,11 +212,11 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
                 std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
                 exit(1);
             } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
-                LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror(rerrs)*mult;
+                LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror(rerrs[sidx])*mult;
             }
             
             bool inlier = true;
-            if(std::isnan(next[j]) || inter_error[j] > LPD_RERROR_THRESHOLD) inlier = false;
+            if(std::isnan(inter_error[j]) || inter_error[j] > LPD_RERROR_THRESHOLD) inlier = false;
             if(std::isnan(intra_error[j])) inlier = false;
             if(intra_error[j] > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
             if(permerr[sidx][j] > 0) inlier = false;

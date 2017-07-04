@@ -52,7 +52,7 @@ protected:
     std::vector<std::vector<double>> lpd_rerror;
     std::vector<ParseOptimizationResults> POR;
     std::vector<std::unordered_map<int, int>> lmap;
-    std::vector<double> inlier_ratios;
+    std::vector<double> inlier_ratio;
     
     void IdentifyOptimizationDates();
     void Initialize();
