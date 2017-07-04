@@ -334,7 +334,7 @@ int AcquireISConstraints::AcquireISConstraintsWithRF(int por1time, int dir){
 }
 
 void AcquireISConstraints::Run(int start){
-    int por1time=0; debug=true;
+    bool debug=true;
     int nentries = survey_est[latestsurvey].por.boat.size();
     bool haveconstraints = false;
     
@@ -358,7 +358,7 @@ void AcquireISConstraints::Run(int start){
         if(!haveconstraints) break;
         
         if(debug) std::cout<<"Running RF"<<std::endl;
-        int lcuridx = localizations.size()-1;
+        int lcuridx = lpdi.localizations.size()-1;
         
         if(back_two){
         AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lpdi.FROM::LastLPD, lpdi.DIRECTION::Backward), -1); //backward from the first verified pose.

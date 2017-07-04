@@ -33,7 +33,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
         if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
-    optstart = min(POR.size()-K-1, 0);
+    optstart = std::min(((int) POR.size()-K-1), 0);
     dates = std::vector<string>(dates.begin(), dates.begin()+POR.size());
 }
 
@@ -55,7 +55,7 @@ void MultiSessionOptimization::Initialize() {
         cached_landmarks.push_back(clset);
         
         HopcountLog hlog(_map_dir);
-        vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], count);
+        vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], nloaded);
         lpd_rerror.push_back(rerror_set);
         
         int ninliers = 0;
@@ -192,9 +192,9 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     double totchanges = 0;
     for(int i=optstart; i<dates.size(); i++){
         int sidx = i-optstart;
+        EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
         if(firstiter){
             permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
-            EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
             rerrs.push_back(ESlam.LoadRerrorFile());
         }
 
@@ -223,6 +223,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
             
             if((inlier && lpd_rerror[sidx][j] < 0) || (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
+                LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
                 if(lpd.s0 >= optstart) {
                     ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
                     ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
@@ -271,7 +272,7 @@ void MultiSessionOptimization::SaveResults() {
         erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
         
         HopcountLog hlog(_map_dir);
-        hlog.SaveLocalLog(dates[i], numverified, lpdi[sidx].localizations, lpd_rerror[sidx]);
+        hlog.SaveLocalLog(dates[i], lpd_rerror[sidx].size(), lpdi[sidx].localizations, lpd_rerror[sidx]);
     }
 }
 

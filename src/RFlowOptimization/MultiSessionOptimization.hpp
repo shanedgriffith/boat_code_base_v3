@@ -44,13 +44,14 @@ class MultiSessionOptimization: public SurveyOptimizer {
 protected:
     //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.
     const int K = 5;
+    const int MAX_ITERATIONS = 10;
     
     int optstart;
     std::vector<std::string> dates;
     std::vector<LPDInterface> lpdi;
     std::vector<std::vector<double>> lpd_rerror;
     std::vector<ParseOptimizationResults> POR;
-    std::vector<unordered_map<int, int>> lmap;
+    std::vector<std::unordered_map<int, int>> lmap;
     std::vector<double> inlier_ratios;
     
     void IdentifyOptimizationDates();
