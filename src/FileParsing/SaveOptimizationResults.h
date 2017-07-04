@@ -22,7 +22,7 @@
 class SaveOptimizationResults: public OptimizationResults {
 private:
     std::string _base;
-    time_t start,end;
+    time_t beginning,optstart,end;
     
 public:
     bool created_base_dir = false;
@@ -35,6 +35,7 @@ public:
     filter_null_points(true), save_status(false), draw_map(false), _base(base)
     {
         MakeDir(_base);
+        time(&beginning);
     }
     
     void StartTimer();
