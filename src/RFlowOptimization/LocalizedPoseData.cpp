@@ -228,6 +228,7 @@ void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gt
     vector<gtsam::Point2>* points2d;
     vector<int>* pointids;
     if(bot==0) {
+        pids = std::vector<int>(nin);
         p3d0 = std::vector<gtsam::Point3>(nin);
         p2d1 = std::vector<gtsam::Point2>(nin);
         rerrorp = std::vector<double>(nin, ACCEPTABLE_RERROR);
@@ -235,6 +236,7 @@ void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gt
         points2d = &p2d1;
         pointids = &pids;
     } else {
+        bids = std::vector<int>(nin);
         b3d1 = std::vector<gtsam::Point3>(nin);
         b2d0 = std::vector<gtsam::Point2>(nin);
         rerrorb = std::vector<double>(nin, ACCEPTABLE_RERROR);

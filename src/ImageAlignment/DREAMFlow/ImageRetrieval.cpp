@@ -142,9 +142,17 @@ int ImageRetrieval::IdentifyClosestPose(std::string base, std::vector<std::vecto
 }
 
 int ImageRetrieval::GetMin(std::vector<double>& res){
+    //find the minval that is greater than 0
     if(res.size() == 0) return -1;
-    std::vector<double>::iterator result = std::min_element(res.begin(), res.end());
-    return  std::distance(res.begin(), result);
+    double minv = 100000000000;
+    int mini = 0;
+    for(int i=0; i<res.size(); i++){
+        if(res[i]<minv && res[i] > 0){
+            minv = res[i];
+            mini = i;
+        }
+    }
+    return mini;
 }
 
 int ImageRetrieval::GetMax(std::vector<double>& ver){

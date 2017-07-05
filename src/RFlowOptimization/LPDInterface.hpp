@@ -30,7 +30,9 @@ public:
     std::vector<LocalizedPoseData> localizations;
     LocalizedPoseData most_adv_lpd;
     
-    LPDInterface(){}
+    LPDInterface(){
+        most_adv_lpd.s0 = -1;
+    }
     
     int GetLPDIdx(int por1time);
     bool StoreLPD(std::string _map_dir, LocalizedPoseData lpd);

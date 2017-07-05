@@ -108,7 +108,7 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
 }
 
 int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& imagecoord, vector<int> ids, vector<gtsam::Point3>& p3d,
-                                    vector<gtsam::Point2>& p1, vector<gtsam::Point2>& p2, vector<gtsam::Point3>& subset3d, vector<int> subsetids, bool forward){
+                                    vector<gtsam::Point2>& p1, vector<gtsam::Point2>& p2, vector<gtsam::Point3>& subset3d, vector<int>& subsetids, bool forward){
     int imset = forward?0:1;
     int count = 0;
     int countbad3d=0, countinconsistent=0, countoutsideimage=0;

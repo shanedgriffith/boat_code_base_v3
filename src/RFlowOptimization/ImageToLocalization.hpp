@@ -37,7 +37,7 @@ private:
     
     AlignmentResult MatchToSet(std::string image1, std::string image2);
     int MapPoints(AlignmentResult& ar, std::vector<gtsam::Point2>& imagecoord, std::vector<int> ids, std::vector<gtsam::Point3>& p3d,
-                  std::vector<gtsam::Point2>& p1, std::vector<gtsam::Point2>& p2, std::vector<gtsam::Point3>& subset3d, std::vector<int> subsetids, bool forward);
+                  std::vector<gtsam::Point2>& p1, std::vector<gtsam::Point2>& p2, std::vector<gtsam::Point3>& subset3d, std::vector<int>& subsetids, bool forward);
     bool ApplyEpipolarConstraints(std::vector<gtsam::Point2>& p0, std::vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers);
     double RobustAlignmentConstraints(AlignmentResult& ar, ParseFeatureTrackFile& pftf0,  ParseFeatureTrackFile& pftf1);
     
