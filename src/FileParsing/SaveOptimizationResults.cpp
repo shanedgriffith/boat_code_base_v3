@@ -100,7 +100,7 @@ void SaveOptimizationResults::StatusMessage(int iteration, double percent_comple
     double totruntime = difftime (end, beginning);
     FILE * fp = OpenFile(_base + statusfile, "a");
     char buf[LINESIZE];
-    sprintf(buf, "ITERATION %d. Percent complete %lf. Run time (HH:MM:SS) optimization %s, total \n", iteration, percent_completed, formattime(optruntime).c_str(), formattime(totruntime).c_str());
+    sprintf(buf, "ITERATION %d. Percent complete %lf. Run time (HH:MM:SS) optimization %s, total %s\n", iteration, percent_completed, formattime(optruntime).c_str(), formattime(totruntime).c_str());
     fprintf(fp, "%s", buf);
     printf("%s", buf);
     fclose(fp);

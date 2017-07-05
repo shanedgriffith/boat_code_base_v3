@@ -38,7 +38,7 @@ public:
         time(&beginning);
     }
     
-    void StartTimer();
+    void TimeOptimization();
     void SetSaveDir(std::string dir){_base = dir; MakeDir(_base); started_correspondence = false;}
     void SetDrawMap() {MakeDir(_base + drawdir); draw_map = true;}
     void SetSaveStatus() {FILE * bts = OpenFile(_base + statusfile, "w"); fclose(bts); save_status = true;}

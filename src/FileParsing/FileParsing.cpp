@@ -99,7 +99,6 @@ std::vector<std::string> FileParsing::ParseLineAdv(char * line, std::string sepa
         parsedline.push_back(tok);
         idx++;
     }
-    
     return parsedline;
 }
 
@@ -107,7 +106,11 @@ std::string FileParsing::formattime(double seconds) {
     int hours = seconds/3600;
     int minutes = (seconds-hours*3600)/60;
     seconds = seconds-hours*3600- minutes*60;
-    return to_string(hours) + ":"+to_string(minutes)+":"+to_string(seconds);
+    char time[20];
+    sprintf(time, "%02d:%02d:%02lf", hours, minutes, seconds);
+    string ret = time;
+    return ret;
+    //return to_string(hours) + ":"+to_string(minutes)+":"+to_string(seconds);
 }
 
 void FileParsing::ReadDelimitedFile(std::string file, int type) {
