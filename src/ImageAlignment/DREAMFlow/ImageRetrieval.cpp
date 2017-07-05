@@ -145,7 +145,7 @@ int ImageRetrieval::GetMin(std::vector<double>& res){
     //find the minval that is greater than 0
     if(res.size() == 0) return -1;
     double minv = 100000000000;
-    int mini = 0;
+    int mini = -1;
     for(int i=0; i<res.size(); i++){
         if(res[i]<minv && res[i] > 0){
             minv = res[i];
@@ -165,9 +165,9 @@ bool ImageRetrieval::ContinueInDirection(int off, int direction, std::vector<dou
     //assumes off starts off in bounds.
     int idx = GetMin(res);
     if(idx==-1) return true;
-    while(res[off]<1) off -= direction;
+    if(off==0 || off==res.size()) return false; //shouldn't this be for the opposite direction?
+    while(res[off]<1) off -= direction; //stop at the middle of res.
     if(res[off]-res[idx]>DELTA) return false;
-    if(off==0 || off==res.size()) return false;
     return true;
 }
 
@@ -217,6 +217,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
         //check progress to stop if we can.
 //        bool verified = HaveVerified(i, ver);
 //        if(verified) break;
+        
         if(dir<0 && left) left = ContinueInDirection(idx, dir, res);
         else if(dir>0 && right) right = ContinueInDirection(idx, dir, res);
         if(!left && !right) break;
@@ -234,7 +235,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
         while(man.WaitForAnotherMachine()){
 //            while(!verified && man.WaitForAnotherMachine()){
 //            verified = HaveVerified(ws.size(), ver);
-            if(left) left = ContinueInDirection(0, -1, res);
+            if(left) left = ContinueInDirection(0, -1, res); //looks wrong.
             else if(right) right = ContinueInDirection(res.size()-1, 1, res);
             else break;
         }
