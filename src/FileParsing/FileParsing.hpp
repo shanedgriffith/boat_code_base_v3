@@ -30,7 +30,7 @@ protected:
     bool debug = false;
     bool verbose = false;
     
-    static FILE * OpenFile(std::string filename, const char * op);
+    static FILE * OpenFile(std::string filename, const char * op, bool required = true);
     static std::vector<std::string> ParseLine(char * line);
     static std::vector<std::string> ParseLineAdv(char * line, std::string separator);
     

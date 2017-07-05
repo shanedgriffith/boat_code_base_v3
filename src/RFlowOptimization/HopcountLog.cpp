@@ -17,7 +17,7 @@ const string HopcountLog::_locoptname = "/locoptlist.csv";
 double HopcountLog::LoadHopDistance(string hopdate) {
     //loads the average hop count of one map.
     string fname = _path + hopdate + _locoptname; //_results_dir + "maps/"
-    FILE * fp = OpenFile(fname.c_str(), "r");
+    FILE * fp = OpenFile(fname.c_str(), "r", false);
     double avg_hop_distance = 0.0;
     if(fp) {
         int LINESIZE = 10000;

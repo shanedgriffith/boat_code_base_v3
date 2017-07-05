@@ -12,9 +12,9 @@
 
 using namespace std;
 
-FILE * FileParsing::OpenFile(string filename, const char * op) {
+FILE * FileParsing::OpenFile(string filename, const char * op, bool required) {
     FILE * fs = fopen(filename.c_str(), op);
-    if(!fs) {cout << "FileParsing: Error. Couldn't open " << filename << "." << endl; exit(-1);}
+    if(!fs && required) {cout << "FileParsing: Error. Couldn't open " << filename << "." << endl; exit(-1);}
     return fs;
 }
 
