@@ -121,9 +121,11 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
 
         switch(curset){
         case 5: l.p3d = std::vector<gtsam::Point3>(numofline[6]);
+                l.pids = std::vector<int>(numofline[7]);
                 l.p3d0 = std::vector<gtsam::Point3>(numofline[7]);
                 l.p2d1 = std::vector<gtsam::Point2>(numofline[7]);
                 l.rerrorp = std::vector<double>(numofline[7]);
+                l.bids = std::vector<int>(numofline[8]);
                 l.b3d = std::vector<gtsam::Point3>(numofline[8]);
                 l.b3d1 = std::vector<gtsam::Point3>(numofline[9]);
                 l.b2d0 = std::vector<gtsam::Point2>(numofline[9]);
