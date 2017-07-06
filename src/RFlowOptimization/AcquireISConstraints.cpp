@@ -360,12 +360,13 @@ void AcquireISConstraints::Run(int start){
         if(debug) std::cout<<"Running RF"<<std::endl;
         int lcuridx = lpdi.localizations.size()-1;
         
+        int lcuridx = lpdi.localizations.size()-1;
         if(back_two){
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lpdi.FROM::LastLPD, lpdi.DIRECTION::Backward), -1); //backward from the first verified pose.
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lpdi.FROM::LastLPD, lpdi.DIRECTION::Forward), 1);} //forward from the first verified pose.
+        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::LastLPD, lpdi.DIRECTION::Backward), -1); //backward from the first verified pose.
+        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::LastLPD, lpdi.DIRECTION::Forward), 1);} //forward from the first verified pose.
         //if(localizations[lcuridx].s1time - localizations[lcuridx-1].s1time >5) //only go backward here if overlap is small.
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lpdi.FROM::CurLPD, lpdi.DIRECTION::Backward), -1); //backward from the second verified pose.
-        por1time = AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lpdi.FROM::CurLPD, lpdi.DIRECTION::Forward), 1); //forward from the second verified pose.
+        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::CurLPD, lpdi.DIRECTION::Backward), -1); //backward from the second verified pose.
+        por1time = AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::CurLPD, lpdi.DIRECTION::Forward), 1); //forward from the second verified pose.
         haveconstraints = false;
     }
 }
