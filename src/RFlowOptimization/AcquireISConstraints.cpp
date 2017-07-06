@@ -359,8 +359,6 @@ void AcquireISConstraints::Run(int start){
         
         if(debug) std::cout<<"Running RF"<<std::endl;
         int lcuridx = lpdi.localizations.size()-1;
-        
-        int lcuridx = lpdi.localizations.size()-1;
         if(back_two){
         AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::LastLPD, lpdi.DIRECTION::Backward), -1); //backward from the first verified pose.
         AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, lpdi.FROM::LastLPD, lpdi.DIRECTION::Forward), 1);} //forward from the first verified pose.
