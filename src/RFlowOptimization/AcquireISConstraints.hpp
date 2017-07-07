@@ -90,7 +90,7 @@ public:
         Initialize();
     }
     
-    void Run(int start=-1);
+    void Run(int user_specified_start=-1);
 };
 
 

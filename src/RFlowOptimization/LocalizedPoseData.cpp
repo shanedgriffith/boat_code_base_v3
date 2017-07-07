@@ -33,7 +33,7 @@ void LocalizedPoseData::Save(string toppath, string altpath){
     fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf\n",
             p0frame1[0], p0frame1[1], p0frame1[2], p0frame1[3], p0frame1[4], p0frame1[5]);
     fprintf(fp, "%d, %d, %d, %d\n", (int) p3d.size(), (int)p3d0.size(), (int)b3d.size(), (int)b3d1.size());
-    char allpoints[20000];
+    char allpoints[30000];
     int lastl=0;
     for(int i=0; i<p3d.size(); i++){
         sprintf(allpoints+lastl, "%lf, %lf, %lf\n", p3d[i].x(), p3d[i].y(), p3d[i].z());

@@ -333,18 +333,20 @@ int AcquireISConstraints::AcquireISConstraintsWithRF(int por1time, int dir){
     return por1time;
 }
 
-void AcquireISConstraints::Run(int start){
+void AcquireISConstraints::Run(int user_specified_start){
     bool debug=true;
     int nentries = survey_est[latestsurvey].por.boat.size();
     bool haveconstraints = false;
     
     //figure out where to start.
     int por1time = lpdi.GetStartingPoint();
-    if(por1time > 0) haveconstraints = true;
-    if(start <= 0) start = FindRestart();
-    if(start > 0) {
-        por1time = start;
-        haveconstraints = false;
+    int leftoffat = FindRestart();
+    if(user_specified_start > 0) {
+        por1time = user_specified_start;
+    } else if(leftoffat > por1time) {
+        por1time = leftoffat;
+    } else if(por1time > 0){
+        haveconstraints = true;
     }
     if(debug) std::cout << "Starting IS Acquisition with " << por1time << " of " << nentries << std::endl;
     
