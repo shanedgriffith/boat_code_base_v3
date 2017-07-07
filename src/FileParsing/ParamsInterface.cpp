@@ -26,9 +26,9 @@ void ParamsInterface::ProcessLineEntries(int type, vector<string> lp){
 void ParamsInterface::ReadDelimitedFile(string file, int type)
 {
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     
-    while (fgets(line, LINESIZE, fp))
+    while (fgets(line, LINESIZE-1, fp))
     {
         char * tmp = line;
         vector<string> lp = ParseLine(tmp);

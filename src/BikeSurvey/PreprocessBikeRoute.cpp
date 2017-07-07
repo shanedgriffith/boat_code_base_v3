@@ -29,7 +29,7 @@ void PreprocessBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
 
 void PreprocessBikeRoute::ReadDelimitedFile(string file, int type) {
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
 
     //skip the first line.
     fgets(line, LINESIZE-1, fp);

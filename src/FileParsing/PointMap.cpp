@@ -24,7 +24,7 @@ void PointMap::ProcessLineEntries(int type, vector<string> lp){
 void PointMap::ReadDelimitedFile(string file, int type)
 {
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     fgets(line, LINESIZE-1, fp);
     while (fgets(line, LINESIZE-1, fp))
     {

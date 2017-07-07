@@ -48,7 +48,7 @@ void MultiManualCorrespondence::ProcessLineEntries(int type, std::vector<std::st
 
 void MultiManualCorrespondence::ReadDelimitedFile(std::string file, int type){
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
 
     while (fgets(line, LINESIZE-1, fp))
     {

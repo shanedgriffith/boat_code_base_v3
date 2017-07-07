@@ -82,7 +82,7 @@ void LocalizedPoseData::CheckLine(string& filepath, int numr, int expected){
 LocalizedPoseData LocalizedPoseData::Read(string filepath){
     LocalizedPoseData l;
 
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     int d0, d1;
     std::vector<int> expectedperline = {8, 4, 2, 6, 6, 4, 3, 7, 3, 7};
     std::vector<int> numofline = {1, 1, 1, 1, 1, 1, -1, -1, -1, -1};

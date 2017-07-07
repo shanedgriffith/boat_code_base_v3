@@ -21,7 +21,7 @@ double HopcountLog::LoadHopDistance(string hopdate) {
     double avg_hop_distance = 0.0;
     if(fp) {
         int LINESIZE = 10000;
-        char line[LINESIZE]="";
+        char line[LINESIZE];
         fgets(line, LINESIZE-1, fp);
         if(sscanf(line, "%lf\n", &avg_hop_distance)!=1) {
             std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
@@ -42,7 +42,7 @@ std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count)
         int a, b, rerr;
         double c;
         int LINESIZE = 10000;
-        char line[LINESIZE]="";
+        char line[LINESIZE];
         fgets(line, LINESIZE-1, fp);//skip the first line
         while(fgets(line, LINESIZE-1, fp)){
             

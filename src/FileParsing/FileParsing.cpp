@@ -115,9 +115,9 @@ std::string FileParsing::formattime(double seconds) {
 
 void FileParsing::ReadDelimitedFile(std::string file, int type) {
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     
-    while (fgets(line, LINESIZE, fp)) {
+    while (fgets(line, LINESIZE-1, fp)) {
         char * tmp = line;
         std::vector<std::string> lp = ParseLine(tmp);
         ProcessLineEntries(type, lp);

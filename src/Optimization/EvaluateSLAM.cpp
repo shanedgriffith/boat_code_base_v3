@@ -23,7 +23,7 @@ vector<double> EvaluateSLAM::LoadRerrorFile(){
     std::vector<double> rerrors;
     FILE * fp = OpenFile(fname, "r");
     int LINESIZE = 10000;
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     fgets(line, LINESIZE-1, fp);
     while(!feof(fp)){
         double val=0;

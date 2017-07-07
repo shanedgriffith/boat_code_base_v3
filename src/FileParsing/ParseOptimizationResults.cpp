@@ -84,7 +84,7 @@ void ParseOptimizationResults::ProcessLineEntries(int type, vector<string> lp){
 void ParseOptimizationResults::ReadDelimitedFile(string file, int type)
 {
     FILE * fp = OpenFile(file,"r");
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     
     while (fgets(line, LINESIZE-1, fp))
     {

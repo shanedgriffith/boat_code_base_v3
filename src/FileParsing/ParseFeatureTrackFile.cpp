@@ -25,7 +25,7 @@ void ParseFeatureTrackFile::ProcessLineEntries(int type, vector<string> lp){
 
 /*
 void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     char l3[LINESIZE];
     int entry;
     int id;
@@ -73,7 +73,7 @@ void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
 
 //This version is less buggy, in some way due to lack of reliance on string, which uses dynamic memory.
 void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
-    char line[LINESIZE]="";
+    char line[LINESIZE];
     char l3[LINESIZE];
     int entry;
     int id;

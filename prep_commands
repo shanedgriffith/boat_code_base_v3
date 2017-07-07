@@ -20,6 +20,7 @@ sudo ldconfig
 # >unset SSH_ASKPASS (if necessary)
 # >git pull origin master
 # >git push -u origin master (the -u initializes the tracking references)
+# >git remote show origin
 # >git config --global credential.helper "cache --timeout=86400"
 
 #to update code on the lab machines:
