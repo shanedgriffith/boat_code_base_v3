@@ -75,7 +75,7 @@ bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p) {
     //only the p1frame0 poses are added, and only if they're not already added.
     if(VariableExists(survey, pnum)) return false;
     gtsam::Symbol s = GetSymbol(survey, pnum);
-    return AddPose(s, p); //, loc
+    return AddPose(s, p);
 }
 
 bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {

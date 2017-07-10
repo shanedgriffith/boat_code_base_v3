@@ -33,7 +33,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
         if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
-    optstart = std::min(((int) POR.size()-K-1), 0);
+    optstart = std::max(((int) POR.size()-K-1), 0);
     dates = std::vector<string>(dates.begin(), dates.begin()+POR.size());
 }
 
@@ -43,10 +43,10 @@ void MultiSessionOptimization::Initialize() {
     cache_landmarks = true;
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
-        lpdi.push_back(lint);
         int nloaded = lint.LoadLocalizations(_map_dir + dates[i]);
+        lpdi.push_back(lint);
         
-        if(nloaded < POR[i].boat.size()*0.01) {
+        if(i > 0 && nloaded < POR[i].boat.size()*0.01) {
             std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimization will be the original set."<<std::endl;
             exit(-1);
         }
@@ -63,6 +63,9 @@ void MultiSessionOptimization::Initialize() {
             ninliers += (rerror_set[i]==1)?1:0;
         inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
+    
+    for(int i=0; i<5; i++)
+        std::cout << "cur lpd ( " << lpdi[1].localizations[i].s0time << ", " << lpdi[1].localizations[i].s1time << ")"<<endl;
 }
 
 void MultiSessionOptimization::UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks){
@@ -102,7 +105,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         }
     }
 
-    if(firstiter){
+    if(firstiter) {
         //add the rest of the landmarks
         UpdateLandmarkMap(active);
         CacheLandmarks(active);
@@ -279,6 +282,8 @@ void MultiSessionOptimization::SaveResults() {
 void MultiSessionOptimization::IterativeMerge() {
     LocalizePose lp(_cam);
     for(int i=0, nchanges=100; nchanges>1.0 && i<MAX_ITERATIONS; i++) {
+        rfFG->Clear();
+        
         std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
@@ -288,11 +293,10 @@ void MultiSessionOptimization::IterativeMerge() {
         std::cout << "  Optimizing..." << std::endl;
         RunGTSAM();
 
-        std::cout << "  Finished." << std::endl;
-        rfFG->Clear();
-        GTS.ClearGraph();
-
+        std::cout << "  Updating Error." << std::endl;
         nchanges = UpdateError(i==0);
+        
+        std::cout << "  Finished." << std::endl;
     }
     
     if(!dry_run){
