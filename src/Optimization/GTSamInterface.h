@@ -85,7 +85,7 @@ public:
     std::vector<double> MAPPoseEstimate(int num);
     gtsam::Pose3 PoseResult(gtsam::Symbol s);
     gtsam::Point3 MAPLandmarkEstimate(int idx);
-    std::vector<std::vector<double> > GetOptimizedLandmarks(bool sorted);
+    std::vector<std::vector<double> > GetOptimizedLandmarks(bool sorted=false);
     std::vector<std::vector<double> > GetOptimizedTrajectory(int var_id, int N);
     
     void PrintInitialEstimate();

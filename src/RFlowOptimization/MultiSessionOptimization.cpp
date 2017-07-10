@@ -188,7 +188,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
         landmarks.push_back(landmarkset);
     }
     
@@ -255,7 +255,7 @@ void MultiSessionOptimization::SaveResults() {
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
         landmarks.push_back(landmarkset);
     }
     
