@@ -120,6 +120,7 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
             default:
                 break;
         }
+        initialEstimate.clear();
     } catch(const std::exception& ex) {
         printf("GTSamInterface::RunBundleAdjustment. Exception.");
         printf(" There was an exception while attempting to solve the factor graph.");

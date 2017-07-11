@@ -48,7 +48,7 @@ double EvaluateRFlow::UpdateTots(vector<double>& tots, vector<double>& stats){
         tots[0] += ret;
         tots[1]++;
         if(ret > avgbadthreshold) tots[3]++;
-        else if(tots.size()>4){
+        else if(tots.size()>4) {
             tots[4] += ret;
             tots[5]++;
         }
@@ -65,7 +65,7 @@ void EvaluateRFlow::PrintTots(vector<double> tots, string name){
             return;
         }
         cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
-        cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
+        if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
         cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
         cout << "  " << tots[3] << " average unacceptable (should be nearly zero)" << endl;
     }
@@ -166,7 +166,7 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
             }
         }
     }
-    if(debug) cout << "Found " << countfound << " of " << ids_subset.size() << " points." << endl;
+    //if(debug) cout << "Found " << countfound << " of " << ids_subset.size() << " points." << endl;
     return pset;
 }
 

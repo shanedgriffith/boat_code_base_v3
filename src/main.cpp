@@ -20,13 +20,20 @@
 
 using namespace std;
 
+////cluster:
+//const string results_dir = "/home/shaneg/results/";
+//const string query_loc = "/home/shaneg/data/VBags";
+//const string pftbase = "/home/shaneg/data/Lakeshore_KLT/";
+/*
+//
 const string mnt = "/mnt";
-const string results_dir = mnt + "/tale/shaneg/results/isc/";
+const string results_dir = "/cs-share/dream/results_consecutive/"; //mnt + "/tale/shaneg/results/isc";
 const string query_loc = mnt + "/tale/cedricp/VBags";
-const string pftbase = mnt + "/tale/shaneg/Lakeshore_KLT/";
-const string poses_loc = mnt + "/tale/shaneg/results/visibility_poses/all/";
-string visibility_dir = mnt + "/tale/shaneg/results/visibility_poses/all/";
-const string optimized_datasets = mnt + "/tale/shaneg/results/VerifiedOpt/";
+const string pftbase = mnt + "/tale/shaneg/Lakeshore_KLT/";*/
+//const string visibility_dir = mnt + "/tale/shaneg/results/visibility_poses/all/";
+
+vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags", "/home/shaneg/data/Lakeshore_KLT/"};
+vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags", "/mnt/tale/shaneg/Lakeshore_KLT/"};
 
 int main(int argc, char *argv[]) {
     if(argc<4) {
@@ -40,6 +47,15 @@ int main(int argc, char *argv[]) {
 //    trfo.TestNewImageAlignment();
 //    exit(1);
     
+    string results_dir = lab_paths[0];
+    string query_loc = lab_paths[1];
+    string pftbase = lab_paths[2];
+    string visibility_dir = "/mnt/tale/shaneg/results/visibility_poses/all/";
+    if(argc>4){
+        results_dir = cluster_paths[0];
+        query_loc = cluster_paths[1];
+        pftbase = cluster_paths[2];
+    }
     
     int prog = atoi(argv[3]);
     switch(prog){
@@ -47,7 +63,7 @@ int main(int argc, char *argv[]) {
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
+        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, results_dir);
         acq.Run(start);
         break;}
     case 1:{

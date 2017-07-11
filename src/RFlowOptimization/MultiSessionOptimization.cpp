@@ -63,9 +63,6 @@ void MultiSessionOptimization::Initialize() {
             ninliers += (rerror_set[i]==1)?1:0;
         inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
-    
-    for(int i=0; i<5; i++)
-        std::cout << "cur lpd ( " << lpdi[1].localizations[i].s0time << ", " << lpdi[1].localizations[i].s1time << ")"<<endl;
 }
 
 void MultiSessionOptimization::UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks){
@@ -228,10 +225,11 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
                 nchanges++;
                 LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
                 if(lpd.s0 >= optstart) {
+                    //this right? I should be able to turn off constraints with surveys .. oh these are for ISCs not localizations
                     ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
                     ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
                 }
-            }
+            } else if (lpd_rerror[sidx][j] == 0) nchanges++;
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
