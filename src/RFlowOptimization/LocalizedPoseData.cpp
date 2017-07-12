@@ -12,14 +12,14 @@ using namespace std;
 const string LocalizedPoseData::lpath = "/localizations/";
 
 string LocalizedPoseData::GetPath(string toppath, string altpath){
-    string filepath = toppath + lpath + to_string(s1time) + ".loc";
-    if(altpath.length()>0) filepath = toppath + altpath + to_string(s1time) + ".loc";
+    string fname = to_string(s1time) + "_" + to_string(s0) + ".loc";
+    string filepath = toppath + lpath + fname;
+    if(altpath.length()>0) filepath = toppath + altpath + fname;
     return filepath;
 }
 
 void LocalizedPoseData::Save(string toppath, string altpath){
-    string filepath = toppath + lpath + to_string(s1time) + ".loc";
-    if(altpath.length()>0) filepath = toppath + altpath + to_string(s1time) + ".loc";
+    string filepath = GetPath(toppath, altpath);
 
     try{
     FILE * fp = OpenFile(filepath,"w");
@@ -218,7 +218,9 @@ LocalizedPoseData& LocalizedPoseData::operator=(LocalizedPoseData other){
 }
 
 bool LocalizedPoseData::operator<(const LocalizedPoseData& str) const {
-    return (s1time < str.s1time);
+    return ((s1 < str.s1) ||
+            (s1==str.s1 && s1time < str.s1time) ||
+            (s1==str.s1 && s1time==str.s1time && s0 < str.s0));
 }
 
 void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gtsam::Point2>& p2d, vector<gtsam::Point3>& p3d, vector<int> ids, int bot, int top){

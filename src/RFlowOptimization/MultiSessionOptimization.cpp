@@ -139,6 +139,7 @@ void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std:
 
 void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
+    int cISC = 0;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
@@ -147,8 +148,10 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
             } else if(firstiter) { //add ISCs for the remaining surveys
+                if(cISC > 30) continue;
                 AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
                 AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
+                cISC++;
             }
         }
     }
@@ -278,6 +281,8 @@ void MultiSessionOptimization::SaveResults() {
 }
 
 void MultiSessionOptimization::IterativeMerge() {
+    time_t beginning,optstart,end;
+    time (&beginning);
     LocalizePose lp(_cam);
     for(int i=0, nchanges=100; nchanges>1.0 && i<MAX_ITERATIONS; i++) {
         rfFG->Clear();
@@ -289,12 +294,17 @@ void MultiSessionOptimization::IterativeMerge() {
         AddAllTheLandmarkTracks();
         
         std::cout << "  Optimizing..." << std::endl;
+        time (&optstart);
         RunGTSAM();
 
         std::cout << "  Updating Error." << std::endl;
         nchanges = UpdateError(i==0);
         
         std::cout << "  Finished." << std::endl;
+        time (&end);
+        double optruntime = difftime (end, optstart);
+        double totruntime = difftime (end, beginning);
+        printf("ITERATION %d. Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
     }
     
     if(!dry_run){

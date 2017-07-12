@@ -96,7 +96,7 @@ void SaveOptimizationResults::TimeOptimization(){
 void SaveOptimizationResults::StatusMessage(int iteration, double percent_completed){
     if(!save_status) return;
     time (&end);
-    double optruntime = difftime (end,optstart);
+    double optruntime = difftime (end, optstart);
     double totruntime = difftime (end, beginning);
     FILE * fp = OpenFile(_base + statusfile, "a");
     char buf[LINESIZE];

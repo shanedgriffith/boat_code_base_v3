@@ -22,8 +22,6 @@ class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
-    std::string formattime(double seconds);
-    
     Camera& _cam;
 public:
     bool debug;

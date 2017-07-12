@@ -38,7 +38,7 @@ protected:
     virtual void ReadDelimitedFile(std::string file, int type);
     virtual void ProcessLineEntries(int type, std::vector<std::string>& lp){}
 public:
-    std::string formattime(double seconds);
+    static std::string formattime(double seconds);
     static bool DirectoryExists(std::string pzPath );
     static bool Exists(std::string file);
     static void MakeDir(std::string dir);

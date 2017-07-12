@@ -256,7 +256,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         else man.RunMachine(tidx);
     }
     man.WaitForMachine(true);
-
+    
     //get the best result, the verified one with the least avg_hop_distance
     int bestidx = -1;
     double leasthops = 10000000000;
@@ -265,12 +265,13 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         if(perc_dc[i] <= PERCENT_DENSE_CORRESPONDENCES) continue;
         double hops = survey_est[topk[i][0]].avg_hop_distance;
         if(toverify->IsSet() && verified[i]){
-            if(!hasverified || leasthops > hops){
+            if(leasthops > hops){
                 hasverified = true;
                 leasthops = hops;
                 bestidx = i;
             }
         } else if(!hasverified && res[i].IsSet() && leasthops > hops){
+            //if there's no verified pose, use the one with the least hops
             leasthops = hops;
             bestidx = i;
         }
