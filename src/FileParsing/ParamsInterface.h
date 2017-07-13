@@ -35,7 +35,7 @@ public:
         if(Exists(_paramfile)) {
             ReadDelimitedFile(_paramfile, 0);
         } else {
-            std::cout << "Couldn't get the parameters at: " << query_loc << std::endl;
+            std::cout << "Couldn't get the parameters at: " << _paramfile << std::endl;
             exit(-1);
         }
     }

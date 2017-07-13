@@ -48,7 +48,9 @@ protected:
     gtsam::noiseModel::Diagonal::shared_ptr kinNoise;
     gtsam::noiseModel::Diagonal::shared_ptr dVNoise;
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise;
-
+    
+    int next_camera_key = 0;
+    
     //true if the survey landmark tracks haven't been filtered out yet. sppf is set to filter bad points.
     bool sppf_prune = true;
 public:
@@ -71,6 +73,7 @@ public:
     
     int active_landmark_set = 0;
     void ChangeLandmarkSet(int set);
+    int GetNextCameraKey() {return next_camera_key++;}
     
     void InitializeNoiseModels();
 

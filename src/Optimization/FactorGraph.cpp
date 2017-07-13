@@ -153,6 +153,7 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
 
 void FactorGraph::Clear(){
     graph.resize(0);
+    next_camera_key = 0;
     landmark_factors.clear();
     landmark_keys.clear();
     ChangeLandmarkSet(0);

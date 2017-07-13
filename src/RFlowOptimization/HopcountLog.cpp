@@ -36,7 +36,7 @@ double HopcountLog::LoadHopDistance(string hopdate) {
 std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count){
     std::vector<double> rerror_set(count, 0.0);
     string fname = _path + hopdate + _locoptname;
-    FILE * fp = OpenFile(fname.c_str(), "r");
+    FILE * fp = OpenFile(fname.c_str(), "r", false);
     int idx = 0;
     if(fp){
         int a, b, rerr;

@@ -97,7 +97,7 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
 
 int SurveyOptimizer::AddCamera(gtsam::Pose3 cam){
     num_cameras_in_traj++;
-    int camera_key = GTS.GetNextCameraKey();
+    int camera_key = FG->GetNextCameraKey();
     GTS.InitializeValue(FG->key[(int)FactorGraph::var::X], camera_key, &cam);
     FG->AddCamera(camera_key, cam);
     return camera_key;

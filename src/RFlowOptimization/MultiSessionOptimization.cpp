@@ -33,7 +33,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
         if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
-    optstart = std::min(((int) POR.size()-K-1), 0);
+    optstart = std::max(((int) POR.size()-K-1), 0);
     dates = std::vector<string>(dates.begin(), dates.begin()+POR.size());
 }
 
@@ -43,10 +43,10 @@ void MultiSessionOptimization::Initialize() {
     cache_landmarks = true;
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
-        lpdi.push_back(lint);
         int nloaded = lint.LoadLocalizations(_map_dir + dates[i]);
+        lpdi.push_back(lint);
         
-        if(nloaded < POR[i].boat.size()*0.01) {
+        if(i > 0 && nloaded < POR[i].boat.size()*0.01) {
             std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimization will be the original set."<<std::endl;
             exit(-1);
         }
@@ -102,7 +102,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         }
     }
 
-    if(firstiter){
+    if(firstiter) {
         //add the rest of the landmarks
         UpdateLandmarkMap(active);
         CacheLandmarks(active);
@@ -139,6 +139,7 @@ void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std:
 
 void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
+    int cISC = 0;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
@@ -147,8 +148,10 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
             } else if(firstiter) { //add ISCs for the remaining surveys
+                if(cISC > 30) continue;
                 AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
                 AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
+                cISC++;
             }
         }
     }
@@ -185,7 +188,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
         landmarks.push_back(landmarkset);
     }
     
@@ -225,10 +228,11 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
                 nchanges++;
                 LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
                 if(lpd.s0 >= optstart) {
+                    //this right? I should be able to turn off constraints with surveys .. oh these are for ISCs not localizations
                     ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
                     ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
                 }
-            }
+            } else if (lpd_rerror[sidx][j] == 0) nchanges++;
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
@@ -252,7 +256,7 @@ void MultiSessionOptimization::SaveResults() {
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks();
+        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
         landmarks.push_back(landmarkset);
     }
     
@@ -277,8 +281,12 @@ void MultiSessionOptimization::SaveResults() {
 }
 
 void MultiSessionOptimization::IterativeMerge() {
+    time_t beginning,optstart,end;
+    time (&beginning);
     LocalizePose lp(_cam);
     for(int i=0, nchanges=100; nchanges>1.0 && i<MAX_ITERATIONS; i++) {
+        rfFG->Clear();
+        
         std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
@@ -286,13 +294,17 @@ void MultiSessionOptimization::IterativeMerge() {
         AddAllTheLandmarkTracks();
         
         std::cout << "  Optimizing..." << std::endl;
+        time (&optstart);
         RunGTSAM();
 
-        std::cout << "  Finished." << std::endl;
-        rfFG->Clear();
-        GTS.ClearGraph();
-
+        std::cout << "  Updating Error." << std::endl;
         nchanges = UpdateError(i==0);
+        
+        std::cout << "  Finished." << std::endl;
+        time (&end);
+        double optruntime = difftime (end, optstart);
+        double totruntime = difftime (end, beginning);
+        printf("ITERATION %d. Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
     }
     
     if(!dry_run){

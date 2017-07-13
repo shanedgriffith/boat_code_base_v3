@@ -58,7 +58,8 @@ void GTSamInterface::SetupIncrementalSLAM() {
     //        parameters.enablePartialRelinearizationCheck = false;
     ISAM2 isam(parameters);
     i2 = isam;
-    ClearGraph();
+    _fg->Clear();
+    initialEstimate.clear();
 }
 
 void GTSamInterface::Update() {
@@ -80,7 +81,8 @@ void GTSamInterface::Update() {
         }
         
         results = i2.calculateEstimate();
-        ClearGraph();
+        _fg->Clear();
+        initialEstimate.clear();
     } catch(const std::exception& ex) {
         printf("There was an exception while attempting to solve the factor graph.");
         printf("Known causes of the exception:\n");
@@ -118,6 +120,7 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
             default:
                 break;
         }
+        initialEstimate.clear();
     } catch(const std::exception& ex) {
         printf("GTSamInterface::RunBundleAdjustment. Exception.");
         printf(" There was an exception while attempting to solve the factor graph.");
@@ -138,15 +141,6 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
     }
 }
 
-void GTSamInterface::ClearGraph() {
-    _fg->Clear();
-    initialEstimate.clear();
-    next_camera_key = 0;
-    next_landmark_key = 0;
-    num_landmarks_in_graph=0;
-    num_cameras_in_graph=0;
-}
-
 void GTSamInterface::InitializeValue(gtsam::Symbol s, Value * p) {
     if(print_symbol_number) cout << "initializing " << s.key() << ": (" << (int) s.chr() << ", " << s.index() << ") " << endl;
     initialEstimate.insert(s, *p);
@@ -156,6 +150,10 @@ void GTSamInterface::InitializeValue(char c, int num, Value * p) {
     Symbol s(c, num);
     InitializeValue(s, p);
 }
+
+//void GTSamInterface::ClearInitialEstimate(){
+//    initialEstimate.clear();
+//}
 
 Point3 GTSamInterface::MAPLandmarkEstimate(int idx) {
     /*In this function, the idx isn't the landmark_key*/
@@ -189,7 +187,7 @@ vector<double> GTSamInterface::MAPPoseEstimate(Symbol s) {
     return pose;
 }
 
-vector<vector<double> > GTSamInterface::GetOptimizedLandmarks() {
+vector<vector<double> > GTSamInterface::GetOptimizedLandmarks(bool sorted) {
     vector<vector<double> > landmarks;
     
     for(int i=0; i<_fg->landmark_keys[_fg->active_landmark_set].size(); i++) {
@@ -197,6 +195,13 @@ vector<vector<double> > GTSamInterface::GetOptimizedLandmarks() {
         vector<double> landmark = {ev.x(), ev.y(), ev.z(), (double)_fg->landmark_keys[_fg->active_landmark_set][i]};
         landmarks.push_back(landmark);
     }
+    
+    if(sorted){
+        std::sort(landmarks.begin(), landmarks.end(), [](const std::vector<double>& a, const std::vector<double>& b) {
+            return a[3] < b[3];
+        });
+    }
+    
     return landmarks;
 }
 

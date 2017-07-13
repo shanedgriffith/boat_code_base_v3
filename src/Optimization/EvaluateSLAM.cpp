@@ -54,13 +54,6 @@ double EvaluateSLAM::GetAverageRerror(vector<double> rerrors){
     return avg_rerror;
 }
 
-std::string EvaluateSLAM::formattime(double seconds) {
-    int hours = seconds/3600;
-    int minutes = (seconds-hours*3600)/60;
-    seconds = seconds-hours*3600- minutes*60;
-    return to_string(hours) + ":"+to_string(minutes)+":"+to_string(seconds);
-}
-
 std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p) {
     gtsam::Pose3 tf(gtsam::Rot3::ypr(boat[5],boat[4],boat[3]), gtsam::Point3(boat[0],boat[1],boat[2]));
     

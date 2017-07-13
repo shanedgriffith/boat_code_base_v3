@@ -57,11 +57,6 @@ private:
     
     bool IsMeasurementPossible(gtsam::Point2 measurement);
     
-    int next_camera_key = 0;
-    int next_landmark_key = 0;
-    
-    int num_landmarks_in_graph=0;
-    int num_cameras_in_graph=0;
     
 public:
     
@@ -80,11 +75,8 @@ public:
     void RunBundleAdjustment(int choix=0);
     void SetupIncrementalSLAM();
     void Update();
-    void ClearGraph();
+//    void ClearInitialEstimate();//doesn't this already clear upon update?
     bool HasResult(gtsam::Symbol s);
-    
-    int GetNextCameraKey() {return next_camera_key++;}
-    int GetNumCameras() {return num_cameras_in_graph;}
     
     void InitializeValue(gtsam::Symbol s, gtsam::Value * p);
     void InitializeValue(char c, int num, gtsam::Value * p);
@@ -93,7 +85,7 @@ public:
     std::vector<double> MAPPoseEstimate(int num);
     gtsam::Pose3 PoseResult(gtsam::Symbol s);
     gtsam::Point3 MAPLandmarkEstimate(int idx);
-    std::vector<std::vector<double> > GetOptimizedLandmarks();
+    std::vector<std::vector<double> > GetOptimizedLandmarks(bool sorted=false);
     std::vector<std::vector<double> > GetOptimizedTrajectory(int var_id, int N);
     
     void PrintInitialEstimate();

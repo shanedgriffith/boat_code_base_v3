@@ -53,7 +53,7 @@ protected:
     std::vector<LandmarkTrack> DEBUGMOD(std::vector<LandmarkTrack>& inactive);
     
     int cache_set=0;
-    std::vector<std::vector<LandmarkTrack> > cached_landmarks;//landmarks are cached to retroactively add inter-survey constraints.
+    std::vector<std::vector<LandmarkTrack> > cached_landmarks; //landmarks are cached to retroactively add inter-survey constraints.
     void CacheLandmarks(std::vector<LandmarkTrack>& inactive);
     
     int num_cameras_in_traj=0;

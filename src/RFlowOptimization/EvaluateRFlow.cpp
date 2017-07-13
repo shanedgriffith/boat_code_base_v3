@@ -48,7 +48,7 @@ double EvaluateRFlow::UpdateTots(vector<double>& tots, vector<double>& stats){
         tots[0] += ret;
         tots[1]++;
         if(ret > avgbadthreshold) tots[3]++;
-        else if(tots.size()>4){
+        else if(tots.size()>4) {
             tots[4] += ret;
             tots[5]++;
         }
@@ -60,8 +60,12 @@ double EvaluateRFlow::UpdateTots(vector<double>& tots, vector<double>& stats){
 
 void EvaluateRFlow::PrintTots(vector<double> tots, string name){
     if(debug) {
+        if(tots[1] == 0) {
+            cout << "Average " + name + " Rerror: No data" << std::endl;
+            return;
+        }
         cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
-        cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
+        if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
         cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
         cout << "  " << tots[3] << " average unacceptable (should be nearly zero)" << endl;
     }
@@ -139,7 +143,7 @@ int EvaluateRFlow::GetIndexOfFirstPoint(std::vector<std::vector<double> >& landm
 }
 
 vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, vector<int>& ids_subset) {
-    vector<gtsam::Point3> pset;
+    vector<gtsam::Point3> pset(ids_subset.size(), gtsam::Point3(0,0,0));
     if(ids_subset.size() == 0) return pset;
     
     int iter = -1;
@@ -151,8 +155,7 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
         if(iter>=0){
             for(int j=iter; j < landmarks.size(); j++) {
                 if(((int)landmarks[j][3])==ids_subset[i]) {
-                    gtsam::Point3 p3(landmarks[j][0], landmarks[j][1], landmarks[j][2]);
-                    pset.push_back(p3);
+                    pset[i] = gtsam::Point3(landmarks[j][0], landmarks[j][1], landmarks[j][2]); //check: does this deep copy?
                     iter = j;
                     countfound++;
                     found = true;
@@ -162,10 +165,8 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
                 }
             }
         }
-        
-        if(!found) pset.push_back(gtsam::Point3(0,0,0));
     }
-    if(debug) cout << "Found " << countfound << " of " << ids_subset.size() << " points." << endl;
+    //if(debug) cout << "Found " << countfound << " of " << ids_subset.size() << " points." << endl;
     return pset;
 }
 

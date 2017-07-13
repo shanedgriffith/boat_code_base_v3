@@ -1,10 +1,10 @@
 #include <iostream>
 
 #include <Optimization/SurveyOptimizer.h>
-#include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
 #include <FileParsing/FileParsing.hpp>
 #include <DataTypes/Camera.hpp>
 #include <RFlowOptimization/EvaluateRFlow.hpp>
+#include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
 #include <RFlowOptimization/AcquireISConstraints.hpp>
 #include <RFlowEvaluation/AlignVisibilitySet.hpp>
 #include <Visualizations/FlickeringDisplay.h>
@@ -14,6 +14,7 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <BikeSurvey/ImageModification.hpp>
 #include <Tests/TestBikeSurvey.h>
+#include <RFlowOptimization/MultiSessionOptimization.hpp>
 
 
 using namespace std;
@@ -45,16 +46,16 @@ int main(int argc, char *argv[]) {
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, optimized_datasets, results_dir);
+        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, results_dir);
         acq.Run(start);
         break;}
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         MultiSessionOptimization mso(axisptz, results_dir, pftbase);
-        //mso.SetDryRun();
+//        mso.SetDryRun();
         mso.IterativeMerge();
-//        RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, pftbase);
-//        ra.IterativeMerge();
+        //RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, pftbase);
+        //ra.IterativeMerge();
         break;}
     case 2:{
         Camera axisptz = ParseBoatSurvey::GetCamera();

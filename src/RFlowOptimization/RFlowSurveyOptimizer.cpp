@@ -133,7 +133,6 @@ void RFlowSurveyOptimizer::IterativeMerge() {
 
         std::cout << "  Finished." << std::endl;
         rfFG->Clear();
-        GTS.ClearGraph();
 
         nchanges = UpdateError();
     }

@@ -76,15 +76,13 @@ private:
     Camera& _cam;
 public:
     std::string _date;
-    std::string _query_loc, _pftbase, _first_optimization_dir;
+    std::string _query_loc, _pftbase;
     std::string _map_dir;
     bool debug = false;
     int nthreads = 8;
     
-    AcquireISConstraints(Camera& cam, std::string date, std::string query_loc, std::string pftbase,
-                         std::string first_optimization_dir, std::string results_dir):
-    _cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase),
-    _first_optimization_dir(first_optimization_dir), _map_dir(results_dir + "maps/") {
+    AcquireISConstraints(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir):
+    _cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/") {
         //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
         std::cout << "Adding IS constraints." << std::endl;
         Initialize();
