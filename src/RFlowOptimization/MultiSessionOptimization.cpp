@@ -147,10 +147,12 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
                 if(lpd_rerror[i][j] < 0) continue;
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
-            } else if(firstiter) { //add ISCs for the remaining surveys
-                if(cISC > 30) continue;
-                AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
-                AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
+            } else {//if(firstiter) { //add ISCs for the remaining surveys
+                //if(cISC > 30) continue;
+                if(lpd_rerror[i][j] < 0) continue;
+                rfFG->AddBTWNFactor(survey, i-1, survey, i, lpd.tf_p0_to_p1frame0);
+                //AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
+                //AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
                 cISC++;
             }
         }
