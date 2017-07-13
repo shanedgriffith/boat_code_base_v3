@@ -150,7 +150,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
             } else {//if(firstiter) { //add ISCs for the remaining surveys
                 //if(cISC > 30) continue;
                 if(lpd_rerror[i][j] < 0) continue;
-                rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0());
+                rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
                 //AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
                 //AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
                 cISC++;

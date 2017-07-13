@@ -31,7 +31,7 @@ private:
     gtsam::noiseModel::Isotropic::shared_ptr measurementNoise0;
     gtsam::noiseModel::Isotropic::shared_ptr measurementNoise1;
     gtsam::noiseModel::Diagonal::shared_ptr poseNoise0;
-    gtsam::noiseModel::Diagonal::shared_ptr btwnnoise;
+    gtsam::noiseModel::Diagonal::shared_ptr poseNoise1;
 
 	void InitializeNoiseModels();
 
@@ -50,7 +50,7 @@ public:
 	bool AddPose(int survey, int pnum, gtsam::Pose3 p);
 	void AddVirtualBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 p0, gtsam::Pose3 p1, double val=0.001);
 	void AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
-	void AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom);
+	void AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight=false);
 
 	virtual gtsam::Symbol GetSymbol(int survey, int pnum);
 	bool VariableExists(int survey, int pnum);

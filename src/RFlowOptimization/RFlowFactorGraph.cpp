@@ -31,6 +31,15 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     v60(4,0) = 0.1;
     v60(5,0) = 0.1;
     poseNoise0 = gtsam::noiseModel::Diagonal::Sigmas(v60);
+    
+    gtsam::Vector6 v61;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
+    v61(0,0) = 0.002;
+    v61(1,0) = 0.002;
+    v61(2,0) = 0.002;
+    v61(3,0) = 0.001;
+    v61(4,0) = 0.001;
+    v61(5,0) = 0.001;
+    poseNoise1 = gtsam::noiseModel::Diagonal::Sigmas(v61);
 }
 
 gtsam::Pose3 RFlowFactorGraph::VectorToPose(std::vector<double>& p) {
@@ -102,10 +111,12 @@ void RFlowFactorGraph::AddVirtualBTWNFactor(int survey0, int pnum0, int survey1,
     graph.add(VirtualBetweenFactor(symb1, symb3, p0, p1, btwnnoise));
 }
 
-void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom) {
+void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight) {
     gtsam::Symbol symb0 = GetSymbol(survey0, pnum0);
     gtsam::Symbol symb1 = GetSymbol(survey1, pnum1);
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
+    if(tight) graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise1));
+    else graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
 }
 
 void RFlowFactorGraph::Clear(){
