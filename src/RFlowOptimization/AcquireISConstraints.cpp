@@ -265,6 +265,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         if(perc_dc[i] <= PERCENT_DENSE_CORRESPONDENCES) continue;
         double hops = survey_est[topk[i][0]].avg_hop_distance;
         if(toverify->IsSet() && verified[i]){
+            res[i].Save(_map_dir + res[i].date1); //save all the verified localizations.
             if(leasthops > hops){
                 hasverified = true;
                 leasthops = hops;

@@ -309,10 +309,10 @@ void MultiSessionOptimization::IterativeMerge() {
         printf("ITERATION %d. Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
     }
     
-    if(!dry_run){
-        std::cout << "  Saving.." << std::endl;
-        SaveResults();
-    }
+//    if(!dry_run){
+//        std::cout << "  Saving.." << std::endl;
+//        SaveResults();
+//    }
 }
 
 

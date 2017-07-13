@@ -47,7 +47,7 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     v62(2,0) = 5;
     v62(3,0) = 0.2;
     v62(4,0) = 0.2;
-    v62(5,0) = 10;
+    v62(5,0) = 0.1745;
     poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v61);
 }
 
@@ -123,7 +123,6 @@ void RFlowFactorGraph::AddVirtualBTWNFactor(int survey0, int pnum0, int survey1,
 void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight) {
     gtsam::Symbol symb0 = GetSymbol(survey0, pnum0);
     gtsam::Symbol symb1 = GetSymbol(survey1, pnum1);
-    graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
     if(tight) graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise1));
     else graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
 }

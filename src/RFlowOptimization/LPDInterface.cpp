@@ -39,7 +39,9 @@ LocalizedPoseData* LPDInterface::NearestLPD(int s1time){
 int LPDInterface::LoadLocalizations(std::string path){
     localizations = LocalizedPoseData::LoadAll(path); //load existing data.
     if(localizations.size()>0) most_adv_lpd = localizations[localizations.size()-1];
-    for(int i=0; i<localizations.size(); i++)
+    //given that they're sorted, starting the iteration from the end points the
+    //hash table at the correct ones.
+    for(int i=localizations.size()-1; i>=0; i--)
         lpdtable[localizations[i].s1time] = i;
     return localizations.size();
 }
@@ -52,16 +54,18 @@ int LPDInterface::GetStartingPoint(){
 
 int LPDInterface::GetStartingPoint(int lcuridx, FROM u, DIRECTION d){
     int direc = (d==DIRECTION::Forward)?-1:1;
-    int ref = (u==FROM::CurLPD)?0:1;
-    return localizations[lcuridx - ref].s1time - direc;
+    int ref = localizations[lcuridx].s1time;
+    //in case there are multiple localizations at s1time, loop to find the next one.
+    int i=0;
+    if(u!=FROM::CurLPD)
+        for(; localizations[lcuridx-i].s1time == ref; i++);
+    return localizations[lcuridx-i].s1time - direc;
 }
 
 void LPDInterface::SetMostAdvLPD(LocalizedPoseData lpd){
     if(most_adv_lpd.s1time < lpd.s1time)
         most_adv_lpd = lpd;
 }
-
-//most_adv_lpd (should this logic be part of this interface?)
 
 
 
