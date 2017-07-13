@@ -3,7 +3,6 @@
 #include <Optimization/SurveyOptimizer.h>
 #include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
 #include <FileParsing/FileParsing.hpp>
-//#include <Tests/TestRFlowOptimization.hpp>
 #include <DataTypes/Camera.hpp>
 #include <RFlowOptimization/EvaluateRFlow.hpp>
 #include <RFlowOptimization/AcquireISConstraints.hpp>
@@ -35,9 +34,6 @@ int main(int argc, char *argv[]) {
     std::cout << "starting program" << std::endl;
 
 
-//    TestRFlowOptimization trfo;
-//    trfo.TestNewImageAlignment();
-//    exit(1);
     
     
     int prog = atoi(argv[3]);
