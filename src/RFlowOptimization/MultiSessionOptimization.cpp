@@ -150,7 +150,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
             } else {//if(firstiter) { //add ISCs for the remaining surveys
                 //if(cISC > 30) continue;
                 if(lpd_rerror[i][j] < 0) continue;
-                rfFG->AddBTWNFactor(survey, i-1, survey, i, lpd.tf_p0_to_p1frame0);
+                rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0());
                 //AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
                 //AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
                 cISC++;
@@ -228,12 +228,12 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
             
             if((inlier && lpd_rerror[sidx][j] < 0) || (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
-                LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-                if(lpd.s0 >= optstart) {
-                    //this right? I should be able to turn off constraints with surveys .. oh these are for ISCs not localizations
-                    ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
-                    ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
-                }
+//                LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
+//                if(lpd.s0 >= optstart) {
+//                    //this right? I should be able to turn off constraints with surveys .. oh these are for ISCs not localizations
+//                    ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
+//                    ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
+//                }
             } else if (lpd_rerror[sidx][j] == 0) nchanges++;
             
             lpd_rerror[sidx][j] = 1;

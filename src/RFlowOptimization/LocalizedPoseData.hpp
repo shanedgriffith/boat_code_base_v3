@@ -96,7 +96,8 @@ public:
     friend void swap(LocalizedPoseData& first, LocalizedPoseData& second);
     LocalizedPoseData& operator=(LocalizedPoseData other);
     bool operator < (const LocalizedPoseData& str) const;
-
+    
+    gtsam::Pose3 GetTFP0ToP1F0();
     gtsam::Pose3 GetP0frame1();
     gtsam::Pose3 GetP1frame0();
 

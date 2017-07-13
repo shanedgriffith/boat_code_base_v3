@@ -352,4 +352,6 @@ gtsam::Pose3 LocalizedPoseData::GetP1frame0(){
     return VectorToPose(p1frame0);
 }
 
-
+gtsam::Pose3 LocalizedPoseData::GetTFP0ToP1F0(){
+    return VectorToPose(tf_p0_to_p1frame0);
+}
