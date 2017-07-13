@@ -32,6 +32,7 @@ private:
     gtsam::noiseModel::Isotropic::shared_ptr measurementNoise1;
     gtsam::noiseModel::Diagonal::shared_ptr poseNoise0;
     gtsam::noiseModel::Diagonal::shared_ptr poseNoise1;
+    gtsam::noiseModel::Diagonal::shared_ptr poseNoiseP;
 
 	void InitializeNoiseModels();
 

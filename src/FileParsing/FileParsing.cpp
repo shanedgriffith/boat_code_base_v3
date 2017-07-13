@@ -107,7 +107,7 @@ std::string FileParsing::formattime(double seconds) {
     int minutes = (seconds-hours*3600)/60;
     seconds = seconds-hours*3600- minutes*60;
     char time[20];
-    sprintf(time, "%02d:%02d:%02lf", hours, minutes, seconds);
+    sprintf(time, "%02d:%02d:%2.4lf", hours, minutes, seconds);
     string ret = time;
     return ret;
     //return to_string(hours) + ":"+to_string(minutes)+":"+to_string(seconds);

@@ -40,6 +40,15 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     v61(4,0) = 0.001;
     v61(5,0) = 0.001;
     poseNoise1 = gtsam::noiseModel::Diagonal::Sigmas(v61);
+    
+    gtsam::Vector6 v62;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
+    v62(0,0) = 5;
+    v62(1,0) = 5;
+    v62(2,0) = 5;
+    v62(3,0) = 0.2;
+    v62(4,0) = 0.2;
+    v62(5,0) = 10;
+    poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v61);
 }
 
 gtsam::Pose3 RFlowFactorGraph::VectorToPose(std::vector<double>& p) {
@@ -88,7 +97,7 @@ bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p) {
 }
 
 bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
-    graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoise));
+    graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoiseP));
     return true;
 }
 
