@@ -107,9 +107,9 @@ void ParseBikeRoute::ModifyPoses(){
         time (&optstart);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         time (&end);
-        double optruntime = difftime (end, optstart);
-        double totruntime = difftime (end, beginning);
-        printf("ITERATION %d. AVG Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
+        double loadtime = difftime (end, optstart);
+        double votime = difftime (end, optstart);
+        printf("ITERATION %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, FileParsing::formattime(loadtime).c_str(), FileParsing::formattime(votime).c_str());
         vector<double> vp = PoseToVector(vop);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
