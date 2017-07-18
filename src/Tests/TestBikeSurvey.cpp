@@ -305,11 +305,15 @@ bool TestBikeSurvey::DistanceCriterion(std::vector<double>& pose1, std::vector<d
         // that bad.
         return false;
     }
-    if (fabs(remainder(pose1[5]-pose2[5],2*M_PI)) > pose_angle_threshold*M_PI/180) {
-        // If we're not looking remotely in the same direction, no
-        // point trying to match
-        return false;
+    for(int i=3; i<6; i++){
+        //if(i==5) std::cout << "got yaw remainder "<< fabs(remainder(pose1[i]-pose2[i],2*M_PI))<<std::endl;
+        if (fabs(remainder(pose1[i]-pose2[i],2*M_PI)) > pose_angle_threshold*M_PI/180) {
+            // If we're not looking remotely in the same direction, no
+            // point trying to match
+            return false;
+        }
     }
+    
     return true;
 }
 
@@ -324,19 +328,36 @@ void TestBikeSurvey::GenerateTrajectory(){
     VisualOdometry vo(nexus);
     vector<double> lastp;
     ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+//    for(int i=2; i<2000; i=i+2){
+//        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
+//        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+//        vector<double> vp = PoseToVector(vop);
+//        if(i>2){
+//            bool jump = DistanceCriterion(vp, lastp);
+//            printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf) jump? %d\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],(int)!jump);
+//        } else printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+//        
+//        PFT0 = PFT1;
+//        lastp = vp;
+//    }
+    
     for(int i=2; i<2000; i=i+2){
         ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> vp = PoseToVector(vop);
-        DistanceCriterion(vp, lastp);
         if(i>2){
-            bool jump = DistanceCriterion(vp, lastp);
-            printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf) jump? %d\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],(int)jump);
-        } else printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
-        
+            bool smooth = DistanceCriterion(vp, lastp);;
+            while(!smooth){
+                PFT1.next(i++);
+                gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+                smooth = DistanceCriterion(vp, lastp);
+            }
+        }
+        std::cout << "pose " << i << std::endl;
         PFT0 = PFT1;
         lastp = vp;
     }
+    
 }
 
 std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){

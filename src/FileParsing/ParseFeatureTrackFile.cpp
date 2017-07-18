@@ -359,9 +359,11 @@ bool ParseFeatureTrackFile::CheckImageDuplication(vector<LandmarkTrack>& active)
 void swap(ParseFeatureTrackFile& first, ParseFeatureTrackFile& second){
     //see http://stackoverflow.com/questions/5695548/public-friend-swap-member-function
     //for an explanation of the syntax, and use of using, without specifying std::swap below.
+    //Also see https://stackoverflow.com/questions/4117002/why-can-i-access-private-variables-in-the-copy-constructor
+    // which says that two objects of the same class can access each other's private data.
     using std::swap;
     
-    swap(first._no, second._no); //this may not work. if it doesn't, try a copy constructor.
+    swap(first._no, second._no);
     swap(first._base, second._base);
     swap(first.siftfile, second.siftfile);
     swap(first.ids, second.ids);
