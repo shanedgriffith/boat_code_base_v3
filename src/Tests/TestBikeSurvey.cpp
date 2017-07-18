@@ -111,7 +111,6 @@ void TestBikeSurvey::TestTriangulation(){
             PFT0.Next(one);
             PFT1.Next(two);
             
-            
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
             updateset = false;
         }
@@ -295,6 +294,24 @@ void TestBikeSurvey::TestVO(){
     }
     
     cvDestroyAllWindows();
+}
+
+void TestBikeSurvey::GenerateTrajectory(){
+    string bdbase = "/mnt/tale/shaneg/bike_datasets/";
+    string name = "20160831_171816";
+    ParseBikeRoute pbr(bdbase, name);
+    Camera nexus = ParseBikeRoute::GetCamera();
+    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
+    gtsam::Matrix gtmat = gtcam->matrix();
+    
+    VisualOdometry vo(nexus);
+    for(int i=0; i<2000; i=i+2){
+        ParseFeatureTrackFile PFT0(nexus, bdbase + name, i);
+        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i+2);
+        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = PoseToVector(vop);
+        printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+    }
 }
 
 std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){

@@ -33,6 +33,7 @@ public:
     void TestTriangulation();
     void TestVisualOdometry();
     void TestVO();
+    void GenerateTrajectory();
 };
 
 

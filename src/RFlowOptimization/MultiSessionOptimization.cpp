@@ -47,8 +47,12 @@ void MultiSessionOptimization::Initialize() {
         lpdi.push_back(lint);
         
         if(i > 0 && nloaded < POR[i].boat.size()*0.01) {
-            std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimization will be the original set."<<std::endl;
-            exit(-1);
+            std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimizing a set that was previously optimized."<<std::endl;
+            POR.erase(POR.end()-1);
+            optstart = std::max(((int) POR.size()-K-1), 0);
+            dates.erase(dates.end()-1);
+            i--;
+            continue;
         }
         
         std::vector<LandmarkTrack> clset;
@@ -244,6 +248,8 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         inlier_ratio[sidx] = 1.0-(1.*coutliers/inter_error.size());
     }
     
+    //returns avg num_changes.
+    if(optstart==0) return 1.0*totchanges/(dates.size()-1);
     return 1.0*totchanges/(dates.size()-optstart);
 }
 
@@ -286,10 +292,10 @@ void MultiSessionOptimization::IterativeMerge() {
     time_t beginning,optstart,end;
     time (&beginning);
     LocalizePose lp(_cam);
-    for(int i=0, nchanges=100; nchanges>1.0 && i<MAX_ITERATIONS; i++) {
+    for(int i=0, avg_nchanges=100; avg_nchanges>1.0 && i<MAX_ITERATIONS; i++) {
         rfFG->Clear();
         
-        std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << nchanges << std::endl;
+        std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
         AddLocalizations(i==0);
@@ -300,13 +306,13 @@ void MultiSessionOptimization::IterativeMerge() {
         RunGTSAM();
 
         std::cout << "  Updating Error." << std::endl;
-        nchanges = UpdateError(i==0);
+        avg_nchanges = UpdateError(i==0);
         
         std::cout << "  Finished." << std::endl;
         time (&end);
         double optruntime = difftime (end, optstart);
         double totruntime = difftime (end, beginning);
-        printf("ITERATION %d. Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
+        printf("ITERATION %d. AVG Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
     }
     
     if(!dry_run){
