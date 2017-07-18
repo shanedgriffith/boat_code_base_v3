@@ -102,14 +102,13 @@ void ParseBikeRoute::ModifyPoses(){
     
     vector<double> curpose;
     for(int i=2; i<poses.size(); i=i+2){
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         ParseFeatureTrackFile PFT1(nexus, _base, i);
-        std::chrono::steady_clock::time_point mid = std::chrono::steady_clock::now();
+//        std::chrono::steady_clock::time_point mid = std::chrono::steady_clock::now();
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        std::cout << "   Load time (sec) = " << std::chrono::duration_cast<std::chrono::microseconds>(mid - begin).count()/1000000.0 <<std::endl;
-        std::cout << "     VO time (sec) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count()/1000000.0 <<std::endl;
-        //printf("ITERATION %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, FileParsing::formattime(loadtime).c_str(), FileParsing::formattime(votime).c_str());
+//        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//        std::cout << "   Load time (sec) = " << std::chrono::duration_cast<std::chrono::microseconds>(mid - begin).count()/1000000.0 <<std::endl;
+//        std::cout << "     VO time (sec) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count()/1000000.0 <<std::endl;
         vector<double> vp = PoseToVector(vop);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;

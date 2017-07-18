@@ -121,11 +121,12 @@ void VisualOdometry::Reset() {
     initEst.clear();
 }
 
+#include <chrono>
 gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest){
     //using the method to recover the pose from the essential matrix. (for the initial poses)
     std::vector<cv::Point2f> p2d0;
     std::vector<cv::Point2f> p2d1;
-    
+    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     int ci = 0;
     for(int i=0; i<last.ids.size(); i++){
         while(latest.ids[ci]<last.ids[i]) ci++;
@@ -133,19 +134,21 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, Pars
         p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
         p2d1.push_back(cv::Point2f(latest.imagecoord[ci].x(), latest.imagecoord[ci].y()));
     }
+    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     
     if(p2d0.size() < 15)
         return gtsam::Pose3::identity();
     
     double focal = 1.0;
     cv::Point2d pp(0, 0);
-    
     cv::Mat E, R, t, mask;
     std::vector<cv::Point2f> p0(p2d0.size());
     std::vector<cv::Point2f> p1(p2d1.size());
     cv::undistortPoints(p2d0, p0, _cam.IntrinsicMatrix(), _cam.Distortion());
     cv::undistortPoints(p2d1, p1, _cam.IntrinsicMatrix(), _cam.Distortion());
+    std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
     E = findEssentialMat(cv::Mat(p1), cv::Mat(p0), focal, pp, cv::RANSAC, 0.999, 0.0001,  mask);
+    std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
     cv::recoverPose(E, cv::Mat(p1), cv::Mat(p0), R, t, focal, pp, mask);
     //note: at this point, t is the unit translation. The relative translation has to be recovered using the triangulated 3D points and their distances.
     //alternatively, using the IMU, the absolute translation can be recovered.
@@ -156,6 +159,12 @@ gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, Pars
             R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2),
             R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2));
     gtsam::Point3 trans(t.at<double>(0,0), t.at<double>(0,1), t.at<double>(0,2));
+    std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
+    std::cout << "   VO Time" << std::endl;
+    std::cout << "    intersction = " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000000.0 <<std::endl;
+    std::cout << "    normalize   = " << std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count()/1000000.0 <<std::endl;
+    std::cout << "    ransac      = " << std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count()/1000000.0 <<std::endl;
+    std::cout << "    recover pose= " << std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count()/1000000.0 <<std::endl;
     return gtsam::Pose3(rot, trans);
 }
 
