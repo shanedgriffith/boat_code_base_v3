@@ -187,11 +187,12 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
             if(perc_dc > PERCENT_DENSE_CORRESPONDENCES) {
                 lpd.SetPoses(por[0]->boat[portimes[0]], candidates[0], candidates[1]);
                 lpd.SetLocalizationQuality(perc_dc, candidates[2][3]);
-
-                DrawFlowPoints(ar.ref, ar.im2, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
-                string debugdir = _results_dir + dates[1] + "/debug/";
-                FileParsing::MakeDir(debugdir);
-                ar.Save(debugdir + to_string(portimes[1]) + "/");
+                
+                //save the alignment result (to debug or evaluate RF)
+//                DrawFlowPoints(ar.ref, ar.im2, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
+//                string debugdir = _results_dir + dates[1] + "/debug/";
+//                FileParsing::MakeDir(debugdir);
+//                ar.Save(debugdir + to_string(portimes[1]) + "/");
 
                 //Verification constraint.
                 if(toverify->IsSet()) {

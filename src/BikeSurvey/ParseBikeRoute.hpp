@@ -18,6 +18,10 @@ class ParseBikeRoute: public ParseSurvey{
 private:
     
     std::vector<double> omega;
+    gtsam::Pose3 VectorToPose(std::vector<double>& p);
+    std::vector<double> InterpolatePoses(int idx, int a, int b, std::vector<double> pa, std::vector<double> pb);
+    bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
+    void ModifyPoses();
 protected:
     void ReadDelimitedFile(std::string file, int type);
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
@@ -33,7 +37,7 @@ public:
             exit(-1);
         }
         ReadDelimitedFile(aux, 0);
-        
+        ModifyPoses();
     }
     
     static Camera GetCamera();

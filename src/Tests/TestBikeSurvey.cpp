@@ -320,7 +320,6 @@ bool TestBikeSurvey::DistanceCriterion(std::vector<double>& pose1, std::vector<d
 void TestBikeSurvey::GenerateTrajectory(){
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
-    ParseBikeRoute pbr(bdbase, name);
     Camera nexus = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
@@ -328,6 +327,7 @@ void TestBikeSurvey::GenerateTrajectory(){
     VisualOdometry vo(nexus);
     vector<double> lastp;
     ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+    //to show the jumps
 //    for(int i=2; i<2000; i=i+2){
 //        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
 //        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
@@ -341,6 +341,7 @@ void TestBikeSurvey::GenerateTrajectory(){
 //        lastp = vp;
 //    }
     
+    //to skip the jumps
     for(int i=2; i<2000; i=i+2){
         ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
@@ -348,12 +349,14 @@ void TestBikeSurvey::GenerateTrajectory(){
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
-                PFT1.next(i++);
+                PFT1.Next(++i);
                 gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+                vp = PoseToVector(vop);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
-        std::cout << "pose " << i << std::endl;
+        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+
         PFT0 = PFT1;
         lastp = vp;
     }

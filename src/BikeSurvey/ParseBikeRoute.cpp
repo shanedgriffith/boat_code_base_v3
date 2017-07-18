@@ -51,7 +51,93 @@ vector<double> ParseBikeRoute::GetDrawScale(){
     return {-2000,400,-500,1500};
 }
 
+bool ParseBikeRoute::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
+    double pose_distance_threshold = 5.0; //meters
+    double pose_angle_threshold = 20.0; //degrees.
+    double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);
+    if (dist > pose_distance_threshold) {
+        // Don't try to match points more than 20m away, GPS is not
+        // that bad.
+        return false;
+    }
+    for(int i=3; i<6; i++){
+        //if(i==5) std::cout << "got yaw remainder "<< fabs(remainder(pose1[i]-pose2[i],2*M_PI))<<std::endl;
+        if (fabs(remainder(pose1[i]-pose2[i],2*M_PI)) > pose_angle_threshold*M_PI/180) {
+            // If we're not looking remotely in the same direction, no
+            // point trying to match
+            return false;
+        }
+    }
+    
+    return true;
+}
 
+std::vector<double> ParseBikeRoute::InterpolatePoses(int idx, int a, int b, vector<double> pa, vector<double> pb){
+    std::vector<double> p(pa.size(), 0);
+    for(int i=0; i<pa.size(); i++){
+        double w2 = (idx - 1.0*a)/(b-a);
+        double w1 = 1 - w2;
+        p[i] = pa[i] * w1 + pb[i] * w2;
+    }
+    return p;
+}
+
+gtsam::Pose3 ParseBikeRoute::VectorToPose(std::vector<double>& p){
+    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
+void ParseBikeRoute::ModifyPoses(){
+    Camera nexus = ParseBikeRoute::GetCamera();
+    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
+    gtsam::Matrix gtmat = gtcam->matrix();
+    
+    VisualOdometry vo(nexus);
+    vector<double> lastp;
+    vector<vector<double>> filtered;
+    vector<int> indices = {0};
+    ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+    
+    vector<double> curpose;
+    for(int i=2; i<poses.size(); i=i+2){
+        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
+        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = PoseToVector(vop);
+        if(i>2){
+            bool smooth = DistanceCriterion(vp, lastp);;
+            while(!smooth){
+                std::cout << "skipped " << i << std::endl;
+                PFT1.Next(++i);
+                gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+                vp = PoseToVector(vop);
+                smooth = DistanceCriterion(vp, lastp);
+            }
+        }
+        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        if(i==2) curpose = vp;
+        else {
+            gtsam::Pose3 lip = VectorToPose(lastp);
+            gtsam::Pose3 vip = VectorToPose(vp);
+            gtsam::Pose3 cip = lip.compose(vip);
+            curpose = PoseToVector(cip);
+        }
+        filtered.push_back(curpose);
+        indices.push_back(i);
+        PFT0 = PFT1;
+        lastp = vp;
+    }
+    
+    vector<vector<double>> newposes(poses.size(), vector<double>());
+    for(int i=0, c=0; i<poses.size(); i++){
+        while(indices[c] < i && indices.size() > c) c++;
+        if(indices.size() <= c){
+            //hmm, but this may cause issues like before with the duplicated GPS.
+            std::cout << i << " using duplicated pose" << std::endl;
+            newposes.push_back(newposes[newposes.size()-1]);
+        }else newposes[i] = InterpolatePoses(i, c-1, c, poses[c-1], poses[c]);
+    }
+    
+    poses = newposes;
+}
 
 
 
