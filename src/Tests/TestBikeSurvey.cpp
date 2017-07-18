@@ -296,6 +296,21 @@ void TestBikeSurvey::TestVO(){
     cvDestroyAllWindows();
 }
 
+bool TestBikeSurvey::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
+    double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);
+    if (dist > pose_distance_threshold) {
+        // Don't try to match points more than 20m away, GPS is not
+        // that bad.
+        return false;
+    }
+    if (fabs(remainder(pose1[5]-pose2[5],2*M_PI)) > pose_angle_threshold*M_PI/180) {
+        // If we're not looking remotely in the same direction, no
+        // point trying to match
+        return false;
+    }
+    return true;
+}
+
 void TestBikeSurvey::GenerateTrajectory(){
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
@@ -305,12 +320,20 @@ void TestBikeSurvey::GenerateTrajectory(){
     gtsam::Matrix gtmat = gtcam->matrix();
     
     VisualOdometry vo(nexus);
-    for(int i=0; i<2000; i=i+2){
-        ParseFeatureTrackFile PFT0(nexus, bdbase + name, i);
-        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i+2);
+    vector<double> lastp;
+    ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+    for(int i=2; i<2000; i=i+2){
+        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> vp = PoseToVector(vop);
-        printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        DistanceCriterion(vp, lastp);
+        if(i>2){
+            bool jump = DistanceCriterion(vp, lastp);
+            printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf) jump? %d\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],(int)jump);
+        } else printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        
+        PFT0 = PFT1;
+        lastp = vp;
     }
 }
 

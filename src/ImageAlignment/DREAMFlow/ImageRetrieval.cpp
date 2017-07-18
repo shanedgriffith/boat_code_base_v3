@@ -42,7 +42,6 @@ bool ImageRetrieval::DistanceCriterion(std::vector<double>& pose1, std::vector<d
     return true;
 }
 
-
 std::vector<int> ImageRetrieval::IdentifyNeighborPoses(std::vector<std::vector<double> >& poses, std::vector<int>& imageno, std::vector<double>& p2){
 	//return a list of the nearest neighbor poses.
 	//how is it returned?
@@ -59,7 +58,6 @@ std::vector<int> ImageRetrieval::IdentifyNeighborPoses(std::vector<std::vector<d
 	 }
 	 return indices;
 }
-
 
 std::vector<double> ImageRetrieval::NaiveSearch(std::string base, std::vector<int>& imageno, std::string image2, std::vector<int>& neighbor_poses){
 	SFlowDREAM sf(_cam);
@@ -83,7 +81,6 @@ std::vector<double> ImageRetrieval::NaiveSearch(std::string base, std::vector<in
 
     return min_vals;
 }
-
 
 /*Perform image retrieval. Find the best match for image2 in survey 1.
  * @param neighbor_poses The list of poses from survey 1 with a similar GPS location and compass heading.

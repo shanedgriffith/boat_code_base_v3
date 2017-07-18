@@ -23,6 +23,7 @@ protected:
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
     std::vector<double> TransformPose(std::vector<double> p, int m1, int m2, int m3);
     
+    bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
     std::vector<double> PoseToVector(gtsam::Pose3& cam);
     gtsam::Pose3 VectorToPose(std::vector<double>& p);
     
