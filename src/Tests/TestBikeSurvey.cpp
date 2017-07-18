@@ -297,6 +297,8 @@ void TestBikeSurvey::TestVO(){
 }
 
 bool TestBikeSurvey::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
+    double pose_distance_threshold = 5.0; //meters
+    double pose_angle_threshold = 20.0; //degrees.
     double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);
     if (dist > pose_distance_threshold) {
         // Don't try to match points more than 20m away, GPS is not
