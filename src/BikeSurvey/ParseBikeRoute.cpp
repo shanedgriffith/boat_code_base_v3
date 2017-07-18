@@ -1,5 +1,6 @@
 
 #include "ParseBikeRoute.hpp"
+#include <VisualOdometry/VisualOdometry.hpp>
 
 using namespace std;
 
@@ -87,6 +88,7 @@ gtsam::Pose3 ParseBikeRoute::VectorToPose(std::vector<double>& p){
 }
 
 void ParseBikeRoute::ModifyPoses(){
+    
     Camera nexus = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
     gtsam::Matrix gtmat = gtcam->matrix();
@@ -95,18 +97,26 @@ void ParseBikeRoute::ModifyPoses(){
     vector<double> lastp;
     vector<vector<double>> filtered;
     vector<int> indices = {0};
-    ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+    ParseFeatureTrackFile PFT0(nexus, _base, 0);
     
     vector<double> curpose;
     for(int i=2; i<poses.size(); i=i+2){
-        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
+        time_t beginning,optstart,end;
+        time (&beginning);
+        ParseFeatureTrackFile PFT1(nexus, _base, i);
+        time (&optstart);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
+        time (&end);
+        double optruntime = difftime (end, optstart);
+        double totruntime = difftime (end, beginning);
+        printf("ITERATION %d. AVG Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
         vector<double> vp = PoseToVector(vop);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
                 std::cout << "skipped " << i << std::endl;
                 PFT1.Next(++i);
+                if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
                 gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
                 vp = PoseToVector(vop);
                 smooth = DistanceCriterion(vp, lastp);
