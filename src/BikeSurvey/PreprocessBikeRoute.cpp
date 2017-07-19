@@ -517,7 +517,7 @@ void PreprocessBikeRoute::ModifyPoses(){
     
     vector<vector<double>> newposes(timings.size(), vector<double>());
     for(int i=0, c=0; i<timings.size(); i++){
-        while(indices[c] < i && indices.size() > c) c++;
+        while(indices.size() > c && indices[c] < i) c++;
         if(indices.size() <= c){
             //hmm, but this may cause issues like before with the duplicated GPS.
             std::cout << i << " using duplicated pose" << std::endl;
