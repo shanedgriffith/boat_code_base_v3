@@ -33,20 +33,20 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     poseNoise0 = gtsam::noiseModel::Diagonal::Sigmas(v60);
     
     gtsam::Vector6 v61;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
-    v61(0,0) = 0.002;
-    v61(1,0) = 0.002;
-    v61(2,0) = 0.002;
-    v61(3,0) = 0.001;
-    v61(4,0) = 0.001;
-    v61(5,0) = 0.001;
+    v61(0,0) = 0.0001;
+    v61(1,0) = 0.0001;
+    v61(2,0) = 0.0001;
+    v61(3,0) = 0.0001;
+    v61(4,0) = 0.0001;
+    v61(5,0) = 0.0001;
     poseNoise1 = gtsam::noiseModel::Diagonal::Sigmas(v61);
     
     gtsam::Vector6 v62;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
-    v62(0,0) = 5;
-    v62(1,0) = 5;
+    v62(0,0) = 10;
+    v62(1,0) = 10;
     v62(2,0) = 5;
-    v62(3,0) = 0.2;
-    v62(4,0) = 0.2;
+    v62(3,0) = 0.05;
+    v62(4,0) = 0.05;
     v62(5,0) = 0.1745;
     poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v61);
 }

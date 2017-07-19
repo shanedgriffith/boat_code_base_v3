@@ -37,7 +37,7 @@ public:
             exit(-1);
         }
         ReadDelimitedFile(aux, 0);
-        ModifyPoses();
+//        ModifyPoses();
     }
     
     static Camera GetCamera();
