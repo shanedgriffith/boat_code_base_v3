@@ -106,6 +106,7 @@ void PreprocessBikeRoute::AlignDataToImages() {
         curtime += 1./video_fps;
         vtimes[idx] = curtime;
         idx++;
+        if(idx>20) break;
     }
     std::swap(arrs, fullset);
     std::swap(timings, vtimes);
@@ -482,6 +483,7 @@ void PreprocessBikeRoute::ModifyPoses(){
     VisualOdometry vo(nexus);
     vector<double> lastp;
     vector<vector<double>> filtered;
+    filtered.push_back(poses[0]);
     vector<int> indices = {0};
     ParseFeatureTrackFile PFT0(nexus, _bdbase + _name, 0);
     
@@ -517,12 +519,12 @@ void PreprocessBikeRoute::ModifyPoses(){
     
     vector<vector<double>> newposes(timings.size(), vector<double>());
     for(int i=0, c=0; i<timings.size(); i++){
-        while(indices.size() > c && indices[c] < i) c++;
+        while(indices.size() > c && indices[c] <= i) c++;
         if(indices.size() <= c){
             //hmm, but this may cause issues like before with the duplicated GPS.
             std::cout << i << " using duplicated pose" << std::endl;
-            newposes.push_back(newposes[newposes.size()-1]);
-        }else newposes[i] = InterpolatePoses(i, c-1, c, filtered[c-1], filtered[c]);
+            newposes[i] = newposes[i-1];
+        }else newposes[i] = InterpolatePoses(i, indices[c-1], indices[c], filtered[c-1], filtered[c]);
     }
     
     poses = newposes;

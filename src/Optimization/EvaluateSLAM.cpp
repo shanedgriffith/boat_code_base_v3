@@ -118,7 +118,7 @@ std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
     if(debug) {
         cout << "Average Rerror: " << sum/count << std::endl;
         cout << "  " << countbad << " unacceptable landmarks (not so high)" << endl;
-        cout << "  " << avgbadness << " average unacceptable (should be nearly zero)" << endl;
+        cout << "  " << avgbadness << " of " << POR.boat.size()<< " average unacceptable (should be nearly zero)" << endl;
     }
     return result;
 }

@@ -48,6 +48,7 @@ protected:
     gtsam::noiseModel::Diagonal::shared_ptr kinNoise;
     gtsam::noiseModel::Diagonal::shared_ptr dVNoise;
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise;
+//    gtsam::noiseModel::Robust::shared_ptr pixelNoise;
     
     int next_camera_key = 0;
     
