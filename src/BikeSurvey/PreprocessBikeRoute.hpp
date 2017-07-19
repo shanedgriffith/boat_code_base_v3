@@ -30,6 +30,7 @@ private:
     gtsam::Point3 end_pos;
     std::vector<LandmarkTrack> active;
     
+    void SetZ(std::vector<double>& unkz, std::vector<double> nmlzd);
     gtsam::Pose3 VectorToPose(std::vector<double>& p);
     std::vector<double> PoseToVector(gtsam::Pose3& cam);
     std::vector<double> InterpolatePoses(int idx, int a, int b, std::vector<double> pa, std::vector<double> pb);

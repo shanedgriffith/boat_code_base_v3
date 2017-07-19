@@ -19,8 +19,8 @@
 
 using namespace std;
 
-vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/"};
-vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/"};
+vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
+vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
 
 int main(int argc, char *argv[]) {
     if(argc<4) {
@@ -34,10 +34,12 @@ int main(int argc, char *argv[]) {
     string query_loc = lab_paths[1];
     string pftbase = lab_paths[2];
     string visibility_dir = "/mnt/tale/shaneg/results/visibility_poses/all/";
+    string bike_datasets = lab_paths[3];
     if(argc>4){
         results_dir = cluster_paths[0];
         query_loc = cluster_paths[1];
         pftbase = cluster_paths[2];
+        bike_datasets = cluster_paths[3];
     }
     
     int prog = atoi(argv[3]);
@@ -69,7 +71,7 @@ int main(int argc, char *argv[]) {
         fd.CompareFromDir(dir);
         break;}
     case 5:{
-        PreprocessBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+        PreprocessBikeRoute pbr(, argv[1]);
         pbr.Preprocess();
         break;}
     case 6:{
