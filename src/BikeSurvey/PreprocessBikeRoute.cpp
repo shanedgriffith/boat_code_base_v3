@@ -543,7 +543,7 @@ void PreprocessBikeRoute::ModifyPoses(){
             newposes[i] = newposes[i-1];
         }else newposes[i] = InterpolatePoses(i, indices[c-1], indices[c], filtered[c-1], filtered[c]);
         SetZ(poses[i], newposes[i]);
-        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,poses[0],poses[1],poses[2],poses[3],poses[4],poses[5]);
+        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,poses[i][0],poses[i][1],poses[i][2],poses[i][3],poses[i][4],poses[i][5]);
     }
     
     
