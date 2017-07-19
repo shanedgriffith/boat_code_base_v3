@@ -479,7 +479,7 @@ template <typename T> int sgn(T val) {
 }
 
 void PreprocessBikeRoute::SetZ(std::vector<double>& unkz, std::vector<double> nmlzd){
-    unkz[2] = sgn(nmlzd[2]) * sqrt((unkz[0]+unkz[1])/(1/pow(nmlzd[2],2) - 1));
+    unkz[2] = sgn(nmlzd[2]) * sqrt((pow(unkz[0],2)+pow(unkz[1],2))/(1/pow(nmlzd[2],2) - 1));
     unkz[3] = nmlzd[3];
     unkz[4] = nmlzd[4];
     unkz[5] = nmlzd[5];
@@ -509,8 +509,6 @@ void PreprocessBikeRoute::ModifyPoses(){
         ParseFeatureTrackFile PFT1(nexus, _bdbase + _name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> vp = PoseToVector(vop);
-        SetZ(poses[i], vp);
-        vp = poses[i];
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
@@ -519,8 +517,6 @@ void PreprocessBikeRoute::ModifyPoses(){
                 if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
                 gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
                 vp = PoseToVector(vop);
-                SetZ(poses[i], vp);
-                vp = poses[i];
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
@@ -546,7 +542,11 @@ void PreprocessBikeRoute::ModifyPoses(){
             std::cout << i << " using duplicated pose" << std::endl;
             newposes[i] = newposes[i-1];
         }else newposes[i] = InterpolatePoses(i, indices[c-1], indices[c], filtered[c-1], filtered[c]);
+        SetZ(poses[i], newposes[i]);
+        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,poses[0],poses[1],poses[2],poses[3],poses[4],poses[5]);
     }
+    
+    
     
     poses = newposes;
     if(poses.size() != arrs[0].size()){
