@@ -355,3 +355,29 @@ bool ParseFeatureTrackFile::CheckImageDuplication(vector<LandmarkTrack>& active)
     }
     return true;
 }
+
+void swap(ParseFeatureTrackFile& first, ParseFeatureTrackFile& second){
+    //see http://stackoverflow.com/questions/5695548/public-friend-swap-member-function
+    //for an explanation of the syntax, and use of using, without specifying std::swap below.
+    //Also see https://stackoverflow.com/questions/4117002/why-can-i-access-private-variables-in-the-copy-constructor
+    // which says that two objects of the same class can access each other's private data.
+    using std::swap;
+    
+    swap(first._no, second._no);
+    swap(first._base, second._base);
+    swap(first.siftfile, second.siftfile);
+    swap(first.ids, second.ids);
+    swap(first.imagecoord, second.imagecoord);
+    swap(first.time, second.time);
+}
+
+ParseFeatureTrackFile& ParseFeatureTrackFile::operator=(ParseFeatureTrackFile other){
+    //see http://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom
+    //for an explanation of why this is the right way to define an assignment operator.
+    //This assignment isn't passed by reference, because we don't want to
+    //copy the function arguments. See
+    //https://web.archive.org/web/20140113221447/http://cpp-next.com/archive/2009/08/want-speed-pass-by-value/
+    swap(*this, other);
+    return *this;
+}
+

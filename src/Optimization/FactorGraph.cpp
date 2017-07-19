@@ -76,6 +76,11 @@ void FactorGraph::InitializeNoiseModels(){
 void FactorGraph::SetLandmarkDeviation(double dev) {
     double dimensions = 2.0; //there are two dimensions to an image observation
     pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
+//    gtsam::noiseModel::Isotropic::shared_ptr gaussian = gtsam::noiseModel::Isotropic::Sigma(1, 1);
+//    gtsam::noiseModel::mEstimator::Tukey::shared_ptr robust = gtsam::noiseModel::mEstimator::Tukey::Create(15);
+//    pixelNoise = gtsam::noiseModel::Robust::Create(robust, gaussian);
+//    gtsam::noiseModel::Isotropic::shared_ptr gaussian = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
+//    pixelNoise = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(1.345), gaussian);
 }
 
 void FactorGraph::AddCamera(int camera_key, gtsam::Pose3 cam_est){

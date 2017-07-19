@@ -19,8 +19,8 @@
 
 using namespace std;
 
-vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags", "/home/shaneg/data/Lakeshore_KLT/"};
-vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags", "/mnt/tale/shaneg/Lakeshore_KLT/"};
+vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/"};
+vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/"};
 
 int main(int argc, char *argv[]) {
     if(argc<4) {
@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
     std::cout << "starting program" << std::endl;
-
-
+    
+    
     string results_dir = lab_paths[0];
     string query_loc = lab_paths[1];
     string pftbase = lab_paths[2];
@@ -92,29 +92,18 @@ int main(int argc, char *argv[]) {
         break;}
     case 9:{
         TestBikeSurvey tbs;
+        tbs.GenerateTrajectory();
         tbs.TestVO();
         //tbs.TestVisualOdometry();
         //tbs.TestTriangulation();
         break;}
     }
 
-/*    int start = -1;
-    if(argc>2) start = atoi(argv[2]);
-    AcquireISConstraints acq(kingfisher, argv[1]);
-    acq.Run(start);
-*/
-/*     string ref = "140625";
-      AlignVisibilitySet avs(kingfisher, ref, argv[1]);
-      avs.Visibility(); 
-     exit(1);
-*//*     
+/*
       FlickeringDisplay fd(argv[1], argv[2]);
       string dir = results_dir + argv[1] + "_to_" + argv[2];
       fd.DisplaySurveyComparisonDir(dir);
 */
-//    EvaluateRFlow erf(kingfisher, argv[1]);
-//    erf.debug = true;
-//    erf.Evaluate();
 
     return 0;
 }

@@ -54,7 +54,7 @@ std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count)
             rerror_set[idx++] = (double) rerr;
         }
         fclose(fp);
-        if(count != idx-1){
+        if(count != idx){
             std::cout << "HopcountLog::LoadPriorRerror() error. The number of lines in the file is unexpected. Got " << count << std::endl;
             exit(-1);
         }

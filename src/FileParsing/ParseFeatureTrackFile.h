@@ -71,6 +71,10 @@ public:
     {
         Load();
     }
+    
+    friend void swap(ParseFeatureTrackFile& first, ParseFeatureTrackFile& second);
+    ParseFeatureTrackFile& operator=(ParseFeatureTrackFile other);
+    
     void Reset();
     void Next(int no);
     int GetIndexOfPoint(int point_id);
