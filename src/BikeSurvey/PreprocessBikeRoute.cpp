@@ -464,10 +464,13 @@ std::vector<double> PreprocessBikeRoute::InterpolatePoses(int idx, int a, int b,
     return p;
 }
 
-
 #include <VisualOdometry/VisualOdometry.hpp>
 gtsam::Pose3 PreprocessBikeRoute::VectorToPose(std::vector<double>& p){
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
+vector<double> PreprocessBikeRoute::PoseToVector(gtsam::Pose3& cam) {
+    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
 void PreprocessBikeRoute::ModifyPoses(){
@@ -480,11 +483,11 @@ void PreprocessBikeRoute::ModifyPoses(){
     vector<double> lastp;
     vector<vector<double>> filtered;
     vector<int> indices = {0};
-    ParseFeatureTrackFile PFT0(nexus, _base, 0);
+    ParseFeatureTrackFile PFT0(nexus, _bdbase + _name, 0);
     
     vector<double> curpose;
     for(int i=2; i<timings.size(); i=i+2){
-        ParseFeatureTrackFile PFT1(nexus, _base, i);
+        ParseFeatureTrackFile PFT1(nexus, _bdbase + _name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> vp = PoseToVector(vop);
         if(i>2){
