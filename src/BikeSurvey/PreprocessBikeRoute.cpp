@@ -90,7 +90,7 @@ void PreprocessBikeRoute::AlignDataToImages() {
     
     double curtime = GetNearestTimeToPosition(0, 0);
     double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
-    int nentries = (int) ceil((endtime-curtime)*video_fps);
+    int nentries = 200;//(int) ceil((endtime-curtime)*video_fps);
     std::vector<double> vtimes(nentries, 0.0);
     std::vector<std::vector<double> > fullset(n, std::vector<double>(nentries, 0.0));
     
@@ -106,7 +106,7 @@ void PreprocessBikeRoute::AlignDataToImages() {
         curtime += 1./video_fps;
         vtimes[idx] = curtime;
         idx++;
-        if(idx>20) break;
+        if(idx>=nentries) break;
     }
     std::swap(arrs, fullset);
     std::swap(timings, vtimes);
@@ -276,8 +276,8 @@ void PreprocessBikeRoute::Preprocess(){
     AlignDataToImages();
     
     //get RPY
+    GetPoses();
     ModifyPoses();
-//    GetPoses();
 //    PlayPoses();
 //    exit(1);
     

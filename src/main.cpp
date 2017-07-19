@@ -71,11 +71,11 @@ int main(int argc, char *argv[]) {
         fd.CompareFromDir(dir);
         break;}
     case 5:{
-        PreprocessBikeRoute pbr(, argv[1]);
+        PreprocessBikeRoute pbr(bike_datasets, argv[1]);
         pbr.Preprocess();
         break;}
     case 6:{
-        ParseBikeRoute pbr("/mnt/tale/shaneg/bike_datasets/", argv[1]);
+        ParseBikeRoute pbr(bike_datasets, argv[1]);
         Camera nexus = ParseBikeRoute::GetCamera();
         SurveyOptimizer so(nexus, argv[1], results_dir);
         so.Initialize();
