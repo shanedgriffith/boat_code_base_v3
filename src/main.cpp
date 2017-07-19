@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
     std::cout << "starting program" << std::endl;
-
-
+    
+    
     string results_dir = lab_paths[0];
     string query_loc = lab_paths[1];
     string pftbase = lab_paths[2];

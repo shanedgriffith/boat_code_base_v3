@@ -433,7 +433,7 @@ void PreprocessBikeRoute::Play(){
 }
 
 
-bool ParseBikeRoute::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
+bool PreprocessBikeRoute::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
     double pose_distance_threshold = 5.0; //meters
     double pose_angle_threshold = 20.0; //degrees.
     double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);
@@ -454,7 +454,7 @@ bool ParseBikeRoute::DistanceCriterion(std::vector<double>& pose1, std::vector<d
     return true;
 }
 
-std::vector<double> ParseBikeRoute::InterpolatePoses(int idx, int a, int b, vector<double> pa, vector<double> pb){
+std::vector<double> PreprocessBikeRoute::InterpolatePoses(int idx, int a, int b, vector<double> pa, vector<double> pb){
     std::vector<double> p(pa.size(), 0);
     for(int i=0; i<pa.size(); i++){
         double w2 = (idx - 1.0*a)/(b-a);
@@ -464,11 +464,13 @@ std::vector<double> ParseBikeRoute::InterpolatePoses(int idx, int a, int b, vect
     return p;
 }
 
-gtsam::Pose3 ParseBikeRoute::VectorToPose(std::vector<double>& p){
+
+#include <VisualOdometry/VisualOdometry.hpp>
+gtsam::Pose3 PreprocessBikeRoute::VectorToPose(std::vector<double>& p){
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
-void ParseBikeRoute::ModifyPoses(){
+void PreprocessBikeRoute::ModifyPoses(){
     
     Camera nexus = ParseBikeRoute::GetCamera();
     gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
