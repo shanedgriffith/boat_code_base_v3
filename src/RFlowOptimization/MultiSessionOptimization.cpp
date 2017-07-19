@@ -273,6 +273,7 @@ void MultiSessionOptimization::SaveResults() {
         
         EvaluateRFlow erf(_cam, dates[i], _map_dir);
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
+        if(i==0) continue;
         vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks, optstart);
         erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
