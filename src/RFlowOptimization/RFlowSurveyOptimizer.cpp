@@ -114,8 +114,8 @@ int RFlowSurveyOptimizer::UpdateError() {
         lpd_rerror[j] = 1;
         if(!inlier) {lpd_rerror[j] = -1; coutliers++;}
     }
-    erfintra.PrintTots("");
-    erfinter.PrintTots("LPD");
+    erfintra.PrintTots("intra");
+    erfinter.PrintTots("inter");
     std::cout << "number of outliers: " << coutliers << std::endl;
     
     return nchanges;

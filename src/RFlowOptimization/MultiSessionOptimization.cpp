@@ -196,7 +196,8 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     vector<vector<vector<double> > > landmarks;
     
     for(int i=optstart; i<dates.size(); i++){
-        rfFG->ChangeLandmarkSet(i-optstart);
+        int sidx = i-optstart;
+        rfFG->ChangeLandmarkSet(sidx);
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         
@@ -219,7 +220,6 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
         EvaluateRFlow erfintraS0(_cam, dates[i], _map_dir);
         EvaluateRFlow erfintraS1(_cam, dates[i], _map_dir);
-        erf.debug = true;
         
         int nchanges = 0;
         int coutliers = 0;
@@ -269,8 +269,9 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
         }
         totchanges += nchanges;
-        erfintra.PrintTots("");
-        erfinter.PrintTots("LPD");
+        erfintraS0.PrintTots("intra s0");
+        erfintraS1.PrintTots("intra s1");
+        erfinter.PrintTots("inter");
         std::cout << "number of outliers: " << coutliers << std::endl;
         inlier_ratio[sidx] = 1.0-(1.*coutliers/inter_error.size());
     }
