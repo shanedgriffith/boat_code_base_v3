@@ -146,7 +146,7 @@ void RFlowSurveyOptimizer::IterativeMerge() {
     vector<double> inter_error(lpdi.localizations.size(), 0);
     for(int j=0; j<lpdi.localizations.size(); j++)
         inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpdi.localizations[j], poses[lpdi.localizations[j].s1time]);
-    erfinter.SaveEvaluation(rerror_localizations, "/postlocalizationerror.csv");
+    erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
     erfinter.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
 
     HopcountLog hlog(_map_dir);
