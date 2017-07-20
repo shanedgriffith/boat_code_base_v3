@@ -37,7 +37,7 @@ public:
     
     void Evaluate();
     
-    vector<double> InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
+    std::vector<double> InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
 //    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, const std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
     
 //    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);

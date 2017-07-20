@@ -17,12 +17,13 @@
 #include <gtsam/geometry/Point3.h>
 #include <DataTypes/Camera.hpp>
 #include <FileParsing/FileParsing.hpp>
+#include <FileParsing/ParseOptimizationResults.h>
 
 class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
-    vector<double> tots(6, 0.0);
+    std::vector<double> tots(6, 0.0);
     Camera& _cam;
 public:
     bool debug;
