@@ -141,12 +141,13 @@ void RFlowSurveyOptimizer::IterativeMerge() {
         nchanges = UpdateError();
     }
 
-    EvaluateRFlow erf(_cam, _date, _results_dir);
-    erf.debug = true;
+    EvaluateRFlow erfinter(_cam, _date, _results_dir);
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> rerror_localizations = erf.InterSurveyErrorAtLocalizations(lpdi.localizations, poses);
-    erf.SaveEvaluation(rerror_localizations, "/postlocalizationerror.csv");
-    erf.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
+    vector<double> inter_error(lpdi.localizations.size(), 0);
+    for(int j=0; j<lpdi.localizations.size(); j++)
+        inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpdi.localizations[j], poses[lpdi.localizations[j].s1time]);
+    erfinter.SaveEvaluation(rerror_localizations, "/postlocalizationerror.csv");
+    erfinter.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
 
     HopcountLog hlog(_map_dir);
     hlog.SaveLocalLog(_date, numverified, lpdi.localizations, lpd_rerror);

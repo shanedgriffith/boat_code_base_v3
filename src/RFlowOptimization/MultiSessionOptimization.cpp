@@ -312,8 +312,8 @@ void MultiSessionOptimization::SaveResults() {
             LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
             inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpd, poses[lpd.s1time], landmarks, optstart);
         }
-        erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
-        erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
+        erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
+        erfinter.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
         
         HopcountLog hlog(_map_dir);
         hlog.SaveLocalLog(dates[i], lpd_rerror[sidx].size(), lpdi[sidx].localizations, lpd_rerror[sidx]);
