@@ -55,8 +55,8 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(const std::vector<std::
     return pset;
 }
 
-double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks) {
-    ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[idx]);
+double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks) {
+    ParseFeatureTrackFile PFT(_cam, _pftset, POR.ftfilenos[idx]);
     vector<gtsam::Point3> p_subset = GetSubsetOf3DPoints(landmarks, PFT.ids);
     return MeasureReprojectionError(pose, PFT.imagecoord, p_subset);
 }
@@ -69,6 +69,7 @@ double EvaluateRFlow::InterSurveyErrorAtLocalization(const LocalizedPoseData& lo
     else p3d0 = GetSubsetOf3DPoints(landmarks[sidx], localization.pids);
     return MeasureReprojectionError(boat, localization.p2d1, p3d0, localization.rerrorp);
 }
+//std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
 
 /*plot each of the localized poses p1frame0; and every 10 or so of the optimized poses, each with their FOV.
  * -and different colors so they can be differentiated.

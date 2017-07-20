@@ -107,7 +107,7 @@ double EvaluateSLAM::MeasureReprojectionError(const std::vector<double>& boat, c
 }
 
 double EvaluateSLAM::OfflineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase){
-    ParseFeatureTrackFile PFT(_cam, _pftbase, POR.ftfilenos[idx]);
+    ParseFeatureTrackFile PFT(_cam, _pftbase+_date, POR.ftfilenos[idx]);
     std::vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
     return MeasureReprojectionError(POR.boat[idx], PFT.imagecoord, p_subset);
 }
