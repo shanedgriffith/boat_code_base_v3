@@ -15,7 +15,7 @@
 using namespace std;
 
 
-int EvaluateRFlow::GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id) {
+int EvaluateRFlow::GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id) {
     int bot = 0;
     int top = landmarks.size();
     while(bot < top) {
@@ -27,7 +27,7 @@ int EvaluateRFlow::GetIndexOfFirstPoint(std::vector<std::vector<double> >& landm
     return -1;
 }
 
-vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, vector<int>& ids_subset) {
+vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(const std::vector<std::vector<double> >& landmarks, const vector<int>& ids_subset) {
     vector<gtsam::Point3> pset(ids_subset.size(), gtsam::Point3(0,0,0));
     if(ids_subset.size() == 0) return pset;
     

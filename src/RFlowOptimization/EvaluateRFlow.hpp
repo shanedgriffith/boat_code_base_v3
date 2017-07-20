@@ -25,8 +25,8 @@
 
 class EvaluateRFlow: public EvaluateSLAM {
 protected:
-    std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, std::vector<int>& ids_subset);
-    int GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id);
+    std::vector<gtsam::Point3> GetSubsetOf3DPoints(const std::vector<std::vector<double> >& landmarks, const std::vector<int>& ids_subset);
+    int GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id);
     
 public:
     std::string _results_dir;
