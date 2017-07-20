@@ -55,7 +55,7 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(std::vector<std::vector
     return pset;
 }
 
-double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, std::vector<double>& pose, std::vector<std::vector<double> >& landmarks) {
+double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks) {
     ParseFeatureTrackFile PFT(_cam, _pftbase + _date, POR.ftfilenos[idx]);
     vector<gtsam::Point3> p_subset = GetSubsetOf3DPoints(landmarks, PFT.ids);
     return MeasureReprojectionError(pose, PFT.imagecoord, p_subset);
