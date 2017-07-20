@@ -292,8 +292,7 @@ void MultiSessionOptimization::SaveResults() {
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
-        landmarks.push_back(landmarkset);
+        landmarks.push_back(GTS.GetOptimizedLandmarks(true));
     }
     
     for(int i=optstart; i<dates.size(); i++){
@@ -305,10 +304,14 @@ void MultiSessionOptimization::SaveResults() {
         curSOR.SetDrawMap();
         curSOR.PlotAndSaveCurrentEstimate(landmarks[sidx], ts, vs, {});
         
-        EvaluateRFlow erf(_cam, dates[i], _map_dir);
+        EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         if(i==0) continue;
-        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks, optstart);
+        vector<double> inter_error(lpdi[sidx].localizations.size(), 0);
+        for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
+            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
+            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpd, poses[lpd.s1time], landmarks, optstart);
+        }
         erf.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erf.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
         
