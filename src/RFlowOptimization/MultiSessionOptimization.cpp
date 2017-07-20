@@ -217,18 +217,32 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         int sidx = i-optstart;
         
         EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
-        EvaluateRFlow erfintra(_cam, dates[i], _map_dir);
+        EvaluateRFlow erfintraS0(_cam, dates[i], _map_dir);
+        EvaluateRFlow erfintraS1(_cam, dates[i], _map_dir);
         erf.debug = true;
         
         int nchanges = 0;
         int coutliers = 0;
         for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
-            double intra_error = erfintra.OnlineRError(lpdi[sidx].localizations[j], _pftbase, POR[i], poses[sidx][lpdi[sidx].localizations[j].s1time], landmarks[sidx]);
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpdi[sidx].localizations[j], poses[sidx][lpdi[sidx].localizations[j].s1time], landmarks, optstart);
-//            if(intra[sidx].has_key(lpdi[sidx].localizations[j].s1time
+            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
+            
+            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
+            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase, poses[sidx][lpd.s1time], landmarks[sidx]);
+            intra[sidx][lpd.s1time] = intra_errorS1;
+            double intra_errorS0 = 0;
+            if(lpd.s0 >= optstart) {
+                int s0idx = lpd.s0-optstart;
+                auto search = intra[s0idx].find(lpd.s0time);
+                if(search != intra[s0idx].end())
+                    intra_errorS0 = search->second;
+                else {
+                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase, poses[s0idx][lpd.s0time], landmarks[s0idx]);
+                    intra[s0idx][lpd.s0time] = intra_errorS0;
+                }
+            }
             
             //adaptive threshold.
-            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpdi[sidx].localizations[j].s1time]*mult;
+            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
             if(LPD_RERROR_THRESHOLD < 0) {
                 std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
                 exit(1);
@@ -237,9 +251,12 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
             }
             
             bool inlier = true;
-            if(std::isnan(inter_error) || inter_error > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(intra_error)) inlier = false;
-            if(intra_error > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
+            if(std::isnan(inter_error) ||
+               inter_error > LPD_RERROR_THRESHOLD) inlier = false;
+            if(std::isnan(intra_errorS0) ||
+               std::isnan(intra_errorS1)) inlier = false;
+            if(intra_errorS0 > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
+               intra_errorS1 > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
             if(permerr[sidx][j] > 0) inlier = false;
             
             if(lpd_rerror[sidx][j] == 0 ||
