@@ -23,7 +23,7 @@ class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
-    double MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, const std::vector<double>& rerror = {});
+    double MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const std::vector<double>& rerror = {});
     double UpdateTots(std::vector<double>& stats);
     
     std::vector<double> tots;
