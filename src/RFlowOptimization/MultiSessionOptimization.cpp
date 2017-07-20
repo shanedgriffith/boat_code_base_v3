@@ -190,60 +190,70 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     static vector<vector<double> > rerrs;
-    
+    static vector<double> AverageRerror;
+    vector<unordered_map<int, double> > intra;
+    vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
+    
     for(int i=optstart; i<dates.size(); i++){
         rfFG->ChangeLandmarkSet(i-optstart);
-        vector<vector<double> > landmarkset = GTS.GetOptimizedLandmarks(true);
-        landmarks.push_back(landmarkset);
+        poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
+        landmarks.push_back(GTS.GetOptimizedLandmarks(true));
+        
+        if(firstiter){
+            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
+            rerrs.push_back(ESlam.LoadRerrorFile());
+            
+            EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
+            double avg = ESlam.GetAverageRerror(rerrs[sidx]);
+            AverageRerror.push_back(avg);
+        }
+        
+        intra.push_back(unordered_map<int, double>());
     }
     
     double totchanges = 0;
     for(int i=optstart; i<dates.size(); i++){
         int sidx = i-optstart;
-        EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
-        if(firstiter){
-            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
-            rerrs.push_back(ESlam.LoadRerrorFile());
-        }
-
-        EvaluateRFlow erf(_cam, dates[i], _map_dir);
+        
+        EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
+        EvaluateRFlow erfintra(_cam, dates[i], _map_dir);
         erf.debug = true;
-        vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
-        vector<double> intra_error = erf.IntraSurveyErrorAtLocalizations(poses, landmarks[sidx], lpdi[sidx].localizations, POR[i], _pftbase);
-        vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi[sidx].localizations, poses, landmarks, optstart);
+        
         int nchanges = 0;
         int coutliers = 0;
-        for(int j=0; j<inter_error.size(); j++) {
+        for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
+            double intra_error = erfintra.OnlineRError(lpdi[sidx].localizations[j], _pftbase, POR[i], poses[sidx][lpdi[sidx].localizations[j].s1time], landmarks[sidx]);
+            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpdi[sidx].localizations[j], poses[sidx][lpdi[sidx].localizations[j].s1time], landmarks, optstart);
+//            if(intra[sidx].has_key(lpdi[sidx].localizations[j].s1time
+            
             //adaptive threshold.
             double LPD_RERROR_THRESHOLD = rerrs[sidx][lpdi[sidx].localizations[j].s1time]*mult;
             if(LPD_RERROR_THRESHOLD < 0) {
                 std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
                 exit(1);
             } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
-                LPD_RERROR_THRESHOLD = ESlam.GetAverageRerror(rerrs[sidx])*mult;
+                LPD_RERROR_THRESHOLD = AverageRerror[sidx]*mult;
             }
             
             bool inlier = true;
-            if(std::isnan(inter_error[j]) || inter_error[j] > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(intra_error[j])) inlier = false;
-            if(intra_error[j] > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
+            if(std::isnan(inter_error) || inter_error > LPD_RERROR_THRESHOLD) inlier = false;
+            if(std::isnan(intra_error)) inlier = false;
+            if(intra_error > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
             if(permerr[sidx][j] > 0) inlier = false;
             
-            if((inlier && lpd_rerror[sidx][j] < 0) || (!inlier && lpd_rerror[sidx][j] > 0)) {
+            if(lpd_rerror[sidx][j] == 0 ||
+               (inlier && lpd_rerror[sidx][j] < 0) ||
+               (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
-//                LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-//                if(lpd.s0 >= optstart) {
-//                    //this right? I should be able to turn off constraints with surveys .. oh these are for ISCs not localizations
-//                    ToggleLandmarkConstraints(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1);
-//                    ToggleLandmarkConstraints(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0);
-//                }
-            } else if (lpd_rerror[sidx][j] == 0) nchanges++;
+            }
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
         }
         totchanges += nchanges;
+        erfintra.PrintTots("");
+        erfinter.PrintTots("LPD");
         std::cout << "number of outliers: " << coutliers << std::endl;
         inlier_ratio[sidx] = 1.0-(1.*coutliers/inter_error.size());
     }

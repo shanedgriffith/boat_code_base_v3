@@ -82,15 +82,18 @@ int RFlowSurveyOptimizer::UpdateError() {
     EvaluateSLAM ESlam(_cam, _date, _map_dir);
     static vector<double> rerrs = ESlam.LoadRerrorFile();
     double mult = 3;
-    EvaluateRFlow erf(_cam, _date, _results_dir);
+    EvaluateRFlow erfinter(_cam, _date, _map_dir);
+    EvaluateRFlow erfintra(_cam, _date, _map_dir);
     erf.debug = true;
     
     int nchanges = 0;
+    ParseOptimizationResults curPOR(_map_dir + _date);//yet, this result was saved over ..., it would make more sense to use the online error version.
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
-    vector<double> inter_error = erf.InterSurveyErrorAtLocalizations(lpdi.localizations, poses);
-    vector<double> intra_error = erf.IntraSurveyErrorAtLocalizations(lpdi.localizations, _pftbase);
     int coutliers = 0;
     for(int j=0; j<inter_error.size(); j++) {
+        double intra_error = erfintra.OfflineRError(curPOR, lpdi.localizations[j].s1time, _pftbase);
+        double inter_error = erfinter.InterSurveyErrorAtLocalization(lpdi.localizations[j], poses[lpdi.localizations[j].s1time]);
+        
         //adaptive threshold.
         double LPD_RERROR_THRESHOLD = rerrs[lpdi.localizations[j].s1time]*mult;
         if(LPD_RERROR_THRESHOLD < 0) {
@@ -101,9 +104,9 @@ int RFlowSurveyOptimizer::UpdateError() {
         }
         
         bool inlier = true;
-        if(std::isnan(inter_error[j]) || LPD_RERROR_THRESHOLD <= inter_error[j]) inlier = false;
-        if(std::isnan(intra_error[j])) inlier = false;
-        if(LPD_RERROR_THRESHOLD <= intra_error[j]) permerr[j] = 1;
+        if(std::isnan(inter_error) || LPD_RERROR_THRESHOLD <= inter_error) inlier = false;
+        if(std::isnan(intra_error)) inlier = false;
+        if(LPD_RERROR_THRESHOLD <= intra_error) permerr[j] = 1;
         if(permerr[j]>0) inlier = false;
         
         if((inlier && lpd_rerror[j] <= 0) || (!inlier && lpd_rerror[j]> 0)) nchanges++;
@@ -111,6 +114,8 @@ int RFlowSurveyOptimizer::UpdateError() {
         lpd_rerror[j] = 1;
         if(!inlier) {lpd_rerror[j] = -1; coutliers++;}
     }
+    erfintra.PrintTots("");
+    erfinter.PrintTots("LPD");
     std::cout << "number of outliers: " << coutliers << std::endl;
     
     return nchanges;

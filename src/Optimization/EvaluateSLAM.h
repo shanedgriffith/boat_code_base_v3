@@ -22,6 +22,7 @@ class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
+    vector<double> tots(6, 0.0);
     Camera& _cam;
 public:
     bool debug;
@@ -34,10 +35,12 @@ public:
         debug(false), badthreshold(50), avgbadthreshold(15),
     _cam(cam), _date(date), _results_dir(results_dir){}
     
-    void Evaluate(std::string _pftbase);
+    std::vector<double> ErrorForSurvey(std::string _pftbase, bool save = false);
     
-    std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p);
-    std::vector<double> ErrorForSurvey(std::string _pftbase);
+    double MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, const std::vector<double>& rerror = {});
+    
+    double OfflineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase);
+    
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
     double GetAverageRerror(std::vector<double> rerrors);

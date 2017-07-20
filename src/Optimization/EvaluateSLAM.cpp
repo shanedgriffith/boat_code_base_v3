@@ -54,7 +54,37 @@ double EvaluateSLAM::GetAverageRerror(vector<double> rerrors){
     return avg_rerror;
 }
 
-std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p) {
+double EvaluateSLAM::UpdateTots(vector<double>& stats){
+    double ret = 0.0;
+    if(stats[1] > 0) {
+        ret = stats[0]/stats[1];
+        tots[0] += ret;
+        tots[1]++;
+        if(ret > avgbadthreshold) tots[3]++;
+        else if(tots.size()>4) {
+            tots[4] += ret;
+            tots[5]++;
+        }
+    }
+    else tots[3]++;
+    tots[2] += stats[2];
+    return ret;
+}
+
+void EvaluateSLAM::PrintTots(string name){
+    if(debug) {
+        if(tots[1] == 0) {
+            cout << "Average " + name + " Rerror: No data" << std::endl;
+            return;
+        }
+        cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
+        if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
+        cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
+        cout << "  " << tots[3] << " average unacceptable (should be nearly zero)" << endl;
+    }
+}
+
+double EvaluateSLAM::MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, vector<double>& rerror) {
     gtsam::Pose3 tf(gtsam::Rot3::ypr(boat[5],boat[4],boat[3]), gtsam::Point3(boat[0],boat[1],boat[2]));
     
     double total_error = 0;
@@ -62,11 +92,12 @@ std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& 
     double num_bad=0;
     std::string string_data = "";
     for(int j=0; j<orig_imagecoords.size(); j++) {
+        if(rerror.size()>0 && (rerror[j]<0.0001 || rerror[j]>6.0)) continue;//skip points that are likely mismatches.
         if(p[j].x()==0.0 && p[j].y()==0.0 && p[j].z()==0.0) continue;
         
         gtsam::Point3 res = tf.transform_to(p[j]);
         gtsam::Point2 twodim = _cam.ProjectToImage(res);
-        if(!_cam.InsideImage(twodim)) continue;
+        if(!_cam.InsideImage(twodim)) continue; //different.
         gtsam::Point2 orig = orig_imagecoords[j];
         
         double error = pow(pow(twodim.x() - orig.x(), 2)+pow(twodim.y() - orig.y(), 2),0.5);
@@ -74,52 +105,26 @@ std::vector<double> EvaluateSLAM::MeasureReprojectionError(std::vector<double>& 
         count++;
         total_error += error;
     }
-    std::vector<double> res = {total_error, count, num_bad};
-    return res;
+    std::vector<double> stats = {total_error, count, num_bad};
+    return UpdateTots(stats);
 }
 
-std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase){
+double EvaluateSLAM::OfflineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase){
+    ParseFeatureTrackFile PFT(_cam, _pftbase, POR.ftfilenos[idx]);
+    std::vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
+    return MeasureReprojectionError(POR.boat[idx], PFT.imagecoord, p_subset);
+}
+
+std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase, bool save){
     time_t start,interm,end;
     time (&start);
     ParseOptimizationResults POR(_results_dir + _date);
 
     std::vector<double> result(POR.boat.size(), 0.0);
-    int countbad = 0;
-    int avgbadness = 0;
-    double sum=0;
-    int count=0;
     for(int i=0; i<POR.boat.size(); i++) {
-        ParseFeatureTrackFile PFT(_cam, _pftbase, POR.ftfilenos[i]);
-        std::vector<gtsam::Point3> p_subset = POR.GetSubsetOf3DPoints(PFT.ids);
-
-        std::vector<double> stats = MeasureReprojectionError(POR.boat[i], PFT.imagecoord, p_subset);
-        if(stats[1] > 0) {
-            result[i] = stats[0]/stats[1];
-            if(result[i] > avgbadthreshold) {
-                avgbadness++;
-                sum += avgbadthreshold;
-            } else
-                sum += result[i];
-            count++;
-        }
-        else avgbadness++;
-        countbad += stats[2];
-
-//        if(debug && i%100==0) {
-//            cout << "ITERATION: " << i << endl;
-//            cout << "# unacceptable landmarks (not so high): " << countbad << endl;
-//            cout << "# average unacceptable (should be nearly zero): " << avgbadness << endl;
-//            cout << "Average Rerror: " << sum/count << std::endl;
-//            time (&interm);
-//            double dif = difftime (interm,start);
-//            cout << "HH:MM:SS of run time so far: " << formattime(dif) << endl;
-//        }
+        result[i] = OfflineRError(POR, i, _pftbase);
     }
-    if(debug) {
-        cout << "Average Rerror: " << sum/count << std::endl;
-        cout << "  " << countbad << " unacceptable landmarks (not so high)" << endl;
-        cout << "  " << avgbadness << " of " << POR.boat.size()<< " average unacceptable (should be nearly zero)" << endl;
-    }
+    if(save) SaveEvaluation(result);
     return result;
 }
 
@@ -134,11 +139,6 @@ void EvaluateSLAM::SaveEvaluation(std::vector<double> evaluation, std::string al
     }
     fprintf(fp, "\n");
     fclose(fp);
-}
-
-void EvaluateSLAM::Evaluate(std::string _pftbase) {
-    std::vector<double> evaluation  = ErrorForSurvey(_pftbase);
-    SaveEvaluation(evaluation);
 }
 
 

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <cstdint>
 
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Point3.h>
@@ -23,13 +24,11 @@
 #include "LocalizedPoseData.hpp"
 
 class EvaluateRFlow: public EvaluateSLAM {
-private:
-    std::vector<double> MeasureReprojectionError(std::vector<double>& boat, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, std::vector<double>& rerror);
-    std::vector<double> MeasureReprojectionError(gtsam::Pose3 tf, std::vector<gtsam::Point2>& orig_imagecoords, std::vector<gtsam::Point3>& p, std::vector<double>& rerror);
-    double UpdateTots(std::vector<double>& tots, std::vector<double>& stats);
-    void PrintTots(std::vector<double> tots, std::string name);
+protected:
     std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, std::vector<int>& ids_subset);
     int GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id);
+    
+    
 public:
     std::string _results_dir;
     EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
@@ -38,10 +37,14 @@ public:
     
     void Evaluate();
     
-    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj);
-    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart);
-    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
-    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks, std::vector<LocalizedPoseData>& localizations, ParseOptimizationResults& POR, std::string _pftbase);
+    vector<double> InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
+//    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, const std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
+    
+//    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
+//    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase, ParseOptimizationResults& POR, std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks);
+    
+    double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks);
+    
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);
 };

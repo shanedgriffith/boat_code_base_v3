@@ -180,7 +180,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
             SOR.TimeOptimization();
             RunGTSAM();
             SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
-            es.Evaluate(PS._pftbase);
+            es.ErrorForSurvey(PS._pftbase, true);
         }
         
         //Log the data alignment.
@@ -200,7 +200,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     SOR.TimeOptimization();
     RunGTSAM();
     SaveResults(0, 100.0, PS.GetDrawScale());
-    es.Evaluate(PS._pftbase);
+    es.ErrorForSurvey(PS._pftbase, true);
 }
 
 
