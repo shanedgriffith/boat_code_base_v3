@@ -84,13 +84,12 @@ int RFlowSurveyOptimizer::UpdateError() {
     double mult = 3;
     EvaluateRFlow erfinter(_cam, _date, _map_dir);
     EvaluateRFlow erfintra(_cam, _date, _map_dir);
-    erf.debug = true;
     
     int nchanges = 0;
     ParseOptimizationResults curPOR(_map_dir + _date);//yet, this result was saved over ..., it would make more sense to use the online error version.
     vector<vector<double> > poses = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     int coutliers = 0;
-    for(int j=0; j<inter_error.size(); j++) {
+    for(int j=0; j<lpdi.localizations.size(); j++) {
         double intra_error = erfintra.OfflineRError(curPOR, lpdi.localizations[j].s1time, _pftbase);
         double inter_error = erfinter.InterSurveyErrorAtLocalization(lpdi.localizations[j], poses[lpdi.localizations[j].s1time]);
         

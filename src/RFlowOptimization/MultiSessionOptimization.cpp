@@ -202,12 +202,12 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         
         if(firstiter){
-            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
-            rerrs.push_back(ESlam.LoadRerrorFile());
-            
             EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
+            rerrs.push_back(ESlam.LoadRerrorFile());
             double avg = ESlam.GetAverageRerror(rerrs[sidx]);
             AverageRerror.push_back(avg);
+            
+            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
         }
         
         intra.push_back(unordered_map<int, double>());
@@ -273,7 +273,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         erfintraS1.PrintTots("intra s1");
         erfinter.PrintTots("inter");
         std::cout << "number of outliers: " << coutliers << std::endl;
-        inlier_ratio[sidx] = 1.0-(1.*coutliers/inter_error.size());
+        inlier_ratio[sidx] = 1.0-(1.*coutliers/lpdi[sidx].localizations.size());
     }
     
     //returns avg num_changes.
