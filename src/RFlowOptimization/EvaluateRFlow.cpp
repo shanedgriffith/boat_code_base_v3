@@ -62,7 +62,7 @@ double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::
 }
 
 /*TODO: check this. It appears LPD either needs to be updated or I need to pass in the POR data. May need to use OnlineRError() */
-vector<double> EvaluateRFlow::InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart){
+double EvaluateRFlow::InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart){
     vector<gtsam::Point3> p3d0;
     int sidx = localization.s0 - optstart;
     if(sidx < 0) p3d0 = localization.p3d0;

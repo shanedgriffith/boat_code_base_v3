@@ -36,7 +36,7 @@ public:
     
     void Evaluate();
     
-    std::vector<double> InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
+    double InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
     
     double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks);
     
