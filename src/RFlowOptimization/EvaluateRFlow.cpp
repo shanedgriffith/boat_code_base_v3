@@ -62,26 +62,12 @@ double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::
 }
 
 /*TODO: check this. It appears LPD either needs to be updated or I need to pass in the POR data. May need to use OnlineRError() */
-double EvaluateRFlow::InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks, int optstart){
+double EvaluateRFlow::InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<double>& boat, const std::vector<std::vector<std::vector<double> > >& landmarks, const int optstart){
     vector<gtsam::Point3> p3d0;
     int sidx = localization.s0 - optstart;
     if(sidx < 0) p3d0 = localization.p3d0;
     else p3d0 = GetSubsetOf3DPoints(landmarks[sidx], localization.pids);
     return MeasureReprojectionError(boat, localization.p2d1, p3d0, localization.rerrorp);
-}
-
-void EvaluateRFlow::Evaluate() {
-    std::vector<LocalizedPoseData> localizations = LocalizedPoseData::LoadAll(_results_dir + _date);
-    ParseOptimizationResults POR(_results_dir + _date);
-    std::cout << "Evaluating " << _results_dir + _date << std::endl;
-
-    vector<double> PostLocalizationRError = InterSurveyErrorAtLocalizations(localizations, POR.boat);
-    SaveEvaluation(PostLocalizationRError, "/postlocalizationerror.csv");
-
-//    vector<double> rerror = ErrorForSurvey();
-//    SaveEvaluation(rerror);
-
-    VisualizeDivergenceFromLocalizations(localizations, PostLocalizationRError);
 }
 
 /*plot each of the localized poses p1frame0; and every 10 or so of the optimized poses, each with their FOV.
