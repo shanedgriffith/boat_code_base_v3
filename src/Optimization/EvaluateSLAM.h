@@ -23,7 +23,9 @@ class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
-    std::vector<double> tots(6, 0.0);
+    double UpdateTots(std::vector<double>& stats);
+    
+    std::vector<double> tots;
     Camera& _cam;
 public:
     bool debug;
@@ -33,7 +35,7 @@ public:
     std::string _results_dir;
     
     EvaluateSLAM(Camera& cam, std::string date, std::string results_dir):
-        debug(false), badthreshold(50), avgbadthreshold(15),
+        debug(false), badthreshold(50), avgbadthreshold(15), tots(6, 0.0),
     _cam(cam), _date(date), _results_dir(results_dir){}
     
     std::vector<double> ErrorForSurvey(std::string _pftbase, bool save = false);
@@ -45,6 +47,7 @@ public:
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
     double GetAverageRerror(std::vector<double> rerrors);
+    void PrintTots(std::string name);
 };
 
 #endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */

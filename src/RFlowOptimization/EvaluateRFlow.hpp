@@ -28,7 +28,6 @@ protected:
     std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<std::vector<double> >& landmarks, std::vector<int>& ids_subset);
     int GetIndexOfFirstPoint(std::vector<std::vector<double> >& landmarks, int id);
     
-    
 public:
     std::string _results_dir;
     EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
@@ -38,10 +37,6 @@ public:
     void Evaluate();
     
     std::vector<double> InterSurveyErrorAtLocalization(LocalizedPoseData& localization, std::vector<double>& boat, std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
-//    std::vector<double> InterSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<std::vector<double> >& traj, const std::vector<std::vector<std::vector<double> > >& landmarks = {}, int optstart = INT_MAX);
-    
-//    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase);
-//    std::vector<double> IntraSurveyErrorAtLocalizations(std::vector<LocalizedPoseData>& localizations, std::string _pftbase, ParseOptimizationResults& POR, std::vector<std::vector<double> >& poses, std::vector<std::vector<double> >& landmarks);
     
     double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks);
     
