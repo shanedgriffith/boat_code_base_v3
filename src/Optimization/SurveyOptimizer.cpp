@@ -201,6 +201,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     RunGTSAM();
     SaveResults(0, 100.0, PS.GetDrawScale());
     es.ErrorForSurvey(PS._pftbase, true);
+    es.PrintTots();
 }
 
 

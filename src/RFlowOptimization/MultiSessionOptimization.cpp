@@ -128,36 +128,17 @@ void MultiSessionOptimization::ConstructFactorGraph(bool firstiter){
     }
 }
 
-void MultiSessionOptimization::AddAdjustableISC(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1, bool on){
-    int sidx = s0-optstart;
-    for(int i=0; i<pids.size(); i++){
-        auto search = lmap[sidx].find(pids[i]);
-        if(search==lmap[sidx].end()){
-            std::cout << "MultiSessionOptimization::AddAdjustableISC() Warning. The pid wasn't found in the map. ISC: " << s0 <<", " << s1 << ", "<<s1time << ", " << pids[i] << std::endl;
-            exit(-1);
-        }
-        int lidx = search->second;
-        cached_landmarks[sidx][lidx].AddToTrack(p2d1[i], s1, s1time, on); //none are used by default.
-    }
-}
-
 void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
-    int cISC = 0;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
+            if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
-                if(lpd_rerror[i][j] < 0) continue;
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
                 rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
-            } else {//if(firstiter) { //add ISCs for the remaining surveys
-                //if(cISC > 30) continue;
-                if(lpd_rerror[i][j] < 0) continue;
+            } else {
                 rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
-                //AddAdjustableISC(lpd.s0, lpd.s1, lpd.s1time, lpd.pids, lpd.p2d1, lpd_rerror[i][j] >= 0);
-                //AddAdjustableISC(lpd.s1, lpd.s0, lpd.s0time, lpd.bids, lpd.b2d0, lpd_rerror[i][j] >= 0);
-                cISC++;
             }
         }
     }
@@ -170,19 +151,6 @@ void MultiSessionOptimization::AddAllTheLandmarkTracks(){
     for(int i=0; i<cached_landmarks.size(); i++){
         rfFG->ChangeLandmarkSet(i);
         AddLandmarkTracks(cached_landmarks[i]);
-    }
-}
-
-void MultiSessionOptimization::ToggleLandmarkConstraints(int s0, int s1, int s1time, std::vector<int>& pids, std::vector<gtsam::Point2>& p2d1){
-    int sidx = s0-optstart;
-    for(int i=0; i<pids.size(); i++){
-        auto search = lmap[sidx].find(pids[i]);
-        if(search==lmap[sidx].end()){
-            std::cout << "MultiSessionOptimization::AddAdjustableISC() Warning. The pid wasn't found in the map. ISC: " << s0 <<", " << s1 << ", "<<s1time << ", " << pids[i] << std::endl;
-            exit(-1);
-        }
-        int lidx = search->second;
-        cached_landmarks[sidx][lidx].Toggle(s1, s1time);
     }
 }
 

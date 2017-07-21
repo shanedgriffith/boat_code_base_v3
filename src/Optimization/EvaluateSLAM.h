@@ -47,7 +47,7 @@ public:
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
     double GetAverageRerror(std::vector<double> rerrors);
-    void PrintTots(std::string name);
+    void PrintTots(std::string name = "");
 };
 
 #endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */
