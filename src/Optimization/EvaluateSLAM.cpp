@@ -60,13 +60,14 @@ double EvaluateSLAM::UpdateTots(vector<double>& stats){
         tots[0] += ret;
         tots[1]++;
         if(ret > avgbadthreshold) tots[3]++;
-        else if(tots.size()>4) {
+        else {
             tots[4] += ret;
             tots[5]++;
         }
     }
     else tots[3]++;
     tots[2] += stats[2];
+    tots[6] += 1;
     return ret;
 }
 
@@ -78,7 +79,7 @@ void EvaluateSLAM::PrintTots(string name){
     cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
     if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
     cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
-    cout << "  " << tots[3] << " average unacceptable (should be nearly zero)" << endl;
+    cout << "  " << tots[3] << " of " << tots[6] << " average unacceptable (should be nearly zero)" << endl;
 }
 
 double EvaluateSLAM::MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const vector<double>& rerror) {

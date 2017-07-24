@@ -36,7 +36,7 @@ public:
     std::string _results_dir;
     
     EvaluateSLAM(Camera& cam, std::string date, std::string results_dir):
-        debug(false), badthreshold(50), avgbadthreshold(15), tots(6, 0.0),
+        debug(false), badthreshold(50), avgbadthreshold(15), tots(7, 0.0),
     _cam(cam), _date(date), _results_dir(results_dir){}
     
     std::vector<double> ErrorForSurvey(std::string _pftbase, bool save = false);

@@ -38,6 +38,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
 }
 
 void MultiSessionOptimization::Initialize() {
+    SurveyOptimizer::Initialize();
      /*Load the lpd data for each one.*/
     cout << "   loading the localizations."<<endl;
     cache_landmarks = true;

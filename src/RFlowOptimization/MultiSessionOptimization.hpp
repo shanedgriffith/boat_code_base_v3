@@ -73,14 +73,15 @@ public:
         _map_dir(results_dir + "maps/"), _pftbase(pftbase),
         SurveyOptimizer(cam, rfFG, date, results_dir, false) {
         
-        std::cout << "Multi-Session Optimization up to " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
-        FG->SetLandmarkDeviation(3.0);
+        
+        std::cout << "Multi-Session Optimization up to " << date << std::endl;
+        
         std::cout << "  Initializing.."<<std::endl;
-        SurveyOptimizer::Initialize();
         IdentifyOptimizationDates();
         Initialize();
+        rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize(); 
     }
 
     ~MultiSessionOptimization(){

@@ -20,6 +20,7 @@
 using namespace std;
 
 void RFlowSurveyOptimizer::Initialize() {
+    SurveyOptimizer::Initialize();
     int nloaded = lpdi.LoadLocalizations(_map_dir + _date);
 
     if(nloaded < POR.boat.size()*0.01) {

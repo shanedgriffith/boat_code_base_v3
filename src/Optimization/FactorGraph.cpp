@@ -75,6 +75,7 @@ void FactorGraph::InitializeNoiseModels(){
 
 void FactorGraph::SetLandmarkDeviation(double dev) {
     double dimensions = 2.0; //there are two dimensions to an image observation
+    vals[Param::LANDMARK_DEVIATION] = dev;
     pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
 //    gtsam::noiseModel::Isotropic::shared_ptr gaussian = gtsam::noiseModel::Isotropic::Sigma(1, 1);
 //    gtsam::noiseModel::mEstimator::Tukey::shared_ptr robust = gtsam::noiseModel::mEstimator::Tukey::Create(15);

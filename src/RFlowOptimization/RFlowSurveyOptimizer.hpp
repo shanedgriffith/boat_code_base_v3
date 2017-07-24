@@ -72,9 +72,8 @@ public:
         std::cout << "RFlow Optimization for : " << date << std::endl;
         rfFG = new RFlowFactorGraph();
         FG = rfFG;
-        FG->SetLandmarkDeviation(3.0);
-        SurveyOptimizer::Initialize();
         Initialize();
+        rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
     }
 
     ~RFlowSurveyOptimizer(){
