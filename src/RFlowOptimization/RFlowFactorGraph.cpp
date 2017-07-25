@@ -44,7 +44,7 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v62;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
     v62(0,0) = 10;
     v62(1,0) = 10;
-    v62(2,0) = 5;
+    v62(2,0) = 5;//this value?
     v62(3,0) = 0.05;
     v62(4,0) = 0.05;
     v62(5,0) = 0.1745;
@@ -97,7 +97,9 @@ bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p) {
 }
 
 bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
-    graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoiseP));
+    //NOTE: the poseNoise used here is what is used in the original FactorGraph.
+    //Otherwise, RError is much worse, for inter, intra, or both.
+    graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoise));
     return true;
 }
 

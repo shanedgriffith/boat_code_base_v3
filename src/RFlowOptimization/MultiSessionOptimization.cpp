@@ -70,16 +70,9 @@ void MultiSessionOptimization::Initialize() {
     }
 }
 
-void MultiSessionOptimization::UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks){
-    int curlength = cached_landmarks[cache_set].size();
-    for(int i=0; i<tracks.size(); i++) {
-        lmap[lmap.size()-1].insert({tracks[i].key, curlength + i});
-    }
-}
-
 void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter) {
     bool latestsurvey = survey == POR.size()-1;
-
+    
     LocalizePose lp(_cam);
     for(int i=0; i<POR[survey].boat.size(); i++) {
         int sidx = survey - optstart;
@@ -90,26 +83,24 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         }
         rfFG->AddPose(survey, i, traj);
         GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
-
+        
         if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
             gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
             gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
             gtsam::Pose3 btwn = last1.between(cur1);
             rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
         }
-
+        
         if(firstiter){
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
             vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active);
-            UpdateLandmarkMap(tracks);
             CacheLandmarks(tracks);
         }
     }
-
+    
     if(firstiter) {
         //add the rest of the landmarks
-        UpdateLandmarkMap(active);
         CacheLandmarks(active);
         active.clear();
     }
@@ -121,10 +112,7 @@ void MultiSessionOptimization::ConstructFactorGraph(bool firstiter){
     //add the latest K surveys to the graph
     for(int survey=optstart; survey<dates.size(); survey++){
         cache_set = survey-optstart; //update the parent class variable
-        if(firstiter){
-            unordered_map<int, int> landmark_id_to_cache_idx;
-            lmap.push_back(landmark_id_to_cache_idx);
-        }
+        rfFG->ChangeLandmarkSet(cache_set);
         StandAloneFactorGraph(survey, firstiter);
     }
 }
@@ -238,10 +226,13 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
         }
         totchanges += nchanges;
-        erfintraS0.PrintTots("intra s0");
-        erfintraS1.PrintTots("intra s1");
-        erfinter.PrintTots("inter");
-        std::cout << "number of outliers: " << coutliers << std::endl;
+        
+        if(i > 0) {
+            erfintraS0.PrintTots("intra s0");
+            erfintraS1.PrintTots("intra s1");
+            erfinter.PrintTots("inter");
+            std::cout << "number of outliers: " << coutliers << std::endl;
+        }
         inlier_ratio[sidx] = 1.0-(1.*coutliers/lpdi[sidx].localizations.size());
     }
     
@@ -316,10 +307,10 @@ void MultiSessionOptimization::IterativeMerge() {
         printf("ITERATION %d. AVG Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
     }
     
-    if(!dry_run){
-        std::cout << "  Saving.." << std::endl;
-        SaveResults();
-    }
+//    if(!dry_run){
+//        std::cout << "  Saving.." << std::endl;
+//        SaveResults();
+//    }
 }
 
 

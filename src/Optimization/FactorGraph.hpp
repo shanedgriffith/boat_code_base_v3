@@ -50,7 +50,8 @@ protected:
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise;
 //    gtsam::noiseModel::Robust::shared_ptr pixelNoise;
     
-    int next_camera_key = 0;
+    int next_camera_key;
+    int active_landmark_set;
     
     //true if the survey landmark tracks haven't been filtered out yet. sppf is set to filter bad points.
     bool sppf_prune = true;
@@ -62,7 +63,8 @@ public:
     std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > > landmark_factors; //used by the GTSamInterface
     std::vector<std::vector<int> > landmark_keys; //used by the GTSamInterface
     
-    FactorGraph(){
+    
+    FactorGraph(): active_landmark_set(0), next_camera_key(0) {
         ChangeLandmarkSet(0);
         InitializeNoiseModels();
     }
@@ -72,7 +74,6 @@ public:
     bool hold_constant = false;
     void HoldConstant(bool h){hold_constant=h;}
     
-    int active_landmark_set = 0;
     void ChangeLandmarkSet(int set);
     int GetNextCameraKey() {return next_camera_key++;}
     

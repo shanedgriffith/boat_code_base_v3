@@ -51,12 +51,10 @@ protected:
     std::vector<LPDInterface> lpdi;
     std::vector<std::vector<double>> lpd_rerror;
     std::vector<ParseOptimizationResults> POR;
-    std::vector<std::unordered_map<int, int>> lmap;
     std::vector<double> inlier_ratio;
     
     void IdentifyOptimizationDates();
     void Initialize();
-    void UpdateLandmarkMap(std::vector<LandmarkTrack>& tracks);
     void StandAloneFactorGraph(int survey, bool firstiter);
     void ConstructFactorGraph(bool firstiter);
     void AddLocalizations(bool firstiter);
