@@ -160,7 +160,7 @@ Point3 GTSamInterface::MAPLandmarkEstimate(int idx) {
     Values* v;
     if(results.size()==0) v = &initialEstimate;
     else                  v = &results;
-    return _fg->landmark_factors[_fg->active_landmark_set][idx].point(*v).get();
+    return _fg->landmark_factors[_fg->GetActiveLandmarkSet()][idx].point(*v).get();
 }
 
 gtsam::Pose3 GTSamInterface::PoseResult(Symbol s) {
@@ -190,9 +190,9 @@ vector<double> GTSamInterface::MAPPoseEstimate(Symbol s) {
 vector<vector<double> > GTSamInterface::GetOptimizedLandmarks(bool sorted) {
     vector<vector<double> > landmarks;
     
-    for(int i=0; i<_fg->landmark_keys[_fg->active_landmark_set].size(); i++) {
+    for(int i=0; i<_fg->landmark_keys[_fg->GetActiveLandmarkSet()].size(); i++) {
         gtsam::Point3 ev = MAPLandmarkEstimate(i);
-        vector<double> landmark = {ev.x(), ev.y(), ev.z(), (double)_fg->landmark_keys[_fg->active_landmark_set][i]};
+        vector<double> landmark = {ev.x(), ev.y(), ev.z(), (double)_fg->landmark_keys[_fg->GetActiveLandmarkSet()][i]};
         landmarks.push_back(landmark);
     }
     

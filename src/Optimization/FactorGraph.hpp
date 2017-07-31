@@ -76,6 +76,7 @@ public:
     
     void ChangeLandmarkSet(int set);
     int GetNextCameraKey() {return next_camera_key++;}
+    int GetActiveLandmarkSet(){return active_landmark_set;}
     
     void InitializeNoiseModels();
 
