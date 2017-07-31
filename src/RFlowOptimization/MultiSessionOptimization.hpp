@@ -52,6 +52,10 @@ protected:
     std::vector<std::vector<double>> lpd_rerror;
     std::vector<ParseOptimizationResults> POR;
     std::vector<double> inlier_ratio;
+    std::vector<double> heights;
+    
+    void SetHeight(gtsam::Pose3& traj, double z);
+    void GetHeight(std::vector<std::vector<std::vector<double> > >& poses);
     
     void IdentifyOptimizationDates();
     void Initialize();

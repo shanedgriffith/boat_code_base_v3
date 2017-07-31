@@ -68,6 +68,14 @@ void MultiSessionOptimization::Initialize() {
             ninliers += (rerror_set[i]==1)?1:0;
         inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
+    heights = std::vector<double>(dates.size()-optstart, 0);
+}
+
+void MultiSessionOptimization::SetHeight(gtsam::Pose3& traj, double z){
+    gtsam::Point3 t = traj.translation();
+    gtsam::Rotation r = traj.rotation();
+    t.z() = z;
+    traj = gtsam::Pose3(r, t);
 }
 
 void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter) {
@@ -81,6 +89,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
             traj = lp.VectorToPose(lpdi[survey].localizations[lpdcur].p1frame0);
         }
+        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
         rfFG->AddPose(survey, i, traj);
         GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
         
@@ -143,6 +152,16 @@ void MultiSessionOptimization::AddAllTheLandmarkTracks(){
     }
 }
 
+void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses){
+    for(int i=0; i<poses.size(); i++){
+        double sumz = 0
+        for(int j=0; j<poses[i].size(); j++){
+            sumz += poses[i][j][5];
+        }
+        heights[i] = sumz/poses[i].size();
+    }
+}
+
 double MultiSessionOptimization::UpdateError(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
@@ -169,6 +188,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         
         intra.push_back(unordered_map<int, double>());
     }
+    GetHeight(poses); //update heights.
     
     double totchanges = 0;
     for(int i=optstart; i<dates.size(); i++){
@@ -220,6 +240,8 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
                (inlier && lpd_rerror[sidx][j] < 0) ||
                (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
+                if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+                else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
             }
             
             lpd_rerror[sidx][j] = 1;
@@ -237,14 +259,14 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
     }
     
     //returns avg num_changes.
-    if(optstart==0) return 1.0*totchanges/(dates.size()-1);
-    return 1.0*totchanges/(dates.size()-optstart);
+    if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
+    return (int) (totchanges/(dates.size()-optstart));
 }
 
 void MultiSessionOptimization::SaveResults() {
     
     for(int i=0; i<inlier_ratio.size(); i++)
-        if(inlier_ratio[i] < 0.9){
+        if(inlier_ratio[i] < 0.6){
             std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[i+optstart] << " with ratio " << inlier_ratio[i] << std::endl;
             return;
         }
@@ -284,10 +306,12 @@ void MultiSessionOptimization::IterativeMerge() {
     time_t beginning,optstart,end;
     time (&beginning);
     LocalizePose lp(_cam);
-    for(int i=0, avg_nchanges=100; avg_nchanges>1.0 && i<MAX_ITERATIONS; i++) {
+    double last_nchanges = 10000000000;
+    double avg_nchanges= last_nchanges - 1;
+    for(int i=0; last_nchanges>avg_nchanges && i<MAX_ITERATIONS; i++) {
         rfFG->Clear();
         
-        std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
+        if(i>0) std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
         AddLocalizations(i==0);
@@ -296,15 +320,17 @@ void MultiSessionOptimization::IterativeMerge() {
         std::cout << "  Optimizing..." << std::endl;
         time (&optstart);
         RunGTSAM();
-
+        
         std::cout << "  Updating Error." << std::endl;
+        last_nchanges = avg_nchanges;
         avg_nchanges = UpdateError(i==0);
         
         std::cout << "  Finished." << std::endl;
         time (&end);
         double optruntime = difftime (end, optstart);
         double totruntime = difftime (end, beginning);
-        printf("ITERATION %d. AVG Nchanges %d. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
+        printf("ITERATION %d. AVG Nchanges %lf. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
+        std::cout << "changes, history: " <<last_nchanges << " -> " << avg_nchanges << std::endl;
     }
     
 //    if(!dry_run){

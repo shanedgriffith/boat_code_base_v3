@@ -53,7 +53,7 @@ int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){
     }
     
     if(debug && from_idx < timings.size()) cout << "found at: " << from_idx << ", with " << timings[from_idx] << endl;
-    if(from_idx >= timings.size() || timings[from_idx] < querytime) return -1;
+    if(from_idx >= timings.size()) return -1;//not sure why this was added: || timings[from_idx] < querytime) return -1;
     
     return from_idx;
 }
