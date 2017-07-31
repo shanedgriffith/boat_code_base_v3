@@ -73,9 +73,9 @@ void MultiSessionOptimization::Initialize() {
 
 void MultiSessionOptimization::SetHeight(gtsam::Pose3& traj, double z){
     gtsam::Point3 t = traj.translation();
-    gtsam::Rotation r = traj.rotation();
-    t.z() = z;
-    traj = gtsam::Pose3(r, t);
+    gtsam::Rot3 r = traj.rotation();
+    gtsam::Point3 newt(t.x(), t.y(), z);
+    traj = gtsam::Pose3(r, newt);
 }
 
 void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter) {
@@ -89,7 +89,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
         if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
             traj = lp.VectorToPose(lpdi[survey].localizations[lpdcur].p1frame0);
         }
-        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
+        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
         rfFG->AddPose(survey, i, traj);
         GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
         
@@ -154,7 +154,7 @@ void MultiSessionOptimization::AddAllTheLandmarkTracks(){
 
 void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses){
     for(int i=0; i<poses.size(); i++){
-        double sumz = 0
+        double sumz = 0;
         for(int j=0; j<poses[i].size(); j++){
             sumz += poses[i][j][5];
         }
