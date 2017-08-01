@@ -44,10 +44,10 @@ public:
         constant_velocity = true;
         default_start = gtsam::Point3(296866.7554855264, 5442698.88922645, 0);
         
-        ReadDelimitedFile(_base + _auxfile, 0);
+        ReadDelimitedFile(_base + date + _auxfile, 0);
         
         if(timings.size() == 0) {
-            std::cout << "Survey Error. The AUX file is empty." << std::endl;
+            std::cout << "ParseBoatSurvey(): Survey Error. The AUX file is empty. path: " << _base + _auxfile << std::endl;
         }
     }
     
