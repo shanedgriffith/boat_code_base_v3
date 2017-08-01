@@ -69,6 +69,7 @@ public:
         
         std::cout << "  Initializing.."<<std::endl;
         IdentifyOptimizationDates();
+        save_params = false;
         Initialize();
         rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize(); 
     }

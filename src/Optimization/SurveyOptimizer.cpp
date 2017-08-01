@@ -26,7 +26,7 @@ void SurveyOptimizer::Initialize(){
     
     num_cameras_in_traj = 0;
     GTS = GTSamInterface(FG);
-    SaveParameters(_results_dir);
+    if(save_params) SaveParameters(_results_dir);
     
     GTS.SetupIncrementalSLAM();
     if(debug)  GTS.SetPrintSymbols();

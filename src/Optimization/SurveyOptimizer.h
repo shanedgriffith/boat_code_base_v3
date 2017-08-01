@@ -37,6 +37,7 @@ protected:
     bool verbose = false;
     bool _print_data_increments = false;
     bool cache_landmarks = false;
+    bool save_params = true;
     
     static const std::vector<std::string> keys;
     enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
