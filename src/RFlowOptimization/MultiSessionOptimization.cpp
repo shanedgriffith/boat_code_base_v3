@@ -23,7 +23,9 @@
 
 using namespace std;
 
-MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date) {
+MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
+_map_dir(results_dir + "maps/"), _pftbase(pftbase),
+SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
     
@@ -31,8 +33,7 @@ MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftba
     
     std::cout << "  Initializing.."<<std::endl;
     IdentifyOptimizationDates();
-    save_params = false;
-    Initialize();
+    Initialize(false);
     rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
 }
 

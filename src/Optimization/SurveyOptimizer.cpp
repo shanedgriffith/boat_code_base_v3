@@ -21,7 +21,7 @@ const vector<string> SurveyOptimizer::keys = {
     "OPT_OFFSET", "OPT_SKIP", "CAM_OFFSET", "CAM_SKIP"
 };
 
-void SurveyOptimizer::Initialize(){
+void SurveyOptimizer::Initialize(bool save_parms){
     initialized = true;
     
     num_cameras_in_traj = 0;

@@ -58,9 +58,7 @@ public:
     std::string _map_dir;
     std::string _pftbase;
     
-    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = ""):
-        _map_dir(results_dir + "maps/"), _pftbase(pftbase),
-    SurveyOptimizer(cam, rfFG, date, results_dir, false);
+    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "");
 
     ~MultiSessionOptimization(){
         delete(rfFG);

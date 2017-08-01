@@ -37,7 +37,6 @@ protected:
     bool verbose = false;
     bool _print_data_increments = false;
     bool cache_landmarks = false;
-    bool save_params = true;
     
     static const std::vector<std::string> keys;
     enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
@@ -82,7 +81,7 @@ public:
     	if(clean_up) delete(FG);
     }
     
-    void Initialize();
+    void Initialize(bool save_parms = true;);
     void SetDryRun(){dry_run = true;}
     void SetVerbose(){verbose = true;}
     
