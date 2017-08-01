@@ -21,18 +21,23 @@
 
 class SaveOptimizationResults: public OptimizationResults {
 private:
+    bool started_correspondence;
+    bool filter_null_points;
+    
     std::string _base;
     time_t beginning,optstart,end;
     
+    void SaveLandmarks(std::vector<std::vector<double> >& landmarks);
+    void SavePoses(std::string file, std::vector<std::vector<double> >& traj);
+    void SaveVisualization(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<double> drawscale);
+    
 public:
     bool created_base_dir = false;
-    bool started_correspondence = false;
-    bool filter_null_points;
     bool save_status;
     bool draw_map;
 
     SaveOptimizationResults(std::string base):
-    filter_null_points(true), save_status(false), draw_map(false), _base(base)
+    filter_null_points(true), started_correspondence(false), save_status(false), draw_map(false), _base(base)
     {
         MakeDir(_base);
         time(&beginning);
@@ -45,16 +50,9 @@ public:
     
     void StatusMessage(int iteration, double percent_completed);
     
-    void SaveLandmarks(std::vector<std::vector<double> >& landmarks);
-    void SavePoses(std::string file, std::vector<std::vector<double> >& traj);
-    
-    void SaveVisualization(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<double> drawscale);
-    
     void PlotAndSaveCurrentEstimate(std::vector<std::vector<double> >& landmarks, std::vector<std::vector<double> >& traj, std::vector<std::vector<double> >& vels, std::vector<double> drawscale);
     
     void SaveDataCorrespondence(int camera_key, int sift_file_no, int aux_file_idx, int imageno, double timestamp);
-    
-    std::string GetParmsFileName(){return _base + parms;}
 };
 
 

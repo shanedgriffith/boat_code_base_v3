@@ -22,29 +22,22 @@
 class ParamsInterface: public FileParsing{
 private:
     static const std::string parmsfile;
+    
+    std::string _paramfile;
+    std::vector<std::string> keys;
+    std::vector<double> values;
 protected:
     void ProcessLineEntries(int type, std::vector<std::string> lp);
     void ReadDelimitedFile(std::string file, int type);
 public:
-    std::string _paramfile;
-    std::vector<std::string> keys;
-    std::vector<double> values;
-    
-    ParamsInterface(std::string query_loc) {
-        _paramfile = query_loc + parmsfile;
-        if(Exists(_paramfile)) {
-            ReadDelimitedFile(_paramfile, 0);
-        } else {
-            std::cout << "Couldn't get the parameters at: " << _paramfile << std::endl;
-            exit(-1);
-        }
-    }
-    
+
+    ParamsInterface(){}
+
     void AddParam(std::string key, double value);
-    
     void AddParams(std::vector<std::string> keys, std::vector<double> values);
-    
-    void SaveParams(std::string loc = "");
+
+    void LoadParams(std::string loc);
+    void SaveParams(std::string loc);
     
     std::vector<double> LoadParams(std::vector<std::string> keys, std::vector<double> defaults = std::vector<double>());
     

@@ -33,7 +33,7 @@ SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     
     std::cout << "  Initializing.."<<std::endl;
     IdentifyOptimizationDates();
-    Initialize(false);
+    Initialize();
     rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
 }
 

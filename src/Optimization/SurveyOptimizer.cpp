@@ -21,12 +21,12 @@ const vector<string> SurveyOptimizer::keys = {
     "OPT_OFFSET", "OPT_SKIP", "CAM_OFFSET", "CAM_SKIP"
 };
 
-void SurveyOptimizer::Initialize(bool save_params){
+void SurveyOptimizer::Initialize(){
     initialized = true;
     
     num_cameras_in_traj = 0;
     GTS = GTSamInterface(FG);
-    if(save_params) SaveParameters(_results_dir);
+    LoadParameters(_results_dir);
     
     GTS.SetupIncrementalSLAM();
     if(debug)  GTS.SetPrintSymbols();
@@ -46,7 +46,7 @@ void SurveyOptimizer::RunGTSAM(){
     if(verbose) FG->PrintFactorGraph();
 }
 
-void SurveyOptimizer::SaveResults(int iteration, double percent_completed, vector<double> drawscale){
+void SurveyOptimizer::SaveResults(SaveOptimizationResults& SOR, int iteration, double percent_completed, vector<double> drawscale){
     if(_print_data_increments || percent_completed == 100){
         vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
         vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], num_cameras_in_traj);
@@ -56,20 +56,25 @@ void SurveyOptimizer::SaveResults(int iteration, double percent_completed, vecto
     SOR.StatusMessage(iteration, percent_completed);
 }
 
-void SurveyOptimizer::SaveParameters(string dir_of_param_file){
+void SurveyOptimizer::LoadParameters(){
     /*Tries to load the parameters from the file. If they don't exist, 
-     the defaults are used, and the params are saved with the result.*/
+     the defaults are used.*/
 	if(!initialized){cout << "check initialization"<<endl; exit(1);}
 
-    ParamsInterface PI(dir_of_param_file);
+    ParamsInterface PI;
+    PI.LoadParams(_results_dir);
     SetParams(PI.LoadParams(SurveyOptimizer::Keys(), Params()));
     GTS.SetParams(PI.LoadParams(GTSamInterface::Keys(), GTS.Params()));
     FG->SetParams(PI.LoadParams(FactorGraph::Keys(), FG->Params()));
-    
+}
+
+void SurveyOptimizer::SaveParameters(){
+    /*Save the params with the result.*/
+    ParamsInterface PI;
     PI.AddParams(Keys(), Params());
     PI.AddParams(GTSamInterface::Keys(), GTS.Params());
     PI.AddParams(FactorGraph::Keys(), FG->Params());
-    PI.SaveParams(SOR.GetParmsFileName());
+    PI.SaveParams(_results_dir + _date);
 }
 
 void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped){
@@ -158,6 +163,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     EvaluateSLAM es(_cam, _date, _results_dir);
     es.debug=true;
     
+    SaveOptimizationResults SOR(_results_dir + _date);
     SOR.SetSaveStatus();
     SOR.SetDrawMap();
     
@@ -179,7 +185,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         if(OptimizeThisIteration(camera_key)){
             SOR.TimeOptimization();
             RunGTSAM();
-            SaveResults(camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
+            SaveResults(SOR, camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
             es.ErrorForSurvey(PS._pftbase, true);
         }
         
@@ -199,7 +205,8 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     //Final optimization
     SOR.TimeOptimization();
     RunGTSAM();
-    SaveResults(0, 100.0, PS.GetDrawScale());
+    SaveResults(SOR, 0, 100.0, PS.GetDrawScale());
+    SaveParameters()
     es.ErrorForSurvey(PS._pftbase, true);
     es.PrintTots();
 }

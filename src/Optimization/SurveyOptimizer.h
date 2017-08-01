@@ -44,7 +44,7 @@ protected:
     
     void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive);
     bool OptimizeThisIteration(int camera_key);
-    void SaveResults(int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
+    void SaveResults(SaveOptimizationResults& SOR, int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
     void RunGTSAM();
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped);
@@ -60,7 +60,6 @@ protected:
     std::vector<LandmarkTrack> active;
     GTSamInterface GTS;
     Camera& _cam;
-    SaveOptimizationResults SOR;
     FactorGraph * FG;
     bool clean_up = false;
 public:
@@ -81,7 +80,7 @@ public:
     	if(clean_up) delete(FG);
     }
     
-    void Initialize(bool save_params = true);
+    void Initialize();
     void SetDryRun(){dry_run = true;}
     void SetVerbose(){verbose = true;}
     
@@ -92,7 +91,8 @@ public:
     std::vector<double> Params(){return vals;}
     static std::vector<std::string> Keys(){return keys;}
     void SetParams(std::vector<double> params){vals = params;}
-    void SaveParameters(std::string dir_of_param_file);
+    void SaveParameters();
+    void LoadParameters();
     void SetPercentOfTracks(double p){percent_of_tracks = p;}
 };
 
