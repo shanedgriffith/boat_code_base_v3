@@ -81,7 +81,7 @@ public:
     	if(clean_up) delete(FG);
     }
     
-    void Initialize(bool save_parms = true;);
+    void Initialize(bool save_params = true);
     void SetDryRun(){dry_run = true;}
     void SetVerbose(){verbose = true;}
     
