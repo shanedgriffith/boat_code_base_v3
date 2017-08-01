@@ -26,7 +26,7 @@ void SurveyOptimizer::Initialize(){
     
     num_cameras_in_traj = 0;
     GTS = GTSamInterface(FG);
-    LoadParameters(_results_dir);
+    LoadParameters();
     
     GTS.SetupIncrementalSLAM();
     if(debug)  GTS.SetPrintSymbols();
@@ -206,7 +206,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     SOR.TimeOptimization();
     RunGTSAM();
     SaveResults(SOR, 0, 100.0, PS.GetDrawScale());
-    SaveParameters()
+    SaveParameters();
     es.ErrorForSurvey(PS._pftbase, true);
     es.PrintTots();
 }
