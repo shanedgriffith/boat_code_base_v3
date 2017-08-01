@@ -39,8 +39,8 @@ protected:
     void ReadDelimitedFile(std::string file, int type);
 public:
     
-    ParseBoatSurvey(std::string base, std::string pftbase):
-    ParseSurvey(base, pftbase) {
+    ParseBoatSurvey(std::string base, std::string pftbase, std::string date):
+    ParseSurvey(base, pftbase, date) {
         constant_velocity = true;
         default_start = gtsam::Point3(296866.7554855264, 5442698.88922645, 0);
         

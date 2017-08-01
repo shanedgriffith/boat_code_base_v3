@@ -31,7 +31,6 @@
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/LandmarkTrack.h>
 #include <DataTypes/Camera.hpp>
-#include <FileParsing/SaveOptimizationResults.h>
 
 class VisualOdometry {
 protected:

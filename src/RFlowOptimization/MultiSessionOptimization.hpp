@@ -18,25 +18,12 @@
 #include <vector>
 #include <unordered_map>
 
-#include "RFlowFactorGraph.hpp"
-
 #include <Optimization/SurveyOptimizer.h>
 #include <Optimization/GTSamInterface.h>
-#include <ImageAlignment/DREAMFlow/ImageRetrieval.hpp>
-#include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
-
-#include <FileParsing/ParseFeatureTrackFile.h>
-#include <FileParsing/ParamsInterface.h>
-#include <FileParsing/SaveOptimizationResults.h>
 #include <FileParsing/ParseOptimizationResults.h>
-#include <FileParsing/ParseSurvey.h>
-
-#include <DataTypes/AlignmentResult.h>
-#include <DataTypes/Map.hpp>
 #include <DataTypes/Camera.hpp>
-#include <DataTypes/LandmarkTrack.h>
-#include <DataTypes/ImagePose.h>
 
+#include "RFlowFactorGraph.hpp"
 #include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 

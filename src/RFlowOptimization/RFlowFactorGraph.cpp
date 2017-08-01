@@ -48,7 +48,7 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     v62(3,0) = 0.05;
     v62(4,0) = 0.05;
     v62(5,0) = 0.1745;
-    poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v61);
+    poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v62);
 }
 
 gtsam::Pose3 RFlowFactorGraph::VectorToPose(std::vector<double>& p) {

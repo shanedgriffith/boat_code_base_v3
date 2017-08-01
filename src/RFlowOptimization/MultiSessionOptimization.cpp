@@ -10,6 +10,8 @@
 
 #include <random>
 #include <string>
+#include <FileParsing/ParseFeatureTrackFile.h>
+#include <FileParsing/SaveOptimizationResults.h>
 #include <Optimization/EvaluateSLAM.h>
 
 #include "SFlowDREAM2RF.hpp"

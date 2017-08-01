@@ -21,7 +21,6 @@
 #include <DataTypes/Camera.hpp>
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
-#include <FileParsing/ParseSurvey.h>
 
 #include "LocalizedPoseData.hpp"
 

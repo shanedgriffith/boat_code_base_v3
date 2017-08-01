@@ -40,11 +40,12 @@ protected:
 public:
     std::string _base;
     std::string _pftbase;
+    std::string _date;
     static const std::string _auxfile;
     std::vector<double> timings;
     
-    ParseSurvey(std::string base, std::string pftbase):
-    _base(base), _pftbase(pftbase) {}
+    ParseSurvey(std::string base, std::string pftbase, std::string date):
+    _base(base), _pftbase(pftbase), _date(date) {}
     
     virtual int GetImageNumber(int auxidx) = 0;
     virtual int GetIndexOfImage(int image) = 0;

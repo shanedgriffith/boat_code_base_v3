@@ -1,5 +1,5 @@
 //
-//  ParseSurvey.cpp
+//  ParseBoatSurvey.cpp
 //  VisualizationCode
 //
 //  Created by Shane Griffith on 6/9/15.

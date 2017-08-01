@@ -29,7 +29,6 @@
 #include <FileParsing/ParamsInterface.h>
 #include <FileParsing/SaveOptimizationResults.h>
 #include <FileParsing/ParseOptimizationResults.h>
-#include <FileParsing/ParseSurvey.h>
 
 #include <DataTypes/AlignmentResult.h>
 #include <DataTypes/Map.hpp>

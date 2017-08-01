@@ -10,7 +10,6 @@
 
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 #include <gtsam/nonlinear/DoglegOptimizer.h>
-#include "FileParsing/ParseSurvey.h"
 
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/BetweenFactor.h>

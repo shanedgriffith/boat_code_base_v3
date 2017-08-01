@@ -98,11 +98,11 @@ void ParseBikeRoute::ModifyPoses(){
     vector<double> lastp;
     vector<vector<double>> filtered;
     vector<int> indices = {0};
-    ParseFeatureTrackFile PFT0(nexus, _base, 0);
+    ParseFeatureTrackFile PFT0(nexus, _base + _date, 0);
     
     vector<double> curpose;
     for(int i=2; i<poses.size(); i=i+2){
-        ParseFeatureTrackFile PFT1(nexus, _base, i);
+        ParseFeatureTrackFile PFT1(nexus, _base + _date, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> vp = PoseToVector(vop);
         if(i>2){

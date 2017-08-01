@@ -11,6 +11,8 @@
 #include <random>
 #include <string>
 #include <Optimization/EvaluateSLAM.h>
+#include <DataTypes/LandmarkTrack.h>
+#include <FileParsing/ParseFeatureTrackFile.h>
 
 #include "SFlowDREAM2RF.hpp"
 #include "LocalizePose.hpp"

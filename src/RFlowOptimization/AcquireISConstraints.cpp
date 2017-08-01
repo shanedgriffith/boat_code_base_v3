@@ -12,7 +12,7 @@
 #include <random>
 #include <string>
 
-
+#include <FileParsing/ParseSurvey.h>
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
 #include "SFlowDREAM2RF.hpp"
 #include "HopcountLog.hpp"

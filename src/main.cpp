@@ -1,18 +1,15 @@
 #include <iostream>
 
 #include <Optimization/SurveyOptimizer.h>
-#include <FileParsing/FileParsing.hpp>
 #include <DataTypes/Camera.hpp>
 #include <RFlowOptimization/EvaluateRFlow.hpp>
 #include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
 #include <RFlowOptimization/AcquireISConstraints.hpp>
 #include <RFlowEvaluation/AlignVisibilitySet.hpp>
 #include <Visualizations/FlickeringDisplay.h>
-#include <FileParsing/ParseSurvey.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
 #include <BikeSurvey/PreprocessBikeRoute.hpp>
 #include <BikeSurvey/ParseBikeRoute.hpp>
-#include <BikeSurvey/ImageModification.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
 
@@ -83,14 +80,14 @@ int main(int argc, char *argv[]) {
         so.Optimize(pbr);
         break;}
     case 7:{
-        ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);
+        ParseBoatSurvey PS(query_loc, pftbase, argv[1]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
         SurveyOptimizer so(axisptz, argv[1], results_dir, true);
         so.Initialize();
         so.Optimize(PS);
         break;}
     case 8:{
-        ParseBoatSurvey PS(query_loc + argv[1], pftbase + argv[1]);
+        ParseBoatSurvey PS(query_loc, pftbase, argv[1]);
         PS.PlayPoses();
         break;}
     case 9:{

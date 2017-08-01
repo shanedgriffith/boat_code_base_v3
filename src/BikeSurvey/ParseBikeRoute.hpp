@@ -27,7 +27,7 @@ protected:
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
 public:
     ParseBikeRoute(std::string bdbase, std::string name):
-    ParseSurvey(bdbase + name, bdbase + name) {
+    ParseSurvey(bdbase, bdbase, name) {
         constant_velocity = false;
         default_start = gtsam::Point3(296456.933, 5443544.892, 0);
         
