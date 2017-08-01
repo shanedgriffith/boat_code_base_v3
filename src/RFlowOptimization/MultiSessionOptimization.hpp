@@ -60,19 +60,7 @@ public:
     
     MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = ""):
         _map_dir(results_dir + "maps/"), _pftbase(pftbase),
-        SurveyOptimizer(cam, rfFG, date, results_dir, false) {
-        
-        rfFG = new RFlowFactorGraph();
-        FG = rfFG;
-        
-        std::cout << "Multi-Session Optimization up to " << date << std::endl;
-        
-        std::cout << "  Initializing.."<<std::endl;
-        IdentifyOptimizationDates();
-        save_params = false;
-        Initialize();
-        rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize(); 
-    }
+    SurveyOptimizer(cam, rfFG, date, results_dir, false);
 
     ~MultiSessionOptimization(){
         delete(rfFG);

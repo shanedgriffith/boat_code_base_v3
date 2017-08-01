@@ -23,6 +23,19 @@
 
 using namespace std;
 
+MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date) {
+    rfFG = new RFlowFactorGraph();
+    FG = rfFG;
+    
+    std::cout << "Multi-Session Optimization up to " << date << std::endl;
+    
+    std::cout << "  Initializing.."<<std::endl;
+    IdentifyOptimizationDates();
+    save_params = false;
+    Initialize();
+    rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
+}
+
 void MultiSessionOptimization::IdentifyOptimizationDates(){
     /*The dates in datetable*/
     cout << "   parsing the optimization results."<<endl;
