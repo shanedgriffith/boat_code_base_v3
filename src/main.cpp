@@ -98,6 +98,12 @@ int main(int argc, char *argv[]) {
         //tbs.TestVisualOdometry();
         //tbs.TestTriangulation();
         break;}
+    case 10: {
+        //for the experimental programs.
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
+        avs.VisualizeAllLabelsInOneMap();
+        break;}
     }
 
 /*

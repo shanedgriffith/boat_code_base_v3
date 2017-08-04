@@ -9,8 +9,11 @@
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <DataTypes/Map.hpp>
 #include <FileParsing/ParseVisibilityFile.h>
+#include <Visualizations/SLAMDraw.h>
 
 #include "AlignVisibilitySet.hpp"
+
+using namespace std;
 
 void AlignVisibilitySet::Visibility() {
     ParseVisibilityFile vis(_visibility_dir, _date1, _date2);
@@ -35,6 +38,63 @@ void AlignVisibilitySet::Visibility() {
 }
 
 
-void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
+std::vector<char> AlignVisibilitySet::LoadLabelsFile(std::string filepath){
+    FILE * fp = OpenFile(filepath,"r");
+    char line[99]="";
     
+    std::vector<char> labels;
+    while (!feof(fp) && fgets(line,99,fp)!=NULL) {
+        char label;
+        double time;
+        if (sscanf(line,"%c,%lf", &label,&time)!=2) {
+            std::cout << "AlignVisibilitySet::LoadLabelsFile() Read Error of file. " << filepath << ", line: " << line << std::endl;
+            exit(-1);
+        }
+        labels.push_back(label);
+    }
+    fclose(fp);
+    return labels;
 }
+
+void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
+    vector<string> dates = {"140117", "140122", "140129", "140205", "140314"};
+    
+    vector<int> coarse(7000,0);
+    vector<int> precise(7000,0);
+    for(int i=0; i<dates.size(); i++){
+        ParseVisibilityFile vis(_visibility_dir, _date1, dates[i]);
+        
+        string labelfile = _results_dir + _date1 + "_to_" + dates[i] + "/labels.txt";
+        std::vector<char> labels = LoadLabelsFile(labelfile);
+        if(labels.size()!= vis.boat1.size()){
+            std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the visibility set."<<std::endl
+            exit(-1);
+        }
+        for(int j=0; j<vis.boat1.size(); j++){
+            int idx = vis.boat1[j];
+            if(labels[j]=='g') precise[idx]++;
+            else coarse[idx]++;
+        }
+    }
+    
+    SLAMDraw draw;
+    draw.SetScale(-300,300,-300,300);
+    draw.ResetCanvas();
+    for(int i=0; i<coarse.size(); i++){
+        if(coarse[i] > 0 || precise[i] > 0){
+            double ratio = 1.0*precise[i]/(precise[i]+coarse[i]);
+            double col = ratio * 255;
+            draw.AddPointPath(por.boat[i][0], por.boat[i][1], col, col, col);
+        }
+    }
+    
+    string resfile = _results_dir + "timelapse_quality_map_.png";
+    draw.SaveDrawing(resfile);
+}
+
+
+
+
+
+
+

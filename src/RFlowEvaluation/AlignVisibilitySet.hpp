@@ -14,16 +14,17 @@
 #include <unistd.h>
 
 #include <DataTypes/Camera.hpp>
+#include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
 #include <DataTypes/Map.hpp>
 #include "AlignImageMachine.hpp"
 
-class AlignVisibilitySet {
+class AlignVisibilitySet: public FileParsing {
 private:
     int _nthreads = 8;
     
-    int GetIndexFromImageNo(int imageno, ParseOptimizationResults& por);
+    std::vector<char> LoadLabelsFile(std::string filepath);
     
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
