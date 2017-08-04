@@ -47,7 +47,7 @@ public:
         maps[1].LoadMap(_date2);
         
         por.push_back(ParseOptimizationResults(_results_dir + "maps/" + _date1));
-        por.push_back(ParseOptimizationResults(_results_dir + "maps/" + _date2));//
+        por.push_back(ParseOptimizationResults(_results_dir + "maps/" + _date2));
         
         for(int i=0; i<_nthreads; i++) {
             ws.push_back(new AlignImageMachine(_cam));
@@ -64,6 +64,8 @@ public:
 
 
     void Visibility();
+    
+    void VisualizeAllLabelsInOneMap();
 };
 
 

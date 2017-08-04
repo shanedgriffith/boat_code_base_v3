@@ -49,7 +49,7 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
         if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
-    optstart = std::max(((int) POR.size()-K-1), 0);
+    optstart = std::max(((int) POR.size()-K), 0);
     dates = std::vector<string>(dates.begin(), dates.begin()+POR.size());
 }
 
@@ -96,16 +96,16 @@ void MultiSessionOptimization::SetHeight(gtsam::Pose3& traj, double z){
 
 void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter) {
     bool latestsurvey = survey == POR.size()-1;
+    int sidx = survey - optstart;
     
     LocalizePose lp(_cam);
     for(int i=0; i<POR[survey].boat.size(); i++) {
-        int sidx = survey - optstart;
         gtsam::Pose3 traj = POR[survey].CameraPose(i);
-        int lpdcur = lpdi[survey].GetLPDIdx(i);
+        int lpdcur = lpdi[sidx].GetLPDIdx(i);
         if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
-            traj = lp.VectorToPose(lpdi[survey].localizations[lpdcur].p1frame0);
+            traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
         }
-        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
+//        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
         rfFG->AddPose(survey, i, traj);
         GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
         
@@ -175,6 +175,7 @@ void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses
             sumz += poses[i][j][5];
         }
         heights[i] = sumz/poses[i].size();
+        std::cout << i << ": avg height: " << heights[i]<<std::endl;
     }
 }
 
@@ -204,7 +205,7 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         
         intra.push_back(unordered_map<int, double>());
     }
-    GetHeight(poses); //update heights.
+    //GetHeight(poses); //update heights.
     
     double totchanges = 0;
     for(int i=optstart; i<dates.size(); i++){
@@ -256,8 +257,10 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
                (inlier && lpd_rerror[sidx][j] < 0) ||
                (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
+                if(!firstiter){
                 if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
                 else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+                }
             }
             
             lpd_rerror[sidx][j] = 1;
@@ -266,8 +269,8 @@ double MultiSessionOptimization::UpdateError(bool firstiter) {
         totchanges += nchanges;
         
         if(i > 0) {
-            erfintraS0.PrintTots("intra s0");
-            erfintraS1.PrintTots("intra s1");
+            erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
+            erfintraS1.PrintTots("intra " + dates[i]);
             erfinter.PrintTots("inter");
             std::cout << "number of outliers: " << coutliers << std::endl;
         }
@@ -349,10 +352,10 @@ void MultiSessionOptimization::IterativeMerge() {
         std::cout << "changes, history: " <<last_nchanges << " -> " << avg_nchanges << std::endl;
     }
     
-//    if(!dry_run){
-//        std::cout << "  Saving.." << std::endl;
-//        SaveResults();
-//    }
+    if(!dry_run){
+        std::cout << "  Saving.." << std::endl;
+        SaveResults();
+    }
 }
 
 

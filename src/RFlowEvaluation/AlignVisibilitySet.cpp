@@ -33,3 +33,8 @@ void AlignVisibilitySet::Visibility() {
     
     std::cout << "Finished aligning the visibility set for " << _date1 << " to " << _date2 <<". Num images: " << vis.boat1.size() << std::endl;
 }
+
+
+void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
+    
+}

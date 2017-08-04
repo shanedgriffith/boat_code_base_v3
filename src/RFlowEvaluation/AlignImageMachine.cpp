@@ -57,6 +57,9 @@ void AlignImageMachine::RunRFlow() {
     int poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
     if(poseloc1 == -1)  return;
 
+    string saveloc =  _results_dir + dates[0] + "_to_" + dates[1] + "/" + to_string(poseloc0) + "/";
+    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << saveloc << std::endl;
+    
     ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[0]->ftfilenos[poseloc0]);
     ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[1]->ftfilenos[poseloc1]);
 
@@ -68,7 +71,7 @@ void AlignImageMachine::RunRFlow() {
     string _image0 = ParseSurvey::GetImagePath(_query_loc + dates[0], por[0]->cimage[poseloc0]);
     string _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
     AlignmentResult ar = RunSFlowWithRF(rf, _image0, _image1);
-    string saveloc =  _results_dir + dates[0] + "_to_" + dates[1] + "/" + to_string(poseloc0) + "/";
+    
     ar.Save(saveloc);
 }
 

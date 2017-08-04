@@ -58,13 +58,14 @@ int main(int argc, char *argv[]) {
         //ra.IterativeMerge();
         break;}
     case 2:{
+        //keep date 1 the same and change date 2 to have the images be aligned at the same places. 
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        AlignVisibilitySet avs(axisptz, argv[2], argv[1], pftbase, query_loc, results_dir, visibility_dir);
+        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
         avs.Visibility();
         break;}
     case 3:{
-        FlickeringDisplay fd(argv[2], argv[1]);
-        string dir = results_dir + argv[2] + "_to_" + argv[1] + "/";
+        FlickeringDisplay fd(argv[1], argv[2]);
+        string dir = results_dir + argv[1] + "_to_" + argv[2] + "/";
         std::cout << "dir: " << dir << std::endl;
         fd.CompareFromDir(dir);
         break;}

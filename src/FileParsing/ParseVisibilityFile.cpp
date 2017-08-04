@@ -14,8 +14,7 @@
 
 using namespace std;
 
-void ParseVisibilityFile::ParseFile(string filepath)
-{
+void ParseVisibilityFile::ParseFile(string filepath) {
     FILE * fp = OpenFile(filepath,"r");
     char ds1[1024],ds2[1024];
     char line[1024]="";

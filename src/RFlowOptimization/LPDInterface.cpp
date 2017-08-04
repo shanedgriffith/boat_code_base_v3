@@ -41,6 +41,7 @@ int LPDInterface::LoadLocalizations(std::string path){
     if(localizations.size()>0) most_adv_lpd = localizations[localizations.size()-1];
     //given that they're sorted, starting the iteration from the end points the
     //hash table at the correct ones.
+    lpdtable.reserve(localizations.size());
     for(int i=localizations.size()-1; i>=0; i--)
         lpdtable[localizations[i].s1time] = i;
     return localizations.size();

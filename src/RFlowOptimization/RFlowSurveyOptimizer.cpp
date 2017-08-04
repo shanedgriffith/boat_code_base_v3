@@ -13,6 +13,7 @@
 #include <Optimization/EvaluateSLAM.h>
 #include <DataTypes/LandmarkTrack.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
+#include <FileParsing/SaveOptimizationResults.h>
 
 #include "SFlowDREAM2RF.hpp"
 #include "LocalizePose.hpp"
@@ -75,6 +76,7 @@ void RFlowSurveyOptimizer::SaveResults() {
     vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
     vector<vector<double> > ts = GTS.GetOptimizedTrajectory(latestsurvey, POR.boat.size());
     vector<vector<double> > vs;
+    SaveOptimizationResults SOR(_map_dir + _date);
     SOR.SetSaveStatus();
     SOR.SetDrawMap();
     SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, {});
