@@ -67,7 +67,7 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
         string labelfile = _results_dir + _date1 + "_to_" + dates[i] + "/labels.txt";
         std::vector<char> labels = LoadLabelsFile(labelfile);
         if(labels.size()!= vis.boat1.size()){
-            std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the visibility set."<<std::endl
+            std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the visibility set."<<std::endl;
             exit(-1);
         }
         for(int j=0; j<vis.boat1.size(); j++){
@@ -77,6 +77,8 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
         }
     }
     
+    std::cout << "using poses of file: "<< por[0]._base << std::endl
+    
     SLAMDraw draw;
     draw.SetScale(-300,300,-300,300);
     draw.ResetCanvas();
@@ -84,7 +86,7 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
         if(coarse[i] > 0 || precise[i] > 0){
             double ratio = 1.0*precise[i]/(precise[i]+coarse[i]);
             double col = ratio * 255;
-            draw.AddPointPath(por.boat[i][0], por.boat[i][1], col, col, col);
+            draw.AddPointPath(por[0].boat[i][0], por[0].boat[i][1], col, col, col);
         }
     }
     
