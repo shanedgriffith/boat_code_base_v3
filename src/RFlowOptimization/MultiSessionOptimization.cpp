@@ -1,7 +1,7 @@
 /*
- * RFlowSurveyOptimizer.cpp
+ * MultiSessionOptimization.cpp
  *
- *  Created on: Jul 28, 2016
+ *  Created on: ~June 28, 2017
  *      Author: shane
  */
 

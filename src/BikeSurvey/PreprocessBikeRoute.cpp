@@ -520,7 +520,7 @@ void PreprocessBikeRoute::ModifyPoses(){
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
-        printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+        //printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         if(i==2) curpose = vp;
         else {
             gtsam::Pose3 lip = VectorToPose(lastp);
