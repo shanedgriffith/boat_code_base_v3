@@ -61,23 +61,25 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
     
     vector<int> coarse(7000,0);
     vector<int> precise(7000,0);
+    
+    
     for(int i=0; i<dates.size(); i++){
-        ParseVisibilityFile vis(_visibility_dir, _date1, dates[i]);
-        
         string labelfile = _results_dir + _date1 + "_to_" + dates[i] + "/labels.txt";
         std::vector<char> labels = LoadLabelsFile(labelfile);
-        if(labels.size()!= vis.boat1.size()){
-            std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the visibility set."<<std::endl;
+//        ParseVisibilityFile vis(_visibility_dir, _date1, dates[i]);
+        std::vector<string> dirs = FileParsing::ListDirsInDir(_results_dir + _date1 + "_to_" + dates[i]);
+        if(dirs.size() != labels.size()){
+            std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the alignment set. " << labels.size() << " labels, " << dirs.size() << " vis set."<<std::endl;
             exit(-1);
         }
-        for(int j=0; j<vis.boat1.size(); j++){
-            int idx = vis.boat1[j];
+        for(int j=0; j<dirs.size(); j++){
+            int idx = stoi(dirs[j]);
             if(labels[j]=='g') precise[idx]++;
             else coarse[idx]++;
         }
     }
     
-    std::cout << "using poses of file: "<< por[0]._base << std::endl
+    std::cout << "using poses of file: "<< por[0]._base << std::endl;
     
     SLAMDraw draw;
     draw.SetScale(-300,300,-300,300);
