@@ -129,6 +129,15 @@ void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pn
     else graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
 }
 
+void RFlowFactorGraph::AddCustomBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, double val) {
+    gtsam::Symbol symb0 = GetSymbol(survey0, pnum0);
+    gtsam::Symbol symb1 = GetSymbol(survey1, pnum1);
+    gtsam::Vector6 v6;
+    v6.setConstant(val);
+    gtsam::noiseModel::Diagonal::shared_ptr customnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
+    graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, customnoise));
+}
+
 void RFlowFactorGraph::Clear(){
     FactorGraph::Clear();
     lastcnums.clear();

@@ -155,7 +155,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
             } else {
                 //rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
                 double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-                rfFG->AddVirtualBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
+                rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
             }
         }
     }
