@@ -70,8 +70,8 @@ bool ParseSurvey::CheckGap(int last_auxidx, int next_auxidx){
     if(timings.size() < next_auxidx) {
         return false;
     }
-    int im1 = GetImageNo(last_auxidx);
-    int im2 = GetImageNo(next_auxidx);
+    int im1 = GetImageNumber(last_auxidx);
+    int im2 = GetImageNumber(next_auxidx);
     if(im2-im1 > 15) return true;
     return false;
 }
@@ -120,7 +120,7 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
                 exit(-1);
             }
         }
-        //if(debug)
+        if(!gap)
             cout << "Empty PFT file at " << index  << ". loading next." << endl;
         PFT.Next(++index);
     }

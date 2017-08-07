@@ -77,15 +77,15 @@ void SurveyOptimizer::SaveParameters(){
     PI.SaveParams(_results_dir + _date);
 }
 
-void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped){
-    static bool transition = true;
+void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition){
+    static bool transition_prevstep = true;
     
     //the island transition. if the pan/tilt camera moves, use a simple odom factor to get around the yaw constraint.
-    if(!flipped) {
-        if(transition) {
+    if(!transition) {
+        if(transition_prevstep) {
             GTS.InitializeValue(FG->key[(int)FactorGraph::var::V], camera_key-1, &vel_est);
             FG->AddVelocity(camera_key-1, vel_est);
-            transition = false;
+            transition_prevstep = false;
         }
         
         GTS.InitializeValue(FG->key[(int)FactorGraph::var::V], camera_key, &vel_est);
@@ -95,8 +95,9 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
         FG->AddSmoothVelocityConstraint(camera_key);
     } else {
         FG->AddOdomFactor(camera_key, btwn_pos);
-        transition=true;
-        if(debug) cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>flipped at<<<<<<<<<<<<<<<<<<<<<<<<<<<<< pose " << camera_key << endl;
+        transition_prevstep=true;
+        //if(debug)
+            cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>transition at<<<<<<<<<<<<<<<<<<<<<<<<<<<<< pose " << camera_key << endl;
     }
 }
 
@@ -128,7 +129,9 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     
     //check for camera transitions
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
-    if(flipped){
+    bool transition = flipped || gap;
+    if(transition){
+        std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
     	if(cache_landmarks) CacheLandmarks(active);
     	else AddLandmarkTracks(active);
     	active.clear();
@@ -143,12 +146,12 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     if(camera_key != 0) {
         gtsam::Pose3 btwn_pos = last_cam.between(cam);
         
-        if(PS.ConstantVelocity() && !gap){
+        if(PS.ConstantVelocity()){
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
             double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
             double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
             gtsam::Pose3 vel_est = gtsam::Pose3(gtsam::Rot3::ypr(av*delta_t, 0, 0), gtsam::Point3(btwn_pos.x(), btwn_pos.y(), btwn_pos.z()));
-            AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, flipped);
+            AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, transition);
         } else {
             FG->AddOdomFactor(camera_key, btwn_pos);
         }
@@ -180,7 +183,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         
         //Construct the graph (camera, visual landmarks, velocity, and time)
         //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
-        int camera_key = ConstructGraph(PS, PFT, cidx, lcidx);
+        int camera_key = ConstructGraph(PS, PFT, cidx, lcidx, gap);
         
         //Optimize the graph
         if(OptimizeThisIteration(camera_key)){

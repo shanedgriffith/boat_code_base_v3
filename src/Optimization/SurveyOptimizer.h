@@ -47,7 +47,7 @@ protected:
     void SaveResults(SaveOptimizationResults& SOR, int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
     void RunGTSAM();
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
-    void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped);
+    void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition);
     int AddCamera(gtsam::Pose3 cam);
     int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
     std::vector<LandmarkTrack> DEBUGMOD(std::vector<LandmarkTrack>& inactive);
