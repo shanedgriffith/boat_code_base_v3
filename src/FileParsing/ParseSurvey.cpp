@@ -66,6 +66,16 @@ double ParseSurvey::AngleDistance(double a, double b){
     return abs(fmod(d+M_PI, 2*M_PI)-M_PI);
 }
 
+bool ParseSurvey::CheckGap(int last_auxidx, int next_auxidx){
+    if(timings.size() < next_auxidx) {
+        return false;
+    }
+    int im1 = GetImageNo(last_auxidx);
+    int im2 = GetImageNo(next_auxidx);
+    if(im2-im1 > 15) return true;
+    return false;
+}
+
 bool ParseSurvey::CheckCameraTransition(int cidx, int lcidx){
     /*Large changes in camera pose violate our kinematic constraint of smooth motion. This function detects that.*/
     gtsam::Pose3 cam = CameraPose(cidx);
@@ -86,7 +96,7 @@ bool ParseSurvey::CheckCameraTransition(int cidx, int lcidx){
     return false;
 }
 
-ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& index){
+ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& index, bool gap){
     /*Proceed when the visual feature track file is good.*/
     static bool found = false;
     if(!found){
@@ -102,7 +112,7 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
     ParseFeatureTrackFile PFT(_cam, _pftbase + _date, index);
     int nonexist=0;
     while(PFT.time<=0) {
-        if(!PFT.Exists(PFT.siftfile)) {
+        if(!gap && !PFT.Exists(PFT.siftfile)) {
             nonexist++;
             if(nonexist>10 && found || nonexist>50000) {
                 if(found) return PFT;

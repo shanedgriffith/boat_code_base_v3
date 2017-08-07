@@ -49,7 +49,7 @@ protected:
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool flipped);
     int AddCamera(gtsam::Pose3 cam);
-    int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx);
+    int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
     std::vector<LandmarkTrack> DEBUGMOD(std::vector<LandmarkTrack>& inactive);
     
     int cache_set=0;

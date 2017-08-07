@@ -118,7 +118,7 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx){
+int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
     gtsam::Pose3 cam = PS.CameraPose(cidx);
     gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
@@ -143,7 +143,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     if(camera_key != 0) {
         gtsam::Pose3 btwn_pos = last_cam.between(cam);
         
-        if(PS.ConstantVelocity()){
+        if(PS.ConstantVelocity() && !gap){
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
             double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
             double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
@@ -170,7 +170,8 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     int cidx = 0, lcidx=0;
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
-        ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i);
+        bool gap = PS.CheckGap(lcidx, lcidx + vals[Param::CAM_SKIP]);
+        ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i, gap);
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.

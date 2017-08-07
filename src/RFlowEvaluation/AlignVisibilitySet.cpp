@@ -56,12 +56,12 @@ std::vector<char> AlignVisibilitySet::LoadLabelsFile(std::string filepath){
     return labels;
 }
 
+
 void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
     vector<string> dates = {"140117", "140122", "140129", "140205", "140314"};
     
     vector<int> coarse(7000,0);
     vector<int> precise(7000,0);
-    
     
     for(int i=0; i<dates.size(); i++){
         string labelfile = _results_dir + _date1 + "_to_" + dates[i] + "/labels.txt";
@@ -72,8 +72,13 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
             std::cout << "AlignVisibilitySet::VisualizeAllLabelsInOneMap() something went wrong with the labels. Mismatch with the alignment set. " << labels.size() << " labels, " << dirs.size() << " vis set."<<std::endl;
             exit(-1);
         }
+        std::vector<int> poses(dirs.size(),0);
         for(int j=0; j<dirs.size(); j++){
-            int idx = stoi(dirs[j]);
+            poses[j] =stoi(dirs[j]);
+        }
+        std::sort(poses.begin(), poses.end());
+        for(int j=0; j<poses.size(); j++){
+            int idx = poses[j];
             if(labels[j]=='g') precise[idx]++;
             else coarse[idx]++;
         }
@@ -88,6 +93,7 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
         if(coarse[i] > 0 || precise[i] > 0){
             double ratio = 1.0*precise[i]/(precise[i]+coarse[i]);
             double col = ratio * 255;
+            std::cout << i << ": ratio: "<<precise[i]<<"/"<<(precise[i]+coarse[i]) << " with color " << col << std::endl;
             draw.AddPointPath(por[0].boat[i][0], por[0].boat[i][1], col, col, col);
         }
     }

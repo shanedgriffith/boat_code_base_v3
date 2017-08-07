@@ -54,7 +54,7 @@ public:
     virtual std::vector<double> GetDrawScale()=0;
     
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
-    
+    bool CheckGap(int last_auxidx, int next_auxidx);
     static int GetImageNumberFromImagePath(std::string imagepath);
     static std::vector<double> PoseToVector(gtsam::Pose3& cam);
     static std::string GetImagePath(std::string base, int no, bool makedir=false);
@@ -67,7 +67,7 @@ public:
     
     bool CheckCameraTransition(int cidx, int lcidx);
     int FindSynchronizedAUXIndex(double querytime, int from_idx);
-    ParseFeatureTrackFile LoadVisualFeatureTracks(Camera& _cam, int& index);
+    ParseFeatureTrackFile LoadVisualFeatureTracks(Camera& _cam, int& index, bool gap = false);
     
 };
 
