@@ -37,6 +37,7 @@ protected:
     std::vector<std::string> dates;
     std::vector<LPDInterface> lpdi;
     std::vector<std::vector<double>> lpd_rerror;
+    std::vector<std::vector<double>> lpd_eval;
     std::vector<ParseOptimizationResults> POR;
     std::vector<double> inlier_ratio;
     std::vector<double> heights;
@@ -50,7 +51,8 @@ protected:
     void ConstructFactorGraph(bool firstiter);
     void AddLocalizations(bool firstiter);
     void AddAllTheLandmarkTracks();
-    double UpdateError(bool firstiter);
+    double UpdateErrorPrune(bool firstiter);
+    double UpdateErrorAdaptive(bool firstiter);
     void SaveResults();
     
     RFlowFactorGraph* rfFG;

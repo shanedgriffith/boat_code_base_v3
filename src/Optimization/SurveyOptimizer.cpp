@@ -96,7 +96,7 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
     } else {
         FG->AddOdomFactor(camera_key, btwn_pos);
         transition_prevstep=true;
-        //if(debug)
+        if(debug)
             cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>transition at<<<<<<<<<<<<<<<<<<<<<<<<<<<<< pose " << camera_key << endl;
     }
 }
@@ -131,7 +131,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
     bool transition = flipped || gap;
     if(transition){
-        std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
+        if(debug) std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
     	if(cache_landmarks) CacheLandmarks(active);
     	else AddLandmarkTracks(active);
     	active.clear();
