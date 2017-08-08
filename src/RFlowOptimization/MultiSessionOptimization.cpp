@@ -190,9 +190,7 @@ void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses
 
 double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
-//    static vector<vector<double> > permerr;
-    static vector<vector<double> > rerrs;
-    static vector<double> AverageRerror;
+    static vector<vector<double> > permerr;
     vector<unordered_map<int, double> > intra;
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
@@ -204,6 +202,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         
         intra.push_back(unordered_map<int, double>());
+        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
     }
     
     double totchanges = 0;
@@ -295,8 +294,6 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
 double MultiSessionOptimization::UpdateErrorPrune(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
-    static vector<vector<double> > rerrs;
-    static vector<double> AverageRerror;
     vector<unordered_map<int, double> > intra;
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
