@@ -30,7 +30,7 @@
 class MultiSessionOptimization: public SurveyOptimizer {
 protected:
     //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.
-    const int K = 5;
+    const int K = 500;
     const int MAX_ITERATIONS = 10;
     
     int optstart;
@@ -41,8 +41,8 @@ protected:
     std::vector<ParseOptimizationResults> POR;
     std::vector<double> inlier_ratio;
     std::vector<double> heights;
-    vector<vector<double> > rerrs;
-    vector<double> AverageRerror;
+    std::vector<std::vector<double> > rerrs;
+    std::vector<double> AverageRerror;
     
     void SetHeight(gtsam::Pose3& traj, double z);
     void GetHeight(std::vector<std::vector<std::vector<double> > >& poses);

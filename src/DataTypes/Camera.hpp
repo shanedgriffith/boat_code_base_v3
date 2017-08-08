@@ -30,7 +30,7 @@ public:
     {}
     
     ~Camera(){
-        delete(k); //check. this right for deleting the shared_ptr object?
+//        delete(k); //check. this right for deleting the shared_ptr object?
     }
 
     void SetDistortion(double k1, double k2, double p1, double p2, double k3);
