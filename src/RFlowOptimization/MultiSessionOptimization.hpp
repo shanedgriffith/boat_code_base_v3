@@ -41,6 +41,8 @@ protected:
     std::vector<ParseOptimizationResults> POR;
     std::vector<double> inlier_ratio;
     std::vector<double> heights;
+    vector<vector<double> > rerrs;
+    vector<double> AverageRerror;
     
     void SetHeight(gtsam::Pose3& traj, double z);
     void GetHeight(std::vector<std::vector<std::vector<double> > >& poses);

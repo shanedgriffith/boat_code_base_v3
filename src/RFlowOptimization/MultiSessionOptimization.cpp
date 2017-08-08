@@ -72,6 +72,11 @@ void MultiSessionOptimization::Initialize() {
             continue;
         }
         
+        EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
+        rerrs.push_back(ESlam.LoadRerrorFile());
+        double avg = ESlam.GetAverageRerror(rerrs[i-optstart]);
+        AverageRerror.push_back(avg);
+        
         std::vector<LandmarkTrack> clset;
         cached_landmarks.push_back(clset);
         
@@ -103,7 +108,7 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
     for(int i=0; i<POR[survey].boat.size(); i++) {
         gtsam::Pose3 traj = POR[survey].CameraPose(i);
         int lpdcur = lpdi[sidx].GetLPDIdx(i);
-        if(latestsurvey && lpdcur >= 0 && lpd_eval[sidx][lpdcur] < 6){ //lpd_rerror[sidx][lpdcur] >= 0) {
+        if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
             traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
         }
 //        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
@@ -114,7 +119,8 @@ void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter)
             gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
             gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
             gtsam::Pose3 btwn = last1.between(cur1);
-            rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
+//            rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
+            rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
         }
         
         if(firstiter){
@@ -147,7 +153,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
-//            if(lpd_rerror[i][j] < 0) continue;
+            if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
                 std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
@@ -197,15 +203,6 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         
-        if(firstiter){
-            EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
-            rerrs.push_back(ESlam.LoadRerrorFile());
-            double avg = ESlam.GetAverageRerror(rerrs[sidx]);
-            AverageRerror.push_back(avg);
-            
-//            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
-        }
-        
         intra.push_back(unordered_map<int, double>());
     }
     
@@ -237,17 +234,47 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
                 }
             }
             
-            double newval = std::max(std::max(inter_error, intra_errorS1), intra_errorS0);
-            if(lpd_eval[sidx][j] >= 2*newval || lpd_eval[sidx][j] <= newval/2) {
-                nchanges++;
-                if(!firstiter){
-                    if(lpd_eval[sidx][j] > 2*newval) std::cout << "weakened   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                    else       std::cout << "strengthened ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                }
-            }
+            double newval = std::max(3.0, std::max(std::max(inter_error, intra_errorS1), intra_errorS0));
+//            if(lpd_eval[sidx][j] >= 2*newval || lpd_eval[sidx][j] <= newval/2) {
+//                nchanges++;
+//                if(!firstiter){
+//                    if(lpd_eval[sidx][j] > 2*newval) std::cout << "weakened   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+//                    else       std::cout << "strengthened ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+//                }
+//            }
             
             lpd_eval[sidx][j] = newval;
             if(newval > 15) coutliers++;
+            
+            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
+            if(LPD_RERROR_THRESHOLD < 0) {
+                std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
+                exit(1);
+            } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
+                LPD_RERROR_THRESHOLD = AverageRerror[sidx]*mult;
+            }
+            
+            bool inlier = true;
+            if(std::isnan(inter_error) ||
+               inter_error > LPD_RERROR_THRESHOLD) inlier = false;
+            if(std::isnan(intra_errorS0) ||
+               std::isnan(intra_errorS1)) inlier = false;
+            if(intra_errorS0 > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
+               intra_errorS1 > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
+            if(permerr[sidx][j] > 0) inlier = false;
+            
+            if(lpd_rerror[sidx][j] == 0 ||
+               (inlier && lpd_rerror[sidx][j] < 0) ||
+               (!inlier && lpd_rerror[sidx][j] > 0)) {
+                nchanges++;
+                if(!firstiter){
+                    if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+                    else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
+                }
+            }
+            
+            lpd_rerror[sidx][j] = 1;
+            if(!inlier) {lpd_rerror[sidx][j] = -1;}
         }
         totchanges += nchanges;
         
@@ -279,16 +306,6 @@ double MultiSessionOptimization::UpdateErrorPrune(bool firstiter) {
         rfFG->ChangeLandmarkSet(sidx);
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
-        
-        if(firstiter){
-            EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
-            rerrs.push_back(ESlam.LoadRerrorFile());
-            double avg = ESlam.GetAverageRerror(rerrs[sidx]);
-            AverageRerror.push_back(avg);
-            
-            permerr.push_back(vector<double>(lpd_rerror[sidx].size(), 0));
-        }
-        
         intra.push_back(unordered_map<int, double>());
     }
     //GetHeight(poses); //update heights.
@@ -413,7 +430,7 @@ void MultiSessionOptimization::IterativeMerge() {
     LocalizePose lp(_cam);
     double last_nchanges = 10000000000;
     double avg_nchanges= last_nchanges - 1;
-    for(int i=0; last_nchanges>avg_nchanges && i<MAX_ITERATIONS; i++) {
+    for(int i=0; avg_nchanges>0 && last_nchanges>avg_nchanges && i<MAX_ITERATIONS; i++) {
         rfFG->Clear();
         
         if(i>0) std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;

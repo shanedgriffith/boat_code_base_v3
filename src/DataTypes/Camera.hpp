@@ -28,6 +28,10 @@ public:
         k(new gtsam::Cal3_S2(_fx, _fy, 0.0, _cx, _cy)),
         distCoeffs(5, 1, CV_64F, cv::Scalar::all(0))
     {}
+    
+    ~Camera(){
+        delete(k); //check. this right for deleting the shared_ptr object?
+    }
 
     void SetDistortion(double k1, double k2, double p1, double p2, double k3);
     cv::Mat Distortion();
