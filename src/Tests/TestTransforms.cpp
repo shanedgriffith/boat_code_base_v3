@@ -10,9 +10,9 @@
 #include "TestTransforms.hpp"
 #include <RFlowOptimization/LocalizedPoseData.hpp>
 #include <RFlowOptimization/LocalizePose.hpp>
-#include <FileParsing/ParseOptimizationResults.hpp>
+#include <FileParsing/ParseOptimizationResults.h>
 
-
+using namespace std;
 
 void TestTransforms::CheckBtwn(Camera& _cam){
     LocalizePose lp(_cam);
@@ -27,8 +27,8 @@ void TestTransforms::CheckBtwn(Camera& _cam){
 }
 
 void TestTransforms::TestLocalization(Camera& _cam){
-    std::string lpd = "/cs-share/dream/results_consecutive/maps/140117/localizations/234.loc";
-    LocalizedPoseData lpd = LocalizedPoseData::Read(lpd);
+    std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/234.loc";
+    LocalizedPoseData lpd = LocalizedPoseData::Read(lpdfile);
     ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/140106");
     ParseOptimizationResults POR1("/cs-share/dream/results_consecutive/maps/140117");
     
@@ -37,7 +37,7 @@ void TestTransforms::TestLocalization(Camera& _cam){
                                                                    lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
     if(candidates.size()==0) return -1;
     
-    perc_dc = candidates[2][1]/(count1+count2);
+    double perc_dc = candidates[2][1]/(lpd.p3d0+lpd.b3d1);
     if(debug) std::cout<<"localization quality check: \n\tForward and Backward:  "
         <<((int)1000*perc_dc)/10.0 << "% inliers with "
         << candidates[2][3] << " avg reprojection error" << std::endl;
