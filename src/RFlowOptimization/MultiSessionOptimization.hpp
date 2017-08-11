@@ -49,8 +49,7 @@ protected:
     
     void IdentifyOptimizationDates();
     void Initialize();
-    void StandAloneFactorGraph(int survey, bool firstiter);
-    void ConstructFactorGraph(bool firstiter);
+    void ConstructFactorGraph();
     void AddLocalizations(bool firstiter);
     void AddAllTheLandmarkTracks();
     double UpdateErrorPrune(bool firstiter);

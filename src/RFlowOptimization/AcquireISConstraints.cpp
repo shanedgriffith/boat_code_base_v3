@@ -133,8 +133,12 @@ vector<double> AcquireISConstraints::EstimateNextPose(int survey, int time, int 
     gtsam::Pose3 last = lp.VectorToPose(lastpose);
     gtsam::Pose3 p_tm1 = survey_est[lastsurvey].por.CameraPose(lasttime);
     gtsam::Pose3 p_t = survey_est[survey].por.CameraPose(time);
-    gtsam::Pose3 est = last.compose(p_tm1.between(p_t));
+//    gtsam::Pose3 est = last.compose(p_tm1.between(p_t));
 
+    gtsam::Pose3 est = last.compose(last.between(p_tm1)*p_tm1.between(p_t)*p_tm1.between(last));
+    //above should equal below.
+//    gtsam::Pose3 est = last.compose(last.between(p_tm1)*p_tm1.between(p_t)*last.between(p_tm1).inverse());
+    
     return lp.PoseToVector(est);
 }
 

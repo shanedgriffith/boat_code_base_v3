@@ -60,6 +60,41 @@ public:
                          boost::optional<gtsam::Matrix&> H1frame0 = boost::none,
                          boost::optional<gtsam::Matrix&> H0frame1 = boost::none) const
     {
+        //p0f1_solve =should= p1.compose(p1.btwn(p1frame0)*p1frame0.btwn(p0)*p1frame0.btwn(p1))
+        //p1f0_solve =should= p0.compose(p0.btwn(p0frame1)*p0frame1.btwn(p1)*p0frame1.btwn(p0))
+        //should nearzero be the sum in both directions?
+        //perhaps using zeros.localCoordinates(n1) + zeros.localCoordinates(n0);
+        //hmm, that step computes the tangent vector, presumably to reach zero from nearzero.
+        //but if both are used..
+        //maybe use a static variable which is toggled, and the value determines which nearzero is returned.
+        //may not matter.
+        
+        gtsam::Pose3 btwn0, btwn1, btwn2, nearzero;
+        if(H1frame0) {
+            gtsam::Matrix d0, d1;
+            gtsam::Pose3 ptwn0, ptwn1, ptwn2;
+            gtsam::Pose3 expected_p0f1, expected_p1f0;
+            ptwn0 = _p0.between(p0frame1);
+            ptwn1 = p0frame1.between(_p1);
+            ptwn2 = p0frame1.between(_p0);
+            expected_p1f0 = _p0.compose(ptwn0*ptwn1*ptwn2);
+            expected_p1f0.between(p1frame0, d1, *H1frame0);
+            
+            btwn0 = _p1.between(p1frame0);
+            btwn1 = p1frame0.between(_p0);
+            btwn2 = p1frame0.between(_p1);
+            expected_p0f1 = _p1.compose(btwn0*btwn1*btwn2);
+            nearzero = expected_p0f1.between(p0frame1, d0, *H0frame1);
+        } else {
+            btwn0 = _p1.between(p1frame0);
+            btwn1 = p1frame0.between(_p0);
+            btwn2 = p1frame0.between(_p1);
+            nearzero = _p1.compose(btwn0*btwn1*btwn2).between(p0frame1);
+        }
+        gtsam::Pose3 zeros = gtsam::Pose3::identity();//needed?
+        return zeros.localCoordinates(nearzero);
+        
+/*  //working approach, though may only be an approximation
         //note. the jacobians here could be wrong.
         gtsam::Pose3 diff0, diff1, nearzero;
         if(H1frame0) {
@@ -77,7 +112,8 @@ public:
             nearzero = diff0.between(diff1);
         }
         gtsam::Pose3 zeros = gtsam::Pose3::identity();//needed?
-        return zeros.localCoordinates(nearzero);
+        return zeros.localCoordinates(nearzero);*/
+
         //previous approach. The different formulations depending on whether the Jacobian is wanted may be problematic.
 //        Pose3 diff0 = _p0.between(p0frame1);
 //        Pose3 diff1 = p1frame0.between(_p1);

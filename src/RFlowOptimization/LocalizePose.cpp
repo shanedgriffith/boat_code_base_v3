@@ -324,7 +324,8 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     }
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p0frame1.
-    gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0));
+    //gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0)); //this also looks wrong.
+    gtsam::Pose3 p0frame1 = gp1.compose(gp1.between(p1frame0)*p1frame0.between(gp0)*p1frame0.between(gp1));
     std::vector<double> posevals0f1 = RANSAC_BA(p0frame1, b3d, b2d0, rerrorb);
     if(posevals0f1[1]<0.000001) {
         std::cout << "Localization failed due to RANSAC failure on set b"<<std::endl;
@@ -334,5 +335,4 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     //iterative localization (like EM), started with the good initial estimates found using RANSAC.
     return DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
 }
-
 

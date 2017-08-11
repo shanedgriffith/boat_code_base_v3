@@ -91,6 +91,7 @@ void MultiSessionOptimization::Initialize() {
         inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
     heights = std::vector<double>(dates.size()-optstart, 0);
+    BuildLandmarkSet();
 }
 
 void MultiSessionOptimization::SetHeight(gtsam::Pose3& traj, double z){
@@ -100,52 +101,52 @@ void MultiSessionOptimization::SetHeight(gtsam::Pose3& traj, double z){
     traj = gtsam::Pose3(r, newt);
 }
 
-void MultiSessionOptimization::StandAloneFactorGraph(int survey, bool firstiter) {
-    bool latestsurvey = survey == POR.size()-1;
-    int sidx = survey - optstart;
-    
-    LocalizePose lp(_cam);
-    for(int i=0; i<POR[survey].boat.size(); i++) {
-        gtsam::Pose3 traj = POR[survey].CameraPose(i);
-        int lpdcur = lpdi[sidx].GetLPDIdx(i);
-        if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
-            traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
-        }
-//        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
-        rfFG->AddPose(survey, i, traj);
-        GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
+void MultiSessionOptimization::BuildLandmarkSet() {
+    for(int survey=optstart; survey<dates.size(); survey++) {
+        cache_set = survey-optstart; //update the parent class variable
+        rfFG->ChangeLandmarkSet(cache_set);
         
-        if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
-            gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
-            gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
-            gtsam::Pose3 btwn = last1.between(cur1);
-//            rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
-            rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
-        }
-        
-        if(firstiter){
+        for(int i=0; i<POR[survey].boat.size(); i++) {
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
             vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active);
             CacheLandmarks(tracks);
         }
-    }
-    
-    if(firstiter) {
+        
         //add the rest of the landmarks
         CacheLandmarks(active);
         active.clear();
     }
 }
 
-void MultiSessionOptimization::ConstructFactorGraph(bool firstiter){
+void MultiSessionOptimization::ConstructFactorGraph() {
     cout << "   adding the surveys"<<endl;
     
     //add the latest K surveys to the graph
     for(int survey=optstart; survey<dates.size(); survey++){
-        cache_set = survey-optstart; //update the parent class variable
-        rfFG->ChangeLandmarkSet(cache_set);
-        StandAloneFactorGraph(survey, firstiter);
+        
+        bool latestsurvey = survey == POR.size()-1;
+        int sidx = survey - optstart;
+        
+        LocalizePose lp(_cam);
+        for(int i=0; i<POR[survey].boat.size(); i++) {
+            gtsam::Pose3 traj = POR[survey].CameraPose(i);
+            int lpdcur = lpdi[sidx].GetLPDIdx(i);
+            if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
+                traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
+            }
+    //        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
+            rfFG->AddPose(survey, i, traj);
+            GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
+            
+            if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
+                gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
+                gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
+                gtsam::Pose3 btwn = last1.between(cur1);
+    //            rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
+                rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
+            }
+        }
     }
 }
 
@@ -243,7 +244,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
 //            }
             
             lpd_eval[sidx][j] = newval;
-            if(newval > 15) coutliers++;
+//            if(newval > 15) coutliers++;
             
             double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
             if(LPD_RERROR_THRESHOLD < 0) {
@@ -273,7 +274,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             }
             
             lpd_rerror[sidx][j] = 1;
-            if(!inlier) {lpd_rerror[sidx][j] = -1;}
+            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++}
         }
         totchanges += nchanges;
         
@@ -304,6 +305,7 @@ double MultiSessionOptimization::UpdateErrorPrune(bool firstiter) {
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         intra.push_back(unordered_map<int, double>());
+        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
     }
     //GetHeight(poses); //update heights.
     
@@ -453,8 +455,9 @@ void MultiSessionOptimization::IterativeMerge() {
     }
     
     if(!dry_run){
-        std::cout << "  Saving.. IS DISABLED FOR THE ADAPTIVE CONSTRAINT TEST" << std::endl;
-        //SaveResults();
+        std::cout << "  Saving.." << std::endl;
+        //std::cout << "  Saving.. IS DISABLED FOR THE ADAPTIVE CONSTRAINT TEST" << std::endl;
+        SaveResults();
     }
 }
 

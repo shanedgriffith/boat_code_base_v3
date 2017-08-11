@@ -10,70 +10,149 @@
 #include <gtsam/geometry/Pose3.h>
 #include <Optimization/EvaluateSLAM.h>
 #include <DataTypes/Camera.hpp>
+#include <cmath>
+
+using namespace std;
 
 const string Anchors::_anchorsname = "/anchors.txt";
 
-void Anchors::WriteAnchors(){
-    string fname = _base + _date + _anchorsname;
-    FILE * fp = fopen(fname.c_str(), "w");
-    if(!fp) {
-        std::cout << "Anchors::WriteAnchors(). Couldn't save em." << fname << std::endl;
-        exit(1);
-    }
+Anchors::Anchors(Camera& _cam, string base, string date):
+    _filename(base + date + Anchors::_anchorsname) {
+        LoadAnchors();
+}
 
-    int lastl=0;
-    for(int i=0; i<anchor.size(); i++){
-        for(int j=0; j<anchor[i].size(); j++)
-            fprintf(fp, "%lf, ", anchor[i][j]);
-        fprintf(fp, "%d\n", sections[i]);
+
+Anchors(Camera& _cam, ParseOptimizationResults& POR, int nanchors, int nposes):
+_filename(POR._base + Anchors::_anchorsname) {
+    last = POR.boat.size();
+    anchors = vector<vector<double>>(nanchors, vector<double>(6,0));
+    sections = vector<int>(nanchors, 0);
+    int binsz = round(nposes/nanchors);
+    for(int i=0; i<nanchors; i++){
+        sections[i] = i*binsz;
+    }
+}
+
+
+void Anchors::WriteAnchors(){
+    FILE * fp = OpenFile(_filename, "w", true);
+    for(int i=0; i<anchors.size(); i++) {
+        fprintf(fp, "%d, ", sections[i]);
+        for(int j=0; j<anchors[i].size(); j++) {
+            if(j<anchors[i].size()-1) fprintf(fp, "%lf, ", anchor[i][j]);
+            else fprintf(fp, "%lf", anchor[i][j]);
+        }
     }
     fflush(fp);
     fclose(fp);
 }
 
-bool Anchors::ReadAnchors(){
-    string fname = _base + _date + _anchorsname;
-    FILE * fp = fopen(fname.c_str(), "r");
-    if(!fp) return false;
-    char line[LINESIZE]="";
-    int count = 0;
-    while (fgets(line, LINESIZE-1, fp)) {
-        std::vector<std::string> vals = ParseLine(line);
-        vector<double> anc(6,0);
-        int section = 0;
 
-        if(vals.size()<7) {
-            std::cout << "something went wrong with the anchors file. Check it: " << fname << std::endl;
-            std::cout << "Line: " << line << std::endl;
+void Anchors::LoadAnchors(){
+    FILE * fp = OpenFile(_filename.c_str(), "r", true);
+    char line[LINESIZE]="";
+    while (fgets(line, LINESIZE-1, fp)) {
+        vector<double> a(6, 0.0);
+        int s;
+        int ret = sscanf(line, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n",
+                         &s, &a[0], &a[1], &a[2], &a[3], &a[4], &a[5]);
+        if(ret != 7) {
+            std::cout << "Anchors::LoadAnchors() read error: " << fname << ", line: " << line << std::endl;
             exit(1);
         }
-        for(int i=0; i<anc.size(); i++) anc[i] = stod(vals[i]);
-        section = stoi(vals[6]);
 
-        anchor.push_back(anc);
-        sections.push_back(section);
-        count++;
+        anchors.push_back(a);
+        sections.push_back(s);
     }
-    return (count>0)?true:false;
 }
 
-bool Anchors::IsValid(int section){
-    //an anchor is nonvalid if it's all zeros (i.e., uninitialized)
-    if(section > sections.size()) return false;
-    for(int i=0; i<anchor[section].size(); i++){
-        if(abs(anchor[section][i]) > 0.000001) return true;
-    }
-    return false;
-}
 
 int Anchors::NumAnchors(){
     return sections.size();
 }
 
-bool Anchors::HaveAnchors(){
-    return sections.size() > 0;
+
+vector<double> Anchors::ShiftPose(int s, gtsam::Pose3& gtp){
+    vector<double>& a = anchors[s];
+    gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
+    return gta.compose(gtp); //order?
+    return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
+
+vector<double> Anchors::ShiftPose(int s, vector<double>& p){
+    vector<double>& a = anchors[s];
+    gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
+    gtsam::Pose3 gtp(gtsam::Rot3::RzRyRx(p[3],p[4],p[5]), gtsam::Point3(p[0],p[1],p[2]));
+    gtsam::Pose3 comp = gta.compose(gtp); //order?
+    return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
+}
+
+
+vector<vector<double>> Anchors::GetShiftedPoses(vector<vector<double>>& poses) {
+    vector<vector<double>> shifted(poses.size(), vector<double>(6, 0));
+    int s = 0;
+    for(int i=0; i<poses.size(); i++){
+        while(s < sections.size()-1 && sections[s+1] <= i) s++;
+        shifted[i] = ShiftPose(s, poses[i]);
+    }
+    return shifted;
+}
+
+
+//what if the updated set has a different size? skip for now.
+void Anchors::UpdateAnchors(vector<vector<double>>& updated) {
+    for(int i=0; i<anchors.size(); i++){
+        anchors[i] = updated[i];
+    }
+}
+
+
+int Anchors::PoseIdxToAnchorIdx(int pidx){
+    int top = sections.size();
+    int bot = 0;
+    while(top>bot){
+        int med = bot + (top-bot)/2;
+        if(sections[med] < pidx) bot = med;
+        if(sections[med] > pidx) top = med;
+        else return med;
+    }
+    return -1;
+}
+
+
+void Anchors::Print() {
+    for(int i=0; i<sections.size(); i++){
+        std::cout << sections[i] << ": ";
+        for(int j=0; j<anchors[i].size(); j++){
+            std::cout << anchors[i][j] << ", ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+
+gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
+    vector<double>& anc = anchors[idx];
+    return gtsam::Pose3(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
+}
+
+/*
+ 
+ get anchor for a given pose.
+ 
+ update
+   number of sections (with a flag for whether to change this or not)
+   anchors positions
+ 
+ 
+ */
+
+
+
+
+
+/*
 void Anchors::FindSections(Camera& _cam){
     //a section is a discontinuity in the optimized trajectory (loss of visual feature tracks, high rerror, ).
     //can I find all the discontinuities in the rerror information? Aren't they zero if the visual feature tracks are lost?
@@ -117,7 +196,6 @@ void Anchors::FindSections(Camera& _cam){
 
     anchor = std::vector<std::vector<double>>(sections.size(), std::vector<double>(6, 0.0));
     std::cout << "Found " << sections.size() << " sections"<< std::endl;
-//    WriteAnchors();
 }
 
 void Anchors::SetAnchor(int section, std::vector<double> anc){
@@ -146,6 +224,9 @@ gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
     return gtsam::Pose3(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
 }
 
+
+
+
 vector<double> Anchors::GetAnchoredPose(int i, vector<double> p){
     vector<double> anc = GetAnchor(i);
     if(anc.size()==0 || p.size()<6) return {};
@@ -155,14 +236,4 @@ vector<double> Anchors::GetAnchoredPose(int i, vector<double> p){
     return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
-void Anchors::Print() {
-    std::cout << "Anchor " << _date << std::endl;
-    for(int i=0; i<anchor.size(); i++){
-        std::cout << sections[i] << ": ";
-        for(int j=0; j<anchor[i].size(); j++){
-            std::cout << anchor[i][j] << ", ";
-        }
-        std::cout << std::endl;
-    }
-}
-
+*/

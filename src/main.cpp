@@ -12,7 +12,7 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
-
+#include <Tests/TestTransforms.hpp>
 
 using namespace std;
 
@@ -100,9 +100,13 @@ int main(int argc, char *argv[]) {
         break;}
     case 10: {
         //for the experimental programs.
-        Camera axisptz = ParseBoatSurvey::GetCamera();
-        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
-        avs.VisualizeAllLabelsInOneMap();
+//        Camera axisptz = ParseBoatSurvey::GetCamera();
+        //create Timelapse quality map
+//        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
+//        avs.VisualizeAllLabelsInOneMap();
+        //test transform changes
+        TestTransforms
+        
         break;}
     }
 

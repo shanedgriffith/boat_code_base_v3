@@ -297,7 +297,8 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
 
     gtsam::Pose3 p1frame0_t = VectorToPose(lpd.p1frame0);
     gtsam::Pose3 p1frame0_tm1 = VectorToPose(p1frame0);
-    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1_tm1.between(p1_t));
+//    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1_tm1.between(p1_t)); //TODO: check this vs. the one below.
+    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1frame0_tm1.between(p1_tm1)*p1_tm1.between(p1_t)*p1_tm1.between(p1frame0_tm1));
     
     //check lpd.p3d onto p1frame0_tm1_est matches lpd.p3d onto p1frame0_tm1. (Tests points from t to tm1.)
     //NOTE: b3d isn't tested because s0 could be the same in both surveys. Thus odometry would be zero.

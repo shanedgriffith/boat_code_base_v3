@@ -1,7 +1,7 @@
 /*
  * Anchors.hpp
  *
- *  Created on: Mar 8, 2017
+ *  Created on: Aug 10, 2017
  *      Author: shane
  */
 
@@ -18,33 +18,33 @@
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <FileParsing/FileParsing.hpp>
-
+#include <gtsam/geometry/Pose3.h>
 
 class Anchors: public FileParsing {
 private:
     double avgbadthreshold = 15;
     static const string _anchorsname;
-    bool ReadAnchors();
+    bool LoadAnchors();
     void FindSections(Camera& _cam);
 
 public:
-    string _base;
-    string _date;
-    std::vector<std::vector<double>> anchor;
+    string _filename;
+    std::vector<std::vector<double>> anchors;
     std::vector<int> sections;
+    int last; //TODO: this.
 
-    Anchors(string base, string date, Camera& _cam): _base(base), _date(date) {
-        if(!ReadAnchors()) FindSections(_cam);
-    }
+    Anchors(Camera& _cam, std::string base, std::string date);
+    
+    Anchors(Camera& _cam, ParseOptimizationResults& POR, int nanchors, int nposes);
 
-    int NumAnchors();
-    bool HaveAnchors();
-    bool IsValid(int section);
-    std::vector<double> GetAnchoredPose(int i, vector<double> p);
-    void SetAnchor(int section, std::vector<double> anchor);
+    
     void WriteAnchors();
-    int GetSection(int idx);
-    std::vector<double> GetAnchor(int idx);
+    void LoadAnchors();
+    int NumAnchors();
+    vector<double> ShiftPose(int s, vector<double>& p);
+    vector<vector<double>> GetShiftedPoses(vector<vector<double>>& poses);
+    void UpdateAnchors(vector<vector<double>>& updated);
+    int PoseIdxToAnchorIdx(int pidx);
     gtsam::Pose3 GetAnchorAsPose(int idx);
     void Print();
 };
