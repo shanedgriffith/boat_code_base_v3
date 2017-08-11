@@ -274,7 +274,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             }
             
             lpd_rerror[sidx][j] = 1;
-            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++}
+            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
         }
         totchanges += nchanges;
         
@@ -434,7 +434,7 @@ void MultiSessionOptimization::IterativeMerge() {
         
         if(i>0) std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
-        ConstructFactorGraph(i==0);
+        ConstructFactorGraph();
         AddLocalizations(i==0);
         AddAllTheLandmarkTracks();
         

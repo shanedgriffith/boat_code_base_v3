@@ -100,12 +100,13 @@ int main(int argc, char *argv[]) {
         break;}
     case 10: {
         //for the experimental programs.
-//        Camera axisptz = ParseBoatSurvey::GetCamera();
+        Camera axisptz = ParseBoatSurvey::GetCamera();
         //create Timelapse quality map
 //        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
 //        avs.VisualizeAllLabelsInOneMap();
         //test transform changes
-        TestTransforms
+        TestTransforms::CheckBtwn(axisptz);
+        TestTransforms::TestLocalization(axisptz);
         
         break;}
     }

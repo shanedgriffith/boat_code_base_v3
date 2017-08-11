@@ -49,6 +49,7 @@ protected:
     
     void IdentifyOptimizationDates();
     void Initialize();
+    void BuildLandmarkSet();
     void ConstructFactorGraph();
     void AddLocalizations(bool firstiter);
     void AddAllTheLandmarkTracks();
