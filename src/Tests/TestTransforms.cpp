@@ -27,15 +27,16 @@ void TestTransforms::CheckBtwn(Camera& _cam){
 }
 
 void TestTransforms::TestLocalization(Camera& _cam){
-    std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/234.loc";
+    std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/289.loc";
     LocalizedPoseData lpd = LocalizedPoseData::Read(lpdfile);
     ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/140106");
     ParseOptimizationResults POR1("/cs-share/dream/results_consecutive/maps/140117");
     
     LocalizePose lp(_cam);
+    lp.debug = true;
     std::vector<std::vector<double> > candidates = lp.RobustDualBA(POR0.boat[lpd.s0time], POR1.boat[lpd.s1time],
                                                                    lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
-    if(candidates.size()==0) return -1;
+    if(candidates.size()==0) return;
     
     double perc_dc = candidates[2][1]/(lpd.p3d0.size()+lpd.b3d1.size());
     std::cout<<"localization quality check: \n\tForward and Backward:  "

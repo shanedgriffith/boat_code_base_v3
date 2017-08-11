@@ -113,22 +113,22 @@ public:
         }
         gtsam::Pose3 zeros = gtsam::Pose3::identity();//needed?
         return zeros.localCoordinates(nearzero);*/
-
+/*
         //previous approach. The different formulations depending on whether the Jacobian is wanted may be problematic.
-//        Pose3 diff0 = _p0.between(p0frame1);
-//        Pose3 diff1 = p1frame0.between(_p1);
-//        Pose3 nearzero = diff0.between(diff1);
-//        if(H1frame0){
-//            gtsam::Matrix dH0;
-//            gtsam::Matrix dH1;
-//            Pose3 top = p0frame1.compose(_p0.between(p1frame0), H0frame1).between(_p1, dH0);
-//            Pose3 bot = p1frame0.between(_p1.between(p0frame1), H1frame0).between(_p0, dH1);
-//            nearzero = diff0.between(diff1, dH0, dH1);
-//            *H0frame1 = dH0 * (*H0frame1);
-//            *H1frame0 = dH1 * (*H1frame0);
-//        }
-//        gtsam::Pose3 zeros = gtsam::Pose3::identity();//needed?
-//        return zeros.localCoordinates(nearzero);
+        Pose3 diff0 = _p0.between(p0frame1);
+        Pose3 diff1 = p1frame0.between(_p1);
+        Pose3 nearzero = diff0.between(diff1);
+        if(H1frame0){
+            gtsam::Matrix dH0;
+            gtsam::Matrix dH1;
+            Pose3 top = p0frame1.compose(_p0.between(p1frame0), H0frame1).between(_p1, dH0);
+            Pose3 bot = p1frame0.between(_p1.between(p0frame1), H1frame0).between(_p0, dH1);
+            nearzero = diff0.between(diff1, dH0, dH1);
+            *H0frame1 = dH0 * (*H0frame1);
+            *H1frame0 = dH1 * (*H1frame0);
+        }
+        gtsam::Pose3 zeros = gtsam::Pose3::identity();//needed?
+        return zeros.localCoordinates(nearzero); */
     }
 };
 

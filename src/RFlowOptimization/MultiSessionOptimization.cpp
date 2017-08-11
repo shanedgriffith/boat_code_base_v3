@@ -407,6 +407,12 @@ void MultiSessionOptimization::SaveResults() {
         curSOR.SetDrawMap();
         curSOR.PlotAndSaveCurrentEstimate(landmarks[sidx], ts, vs, {});
         
+        /* The reprojectionerror.csv is used for the adaptive pruning. 
+        EvaluateSLAM es(_cam, _date, _results_dir);
+        es.debug=true;
+        es.ErrorForSurvey(_pftbase, true);
+        es.PrintTots(); */
+        
         EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
         vector<vector<double> > poses = GTS.GetOptimizedTrajectory(i, POR[i].boat.size());
         if(i==0) continue;
