@@ -37,8 +37,8 @@ void TestTransforms::TestLocalization(Camera& _cam){
                                                                    lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
     if(candidates.size()==0) return -1;
     
-    double perc_dc = candidates[2][1]/(lpd.p3d0+lpd.b3d1);
-    if(debug) std::cout<<"localization quality check: \n\tForward and Backward:  "
+    double perc_dc = candidates[2][1]/(lpd.p3d0.size()+lpd.b3d1.size());
+    std::cout<<"localization quality check: \n\tForward and Backward:  "
         <<((int)1000*perc_dc)/10.0 << "% inliers with "
         << candidates[2][3] << " avg reprojection error" << std::endl;
     
