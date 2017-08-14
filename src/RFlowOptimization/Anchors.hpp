@@ -45,6 +45,7 @@ public:
     vector<vector<double>> GetShiftedPoses(vector<vector<double>>& poses);
     void UpdateAnchors(vector<vector<double>>& updated);
     int PoseIdxToAnchorIdx(int pidx);
+    bool IsTransition(int t);
     gtsam::Pose3 GetAnchorAsPose(int idx);
     void Print();
 };

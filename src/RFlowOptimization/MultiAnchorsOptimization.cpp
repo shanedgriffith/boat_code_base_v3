@@ -1,23 +1,11 @@
 /*
  * MultiAnchorsOptimization.cpp
  *
- *  Created on: ~June 28, 2017
+ *  Created on: ~Aug 7, 2017
  *      Author: shane
  */
 
-
-#include "MultiSessionOptimization.hpp"
-
-
-/*
- * MultiSessionOptimization.cpp
- *
- *  Created on: ~June 28, 2017
- *      Author: shane
- */
-
-
-#include "MultiSessionOptimization.hpp"
+#include "MultiAnchorsOptimization.hpp"
 
 #include <random>
 #include <string>
@@ -103,16 +91,7 @@ void MultiAnchorsOptimization::Initialize() {
             ninliers += (rerror_set[i]==1)?1:0;
         inlier_ratio.push_back(1.*ninliers/rerror_set.size());
     }
-    heights = std::vector<double>(dates.size()-optstart, 0);
     BuildLandmarkSet();
-    
-}
-
-void MultiAnchorsOptimization::SetHeight(gtsam::Pose3& traj, double z){
-    gtsam::Point3 t = traj.translation();
-    gtsam::Rot3 r = traj.rotation();
-    gtsam::Point3 newt(t.x(), t.y(), z);
-    traj = gtsam::Pose3(r, newt);
 }
 
 
@@ -138,133 +117,71 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 void MultiSessionOptimization::ConstructFactorGraph(bool firstiter) {
     cout << "   adding the surveys"<<endl;
     
-    //add the latest K surveys to the graph
+    //add all the surveys to the graph
     LocalizePose lp(_cam);
     for(int survey=optstart; survey<dates.size(); survey++){
-        
         bool latestsurvey = survey == POR.size()-1;
         int sidx = survey - optstart;
         
-        for(int i=0; i<A[sidx].NumAnchors(); i++) {
-            gtsam::Pose3 traj;
-            bool found = false;
-            if(!firstiter && latestsurvey){
-                vector<int> range = A[sidx].GetAnchorRange(i);
-                for(int j=range[0]; j<range[1]; j++) {
-                    int lpdcur = lpdi[sidx].GetLPDIdx(j);
-                    if(lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
-                        traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
-                        found = true;
-                        j=range[1];
-                    }
-                }
-            }
-            if(found) {
-                //use traj to compute the initial value of the anchor.
-                
-            } else {
-                gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(cidx);
-                rfFG->AddPose(survey, cidx, anc);
-            }
-            
-            
-            if(i>0) {
-                //if btwn anchors, AddBTWNAnchor(btwn, pose[survey][i], pose[survey][i-1], 0.01);
-                gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
-                gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
-            }
-        }
-        
-        LocalizePose lp(_cam);
-        int lidx = -1;
-        int lastlpd = -1;
         for(int i=0; i<POR[survey].boat.size(); i++) {
-            int lpdcur = lpdi[sidx].GetLPDIdx(i);
-            if(lpdcur >= 0) {
-                if(lastlpd != lpdcur) {
-                    //AddISCToAnchor
+            int aidx = A[sidx].PoseIdxToAnchorIdx(i);
+            if(i==0 || A[sidx].IsTransition(i)) {
+                //add anchor.
+                gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(aidx);
+                //if the latest survey and the first iteration, could use p1frame0 to estimate the anchor. (also, assuming that the set starts out with 1 per pose).
+                //with anchors, it would be p1frame0 = a1p1, because a0p0 would be used for localization. so the offset from a0p0
+                // p0.between(p1frame0)
+                //a1 should be p1frame0 * p1.inv();
+                if(latestsurvey && firstiter) {
+                    //use an ISC to initialize the anchor if one exists..
+                    int ajdx = aidx;
+                    bool found = false;
+                    for(int j=i; !found && aidx == ajdx && j<POR[survey].boat.size(); j++) {
+                        ajdx = A[sidx].PoseIdxToAnchorIdx(j);
+                        int lpdcur = lpdi[sidx].GetLPDIdx(i);
+                        if(lpdcur >=0){
+                            found = true;
+                            gtsam::Pose3 p1 = POR[survey].CameraPose(j);
+                            anc = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0).compose(p1.inverse());
+                        }
+                    }
+                    
                 }
-                lastlpd = lpdcur;
-            }
-            
-            gtsam::Pose3 traj = POR[survey].CameraPose(i);
-            if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
-                traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
-            }
-            
-            //nothing like p1frame0 will be used.
-            //actually, it should be used to initialize the anchor value of the latest survey.
-            
-            
-            int cidx = A[sidx].PoseIdxToAnchorIdx(i);
-            //A[sidx].ShiftPose(cidx, traj);
-            
-            if(lidx != cidx) {
-                gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(cidx);
                 rfFG->AddPose(survey, cidx, anc);
-                
                 if(i>0) {
-                    //if btwn anchors, AddBTWNAnchor(btwn, pose[survey][i], pose[survey][i-1], 0.01);
+                    //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
                     gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
+                    gtsam::Pose3 btwn = last1.between(cur1);
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.01);//this model be better approximated using a chow-liu tree.
                 }
             }
-            lidx = cidx;
-            
-            
-            //        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
-            rfFG->AddPose(survey, i, traj);
-            GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
-            
-            if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
-                gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
-                gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
-                gtsam::Pose3 btwn = last1.between(cur1);
-                //            rfFG->AddBTWNFactor(survey, i-1, survey, i, btwn);
-                rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
-            }
-        }
-    }
-}
-
-
-void MultiAnchorsOptimization::AddLocalizations(bool firstiter){
-    cout << "   adding the localizations."<<endl;
-    for(int i=0; i<lpdi.size(); i++) {
-        for(int j=0; j<lpdi[i].localizations.size(); j++) {
-            if(lpd_rerror[i][j] < 0) continue;
-            LocalizedPoseData& lpd = lpdi[i].localizations[j];
-            if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
-                std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
-                rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
-            } else {
-                //rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
+            int lpdcur = lpdi[sidx].GetLPDIdx(i);
+            if(lpdcur >= 0) {
+                //add an AnchorISC factor between the two surveys for the ISC constraint.
+                int s0idx = lpdi[sidx].s0-optstart;
+                int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].s0time);
+                gtsam::Pose3 p1 = POR[survey].CameraPose(i);
+                gtsam::Pose3 p0 = POR[lpdi[sidx].s0].CameraPose(lpdi[sidx].s0time);
                 double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-                rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
+                rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpd.GetTFP0ToP1F0(), noise);
             }
         }
     }
 }
 
-void MultiAnchorsOptimization::AddAllTheLandmarkTracks(){
-    cout << "   adding the landmark tracks."<<endl;
-    
-    //add all the landmark tracks to the factor graph.
-    for(int i=0; i<cached_landmarks.size(); i++){
-        rfFG->ChangeLandmarkSet(i);
-        AddLandmarkTracks(cached_landmarks[i]);
-    }
-}
 
-void MultiAnchorsOptimization::GetHeight(vector<vector<vector<double> > >& poses){
-    for(int i=0; i<poses.size(); i++){
-        double sumz = 0;
-        for(int j=0; j<poses[i].size(); j++){
-            sumz += poses[i][j][5];
-        }
-        heights[i] = sumz/poses[i].size();
-        std::cout << i << ": avg height: " << heights[i]<<std::endl;
-    }
+void MultiAnchorsOptimization::SolveForCameras() {
+    /*
+     typedef CameraSet<CAMERA> Cameras;
+     typename Base::Cameras cameras;
+     Pose3 pose; K_ is the calibration.
+     Camera camera(pose, K_);
+     cameras.push_back(camera);
+     */
+    
+    
+    
 }
 
 double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
@@ -313,14 +230,6 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             }
             
             double newval = std::max(3.0, std::max(std::max(inter_error, intra_errorS1), intra_errorS0));
-            //            if(lpd_eval[sidx][j] >= 2*newval || lpd_eval[sidx][j] <= newval/2) {
-            //                nchanges++;
-            //                if(!firstiter){
-            //                    if(lpd_eval[sidx][j] > 2*newval) std::cout << "weakened   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-            //                    else       std::cout << "strengthened ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-            //                }
-            //            }
-            
             lpd_eval[sidx][j] = newval;
             if(newval > 15) coutliers++;
             
@@ -370,97 +279,6 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     return (int) (totchanges/(dates.size()-optstart));
 }
 
-double MultiAnchorsOptimization::UpdateErrorPrune(bool firstiter) {
-    double mult = 3;
-    static vector<vector<double> > permerr;
-    vector<unordered_map<int, double> > intra;
-    vector<vector<vector<double> > > poses;
-    vector<vector<vector<double> > > landmarks;
-    
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
-        rfFG->ChangeLandmarkSet(sidx);
-        poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
-        landmarks.push_back(GTS.GetOptimizedLandmarks(true));
-        intra.push_back(unordered_map<int, double>());
-        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
-    }
-    //GetHeight(poses); //update heights.
-    
-    double totchanges = 0;
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
-        
-        EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
-        EvaluateRFlow erfintraS0(_cam, "-", _map_dir);
-        EvaluateRFlow erfintraS1(_cam, dates[i], _map_dir);
-        
-        int nchanges = 0;
-        int coutliers = 0;
-        for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
-            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-            
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
-            intra[sidx][lpd.s1time] = intra_errorS1;
-            double intra_errorS0 = 0;
-            if(lpd.s0 >= optstart) {
-                int s0idx = lpd.s0-optstart;
-                auto search = intra[s0idx].find(lpd.s0time);
-                if(search != intra[s0idx].end())
-                    intra_errorS0 = search->second;
-                else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], poses[s0idx][lpd.s0time], landmarks[s0idx]);
-                    intra[s0idx][lpd.s0time] = intra_errorS0;
-                }
-            }
-            
-            //adaptive threshold.
-            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
-            if(LPD_RERROR_THRESHOLD < 0) {
-                std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
-                exit(1);
-            } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
-                LPD_RERROR_THRESHOLD = AverageRerror[sidx]*mult;
-            }
-            
-            bool inlier = true;
-            if(std::isnan(inter_error) ||
-               inter_error > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(intra_errorS0) ||
-               std::isnan(intra_errorS1)) inlier = false;
-            if(intra_errorS0 > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
-               intra_errorS1 > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
-            if(permerr[sidx][j] > 0) inlier = false;
-            
-            if(lpd_rerror[sidx][j] == 0 ||
-               (inlier && lpd_rerror[sidx][j] < 0) ||
-               (!inlier && lpd_rerror[sidx][j] > 0)) {
-                nchanges++;
-                if(!firstiter){
-                    if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                    else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                }
-            }
-            
-            lpd_rerror[sidx][j] = 1;
-            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-        }
-        totchanges += nchanges;
-        
-        if(i > 0) {
-            erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
-            erfintraS1.PrintTots("intra " + dates[i]);
-            erfinter.PrintTots("inter");
-            std::cout << "number of outliers: " << coutliers << std::endl;
-        }
-        inlier_ratio[sidx] = 1.0-(1.*coutliers/lpdi[sidx].localizations.size());
-    }
-    
-    //returns avg num_changes.
-    if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
-    return (int) (totchanges/(dates.size()-optstart));
-}
 
 void MultiAnchorsOptimization::SaveResults() {
     
@@ -501,6 +319,7 @@ void MultiAnchorsOptimization::SaveResults() {
     }
 }
 
+
 void MultiAnchorsOptimization::IterativeMerge() {
     time_t beginning,optstart,end;
     time (&beginning);
@@ -513,8 +332,6 @@ void MultiAnchorsOptimization::IterativeMerge() {
         if(i>0) std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph(i==0);
-        AddLocalizations(i==0);
-        AddAllTheLandmarkTracks();
         
         std::cout << "  Optimizing..." << std::endl;
         time (&optstart);

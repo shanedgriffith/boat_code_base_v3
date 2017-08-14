@@ -46,16 +46,10 @@ protected:
     std::vector<double> AverageRerror;
     std::vector<Anchors> A;
     
-    void SetHeight(gtsam::Pose3& traj, double z);
-    void GetHeight(std::vector<std::vector<std::vector<double> > >& poses);
-    
     void IdentifyOptimizationDates();
     void Initialize();
     void BuildLandmarkSet();
     void ConstructFactorGraph(bool firstiter);
-    void AddLocalizations(bool firstiter);
-    void AddAllTheLandmarkTracks();
-    double UpdateErrorPrune(bool firstiter);
     double UpdateErrorAdaptive(bool firstiter);
     void SaveResults();
     

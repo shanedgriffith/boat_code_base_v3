@@ -18,6 +18,7 @@
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include "RFlowFactorGraph.hpp"
+#include "AnchorISCFactor.h"
 
 #include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
@@ -101,6 +102,15 @@ bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     //Otherwise, RError is much worse, for inter, intra, or both.
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoiseP));
     return true;
+}
+
+void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){
+    gtsam::Symbol symb1 = GetSymbol(survey0, anum0);
+    gtsam::Symbol symb3 = GetSymbol(survey1, anum1);
+    gtsam::Vector6 v6;
+    v6.setConstant(val);
+    gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
+    graph.add(AnchorISCFactor(symb1, symb3, p0, p1, btwn, btwnnoise));
 }
 
 void RFlowFactorGraph::AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers) {

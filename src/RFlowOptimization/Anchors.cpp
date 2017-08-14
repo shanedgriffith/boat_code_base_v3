@@ -121,6 +121,14 @@ int Anchors::PoseIdxToAnchorIdx(int pidx){
 }
 
 
+bool Anchors::IsTransition(int t){
+    //transition if p_t and p_tm1 connect to different anchors.
+    if(t == 0) return false;
+    int a_t = PoseIdxToAnchorIdx(t);
+    int a_tm1 = PoseIdxToAnchorIdx(t-1);
+    return a_t != a_tm1;
+}
+
 void Anchors::Print() {
     for(int i=0; i<sections.size(); i++){
         std::cout << sections[i] << ": ";
