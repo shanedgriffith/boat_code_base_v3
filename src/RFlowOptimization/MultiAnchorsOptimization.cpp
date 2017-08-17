@@ -171,18 +171,6 @@ void MultiSessionOptimization::ConstructFactorGraph(bool firstiter) {
 }
 
 
-void MultiAnchorsOptimization::SolveForCameras() {
-    /*
-     typedef CameraSet<CAMERA> Cameras;
-     typename Base::Cameras cameras;
-     Pose3 pose; K_ is the calibration.
-     Camera camera(pose, K_);
-     cameras.push_back(camera);
-     */
-    
-    
-    
-}
 
 double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
