@@ -29,9 +29,12 @@
 #include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 #include <gtsam/nonlinear/NonlinearConjugateGradientOptimizer.h>
 
+#include "Anchors.hpp"
 
 class SolveForMap {
 private:
+    
+    
 public:
     
     SolveForMap(){}
