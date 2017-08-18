@@ -1,7 +1,11 @@
 
 
 #include <gtsam/geometry/triangulation.h>
-
+#include <gtsam/geometry/PinholeCamera.h>
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Point3.h>
+#include <gtsam/geometry/Point2.h>
+#include <gtsam/geometry/Cal3_S2.h>
 
 #include "SolveForMap.hpp"
 
@@ -41,58 +45,37 @@
  
  */
 
-void MultiAnchorsOptimization::SolveForCameras() {
-    /*
-     typedef CameraSet<CAMERA> Cameras;
-     typename Base::Cameras cameras;
-     Pose3 pose; K_ is the calibration.
-     Camera camera(pose, K_);
-     cameras.push_back(camera);
-     TriangulationResult triangulateSafe(const std::vector<CAMERA>& cameras,
-     const std::vector<Point2>& measured,
-     const TriangulationParameters& params)
-     //what about the noise model?
-     */
-    TriangulationParameters tp(1, false, 100, 100);
+
+std::vector<double> SolveForMap::GetPoint(ParseOptimizationResult& POR, Anchors& anchors, LandmarkTrack& landmark){
+    double dimensions = 2.0; //there are two dimensions to an image observation
+    double dev = 3.0;
+    gtsam::noiseModel::Isotropic::shared_ptr pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
     
+    int ldist = 100; //this threshold specifies the distance between the camera and the landmark.
+    int onoise = 100; //the threshold specifies at what point factors are discarded due to reprojection error.
+    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
-}
-
-/*
- PinholeCamera<gtsam::Cal3_S2> Camera;
- std::vector<Camera> Cameras;
- index()
- 
- */
-
-
-gtsam::Point3 SolveForMap::GetPoint(ParseOptimizationResult& POR, std::vector<Anchors>& anchors, LandmarkTrack& lt){
-    //BOOST_PAIR? {point3 and double}
-    //symbol
+    gtsam::Cal3_S2::shared_ptr calib = _cam.GetGTSAMCam();
     
     //can use double totalReprojectionError(const Cameras& cameras, const Point3& point)
-    
-    
-    
-}
-
-
-/**
- * Collect all cameras involved in this factor
- * @param values Values structure which must contain camera poses corresponding
- * to keys involved in this factor
- * @return vector of Values
- */
-typename Base::Cameras cameras(const Values& values) const {
-    typename Base::Cameras cameras;
-    size_t i=0;
-    BOOST_FOREACH(const Key& k, this->keys_) {
-        Pose3 pose = values.at<Pose3>(k);
-        typename Base::Camera camera(pose, *K_all_[i++]);
-        cameras.push_back(camera);
+    PinholeCamera<gtsam::Cal3_S2> Camera;
+    std::vector<Camera> Cameras;
+    for(int i=0; i<landmark.size(); i++){
+        int pidx = landmark.camera_keys[i].symbol();
+        vector<double> pose = POR.boat[pidx];
+        int aidx = anchors.PoseIdxToAnchorIdx(pidx);
+        vector<double> shifted = anchors.ShiftPose(aidx, pose);
+        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, calib);
+        gtsam::Pose3 gtpose = POR.CameraPose(pidx);
+        Cameras.push_back(Camera(gtpose, calib));
     }
-    return cameras;
+    
+    sppf.triangulateSafe(Cameras);
+    gtsam::Point3 p = sppf.point();
+    double rerror_whitened = totalReprojectionError(Cameras);
+    return {p.x(), p.y(), p.z(), landmark.key, rerror_whitened};
 }
+
 
 
 

@@ -29,9 +29,7 @@ protected:
     int GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id);
     
 public:
-    std::string _results_dir;
     EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
-    _results_dir(results_dir), 
     EvaluateSLAM(cam, date, results_dir) {}
     
     double InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<double>& boat,

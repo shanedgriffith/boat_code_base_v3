@@ -19,6 +19,7 @@
 #include "HopcountLog.hpp"
 #include <FileParsing/FileParsing.hpp>
 #include <DataTypes/LandmarkTrack.h>
+#include "SolveForMap.hpp"
 
 using namespace std;
 
@@ -170,6 +171,33 @@ void MultiSessionOptimization::ConstructFactorGraph(bool firstiter) {
     }
 }
 
+
+double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
+    vector<vector<vector<double> > > updatedanchors;
+    
+    
+    for(int i=0; i<dates.size(); i++){
+        vector<vector<double> > updatedanchors = GTS.GetOptimizedTrajectory(i, A[i].NumAnchors());
+        A[i].UpdateAnchors(updatedanchors);
+        vector<vector<double> > landmarks;
+        for(int j=0; j<) //what about the 3D points that are all zeros?
+        
+        
+        //std::pair<gtsam::Point3, double> GetPoint(ParseOptimizationResult& POR, Anchors& anchors, LandmarkTrack& landmark);
+//        landmarks.push_back(GTS.GetOptimizedLandmarks(true));
+        /* This is only the intra survey reprojection error for the origin survey.
+         
+         */
+        
+    }
+    
+    //using the updated anchors, get the 
+    for(int i=0; i<dates.size(); i++){
+        
+    }
+    
+    
+}
 
 
 double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
