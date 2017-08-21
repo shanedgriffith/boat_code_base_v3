@@ -26,8 +26,9 @@
 class EvaluateRFlowAnchors: public EvaluateRFlow {
 protected:
     double ComputeReprojectionError(std::vector<std::vector<double>> p_subset);
-    std::vector<std::vector<double>> GetSubsetOfPoints(const std::vector<std::vector<double> >& landmarks, const vector<int>& ids_subset);
+    std::vector<std::vector<double>> GetSubsetOfPoints(const std::vector<std::vector<double> >& landmarks, const std::vector<int>& ids_subset);
     int GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id);
+    double ComputeNewReprojectionError(std::vector<double>& anchor, std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks, ParseFeatureTrackFile& PFT);
     
 public:
     std::string _results_dir;
@@ -36,7 +37,7 @@ public:
     
     double InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<std::vector<std::vector<double> > >& landmarks={});
     double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks);
-    double ComputeAnchorRError(vector<double>& anchor, ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks);
+    double ComputeAnchorRError(std::vector<double>& anchor, ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks);
 };
 
 

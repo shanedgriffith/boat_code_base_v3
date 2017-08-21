@@ -21,7 +21,7 @@ _cam(cam), _filename(base + date + Anchors::_anchorsname) {
 }
 
 
-Anchors(Camera& cam, ParseOptimizationResults& POR, int nanchors, int nposes):
+Anchors::Anchors(Camera& cam, ParseOptimizationResults& POR, int nanchors, int nposes):
 _cam(cam), _filename(POR._base + Anchors::_anchorsname) {
     last = POR.boat.size();
     anchors = vector<vector<double>>(nanchors, vector<double>(6,0));

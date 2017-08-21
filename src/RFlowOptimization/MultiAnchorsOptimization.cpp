@@ -116,7 +116,7 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 }
 
 
-void MultiSessionOptimization::ConstructFactorGraph(bool firstiter) {
+void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
     cout << "   adding the surveys"<<endl;
     
     //add all the surveys to the graph

@@ -61,7 +61,7 @@ double EvaluateRFlowAnchors::ComputeNewReprojectionError(std::vector<double>& an
     return UpdateTots(stats);
 }
 
-std::vector<std::vector<double>> EvaluateRFlowAnchors::GetSubsetOfPoints(const std::vector<std::vector<double> >& landmarks, const vector<int>& ids_subset) {
+std::vector<std::vector<double>> EvaluateRFlowAnchors::GetSubsetOfPoints(const std::vector<std::vector<double> >& landmarks, const std::vector<int>& ids_subset) {
     std::vector<std::vector<double>> pset(ids_subset.size(), vector<double>(5, 0));
     if(ids_subset.size() == 0) return pset;
     
