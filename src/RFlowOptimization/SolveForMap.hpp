@@ -26,7 +26,7 @@
 class SolveForMap {
 private:
     
-    Camera& _cam
+    Camera& _cam;
 public:
     
     SolveForMap(Camera cam): _cam(cam){}

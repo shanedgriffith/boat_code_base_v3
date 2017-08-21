@@ -45,6 +45,7 @@ public:
     void WriteAnchors();
     void LoadAnchors();
     int NumAnchors();
+    std::vector<double> ShiftPose(int s, gtsam::Pose3& gtp);
     std::vector<double> ShiftPose(int s, std::vector<double>& p);
     std::vector<std::vector<double> > GetShiftedPoses(std::vector<std::vector<double> >& poses);
     void UpdateAnchors(std::vector<std::vector<double> >& updated);

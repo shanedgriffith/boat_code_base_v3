@@ -149,7 +149,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                     }
                     
                 }
-                rfFG->AddPose(survey, cidx, anc);
+                rfFG->AddPose(survey, aidx, anc);
                 if(i>0) {
                     //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
                     gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
@@ -161,12 +161,12 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
             if(lpdcur >= 0) {
                 //add an AnchorISC factor between the two surveys for the ISC constraint.
-                int s0idx = lpdi[sidx].s0-optstart;
-                int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].s0time);
+                int s0idx = lpdi[sidx].localizations[lpdcur].s0-optstart;
+                int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].localizations[lpdcur].s0time);
                 gtsam::Pose3 p1 = POR[survey].CameraPose(i);
-                gtsam::Pose3 p0 = POR[lpdi[sidx].s0].CameraPose(lpdi[sidx].s0time);
-                double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-                rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpd.GetTFP0ToP1F0(), noise);
+                gtsam::Pose3 p0 = POR[lpdi[sidx].localizations[lpdcur].s0].CameraPose(lpdi[sidx].localizations[lpdcur].s0time);
+                double noise = pow(2, lpd_eval[i][lpdcur]/3.0) * 0.0001;
+                rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
             }
         }
     }
@@ -177,7 +177,6 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     vector<unordered_map<int, double> > intra;
-    vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
     
     SolveForMap shiftedmap(_cam);
@@ -191,6 +190,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             surveylandmarks.push_back(shifted);
         }
         landmarks.push_back(surveylandmarks);
+        A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
         
         intra.push_back(unordered_map<int, double>());
         permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
@@ -206,7 +206,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         for(int j=0; j<POR[i].boat.size(); j++){
             intra[i][j] = erfintraS1.OnlineRError(POR[i], j, _pftbase+dates[i], landmarks[i]);
         }
-        A[i].ModifyAnchors(surveylandmarks, intra[i], rerrs[i], POR[i], _pftbase+dates[i]);
+        
         
         int nchanges = 0;
         int coutliers = 0;
@@ -280,6 +280,8 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
 
 
 void MultiAnchorsOptimization::SaveResults() {
+    std::cout << "Save disabled. Update this function."<<std:endl;
+    return;
     
     for(int i=0; i<inlier_ratio.size(); i++)
         if(inlier_ratio[i] < 0.6){

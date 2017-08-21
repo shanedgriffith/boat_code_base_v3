@@ -8,7 +8,7 @@
 #include "Anchors.hpp"
 
 #include <gtsam/geometry/Pose3.h>
-#include <Optimization/EvaluateSLAM.h>
+#include <RFlowOptimization/EvaluateRFlowAnchors.hpp>
 #include <cmath>
 
 using namespace std;
@@ -56,7 +56,7 @@ void Anchors::LoadAnchors(){
         int ret = sscanf(line, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n",
                          &s, &a[0], &a[1], &a[2], &a[3], &a[4], &a[5]);
         if(ret != 7) {
-            std::cout << "Anchors::LoadAnchors() read error: " << fname << ", line: " << line << std::endl;
+            std::cout << "Anchors::LoadAnchors() read error: " << _filename << ", line: " << line << std::endl;
             exit(1);
         }
 
@@ -80,11 +80,8 @@ vector<double> Anchors::ShiftPose(int s, gtsam::Pose3& gtp){
 
 
 vector<double> Anchors::ShiftPose(int s, vector<double>& p){
-    vector<double>& a = anchors[s];
-    gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
     gtsam::Pose3 gtp(gtsam::Rot3::RzRyRx(p[3],p[4],p[5]), gtsam::Point3(p[0],p[1],p[2]));
-    gtsam::Pose3 comp = gta.compose(gtp); //order?
-    return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
+    return ShiftPose(s, gtp);
 }
 
 
@@ -168,6 +165,7 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
         if(rerror > mult*old){
             split[i] = true;
             int news = (eidx-sidx)/2 + sidx;
+            vector<double> a = anchors[i];
             anchors.insert(anchors.begin() + i, a);
             sections.insert(sections.begin() + i, news);
             split.insert(split.begin()+i, true);
