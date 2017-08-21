@@ -145,17 +145,92 @@ gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
     return gtsam::Pose3(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
 }
 
-/*
- 
- get anchor for a given pose.
- 
- update
-   number of sections (with a flag for whether to change this or not)
-   anchors positions
- 
- 
- */
 
+std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset){
+    vector<bool> split(sections.size(), false);
+    double mult = 2;
+    EvaluateRFlowAnchors erfintra(_cam, dates[i], _map_dir);
+    for(int i=0; i<anchors.size(); i++) {
+        int sidx = sections[i];
+        int eidx = 0;
+        if(i<sections.size()-1) eidx = sections[i+1];
+        else eidx = last;
+        
+        double rerror = 0;
+        double old = 0;
+        for(int j=sidx; j<eidx; j++) {
+            rerror = erfintra.ComputeAnchorRError(anchors[i], POR, j, _pftset, landmarks);
+            old += rerrors[j];
+        }
+        rerror = rerror/(eidx-sidx);
+        old = old/(eidx-sidx);
+        
+        //expand the set
+        if(rerror > mult*old){
+            split[i] = true;
+            int news = (eidx-sidx)/2 + sidx;
+            anchors.insert(anchors.begin() + i, a);
+            sections.insert(sections.begin() + i, news);
+            split.insert(split.begin()+i, true);
+            i++;
+        }
+    }
+    
+    return split;
+}
+
+
+void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks){
+    
+    EvaluateRFlowAnchors erfintra(_cam, dates[i], _map_dir);
+    
+    double bound=6;
+    int countmerged = 0;
+    for(int i=1; i<anchors.size(); i++) {
+        if(split[i] || split[i-1]) continue;
+        int s = sections[i-1];
+        int e = (i==anchors.size()-1)?last:sections[i+1];
+        vector<double> mergedrerror(e - s, 0);
+        
+        //get the weighted average pose.
+        double w = (1.0*sections[i]-s)/(e-s);
+        vector<double> avgd(anchors[i].size(), 0);
+        for(int j=0; j<anchors[i].size(); j++)
+            avgd[j] = w*anchors[i-1][j] + (1-w)*anchors[i][j];
+        
+        //test merge
+        //  endpoints and then full merge
+        bool merged = false;
+        mergedrerror[sections[i]-s-1] = erfintra.ComputeMergedRError(avgd, POR, sections[i]-1, _pftset, landmarks);
+        mergedrerror[sections[i]-s] = erfintra.ComputeMergedRError(avgd, POR, sections[i], _pftset, landmarks);
+        if(mergedrerror[sections[i]-s-1] < bound && mergedrerror[sections[i]-s] < bound) {
+            double tot = 0;
+            for(int i=0; i<mergedrerror.size(); i++) {
+                if(mergedrerror[i] == 0) mergedrerror[i] = erfintra.ComputeMergedRError(avgd, POR, s+i, _pftset, landmarks);
+                tot += mergedrerror[i];
+            }
+            if(tot/mergedrerror.size() < bound) merged = true;
+            
+        } else continue;
+        
+        //shrink the set
+        if(merged) {
+            anchors.remove(anchors.begin()+i);
+            sections.remove(sections.begin()+i);
+            std::swap(anchors[i-1], avgd);
+            i--;
+            countmerged++;
+        }
+    }
+    std::cout << "Merged " << countmerged << std::endl;
+}
+
+
+void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
+    last = POR.boat.size();
+    std::vector<bool> split = SplitAnchors(landmarks, rerrors);
+    MergeAnchors(POR, _pftset, split, landmarks);
+}
 
 
 
@@ -204,44 +279,6 @@ void Anchors::FindSections(Camera& _cam){
 
     anchor = std::vector<std::vector<double>>(sections.size(), std::vector<double>(6, 0.0));
     std::cout << "Found " << sections.size() << " sections"<< std::endl;
-}
-
-void Anchors::SetAnchor(int section, std::vector<double> anc){
-    if(section > sections.size()) {
-        std::cout << "Anchors::SetAnchor(): oob. " << std::endl;
-        exit(1);
-    }
-    anchor[section] = anc;
-}
-
-int Anchors::GetSection(int idx){
-    for(int i=1; i<sections.size(); i++){
-        if(sections[i] > idx) return i-1;
-    }
-    return sections.size()-1;
-}
-
-std::vector<double> Anchors::GetAnchor(int idx){
-    int anum = GetSection(idx);
-    if(anum<0) return {};
-    return anchor[anum];
-}
-
-gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
-    vector<double> anc = GetAnchor(idx);
-    return gtsam::Pose3(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
-}
-
-
-
-
-vector<double> Anchors::GetAnchoredPose(int i, vector<double> p){
-    vector<double> anc = GetAnchor(i);
-    if(anc.size()==0 || p.size()<6) return {};
-    gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
-    gtsam::Pose3 gtp(gtsam::Rot3::RzRyRx(p[3],p[4],p[5]), gtsam::Point3(p[0],p[1],p[2]));
-    gtsam::Pose3 comp = gta.compose(gtp);
-    return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
 */

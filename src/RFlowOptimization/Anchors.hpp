@@ -37,6 +37,10 @@ public:
     
     Anchors(Camera& _cam, ParseOptimizationResults& POR, int nanchors, int nposes);
 
+    void ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset);
+    void MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks);
+    std::vector<bool> SplitAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset);
+    
     
     void WriteAnchors();
     void LoadAnchors();
