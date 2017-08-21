@@ -9,7 +9,6 @@
 
 #include <gtsam/geometry/Pose3.h>
 #include <Optimization/EvaluateSLAM.h>
-#include <DataTypes/Camera.hpp>
 #include <cmath>
 
 using namespace std;

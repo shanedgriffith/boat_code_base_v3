@@ -18,18 +18,18 @@
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <FileParsing/FileParsing.hpp>
+#include <DataTypes/Camera.hpp>
 #include <gtsam/geometry/Pose3.h>
 
 class Anchors: public FileParsing {
 private:
     double avgbadthreshold = 15;
-    static const string _anchorsname;
-    bool LoadAnchors();
+    static const std::string _anchorsname;
     void FindSections(Camera& _cam);
 
 public:
-    string _filename;
-    std::vector<std::vector<double>> anchors;
+    std::string _filename;
+    std::vector<std::vector<double> > anchors;
     std::vector<int> sections;
     int last; //TODO: this.
 
@@ -45,9 +45,9 @@ public:
     void WriteAnchors();
     void LoadAnchors();
     int NumAnchors();
-    vector<double> ShiftPose(int s, vector<double>& p);
-    vector<vector<double>> GetShiftedPoses(vector<vector<double>>& poses);
-    void UpdateAnchors(vector<vector<double>>& updated);
+    std::vector<double> ShiftPose(int s, std::vector<double>& p);
+    std::vector<std::vector<double> > GetShiftedPoses(std::vector<std::vector<double> >& poses);
+    void UpdateAnchors(std::vector<std::vector<double> >& updated);
     int PoseIdxToAnchorIdx(int pidx);
     bool IsTransition(int t);
     gtsam::Pose3 GetAnchorAsPose(int idx);

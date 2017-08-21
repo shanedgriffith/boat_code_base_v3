@@ -36,7 +36,7 @@ public:
 
 
 
-
+#endif /* SRC_RFLOWOPTIMIZATION_SOLVEFORMAP_HPP_ */
 
 
 

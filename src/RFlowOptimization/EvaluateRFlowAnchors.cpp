@@ -21,7 +21,7 @@ double EvaluateRFlowAnchors::ComputeReprojectionError(std::vector<std::vector<do
         if(p_subset[j][0]==0.0 && p_subset[j][1]==0.0 && p_subset[j][2]==0.0) continue;
         if(p_subset[4]>badthreshold) num_bad++;
         count++;
-        total_error += error;
+        total_error += p_subset[4];
     }
     std::vector<double> stats = {total_error, count, num_bad};
     return UpdateTots(stats);
