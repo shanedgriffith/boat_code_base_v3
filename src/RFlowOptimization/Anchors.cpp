@@ -15,14 +15,14 @@ using namespace std;
 
 const string Anchors::_anchorsname = "/anchors.txt";
 
-Anchors::Anchors(Camera& _cam, string base, string date):
-    _filename(base + date + Anchors::_anchorsname) {
+Anchors::Anchors(Camera& cam, string base, string date):
+_cam(cam), _filename(base + date + Anchors::_anchorsname) {
         LoadAnchors();
 }
 
 
-Anchors(Camera& _cam, ParseOptimizationResults& POR, int nanchors, int nposes):
-_filename(POR._base + Anchors::_anchorsname) {
+Anchors(Camera& cam, ParseOptimizationResults& POR, int nanchors, int nposes):
+_cam(cam), _filename(POR._base + Anchors::_anchorsname) {
     last = POR.boat.size();
     anchors = vector<vector<double>>(nanchors, vector<double>(6,0));
     sections = vector<int>(nanchors, 0);

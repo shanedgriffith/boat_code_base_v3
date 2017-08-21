@@ -46,7 +46,7 @@
  */
 
 
-std::vector<double> SolveForMap::GetPoint(ParseOptimizationResult& POR, Anchors& anchors, LandmarkTrack& landmark){
+std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors& anchors, LandmarkTrack& landmark){
     double dimensions = 2.0; //there are two dimensions to an image observation
     double dev = 3.0;
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);

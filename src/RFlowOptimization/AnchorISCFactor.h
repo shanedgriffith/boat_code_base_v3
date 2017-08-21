@@ -34,7 +34,7 @@ public:
     
     AnchorISCFactor(gtsam::Key a1, gtsam::Key a2, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 isc, const gtsam::SharedNoiseModel& model):
     Base(model, a1, a2), {
-        _p0ISCp1I = p0.compose(ISC).compose(p1.inverse());
+        _p0ISCp1I = p0.compose(isc).compose(p1.inverse());
         _p0ISCp1I_inv = _p0ISCp1I.inverse();
     }
     
@@ -75,7 +75,7 @@ public:
         //ok, so one constant.
         //      i.e., solve for the transform from a0 to a1, and then compute the between.
         gtsam::Pose3 nearzero;
-        if(H1frame0) {
+        if(Ha0) {
             gtsam::Matrix d0, d1, d2, d3;
             nearzero = anchor0.compose(_p0ISCp1I, d0, d1).between(anchor1, d2, d3);
             *Ha0 = d2 * d0;

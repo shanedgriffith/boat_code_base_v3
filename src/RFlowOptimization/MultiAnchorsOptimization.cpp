@@ -12,7 +12,7 @@
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <FileParsing/SaveOptimizationResults.h>
 #include <Optimization/EvaluateSLAM.h>
-#include <Optimization/EvaluateRFlowAnchors.hpp>
+#include <RFlowOptimization/EvaluateRFlowAnchors.hpp>
 
 #include "SFlowDREAM2RF.hpp"
 #include "LocalizePose.hpp"

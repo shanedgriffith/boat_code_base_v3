@@ -19,7 +19,7 @@
 #include <gtsam/geometry/Point3.h>
 #include <DataTypes/Camera.hpp>
 
-#include <Optimization/EvaluateRFlow.hpp>
+#include <RFlowOptimization/EvaluateRFlow.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include "LocalizedPoseData.hpp"
 
