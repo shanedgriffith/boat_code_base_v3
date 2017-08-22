@@ -77,7 +77,7 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     sppf.triangulateSafe(Cameras);
     gtsam::Point3 p = sppf.point();
     double rerror_whitened = totalReprojectionError(Cameras);
-    return {p.x(), p.y(), p.z(), landmark.key, rerror_whitened};
+    return {p.x(), p.y(), p.z(), (double) landmark.key, rerror_whitened};
 }
 
 

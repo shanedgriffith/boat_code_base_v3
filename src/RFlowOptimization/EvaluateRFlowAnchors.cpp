@@ -6,14 +6,10 @@
  */
 
 
-#include "EvaluateRFlow.hpp"
+#include "EvaluateRFlowAnchors.hpp"
 
-#include <Visualizations/SLAMDraw.h>
-#include <FileParsing/ParseOptimizationResults.h>
-#include <FileParsing/ParseFeatureTrackFile.h>
 
 using namespace std;
-
 
 double EvaluateRFlowAnchors::ComputeReprojectionError(std::vector<std::vector<double>> p_subset){
     double total_error=0, count=0, num_bad=0;

@@ -21,6 +21,7 @@
 
 #include <RFlowOptimization/EvaluateRFlow.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
+#include <FileParsing/ParseFeatureTrackFile.h>
 #include "LocalizedPoseData.hpp"
 
 class EvaluateRFlowAnchors: public EvaluateRFlow {
