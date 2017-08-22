@@ -61,6 +61,7 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     //can use double totalReprojectionError(const Cameras& cameras, const Point3& point)
     typedef gtsam::PinholeCamera<gtsam::Cal3_S2> Camera;
     typedef std::vector<Camera> Cameras;
+    Cameras cameras;
     for(int i=0; i<landmark.Length(); i++){
         int pidx = landmark.camera_keys[i].index();
         vector<double> pose = POR.boat[pidx];
@@ -68,16 +69,16 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
         vector<double> shifted = anchors.ShiftPose(aidx, pose);
         sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, calib);
         gtsam::Pose3 gtpose = POR.CameraPose(pidx);
-        Cameras.push_back(Camera(gtpose, calib));
+        cameras.push_back(Camera(gtpose, calib));
     }
     
     //TODO: test.
     // and this version of the reprojection error may or may not be within the same limits.
-    sppf.triangulateSafe(Cameras);
+    sppf.triangulateSafe(cameras);
     boost::optional<gtsam::Point3> p = sppf.point();
     gtsam::Point3 p3D(0,0,0);
     if(p) p3D = *p;
-    double rerror_whitened = sppf.totalReprojectionError(Cameras);
+    double rerror_whitened = sppf.totalReprojectionError(cameras);
     return {p3D.x(), p3D.y(), p3D.z(), (double) landmark.key, rerror_whitened};
 }
 
