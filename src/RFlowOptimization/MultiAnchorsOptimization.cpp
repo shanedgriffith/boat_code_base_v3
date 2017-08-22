@@ -78,7 +78,7 @@ void MultiAnchorsOptimization::Initialize() {
         double avg = ESlam.GetAverageRerror(rerrs[i-optstart]);
         AverageRerror.push_back(avg);
         
-        A.push_back(Anchors(_cam, POR[i], POR[i].boat.size(), POR[i].boat.size()));
+        A.push_back(Anchors(_cam, POR[i], POR[i].boat.size(), POR[i].boat.size(), dates[i]));
         
         std::vector<LandmarkTrack> clset;
         cached_landmarks.push_back(clset);

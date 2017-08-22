@@ -145,7 +145,7 @@ gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
 std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset){
     vector<bool> split(sections.size(), false);
     double mult = 2;
-    EvaluateRFlowAnchors erfintra(_cam, dates[i], _map_dir);
+    EvaluateRFlowAnchors erfintra(_cam, _date, _map_dir);
     for(int i=0; i<anchors.size(); i++) {
         int sidx = sections[i];
         int eidx = 0;
@@ -179,7 +179,7 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
 
 void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks){
     
-    EvaluateRFlowAnchors erfintra(_cam, dates[i], _map_dir);
+    EvaluateRFlowAnchors erfintra(_cam, _date, _map_dir);
     
     double bound=6;
     int countmerged = 0;
