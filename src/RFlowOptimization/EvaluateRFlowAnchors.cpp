@@ -35,9 +35,10 @@ double EvaluateRFlowAnchors::ComputeNewReprojectionError(std::vector<double>& an
         
         if(iter>=0){
             for(int j=iter; j < landmarks.size(); j++) {
-                if(((int)landmarks[j][3])==ids_subset[i]) {
+                if(((int)landmarks[j][3])==PFT.ids[i]) {
                     //project the point
-                    gtsam::Point3 res = shiftedp.transform_to(p_subset[j]);
+                    gtsam::Point3 origmap(landmarks[j][0], landmarks[j][1], landmarks[j][2]);
+                    gtsam::Point3 res = shiftedp.transform_to(origmap);
                     gtsam::Point2 proj = _cam.ProjectToImage(res);
                     double dist = proj.distance(PFT.imagecoord[i]);
                     if(dist>badthreshold) num_bad++;
