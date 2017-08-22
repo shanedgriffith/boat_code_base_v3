@@ -26,7 +26,7 @@ private:
     double avgbadthreshold = 15;
     static const std::string _anchorsname;
 
-    Camera& cam;
+    Camera& _cam;
 public:
     std::string _filename;
     std::vector<std::vector<double> > anchors;

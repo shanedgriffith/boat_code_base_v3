@@ -280,7 +280,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
 
 
 void MultiAnchorsOptimization::SaveResults() {
-    std::cout << "Save disabled. Update this function."<<std:endl;
+    std::cout << "Save disabled. Update this function." << std::endl;
     return;
     
     for(int i=0; i<inlier_ratio.size(); i++)

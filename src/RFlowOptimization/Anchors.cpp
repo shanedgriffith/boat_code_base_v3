@@ -38,8 +38,8 @@ void Anchors::WriteAnchors(){
     for(int i=0; i<anchors.size(); i++) {
         fprintf(fp, "%d, ", sections[i]);
         for(int j=0; j<anchors[i].size(); j++) {
-            if(j<anchors[i].size()-1) fprintf(fp, "%lf, ", anchor[i][j]);
-            else fprintf(fp, "%lf", anchor[i][j]);
+            if(j<anchors[i].size()-1) fprintf(fp, "%lf, ", anchors[i][j]);
+            else fprintf(fp, "%lf", anchors[i][j]);
         }
     }
     fflush(fp);
@@ -74,7 +74,7 @@ int Anchors::NumAnchors(){
 vector<double> Anchors::ShiftPose(int s, gtsam::Pose3& gtp){
     vector<double>& a = anchors[s];
     gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
-    return gta.compose(gtp); //order?
+    gtsam::Pose3 both = gta * gtp;
     return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
