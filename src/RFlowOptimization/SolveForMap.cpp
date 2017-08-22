@@ -61,8 +61,8 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     //can use double totalReprojectionError(const Cameras& cameras, const Point3& point)
     typedef gtsam::PinholeCamera<gtsam::Cal3_S2> Camera;
     typedef std::vector<Camera> Cameras;
-    for(int i=0; i<landmark.size(); i++){
-        int pidx = landmark.camera_keys[i].symbol();
+    for(int i=0; i<landmark.Length(); i++){
+        int pidx = landmark.camera_keys[i].index();
         vector<double> pose = POR.boat[pidx];
         int aidx = anchors.PoseIdxToAnchorIdx(pidx);
         vector<double> shifted = anchors.ShiftPose(aidx, pose);
