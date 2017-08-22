@@ -6,6 +6,7 @@
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Cal3_S2.h>
+#include <gtsam/slam/SmartProjectionPoseFactor.h>
 
 #include "SolveForMap.hpp"
 
