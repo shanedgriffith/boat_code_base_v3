@@ -198,8 +198,8 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         //test merge
         //  endpoints and then full merge
         bool merged = false;
-        mergedrerror[sections[i]-s-1] = erfintra.ComputeMergedRError(avgd, POR, sections[i]-1, _pftset, landmarks);
-        mergedrerror[sections[i]-s] = erfintra.ComputeMergedRError(avgd, POR, sections[i], _pftset, landmarks);
+        mergedrerror[sections[i]-s-1] = erfintra.ComputeAnchorRError(avgd, POR, sections[i]-1, _pftset, landmarks);
+        mergedrerror[sections[i]-s] = erfintra.ComputeAnchorRError(avgd, POR, sections[i], _pftset, landmarks);
         if(mergedrerror[sections[i]-s-1] < bound && mergedrerror[sections[i]-s] < bound) {
             double tot = 0;
             for(int i=0; i<mergedrerror.size(); i++) {
