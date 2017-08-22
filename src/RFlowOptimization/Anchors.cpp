@@ -16,13 +16,13 @@ using namespace std;
 const string Anchors::_anchorsname = "/anchors.txt";
 
 Anchors::Anchors(Camera& cam, string base, string date):
-_cam(cam), _filename(base + date + Anchors::_anchorsname) {
+_cam(cam), _date(date), _filename(base + date + Anchors::_anchorsname) {
         LoadAnchors();
 }
 
 
-Anchors::Anchors(Camera& cam, ParseOptimizationResults& POR, int nanchors, int nposes):
-_cam(cam), _filename(POR._base + Anchors::_anchorsname) {
+Anchors::Anchors(Camera& cam, std::string date, ParseOptimizationResults& POR, int nanchors, int nposes):
+_cam(cam), _date(date), _filename(POR._base + Anchors::_anchorsname) {
     last = POR.boat.size();
     anchors = vector<vector<double>>(nanchors, vector<double>(6,0));
     sections = vector<int>(nanchors, 0);
@@ -74,7 +74,7 @@ int Anchors::NumAnchors(){
 vector<double> Anchors::ShiftPose(int s, gtsam::Pose3& gtp){
     vector<double>& a = anchors[s];
     gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
-    gtsam::Pose3 both = gta * gtp;
+    gtsam::Pose3 comp = gta * gtp;
     return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
@@ -212,8 +212,8 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         
         //shrink the set
         if(merged) {
-            anchors.remove(anchors.begin()+i);
-            sections.remove(sections.begin()+i);
+            anchors.erase(anchors.begin()+i);
+            sections.erase(sections.begin()+i);
             std::swap(anchors[i-1], avgd);
             i--;
             countmerged++;
@@ -225,7 +225,7 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
 
 void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
     last = POR.boat.size();
-    std::vector<bool> split = SplitAnchors(landmarks, rerrors);
+    std::vector<bool> split = SplitAnchors(landmarks, rerrors, POR, _pftset);
     MergeAnchors(POR, _pftset, split, landmarks);
 }
 

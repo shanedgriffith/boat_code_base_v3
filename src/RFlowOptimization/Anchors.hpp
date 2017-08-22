@@ -28,6 +28,7 @@ private:
 
     Camera& _cam;
 public:
+    std::string _date;
     std::string _filename;
     std::vector<std::vector<double> > anchors;
     std::vector<int> sections;
@@ -35,7 +36,7 @@ public:
 
     Anchors(Camera& cam, std::string base, std::string date);
     
-    Anchors(Camera& cam, ParseOptimizationResults& POR, int nanchors, int nposes);
+    Anchors(Camera& cam, std::string base, ParseOptimizationResults& POR, int nanchors, int nposes);
 
     void ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset);
     void MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks);
