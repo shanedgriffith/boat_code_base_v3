@@ -31,8 +31,8 @@ protected:
     double ComputeNewReprojectionError(std::vector<double>& anchor, std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks, ParseFeatureTrackFile& PFT);
     
 public:
-    EvaluateRFlowAnchors(Camera& cam, std::string date):
-    EvaluateRFlow(cam, date, "") {}
+    EvaluateRFlowAnchors(Camera& cam):
+    EvaluateRFlow(cam, "", "") {}
     
     double InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<std::vector<std::vector<double> > >& landmarks={});
     double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks);

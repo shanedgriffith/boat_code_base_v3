@@ -78,7 +78,7 @@ void MultiAnchorsOptimization::Initialize() {
         double avg = ESlam.GetAverageRerror(rerrs[i-optstart]);
         AverageRerror.push_back(avg);
         
-        A.push_back(Anchors(_cam, POR[i], POR[i].boat.size(), POR[i].boat.size(), dates[i]));
+        A.push_back(Anchors(_cam, dates[i], POR[i], POR[i].boat.size(), POR[i].boat.size()));
         
         std::vector<LandmarkTrack> clset;
         cached_landmarks.push_back(clset);
@@ -199,9 +199,9 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){
         
-        EvaluateRFlowAnchors erfinter(_cam, dates[i], _map_dir);
-        EvaluateRFlowAnchors erfintraS0(_cam, "-", _map_dir);
-        EvaluateRFlowAnchors erfintraS1(_cam, dates[i], _map_dir);
+        EvaluateRFlowAnchors erfinter(_cam);
+        EvaluateRFlowAnchors erfintraS0(_cam);
+        EvaluateRFlowAnchors erfintraS1(_cam);
         
         for(int j=0; j<POR[i].boat.size(); j++){
             intra[i][j] = erfintraS1.OnlineRError(POR[i], j, _pftbase+dates[i], landmarks[i]);
