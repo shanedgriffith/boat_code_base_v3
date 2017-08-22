@@ -45,7 +45,7 @@
  boost::optional<Point3> point()
  
  */
-
+using namespace std;
 
 std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors& anchors, LandmarkTrack& landmark){
     double dimensions = 2.0; //there are two dimensions to an image observation
@@ -59,8 +59,8 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     gtsam::Cal3_S2::shared_ptr calib = _cam.GetGTSAMCam();
     
     //can use double totalReprojectionError(const Cameras& cameras, const Point3& point)
-    const gtsam::PinholeCamera<gtsam::Cal3_S2> Camera;
-    std::vector<Camera> Cameras;
+    typedef gtsam::PinholeCamera<gtsam::Cal3_S2> Camera;
+    typedef std::vector<Camera> Cameras;
     for(int i=0; i<landmark.size(); i++){
         int pidx = landmark.camera_keys[i].symbol();
         vector<double> pose = POR.boat[pidx];

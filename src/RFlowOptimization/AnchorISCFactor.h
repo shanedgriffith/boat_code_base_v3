@@ -22,9 +22,6 @@ private:
     typedef AnchorISCFactor This;
     typedef gtsam::NoiseModelFactor2<gtsam::Pose3, gtsam::Pose3> Base;
     
-//    gtsam::Pose3 _p0;
-//    gtsam::Pose3 _p1;
-//    gtsam::Pose3 _isc;
     gtsam::Pose3 _p0ISCp1I;
     gtsam::Pose3 _p0ISCp1I_inv;
 public:
@@ -33,7 +30,7 @@ public:
     AnchorISCFactor() {}
     
     AnchorISCFactor(gtsam::Key a1, gtsam::Key a2, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 isc, const gtsam::SharedNoiseModel& model):
-    Base(model, a1, a2), {
+    Base(model, a1, a2) {
         _p0ISCp1I = p0.compose(isc).compose(p1.inverse());
         _p0ISCp1I_inv = _p0ISCp1I.inverse();
     }

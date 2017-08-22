@@ -43,11 +43,11 @@ double EvaluateRFlowAnchors::ComputeNewReprojectionError(std::vector<double>& an
                     double dist = proj.distance(PFT.imagecoord[i]);
                     if(dist>badthreshold) num_bad++;
                     count++;
-                    total_error += error;
+                    total_error += dist;
                     
                     iter = j;
                     break;
-                } else if(((int) landmarks[j][3]) > ids_subset[i]){
+                } else if(((int) landmarks[j][3]) > PFT.ids[i]){
                     break;
                 }
             }
