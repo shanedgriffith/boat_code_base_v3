@@ -51,9 +51,11 @@ int main(int argc, char *argv[]) {
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
-        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
+        MultiAnchorsOptimization mao(axisptz, results_dir, pftbase, argv[2]);
+        mao.IterativeMerge();
+//        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
 //        mso.SetDryRun();
-        mso.IterativeMerge();
+//        mso.IterativeMerge();
         //RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, pftbase);
         //ra.IterativeMerge();
         break;}

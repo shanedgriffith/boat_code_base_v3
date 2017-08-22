@@ -28,7 +28,6 @@ class EvaluateRFlowAnchors: public EvaluateRFlow {
 protected:
     double ComputeReprojectionError(std::vector<std::vector<double>> p_subset);
     std::vector<std::vector<double>> GetSubsetOfPoints(const std::vector<std::vector<double> >& landmarks, const std::vector<int>& ids_subset);
-    int GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id);
     double ComputeNewReprojectionError(std::vector<double>& anchor, std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks, ParseFeatureTrackFile& PFT);
     
 public:
