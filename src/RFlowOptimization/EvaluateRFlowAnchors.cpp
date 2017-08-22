@@ -90,12 +90,12 @@ double EvaluateRFlowAnchors::OnlineRError(ParseOptimizationResults& POR, int idx
     return ComputeReprojectionError(p_subset);
 }
 
-double EvaluateRFlow::InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<std::vector<std::vector<double> > >& landmarks) {
+double EvaluateRFlowAnchors::InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<std::vector<std::vector<double> > >& landmarks) {
     vector<vector<double>> p_subset = GetSubsetOfPoints(landmarks[localization.s0], localization.pids);
     return ComputeReprojectionError(p_subset);
 }
 
-double ComputeAnchorRError(vector<double>& anchor, ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks){
+double EvaluateRFlowAnchors::ComputeAnchorRError(vector<double>& anchor, ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<std::vector<double> >& landmarks){
     ParseFeatureTrackFile PFT(_cam, _pftset, POR.ftfilenos[idx]);
     return ComputeNewReprojectionError(anchor, POR.boat[idx], landmarks, PFT);
 }
