@@ -72,12 +72,13 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     }
     
     //TODO: test.
-    // i.e., bad triangulations should return a zero point.
     // and this version of the reprojection error may or may not be within the same limits.
     sppf.triangulateSafe(Cameras);
-    gtsam::Point3 p = sppf.point();
-    double rerror_whitened = totalReprojectionError(Cameras);
-    return {p.x(), p.y(), p.z(), (double) landmark.key, rerror_whitened};
+    boost::optional<gtsam::Point3> p = sppf.point();
+    gtsam::Point3 p3D(0,0,0);
+    if(p) p3D = *p;
+    double rerror_whitened = sppf.totalReprojectionError(Cameras);
+    return {p3D.x(), p3D.y(), p3D.z(), (double) landmark.key, rerror_whitened};
 }
 
 
