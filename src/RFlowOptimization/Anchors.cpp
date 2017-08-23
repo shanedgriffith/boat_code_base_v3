@@ -182,9 +182,12 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
     
     EvaluateRFlowAnchors erfintra(_cam);
     
+    int iters=0;
     double bound=6;
     int countmerged = 0;
     for(int i=1; i<anchors.size(); i++) {
+        iters++;
+        std::cout << iters <<" iters " << i << ", " << sections[i] << std::endl;
         if(split[i] || split[i-1]) continue;
         int s = sections[i-1];
         int e = (i==anchors.size()-1)?last:sections[i+1];
@@ -201,7 +204,6 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         bool merged = false;
         mergedrerror[sections[i]-s-1] = erfintra.ComputeAnchorRError(avgd, POR, sections[i]-1, _pftset, landmarks);
         mergedrerror[sections[i]-s] = erfintra.ComputeAnchorRError(avgd, POR, sections[i], _pftset, landmarks);
-//        std:cout << "section test: endpoints: "<<sections[i]-1<<", " <<sections[i] <<", error: " << mergedrerror[sections[i]-s-1] << ", " << mergedrerror[sections[i]-s] << std::endl;
         if(mergedrerror[sections[i]-s-1] < bound && mergedrerror[sections[i]-s] < bound) {
             double tot = 0;
             for(int i=0; i<mergedrerror.size(); i++) {
@@ -209,9 +211,8 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
                 tot += mergedrerror[i];
             }
             if(tot/mergedrerror.size() < bound) merged = true;
-            
-        } else continue;
-        
+        }
+        std::cout << "section test: endpoints: "<<sections[i]-1<<", " <<sections[i] <<", error: " << mergedrerror[sections[i]-s-1] << ", " << mergedrerror[sections[i]-s] << ", merged? " << merged << std::endl;
         //shrink the set
         if(merged) {
             anchors.erase(anchors.begin()+i);

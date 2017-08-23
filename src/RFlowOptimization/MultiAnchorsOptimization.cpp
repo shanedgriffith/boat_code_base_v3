@@ -180,6 +180,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     vector<unordered_map<int, double> > intra;
+    vector<EvaluateRFlowAnchors> erfintra(dates.size());
     vector<vector<vector<double> > > landmarks;
     
     SolveForMap shiftedmap(_cam);
@@ -195,21 +196,17 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
         A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
         
+        erfintra.push_back(EvaluateRFlowAnchors(_cam));
         intra.push_back(unordered_map<int, double>());
         permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
+        
+        for(int j=0; j<POR[i].boat.size(); j++)
+            intra[i][j] = erfintra[i].OnlineRError(POR[i], j, _pftbase+dates[i], landmarks[i]);
     }
     
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){
-        
         EvaluateRFlowAnchors erfinter(_cam);
-        EvaluateRFlowAnchors erfintraS0(_cam);
-        EvaluateRFlowAnchors erfintraS1(_cam);
-        
-        for(int j=0; j<POR[i].boat.size(); j++){
-            intra[i][j] = erfintraS1.OnlineRError(POR[i], j, _pftbase+dates[i], landmarks[i]);
-        }
-        
         
         int nchanges = 0;
         int coutliers = 0;
@@ -217,19 +214,8 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             
             double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, landmarks);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], landmarks[i]);
-            intra[i][lpd.s1time] = intra_errorS1;
-            double intra_errorS0 = 0;
-            if(lpd.s0 >= optstart) {
-                int s0idx = lpd.s0-optstart;
-                auto search = intra[s0idx].find(lpd.s0time);
-                if(search != intra[s0idx].end())
-                    intra_errorS0 = search->second;
-                else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], landmarks[s0idx]);
-                    intra[s0idx][lpd.s0time] = intra_errorS0;
-                }
-            }
+            double intra_errorS1 = intra[i][lpd.s1time];
+            double intra_errorS0 = intra[lpd.s0][lpd.s0time];
             
             double newval = std::max(3.0, std::max(std::max(inter_error, intra_errorS1), intra_errorS0));
             lpd_eval[i][j] = newval;
@@ -268,8 +254,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         totchanges += nchanges;
         
         if(i > 0) {
-            erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
-            erfintraS1.PrintTots("intra " + dates[i]);
+            erfintra[i].PrintTots("intra " + dates[i]);
             erfinter.PrintTots("inter");
             std::cout << "number of (virtual) outliers: " << coutliers << std::endl;
         }
