@@ -96,10 +96,10 @@ vector<vector<double>> Anchors::GetShiftedPoses(vector<vector<double>>& poses) {
 }
 
 
-//what if the updated set has a different size? skip for now.
 void Anchors::UpdateAnchors(vector<vector<double>>& updated) {
-    for(int i=0; i<anchors.size(); i++){
-        anchors[i] = updated[i];
+    for(int i=0; i<updated.size(); i++){
+        for(int j=0; j<6; j++)
+            anchors[i][j] = updated[i][j];
     }
 }
 
@@ -110,7 +110,7 @@ int Anchors::PoseIdxToAnchorIdx(int pidx){
     while(top>bot){
         int med = bot + (top-bot)/2;
         if(sections[med] < pidx) bot = med;
-        if(sections[med] > pidx) top = med;
+        else if(sections[med] > pidx) top = med;
         else return med;
     }
     return -1;
@@ -151,6 +151,7 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
         int eidx = 0;
         if(i<sections.size()-1) eidx = sections[i+1];
         else eidx = last;
+        if(eidx-sidx <= 1) continue;
         
         double rerror = 0;
         double old = 0;
@@ -191,8 +192,8 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         
         //get the weighted average pose.
         double w = (1.0*sections[i]-s)/(e-s);
-        vector<double> avgd(anchors[i].size(), 0);
-        for(int j=0; j<anchors[i].size(); j++)
+        vector<double> avgd(6, 0);
+        for(int j=0; j<6; j++)
             avgd[j] = w*anchors[i-1][j] + (1-w)*anchors[i][j];
         
         //test merge
@@ -200,6 +201,7 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         bool merged = false;
         mergedrerror[sections[i]-s-1] = erfintra.ComputeAnchorRError(avgd, POR, sections[i]-1, _pftset, landmarks);
         mergedrerror[sections[i]-s] = erfintra.ComputeAnchorRError(avgd, POR, sections[i], _pftset, landmarks);
+        std:cout << "section test: endpoints: "<<sections[i]-1<<", " <<sections[i] <<", error: " << mergedrerror[sections[i]-s-1] << ", " << mergedrerror[sections[i]-s] << std::endl;
         if(mergedrerror[sections[i]-s-1] < bound && mergedrerror[sections[i]-s] < bound) {
             double tot = 0;
             for(int i=0; i<mergedrerror.size(); i++) {

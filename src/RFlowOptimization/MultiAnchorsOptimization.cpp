@@ -86,7 +86,8 @@ void MultiAnchorsOptimization::Initialize() {
         HopcountLog hlog(_map_dir);
         vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], nloaded);
         lpd_rerror.push_back(rerror_set);
-        lpd_eval.push_back(vector<double>(rerror_set.size(), 3.0));
+        vector<double> le(nloaded, 3.0);
+        lpd_eval.push_back(le);
         
         int ninliers = 0;
         for(int i=0; i<rerror_set.size(); i++)
@@ -127,7 +128,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
         
         for(int i=0; i<POR[survey].boat.size(); i++) {
             int aidx = A[sidx].PoseIdxToAnchorIdx(i);
-            if(i==0 || A[sidx].IsTransition(i)) {
+            if(aidx==0 || A[sidx].IsTransition(i)) {
                 //add anchor.
                 gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(aidx);
                 //if the latest survey and the first iteration, could use p1frame0 to estimate the anchor. (also, assuming that the set starts out with 1 per pose).
@@ -150,7 +151,8 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                     
                 }
                 rfFG->AddPose(survey, aidx, anc);
-                if(i>0) {
+                GTS.InitializeValue(rfFG->GetSymbol(survey, aidx), &anc);
+                if(aidx>0) {
                     //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
                     gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
@@ -165,7 +167,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                 int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].localizations[lpdcur].s0time);
                 gtsam::Pose3 p1 = POR[survey].CameraPose(i);
                 gtsam::Pose3 p0 = POR[lpdi[sidx].localizations[lpdcur].s0].CameraPose(lpdi[sidx].localizations[lpdcur].s0time);
-                double noise = pow(2, lpd_eval[i][lpdcur]/3.0) * 0.0001;
+                double noise = pow(2, lpd_eval[sidx][lpdcur]/3.0) * 0.0001;
                 rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
             }
         }
@@ -186,7 +188,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         vector<vector<double> > surveylandmarks;
         for(int j=0; j<cached_landmarks[i].size(); j++) {
             //accounts for the 3D points that are all zeros?
-            std::vector<double> shifted = shiftedmap.GetPoint(POR[j], A[i], cached_landmarks[i][j]);
+            std::vector<double> shifted = shiftedmap.GetPoint(POR[i], A[i], cached_landmarks[i][j]);
             surveylandmarks.push_back(shifted);
         }
         landmarks.push_back(surveylandmarks);

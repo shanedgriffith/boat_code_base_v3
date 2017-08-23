@@ -129,14 +129,14 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
         printf("  >A prior was not specified for the first camera pose.\n");
         printf("  >landmarks need to be observed at least twice.\n");
 
-        if(debug) {
+//        if(debug) {
             printf("\n The factor graph.\n");
             _fg->PrintFactorGraph();
             printf("\n\n\n The initial estimates.\n");
             initialEstimate.print();
             printf("Terminated with an exception.");
             std::cout << ex.what()<<std::endl;
-        }
+//        }
         exit(-1);
     }
 }

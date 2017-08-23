@@ -12,6 +12,7 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
+#include <RFlowOptimization/MultiAnchorsOptimization.hpp>
 #include <Tests/TestTransforms.hpp>
 
 using namespace std;

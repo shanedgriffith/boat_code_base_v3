@@ -69,7 +69,7 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
         vector<double> shifted = anchors.ShiftPose(aidx, pose);
         sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, calib);
         gtsam::Pose3 gtpose = POR.CameraPose(pidx);
-        cameras.push_back(Camera(gtpose, calib));
+        cameras.push_back(Camera(gtpose, *calib));
     }
     
     //TODO: test.
