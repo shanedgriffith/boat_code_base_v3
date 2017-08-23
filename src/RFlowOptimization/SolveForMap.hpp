@@ -25,6 +25,7 @@
 //this code should be independent because it will be used in multiple places, not just the optimization step.
 class SolveForMap {
 private:
+    gtsam::Pose3 VectorToPose(std::vector<double>& p);
     
     Camera& _cam;
 public:

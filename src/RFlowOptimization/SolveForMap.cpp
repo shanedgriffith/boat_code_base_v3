@@ -47,6 +47,10 @@
  */
 using namespace std;
 
+gtsam::Pose3 SolveForMap::VectorToPose(std::vector<double>& p){
+    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
 std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors& anchors, LandmarkTrack& landmark){
     double dimensions = 2.0; //there are two dimensions to an image observation
     double dev = 3.0;
@@ -68,7 +72,8 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
         int aidx = anchors.PoseIdxToAnchorIdx(pidx);
         vector<double> shifted = anchors.ShiftPose(aidx, pose);
         sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, calib);
-        gtsam::Pose3 gtpose = POR.CameraPose(pidx);
+        gtsam::Pose3 gtpose = VectorToPose(shifted);
+//        gtsam::Pose3 gtpose = POR.CameraPose(pidx);
         cameras.push_back(Camera(gtpose, *calib));
     }
     

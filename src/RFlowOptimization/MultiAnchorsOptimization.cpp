@@ -157,7 +157,8 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                     gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
                     gtsam::Pose3 btwn = last1.between(cur1);
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.01);//this model be better approximated using a chow-liu tree.
+                    //this model may be better approximated using a chow-liu tree.
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.01);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
