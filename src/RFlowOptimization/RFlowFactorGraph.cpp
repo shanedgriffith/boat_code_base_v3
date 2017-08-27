@@ -110,7 +110,7 @@ void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int survey1, int 
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    gtsam::Pose3 isc = _p0ISCp1I = p0.compose(btwn).compose(p1.inverse());
+    gtsam::Pose3 isc = p0.compose(btwn).compose(p1.inverse());
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb1, symb3, isc, btwnnoise));
 //    graph.add(AnchorISCFactor(symb1, symb3, p0, p1, isc, btwnnoise));
 }

@@ -120,6 +120,8 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
     cout << "   adding the surveys"<<endl;
     
+    int ca = 0, iscs = 0;
+    
     //add all the surveys to the graph
     LocalizePose lp(_cam);
     for(int survey=optstart; survey<dates.size(); survey++){
@@ -128,14 +130,14 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
         
         for(int i=0; i<POR[survey].boat.size(); i++) {
             int aidx = A[sidx].PoseIdxToAnchorIdx(i);
-            if(aidx==0 || A[sidx].IsTransition(i)) {
+            if(A[sidx].IsTransition(i)) {
                 //add anchor.
                 gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(aidx);
                 //if the latest survey and the first iteration, could use p1frame0 to estimate the anchor. (also, assuming that the set starts out with 1 per pose).
                 //with anchors, it would be p1frame0 = a1p1, because a0p0 would be used for localization. so the offset from a0p0
                 // p0.between(p1frame0)
                 //a1 should be p1frame0 * p1.inv();
-                if(latestsurvey && firstiter) {
+                /*if(latestsurvey && firstiter) {
                     //use an ISC to initialize the anchor if one exists..
                     int ajdx = aidx;
                     bool found = false;
@@ -148,21 +150,21 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                             anc = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0).compose(p1.inverse());
                         }
                     }
-                    
-                }
+                }*/
                 rfFG->AddPose(survey, aidx, anc);
                 GTS.InitializeValue(rfFG->GetSymbol(survey, aidx), &anc);
+                ca++;
                 if(aidx>0) {
                     //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
                     gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
                     gtsam::Pose3 btwn = last1.between(cur1);
                     //this model may be better approximated using a chow-liu tree.
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.01);
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.0001);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
-            if(lpdcur >= 0) {
+            if(lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
                 //add an AnchorISC factor between the two surveys for the ISC constraint.
                 int s0idx = lpdi[sidx].localizations[lpdcur].s0-optstart;
                 int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].localizations[lpdcur].s0time);
@@ -170,16 +172,18 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                 gtsam::Pose3 p0 = POR[lpdi[sidx].localizations[lpdcur].s0].CameraPose(lpdi[sidx].localizations[lpdcur].s0time);
                 double noise = pow(2, lpd_eval[sidx][lpdcur]/3.0) * 0.0001;
                 rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
+                iscs++;
             }
         }
     }
+    std::cout << " Factor graph of " << ca << " anchors and " << iscs << " iscs " << std::endl;
 }
 
 
 double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
-    vector<unordered_map<int, double> > intra;
+    vector<unordered_map<int, double> > intra(dates.size());
     vector<EvaluateRFlowAnchors> erfintra(dates.size());
     vector<vector<vector<double> > > landmarks;
     
@@ -196,24 +200,27 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
         A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
         
-        erfintra.push_back(EvaluateRFlowAnchors(_cam));
-        intra.push_back(unordered_map<int, double>());
         permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
         
-        for(int j=0; j<POR[i].boat.size(); j++)
-            intra[i][j] = erfintra[i].OnlineRError(POR[i], j, _pftbase+dates[i], landmarks[i]);
+        for(int j=0; j<POR[i].boat.size(); j++){
+            int aidx = A[i].PoseIdxToAnchorIdx(j);
+            vector<double> anchor = A[i].anchors[aidx];
+            intra[i][j] = erfintra[i].ComputeAnchorRError(anchor, POR[i], j, _pftbase+dates[i], landmarks[i]);
+        }
     }
     
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){
-        EvaluateRFlowAnchors erfinter(_cam);
+        EvaluateRFlow erfinter(_cam);
         
         int nchanges = 0;
         int coutliers = 0;
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, landmarks);
+            int aidx = A[lpd.s1].PoseIdxToAnchorIdx(lpd.s1time);
+            vector<double> shifted = A[lpd.s1].ShiftPose(aidx, POR[i].boat[lpd.s1time]);
+            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, shifted, landmarks, 0);
             double intra_errorS1 = intra[i][lpd.s1time];
             double intra_errorS0 = intra[lpd.s0][lpd.s0time];
             
@@ -253,14 +260,14 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         }
         totchanges += nchanges;
         
+        erfintra[i].PrintTots("intra " + dates[i]);
         if(i > 0) {
-            erfintra[i].PrintTots("intra " + dates[i]);
             erfinter.PrintTots("inter");
             std::cout << "number of (virtual) outliers: " << coutliers << std::endl;
         }
         inlier_ratio[i] = 1.0-(1.*coutliers/lpdi[i].localizations.size());
     }
-    
+    exit(1);
     //returns avg num_changes.
     if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
     return (int) (totchanges/(dates.size()-optstart));

@@ -105,21 +105,23 @@ void Anchors::UpdateAnchors(vector<vector<double>>& updated) {
 
 
 int Anchors::PoseIdxToAnchorIdx(int pidx){
+    //less elegant binary search for the case when pidx isn't in the array.
     int top = sections.size();
     int bot = 0;
-    while(top>bot){
-        int med = bot + (top-bot)/2;
+    int med = bot + (top-bot)/2;
+    while(top-bot>1){
         if(sections[med] < pidx) bot = med;
         else if(sections[med] > pidx) top = med;
         else return med;
+        med = bot + (top-bot)/2;
     }
-    return -1;
+    return med;
 }
 
 
 bool Anchors::IsTransition(int t){
     //transition if p_t and p_tm1 connect to different anchors.
-    if(t == 0) return false;
+    if(t == 0) return true;
     int a_t = PoseIdxToAnchorIdx(t);
     int a_tm1 = PoseIdxToAnchorIdx(t-1);
     return a_t != a_tm1;
@@ -145,6 +147,7 @@ gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
 std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, std::string _pftset){
     vector<bool> split(sections.size(), false);
     double mult = 2;
+    int nsplit = 0;
     EvaluateRFlowAnchors erfintra(_cam);
     for(int i=0; i<anchors.size(); i++) {
         int sidx = sections[i];
@@ -164,6 +167,7 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
         
         //expand the set
         if(rerror > mult*old){
+            nsplit++;
             split[i] = true;
             int news = (eidx-sidx)/2 + sidx;
             vector<double> a = anchors[i];
@@ -172,13 +176,13 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
             split.insert(split.begin()+i, true);
             i++;
         }
-    }
+    } std::cout <<"split " << nsplit << std::endl;
     
     return split;
 }
 
 
-void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks){
+int Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, std::vector<bool>& split, const std::vector<std::vector<double> >& landmarks){
     
     EvaluateRFlowAnchors erfintra(_cam);
     
@@ -217,19 +221,21 @@ void Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, s
         if(merged) {
             anchors.erase(anchors.begin()+i);
             sections.erase(sections.begin()+i);
+            split.erase(split.begin()+i);
             std::swap(anchors[i-1], avgd);
-            i--;
+            //i--; //Remove this for an O(n) pass. Keep it for an O(n^2) pass.
             countmerged++;
         }
     }
     std::cout << "Merged " << countmerged << std::endl;
+    return countmerged;
 }
 
 
 void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
     last = POR.boat.size();
     std::vector<bool> split = SplitAnchors(landmarks, rerrors, POR, _pftset);
-    MergeAnchors(POR, _pftset, split, landmarks);
+    while(MergeAnchors(POR, _pftset, split, landmarks)>1);
 }
 
 
