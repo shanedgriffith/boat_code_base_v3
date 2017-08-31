@@ -131,6 +131,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     };
     std::vector<double> odomvar(vals.begin()+12, vals.begin()+18);
     std::vector<double> priorvar(vals.begin(), vals.begin()+6);
+    std::vector<double> posehood(vals.begin()+18, vals.begin()+24);
     
     for(int i=1; i<100; i++) {
         int aidx = POR.auxidx[i];
@@ -146,15 +147,15 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         gtsam::Pose3 optposet2 = POR.CameraPose(i+1);
         gtsam::Pose3 optposet1 = POR.CameraPose(i);
         
-        double lodomo += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
-        double lodomo += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
-        double lprioro += GetLikelihood(optposet1, origposet1, priorvar);
-        double lfeato += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
+        double lodomo = GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
+        lodomo += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
+        double lprioro = GetLikelihood(optposet1, origposet1, priorvar);
+        double lfeato = FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
         double llhdo = lodomo + lprioro + lfeato;
         
         double sum = 0;
         for(int j=0; j<100; j++) {
-            gtsam::Pose3 sampled = SamplePose(POR.boat[i]);
+            gtsam::Pose3 sampled = SamplePose(POR.boat[i], posehood);
             double lodom = GetLikelihoodOdom(optposet0, sampled, origposet0, origposet1, odomvar);
             lodom += GetLikelihoodOdom(sampled, optposet2, origposet1, origposet2, odomvar);
             double lprior = GetLikelihood(sampled, origposet1, priorvar);
