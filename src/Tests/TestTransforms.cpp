@@ -13,7 +13,7 @@
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
-
+#include <math.h>
 
 
 using namespace std;
@@ -72,6 +72,29 @@ double TestTransforms::FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::v
 
 double TestTransforms::GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var){
     return GetLikelihood(p1.between(p2), c1.between(c2), var);
+}
+
+double TestTransforms::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
+    gtsam::Vector v = expected.localCoordinates(val);
+    double res = 1;
+    for(int i=0; i<v.size(); i++)
+        res *= pow(2*M_PI*var[i], -0.5) * exp(-0.5*pow(v[i],2)/var[i]);
+    return res;
+}
+
+double TestTransforms::FeatureF(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var){
+    double res = 1;
+    for(int i=0; i<p3.size(); i++){
+        if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
+        gtsam::Point3 p3_est = pose.transform_to(p3[i]);
+        gtsam::Point2 p2_est = _cam.ProjectToImage(p3_est);
+        res *= pow(2*M_PI*var[i], -0.5) * exp(-0.5*pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2))/var; //underflow?
+    }
+    return res;
+}
+
+double TestTransforms::GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var){
+    return GetF(p1.between(p2), c1.between(c2), var);
 }
 
 void TestTransforms::TestConstraintProportions(Camera& _cam){
