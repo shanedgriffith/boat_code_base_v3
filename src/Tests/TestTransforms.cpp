@@ -133,7 +133,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     std::vector<double> priorvar(vals.begin(), vals.begin()+6);
     std::vector<double> posehood(vals.begin()+18, vals.begin()+24);
     
-    for(int i=1; i<100; i++) {
+    for(int i=1; i<500; i++) {
         int aidx = POR.auxidx[i];
         
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
@@ -164,7 +164,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         }
         sum /= 100; //the smaller sum is, the larger the area around opt that's good, so the constraint can be looser.
         
-        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum <<"= " << lprioro << " + " << lodomo << " + " << lfeato << std::endl;
+        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum <<std::endl;//<<"= " << lprioro << " + " << lodomo << " + " << lfeato << std::endl;
     }
     
     
