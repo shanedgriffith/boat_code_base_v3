@@ -16,7 +16,7 @@
 #include <gtsam/base/Vector.h>
 #include <math.h>
 #include <Optimization/EvaluateSLAM.h>
-
+#include <random>
 
 using namespace std;
 
@@ -64,14 +64,14 @@ double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, st
 }
 
 double TestTransforms::FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var) {
-    double llhd = 0;
+    double dist = 0;
     for(int i=0; i<p3.size(); i++){
         if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
         gtsam::Point3 p3_est = pose.transform_to(p3[i]);
         gtsam::Point2 p2_est = _cam.ProjectToImage(p3_est);
-        llhd += (pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2))/var;
+        dist += pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2);
     }
-    return 0.5 * llhd;
+    return 0.5 * dist/var;
 }
 
 double TestTransforms::GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var){
@@ -103,12 +103,26 @@ double TestTransforms::GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c
     return GetF(p1.between(p2), c1.between(c2), var);
 }
 
+
+gtsam::Pose3 TestTransforms::SampleValue(double u, double v){
+    std::default_random_engine generator;
+    std::normal_distribution<double> distribution(u,v);
+    return distribution(generator);
+}
+
+gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var){
+    vector<double> p(mean.size(), 0);
+    for(int i=0; i<mean.size(); i++)
+        p[i] = SampleValue(mean[i], var[i]);
+    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
+
 void TestTransforms::TestConstraintProportions(Camera& _cam){
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
     ParseBoatSurvey PS("/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "140106");
     EvaluateSLAM ESlam(_cam, "140106", "/cs-share/dream/results_consecutive/maps/");
     vector<double> rerrs = ESlam.LoadRerrorFile();
-    
     
     std::vector<double> vals = {
         10, 10, 0.03, 0.05, 0.05, 0.1745,
@@ -117,30 +131,42 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         0.4, 0.4, 0.04, 0.025, 0.025, 0.02,
         1, 100, 100
     };
+    std::vector<double> odomvar(vals.begin()+12, vals.begin()+18);
+    std::vector<double> priorvar(vals.begin(), vals.begin()+6);
     
-    for(int i=0; i<100; i++) {
+    for(int i=1; i<100; i++) {
         int aidx = POR.auxidx[i];
         
         double llhd=0, lodom=0, lprior=0, lfeat=0;
-        gtsam::Pose3 origposet1 = PS.CameraPose(POR.auxidx[i]);
-        gtsam::Pose3 origposet2 = PS.CameraPose(POR.auxidx[i+1]);
-        gtsam::Pose3 optposet1 = POR.CameraPose(i);
-        gtsam::Pose3 optposet2 = POR.CameraPose(i+1);
-        std::vector<double> odomvar(vals.begin()+12, vals.begin()+18);
-        std::vector<double> priorvar(vals.begin(), vals.begin()+6);
-        if(i>0) {
-            gtsam::Pose3 origposet0 = PS.CameraPose(POR.auxidx[i-1]);
-            gtsam::Pose3 optposet0 = POR.CameraPose(i-1);
-            lodom += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
-        }
-        lodom += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
-        lprior += GetLikelihood(optposet1, origposet1, priorvar);
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3 = POR.GetSubsetOf3DPoints(pftf.ids);
         
-        lfeat += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
-        llhd = lodom + lprior + lfeat;
-        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << llhd <<"= " << lprior << " + " << lodom << " + " << lfeat << std::endl;
+        gtsam::Pose3 origposet0 = PS.CameraPose(POR.auxidx[i-1]);
+        gtsam::Pose3 origposet1 = PS.CameraPose(POR.auxidx[i]);
+        gtsam::Pose3 origposet2 = PS.CameraPose(POR.auxidx[i+1]);
+        
+        gtsam::Pose3 optposet0 = POR.CameraPose(i-1);
+        gtsam::Pose3 optposet2 = POR.CameraPose(i+1);
+        gtsam::Pose3 optposet1 = POR.CameraPose(i);
+        
+        lodomo += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
+        lodomo += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
+        lprioro += GetLikelihood(optposet1, origposet1, priorvar);
+        lfeato += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
+        llhdo = lodomo + lprioro + lfeato;
+        
+        double sum = 0;
+        for(int j=0; j<100; j++) {
+            gtsam::Pose3 sampled = SamplePose(POR.boat[i]);
+            lodom += GetLikelihoodOdom(optposet0, sampled, origposet0, origposet1, odomvar);
+            lodom += GetLikelihoodOdom(sampled, optposet2, origposet1, origposet2, odomvar);
+            lprior += GetLikelihood(sampled, origposet1, priorvar);
+            lfeat += FeatureLikelihood(_cam, sampled, p3, pftf.imagecoord, 1.0);
+            sum += (lodom + lprior + lfeat)-llhdo;
+        }
+        sum /= 100; //the smaller sum is, the larger the area around opt that's good, so the constraint can be looser.
+        
+        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum <<"= " << lprioro << " + " << lodomo << " + " << lfeato << std::endl;
     }
     
     

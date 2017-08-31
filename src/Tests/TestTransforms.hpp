@@ -30,6 +30,9 @@ private:
     double GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var);
     double FeatureF(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
     double GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var);
+    
+    gtsam::Pose3 SampleValue(double u, double v);
+    gtsam::Pose3 SamplePose(vector<double> mean, vector<double> var);
 public:
     TestTransforms(){}
     static void CheckBtwn(Camera& _cam);
