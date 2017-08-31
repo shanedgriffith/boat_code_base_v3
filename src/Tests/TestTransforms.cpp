@@ -95,8 +95,8 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         gtsam::Pose3 origposet2 = PS.CameraPose(i+1);
         gtsam::Pose3 optposet1 = POR.CameraPose[i];
         gtsam::Pose3 optposet2 = POR.CameraPose[i+1];
-        gtsam::vector<double> odomvar(var.begin()+12, var.begin()+18);
-        gtsam::vector<double> priorvar(var.begin(), var.begin()+6);
+        std::vector<double> odomvar(var.begin()+12, var.begin()+18);
+        std::vector<double> priorvar(var.begin(), var.begin()+6);
         if(i>0) {
             gtsam::Pose3 origposet0 = PS.CameraPose(i-1);
             gtsam::Pose3 optposet0 = POR.CameraPose[i-1];
@@ -106,7 +106,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         llhd += GetLikelihood(optposet1, origposet1, priorvar);
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3 = POR.GetSubsetOf3DPoints(pftf.ids);
-        llhd += FeatureLikelihood(_cam, optpose1, p3, pftf.imagecoord, 1.0);
+        llhd += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
         std::cout << "Likelihood["<<i<<"]: " << llhd << std::endl;
     }
     
