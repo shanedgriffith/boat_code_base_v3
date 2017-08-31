@@ -13,7 +13,9 @@
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
+#include <gtsam/base/Vector.h>
 #include <math.h>
+#include <Optimization/EvaluateSLAM.h>
 
 
 using namespace std;
@@ -51,7 +53,9 @@ void TestTransforms::TestLocalization(Camera& _cam){
 
 
 double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
-    gtsam::Vector v = expected.localCoordinates(val);
+    gtsam::Pose3 diff = val.between(expected);
+    gtsam::Pose3 zeros = gtsam::Pose3::identity();
+    gtsam::Vector v = zeros.localCoordinates(nearzero);
     double res = 0;
     for(int i=0; i<v.size(); i++)
         res += pow(v[i],2)/var[i];
@@ -75,7 +79,9 @@ double TestTransforms::GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam
 }
 
 double TestTransforms::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
-    gtsam::Vector v = expected.localCoordinates(val);
+    gtsam::Pose3 diff = val.between(expected);
+    gtsam::Pose3 zeros = gtsam::Pose3::identity();
+    gtsam::Vector v = zeros.localCoordinates(nearzero);
     double res = 1;
     for(int i=0; i<v.size(); i++)
         res *= pow(2*M_PI*var[i], -0.5) * exp(-0.5*pow(v[i],2)/var[i]);
