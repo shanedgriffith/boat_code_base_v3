@@ -27,7 +27,7 @@ private:
     double FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
     double GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var);
 public:
-    TestTransforms();
+    TestTransforms(){}
     static void CheckBtwn(Camera& _cam);
     static void TestLocalization(Camera& _cam);
     void TestConstraintProportions(Camera& _cam);

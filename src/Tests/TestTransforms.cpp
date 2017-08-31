@@ -89,7 +89,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     for(int i=0; i<10; i++) {
         int aidx = POR.auxidx[i];
         
-        double llhd=0;
+        double llhd=0, lodom=0, lprior=0, lfeat=0;
         gtsam::Pose3 origposet1 = PS.CameraPose(i);
         gtsam::Pose3 origposet2 = PS.CameraPose(i+1);
         gtsam::Pose3 optposet1 = POR.CameraPose(i);
@@ -99,14 +99,16 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         if(i>0) {
             gtsam::Pose3 origposet0 = PS.CameraPose(i-1);
             gtsam::Pose3 optposet0 = POR.CameraPose(i-1);
-            llhd += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
+            lodom += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
         }
-        llhd += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
-        llhd += GetLikelihood(optposet1, origposet1, priorvar);
+        lodom += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
+        lprior += GetLikelihood(optposet1, origposet1, priorvar);
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3 = POR.GetSubsetOf3DPoints(pftf.ids);
-        llhd += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
-        std::cout << "Likelihood["<<i<<"]: " << llhd << std::endl;
+        
+        lfeat += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
+        llhd = lodom + lprior + lfeat;
+        std::cout << "Likelihood["<<i<<"]: " << llhd <<"= " << lprior << " + " << lodom << " + " << lfeat << std::endl;
     }
     
     
