@@ -116,6 +116,13 @@ gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var)
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
+double TestTransforms::MapToConstraint(double val){
+    val /=3200;
+    if(val>0) return 0.0001/val;
+    else val *= -0.0001;
+    return val;
+}
+
 void TestTransforms::TestConstraintProportions(Camera& _cam){
     int nsamples = 100;
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
@@ -159,6 +166,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         double lprioro = GetLikelihood(optposet1, origposet1, priorvar);
         double lfeato = FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
         double llhdo = lodomo + lprioro + lfeato;
+        //<<"= " << lprioro << " + " << lodomo << " + " << lfeato << std::endl;
         
         double sum = 0;
         for(int j=0; j<nsamples; j++) {
@@ -172,7 +180,10 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         }
         sum /= 100; //the smaller sum is, the larger the area around opt that's good, so the constraint can be looser.
         
-        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum <<std::endl;//<<"= " << lprioro << " + " << lodomo << " + " << lfeato << std::endl;
+        double constraint = MapToConstraint(sum);
+        
+        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraint << std::endl;
+        
     }
     
     
