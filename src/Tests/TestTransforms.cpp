@@ -103,8 +103,7 @@ double TestTransforms::GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c
     return GetF(p1.between(p2), c1.between(c2), var);
 }
 
-
-gtsam::Pose3 TestTransforms::SampleValue(double u, double v){
+double TestTransforms::SampleValue(double u, double v){
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(u,v);
     return distribution(generator);
@@ -116,7 +115,6 @@ gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var)
         p[i] = SampleValue(mean[i], var[i]);
     return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
-
 
 void TestTransforms::TestConstraintProportions(Camera& _cam){
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
