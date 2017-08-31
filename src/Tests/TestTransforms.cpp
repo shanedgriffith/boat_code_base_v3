@@ -13,8 +13,7 @@
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
-#include <gtsam/geometry/Pose3.h>
-#include <gtsam/geometry/Point3.h>
+
 
 
 using namespace std;
@@ -63,10 +62,10 @@ double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, st
 double TestTransforms::FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var) {
     double llhd = 0;
     for(int i=0; i<p3.size(); i++){
-        if(p3[j].x()==0 && p3[j].y()==0 && p3[j].z()==0) continue;
+        if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
         gtsam::Point3 p3_est = pose.transform_to(p3[i]);
         gtsam::Point2 p2_est = _cam.ProjectToImage(p3_est);
-        llhd += (pow(imagecoord.x() - p2_est.x(),2) + pow(imagecoord.y() - p2_est.y(),2))/var;
+        llhd += (pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2))/var;
     }
     return 0.5 * llhd;
 }

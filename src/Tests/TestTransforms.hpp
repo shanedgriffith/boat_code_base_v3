@@ -18,6 +18,9 @@
 
 #include <DataTypes/Camera.hpp>
 
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Point3.h>
+
 class TestTransforms {
 private:
     double GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var);
@@ -27,7 +30,7 @@ public:
     TestTransforms();
     static void CheckBtwn(Camera& _cam);
     static void TestLocalization(Camera& _cam);
-    static void TestConstraintProportions(Camera& _cam);
+    void TestConstraintProportions(Camera& _cam);
 };
 
 

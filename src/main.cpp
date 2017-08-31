@@ -110,7 +110,8 @@ int main(int argc, char *argv[]) {
         //test transform changes
 //        TestTransforms::CheckBtwn(axisptz);
 //        TestTransforms::TestLocalization(axisptz);
-        TestTransforms::TestConstraintProportions(axisptz);
+        TestTransforms test;
+        test.TestConstraintProportions(axisptz);
         
         break;}
     }
