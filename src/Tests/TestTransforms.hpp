@@ -32,7 +32,7 @@ private:
     double GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var);
     
     gtsam::Pose3 SampleValue(double u, double v);
-    gtsam::Pose3 SamplePose(vector<double> mean, vector<double> var);
+    gtsam::Pose3 SamplePose(std::vector<double> mean, std::vector<double> var);
 public:
     TestTransforms(){}
     static void CheckBtwn(Camera& _cam);

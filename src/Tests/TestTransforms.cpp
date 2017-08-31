@@ -137,7 +137,6 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     for(int i=1; i<100; i++) {
         int aidx = POR.auxidx[i];
         
-        double llhd=0, lodom=0, lprior=0, lfeat=0;
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3 = POR.GetSubsetOf3DPoints(pftf.ids);
         
@@ -149,19 +148,19 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         gtsam::Pose3 optposet2 = POR.CameraPose(i+1);
         gtsam::Pose3 optposet1 = POR.CameraPose(i);
         
-        lodomo += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
-        lodomo += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
-        lprioro += GetLikelihood(optposet1, origposet1, priorvar);
-        lfeato += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
-        llhdo = lodomo + lprioro + lfeato;
+        double lodomo += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
+        double lodomo += GetLikelihoodOdom(optposet1, optposet2, origposet1, origposet2, odomvar);
+        double lprioro += GetLikelihood(optposet1, origposet1, priorvar);
+        double lfeato += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
+        double llhdo = lodomo + lprioro + lfeato;
         
         double sum = 0;
         for(int j=0; j<100; j++) {
             gtsam::Pose3 sampled = SamplePose(POR.boat[i]);
-            lodom += GetLikelihoodOdom(optposet0, sampled, origposet0, origposet1, odomvar);
+            double lodom = GetLikelihoodOdom(optposet0, sampled, origposet0, origposet1, odomvar);
             lodom += GetLikelihoodOdom(sampled, optposet2, origposet1, origposet2, odomvar);
-            lprior += GetLikelihood(sampled, origposet1, priorvar);
-            lfeat += FeatureLikelihood(_cam, sampled, p3, pftf.imagecoord, 1.0);
+            double lprior = GetLikelihood(sampled, origposet1, priorvar);
+            double lfeat = FeatureLikelihood(_cam, sampled, p3, pftf.imagecoord, 1.0);
             sum += (lodom + lprior + lfeat)-llhdo;
         }
         sum /= 100; //the smaller sum is, the larger the area around opt that's good, so the constraint can be looser.
