@@ -117,10 +117,12 @@ gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var)
 }
 
 void TestTransforms::TestConstraintProportions(Camera& _cam){
+    int nsamples = 100;
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
     ParseBoatSurvey PS("/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "140106");
     EvaluateSLAM ESlam(_cam, "140106", "/cs-share/dream/results_consecutive/maps/");
     vector<double> rerrs = ESlam.LoadRerrorFile();
+    vector<gtsam::Pose3> offsets(nsamples, gtsam::Pose3());
     
     std::vector<double> vals = {
         10, 10, 0.03, 0.05, 0.05, 0.1745,
@@ -132,6 +134,11 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     std::vector<double> odomvar(vals.begin()+12, vals.begin()+18);
     std::vector<double> priorvar(vals.begin(), vals.begin()+6);
     std::vector<double> posehood(vals.begin()+18, vals.begin()+24);
+    
+    vector<double> zeros(6, 0);
+    for(int j=0; j<nsamples; j++)
+        offsets[j] = SamplePose(zeros, posehood);
+    
     
     for(int i=1; i<500; i++) {
         int aidx = POR.auxidx[i];
@@ -154,8 +161,9 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         double llhdo = lodomo + lprioro + lfeato;
         
         double sum = 0;
-        for(int j=0; j<100; j++) {
-            gtsam::Pose3 sampled = SamplePose(POR.boat[i], posehood);
+        for(int j=0; j<nsamples; j++) {
+            
+            gtsam::Pose3 sampled = optposet1.compose(offsets[j]);//SamplePose(POR.boat[i], posehood);
             double lodom = GetLikelihoodOdom(optposet0, sampled, origposet0, origposet1, odomvar);
             lodom += GetLikelihoodOdom(sampled, optposet2, origposet1, origposet2, odomvar);
             double lprior = GetLikelihood(sampled, origposet1, priorvar);
