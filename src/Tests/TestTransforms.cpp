@@ -11,6 +11,11 @@
 #include <RFlowOptimization/LocalizedPoseData.hpp>
 #include <RFlowOptimization/LocalizePose.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
+#include <FileParsing/ParseFeatureTrackFile.h>
+#include <BoatSurvey/ParseBoatSurvey.hpp>
+#include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Point3.h>
+
 
 using namespace std;
 

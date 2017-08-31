@@ -184,7 +184,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     vector<unordered_map<int, double> > intra(dates.size());
-    vector<EvaluateRFlowAnchors> erfintra(dates.size());
+    vector<EvaluateRFlowAnchors> erfintra(dates.size(), EvaluateRFlowAnchors(_cam));
     vector<vector<vector<double> > > landmarks;
     
     SolveForMap shiftedmap(_cam);
@@ -211,7 +211,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){
-        EvaluateRFlow erfinter(_cam);
+        EvaluateRFlow erfinter(_cam, "", "");
         
         int nchanges = 0;
         int coutliers = 0;

@@ -108,8 +108,9 @@ int main(int argc, char *argv[]) {
 //        AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
 //        avs.VisualizeAllLabelsInOneMap();
         //test transform changes
-        TestTransforms::CheckBtwn(axisptz);
-        TestTransforms::TestLocalization(axisptz);
+//        TestTransforms::CheckBtwn(axisptz);
+//        TestTransforms::TestLocalization(axisptz);
+        TestTransforms::TestConstraintProportions(axisptz);
         
         break;}
     }
