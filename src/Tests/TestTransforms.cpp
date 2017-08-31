@@ -88,7 +88,7 @@ double TestTransforms::FeatureF(Camera& _cam, gtsam::Pose3 pose, std::vector<gts
         if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
         gtsam::Point3 p3_est = pose.transform_to(p3[i]);
         gtsam::Point2 p2_est = _cam.ProjectToImage(p3_est);
-        res *= pow(2*M_PI*var[i], -0.5) * exp(-0.5*pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2))/var; //underflow?
+        res *= pow(2*M_PI*var, -0.5) * exp(-0.5*(pow(imagecoord[i].x() - p2_est.x(),2) + pow(imagecoord[i].y() - p2_est.y(),2))/var); //underflow?
     }
     return res;
 }
@@ -100,6 +100,9 @@ double TestTransforms::GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c
 void TestTransforms::TestConstraintProportions(Camera& _cam){
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
     ParseBoatSurvey PS("/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "140106");
+    EvaluateSLAM ESlam(_cam, "140106", "/cs-share/dream/results_consecutive/maps/");
+    vector<double> rerrs = ESlam.LoadRerrorFile();
+    
     
     std::vector<double> vals = {
         10, 10, 0.03, 0.05, 0.05, 0.1745,
@@ -109,7 +112,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         1, 100, 100
     };
     
-    for(int i=0; i<10; i++) {
+    for(int i=0; i<100; i++) {
         int aidx = POR.auxidx[i];
         
         double llhd=0, lodom=0, lprior=0, lfeat=0;
@@ -131,7 +134,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         
         lfeat += FeatureLikelihood(_cam, optposet1, p3, pftf.imagecoord, 1.0);
         llhd = lodom + lprior + lfeat;
-        std::cout << "Likelihood["<<i<<"]: " << llhd <<"= " << lprior << " + " << lodom << " + " << lfeat << std::endl;
+        std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << llhd <<"= " << lprior << " + " << lodom << " + " << lfeat << std::endl;
     }
     
     
