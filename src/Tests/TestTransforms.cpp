@@ -53,7 +53,7 @@ void TestTransforms::TestLocalization(Camera& _cam){
 
 
 double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
-    gtsam::Pose3 diff = val.between(expected);
+    gtsam::Pose3 nearzero = val.between(expected);
     gtsam::Pose3 zeros = gtsam::Pose3::identity();
     gtsam::Vector v = zeros.localCoordinates(nearzero);
     double res = 0;
@@ -79,7 +79,7 @@ double TestTransforms::GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam
 }
 
 double TestTransforms::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
-    gtsam::Pose3 diff = val.between(expected);
+    gtsam::Pose3 nearzero = val.between(expected);
     gtsam::Pose3 zeros = gtsam::Pose3::identity();
     gtsam::Vector v = zeros.localCoordinates(nearzero);
     double res = 1;
