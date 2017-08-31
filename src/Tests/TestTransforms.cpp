@@ -122,14 +122,14 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         int aidx = POR.auxidx[i];
         
         double llhd=0, lodom=0, lprior=0, lfeat=0;
-        gtsam::Pose3 origposet1 = PS.CameraPose(i);
-        gtsam::Pose3 origposet2 = PS.CameraPose(i+1);
+        gtsam::Pose3 origposet1 = PS.CameraPose(POR.auxidx[i]);
+        gtsam::Pose3 origposet2 = PS.CameraPose(POR.auxidx[i+1]);
         gtsam::Pose3 optposet1 = POR.CameraPose(i);
         gtsam::Pose3 optposet2 = POR.CameraPose(i+1);
         std::vector<double> odomvar(vals.begin()+12, vals.begin()+18);
         std::vector<double> priorvar(vals.begin(), vals.begin()+6);
         if(i>0) {
-            gtsam::Pose3 origposet0 = PS.CameraPose(i-1);
+            gtsam::Pose3 origposet0 = PS.CameraPose(POR.auxidx[i-1]);
             gtsam::Pose3 optposet0 = POR.CameraPose(i-1);
             lodom += GetLikelihoodOdom(optposet0, optposet1, origposet0, origposet1, odomvar);
         }
