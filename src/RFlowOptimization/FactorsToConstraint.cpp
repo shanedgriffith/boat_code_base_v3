@@ -116,9 +116,12 @@ double FactorsToConstraint::GetConstraint(int i){
     return constraints[i];
 }
 
-void FactorsToConstraint::AcquireConstraints(){
+void FactorsToConstraint::AcquireConstraints() {
+    std::cout << " Acquiring constraints for " << _date << std::endl;
+    
     ParseOptimizationResults POR(_map_dir + _date);
     ParseBoatSurvey PS(_query_loc, _pftbase, _date);
+    constraints = vector<double>(POR.boat.size(), 0.0);
     
     for(int i=1; i<POR.boat.size(); i++) {
         int aidx = POR.auxidx[i];
@@ -152,8 +155,9 @@ void FactorsToConstraint::AcquireConstraints(){
         }
         sum /= nsamples; //the smaller sum is, the larger the area around opt that's good, so the constraint can be looser.
         
-        double constraint = MapToConstraint(sum);
+        constraints[i] = MapToConstraint(sum);
         
         //std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraint << std::endl;
     }
+    constraints[0] = constraints[1];
 }

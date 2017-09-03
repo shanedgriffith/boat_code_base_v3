@@ -21,6 +21,7 @@
 #include <FileParsing/FileParsing.hpp>
 #include <DataTypes/LandmarkTrack.h>
 #include "SolveForMap.hpp"
+#include "FactorsToConstraint.hpp"
 
 using namespace std;
 
@@ -46,6 +47,9 @@ void MultiAnchorsOptimization::IdentifyOptimizationDates(){
     for(int i=0; i<dates.size(); i++){
         ParseOptimizationResults datePOR(_map_dir + dates[i]);
         POR.push_back(datePOR);
+        FactorsToConstraint ftc(_cam, _results_dir, _pftbase, dates[i]);
+        ftc.AcquireConstraints();
+        constraints.push_back(ftc);
         if(_date.compare(dates[i])==0) break;
         if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
@@ -160,7 +164,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
                     gtsam::Pose3 btwn = last1.between(cur1);
                     //this model may be better approximated using a chow-liu tree.
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, 0.0001);
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, constraints[sidx][i]);//0.0001);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);

@@ -50,6 +50,8 @@ public:
     
     FactorsToConstraint(std::string map_dir, std::string pftbase, std::string query_loc, std::string date);
     
+    void AcquireConstraints();
+    
     double GetConstraint(int i);
 };
 

@@ -45,6 +45,7 @@ protected:
     std::vector<std::vector<double> > rerrs;
     std::vector<double> AverageRerror;
     std::vector<Anchors> A;
+    std::vector<FactorsToConstraint> constraints;
     
     void IdentifyOptimizationDates();
     void Initialize();
