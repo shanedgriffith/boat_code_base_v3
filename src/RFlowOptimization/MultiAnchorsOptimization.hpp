@@ -59,8 +59,9 @@ protected:
 public:
     std::string _map_dir;
     std::string _pftbase;
+    std::string _query_loc;
     
-    MultiAnchorsOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "");
+    MultiAnchorsOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string query_loc, std::string date = "");
     
     ~MultiAnchorsOptimization(){
         //delete(rfFG);

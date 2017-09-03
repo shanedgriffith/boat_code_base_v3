@@ -48,7 +48,7 @@ protected:
 public:
     std::string _map_dir, _date, _pftbase, _query_loc;
     
-    FactorsToConstraint(std::string map_dir, std::string pftbase, std::string query_loc, std::string date);
+    FactorsToConstraint(Camera& cam, std::string map_dir, std::string pftbase, std::string query_loc, std::string date);
     
     void AcquireConstraints();
     

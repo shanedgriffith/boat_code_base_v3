@@ -24,8 +24,8 @@
 
 using namespace std;
 
-MultiAnchorsOptimization::MultiAnchorsOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
-_map_dir(results_dir + "maps/"), _pftbase(pftbase),
+MultiAnchorsOptimization::MultiAnchorsOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string query_loc, std::string date):
+_map_dir(results_dir + "maps/"), _pftbase(pftbase), _query_loc(query_loc)
 SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
@@ -46,7 +46,7 @@ void MultiAnchorsOptimization::IdentifyOptimizationDates(){
     for(int i=0; i<dates.size(); i++){
         ParseOptimizationResults datePOR(_map_dir + dates[i]);
         POR.push_back(datePOR);
-        FactorsToConstraint ftc(_cam, _results_dir, _pftbase, dates[i]);
+        FactorsToConstraint ftc(_cam, _map_dir, _pftbase, _query_loc, dates[i]);
         ftc.AcquireConstraints();
         constraints.push_back(ftc);
         if(_date.compare(dates[i])==0) break;
