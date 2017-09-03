@@ -34,6 +34,7 @@ protected:
     double SampleValue(double u, double v);
     gtsam::Pose3 SamplePose(std::vector<double> mean, std::vector<double> var);
     double MapToConstraint(double val);
+    void GetOffsets();
     
     std::vector<double> odomvar;
     std::vector<double> priorvar;

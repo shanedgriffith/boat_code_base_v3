@@ -25,7 +25,7 @@
 using namespace std;
 
 MultiAnchorsOptimization::MultiAnchorsOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string query_loc, std::string date):
-_map_dir(results_dir + "maps/"), _pftbase(pftbase), _query_loc(query_loc)
+_map_dir(results_dir + "maps/"), _pftbase(pftbase), _query_loc(query_loc), 
 SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;

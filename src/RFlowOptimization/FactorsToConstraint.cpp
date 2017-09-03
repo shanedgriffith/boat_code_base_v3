@@ -15,8 +15,10 @@
 
 #include "FactorsToConstraint.hpp"
 
-FactorsToConstraint(Camera& cam, std::string map_dir, std::string pftbase, std::string query_loc, std::string date)
-_cam(cam), _map_dir(map_dir), _pftbase(pftbase), _query_loc(query_loc), _date(date):
+using namespace std;
+
+FactorsToConstraint::FactorsToConstraint(Camera& cam, std::string map_dir, std::string pftbase, std::string query_loc, std::string date):
+_cam(cam), _map_dir(map_dir), _pftbase(pftbase), _query_loc(query_loc), _date(date)
 {
     std::vector<double> vals = {
         10, 10, 0.03, 0.05, 0.05, 0.1745,
@@ -56,7 +58,7 @@ double FactorsToConstraint::GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, 
     return GetLikelihood(p1.between(p2), c1.between(c2), var);
 }
 
-double TestTransforms::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
+double FactorsToConstraint::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
     gtsam::Pose3 nearzero = val.between(expected);
     gtsam::Pose3 zeros = gtsam::Pose3::identity();
     gtsam::Vector v = zeros.localCoordinates(nearzero);
