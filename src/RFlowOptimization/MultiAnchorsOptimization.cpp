@@ -21,7 +21,6 @@
 #include <FileParsing/FileParsing.hpp>
 #include <DataTypes/LandmarkTrack.h>
 #include "SolveForMap.hpp"
-#include "FactorsToConstraint.hpp"
 
 using namespace std;
 
@@ -164,7 +163,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                     gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
                     gtsam::Pose3 btwn = last1.between(cur1);
                     //this model may be better approximated using a chow-liu tree.
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, constraints[sidx][i]);//0.0001);
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, constraints[sidx].GetConstraint(i));//0.0001);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);

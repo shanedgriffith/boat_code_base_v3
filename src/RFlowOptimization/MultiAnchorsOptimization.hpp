@@ -27,6 +27,7 @@
 #include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 #include "Anchors.hpp"
+#include "FactorsToConstraint.hpp"
 
 class MultiAnchorsOptimization: public SurveyOptimizer {
 protected:
