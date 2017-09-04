@@ -125,7 +125,9 @@ void FactorsToConstraint::AcquireConstraints() {
     ParseBoatSurvey PS(_query_loc, _pftbase, _date);
     constraints = vector<double>(POR.boat.size(), 0.0);
     
-    for(int i=1; i<POR.boat.size(); i++) {
+    GetOffsets();
+    
+    for(int i=1; i<POR.boat.size()-1; i++) {
         int aidx = POR.auxidx[i];
         
         ParseFeatureTrackFile pftf = PS.LoadVisualFeatureTracks(_cam, POR.ftfilenos[i]);
@@ -159,7 +161,8 @@ void FactorsToConstraint::AcquireConstraints() {
         
         constraints[i] = MapToConstraint(sum);
         
-        //std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraint << std::endl;
+        std::cout << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraints[i] << std::endl;
     }
     constraints[0] = constraints[1];
+    constraints[constraints.size()-1] = constraints[constraints.size()-2];
 }

@@ -166,14 +166,14 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
         old = old/(eidx-sidx);
         
         //expand the set
-        if(rerror > mult*old){
+        if(rerror > mult*old) {
             nsplit++;
             split[i] = true;
             int news = (eidx-sidx)/2 + sidx;
             vector<double> a = anchors[i];
             anchors.insert(anchors.begin() + i, a);
             sections.insert(sections.begin() + i, news);
-            split.insert(split.begin()+i, true);
+            split.insert(split.begin()+i+1, true);
             i++;
         }
     } std::cout <<"split " << nsplit << std::endl;
@@ -232,10 +232,25 @@ int Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, st
 }
 
 
+bool Anchors::SanityCheck(){
+    if(sections[0] != 0) return false;
+    for(int i=1; i<sections.size(); i++){
+        if(sections[i] < sections[i-1]) return false;
+    }
+}
+
+
 void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
     last = POR.boat.size();
     std::vector<bool> split = SplitAnchors(landmarks, rerrors, POR, _pftset);
     while(MergeAnchors(POR, _pftset, split, landmarks)>1);
+    if(!SanityCheck()){
+        std::cout << "Problem with the merge or split." << std::endl;
+        for(int i=0; i<sections.size(); i++){
+            std::cout << i<<": " << sections[i] << std::endl;
+        }
+        exit(-1);
+    }
 }
 
 

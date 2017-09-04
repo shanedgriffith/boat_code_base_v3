@@ -26,6 +26,8 @@ private:
     double avgbadthreshold = 15;
     static const std::string _anchorsname;
 
+    bool SanityCheck();
+    
     Camera& _cam;
 public:
     std::string _date;
