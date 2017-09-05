@@ -120,6 +120,25 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 }
 
 
+void MultiAnchorsOptimization::PrintStats(){
+    //rerror also?
+    for(int s=0; s<dates.size(); s++){
+        for(int i=0; i<100; i++){
+            int aidx = A[sidx].PoseIdxToAnchorIdx(i);
+            int lpdcur = lpdi[s].GetLPDIdx(i);
+            for(int j=0; j<A[s].anchors[aidx].size(); j++){
+                if(j==0) std::cout << aidx << ": " << A[s].anchors[aidx][j];
+                else std::cout << ", " << A[s].anchors[aidx][j];
+            }
+            std::cout << "; "<< constraints[sidx].GetConstraint(i);
+            if(lpdcur >= 0) std::cout << "; ISC " << std::endl;
+            else std::cout << std::endl;
+        }
+    }
+    
+}
+
+
 void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
     cout << "   adding the surveys"<<endl;
     
@@ -194,7 +213,6 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     for(int i=0; i<dates.size(); i++){
         vector<vector<double> > updatedanchors = GTS.GetOptimizedTrajectory(i, A[i].NumAnchors());
         A[i].UpdateAnchors(updatedanchors);
-        A[i].PrintStats();
         vector<vector<double> > surveylandmarks;
         for(int j=0; j<cached_landmarks[i].size(); j++) {
             //accounts for the 3D points that are all zeros?
@@ -212,6 +230,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             intra[i][j] = erfintra[i].ComputeAnchorRError(anchor, POR[i], j, _pftbase+dates[i], landmarks[i]);
         }
     }
+    PrintStats();
     
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){

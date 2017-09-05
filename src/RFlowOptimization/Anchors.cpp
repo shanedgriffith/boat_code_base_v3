@@ -257,13 +257,13 @@ void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, 
 }
 
 
-void Anchors::PrintStats(){
-    for(int i=0; i<100; i++){
-        for(int j=0; j<anchors[i].size(); j++){
-            if(j==0) std::cout << anchors[i][j];
-            else std::cout << ", " << anchors[i][j];
-        }
-        std::cout << std::endl;
-    }
-}
+//void Anchors::PrintStats(){
+//    for(int i=0; i<100; i++){
+//        for(int j=0; j<anchors[i].size(); j++){
+//            if(j==0) std::cout << i << ": " << anchors[i][j];
+//            else std::cout << ", " << anchors[i][j];
+//        }
+//        std::cout << std::endl;
+//    }
+//}
 

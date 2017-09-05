@@ -48,6 +48,7 @@ protected:
     std::vector<Anchors> A;
     std::vector<FactorsToConstraint> constraints;
     
+    void PrintStats();
     void IdentifyOptimizationDates();
     void Initialize();
     void BuildLandmarkSet();

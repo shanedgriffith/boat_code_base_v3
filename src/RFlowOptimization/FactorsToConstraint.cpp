@@ -161,7 +161,7 @@ void FactorsToConstraint::AcquireConstraints() {
         
         constraints[i] = MapToConstraint(sum);
         
-        std::cout << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraints[i] << std::endl;
+        //std::cout << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraints[i] << std::endl;
     }
     constraints[0] = constraints[1];
     constraints[constraints.size()-1] = constraints[constraints.size()-2];

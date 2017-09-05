@@ -26,7 +26,7 @@ private:
     double avgbadthreshold = 15;
     static const std::string _anchorsname;
 
-    bool SanityCheck();
+    void SanityCheck(std::string func);
     
     Camera& _cam;
 public:
@@ -56,7 +56,7 @@ public:
     bool IsTransition(int t);
     gtsam::Pose3 GetAnchorAsPose(int idx);
     void Print();
-    void PrintStats();
+//    void PrintStats();
 };
 
 
