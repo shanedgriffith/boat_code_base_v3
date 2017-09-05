@@ -120,21 +120,21 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 }
 
 
-void MultiAnchorsOptimization::PrintStats(){
+void MultiAnchorsOptimization::PrintStats(std::vector<std::unordered_map<int, double> >& intra, std::vector<std::unordered_map<int, double> >& inter){
     int n = 100;
-    std::vector<std::vector<int> > indicator(dates.size(), std::vector<int>(n, 0));
+    std::vector<std::vector<double> > indicator(dates.size(), std::vector<double>(n, 0));
     for(int i=0; i<dates.size(); i++){
         for(int j=0; j<POR[i].boat.size(); j++){
             int lpdcur = lpdi[i].GetLPDIdx(j);
             if(lpdcur >= 0) {
                 int s0 = lpdi[i].localizations[lpdcur].s0;
                 int s0time = lpdi[i].localizations[lpdcur].s0time;
-                if(j < n) indicator[i][j] = 1;
-                if(lpdi[i].localizations[lpdcur].s0time < n) indicator[s0][s0time] = 1;
+                double crosssurvey = inter[i][lpdcur];
+                if(j < n) indicator[i][j] = crosssurvey;
+                if(lpdi[i].localizations[lpdcur].s0time < n) indicator[s0][s0time] = crosssurvey;
             }
         }
     }
-    
     
     //rerror also?
     for(int s=0; s<dates.size(); s++){
@@ -144,8 +144,9 @@ void MultiAnchorsOptimization::PrintStats(){
                 if(j==0) std::cout << aidx << ": " << A[s].anchors[aidx][j];
                 else std::cout << ", " << A[s].anchors[aidx][j];
             }
-            std::cout << ";\t "<< constraints[s].GetConstraint(i);
-            if(indicator[s][i] > 0) std::cout << ";\t ISC " << std::endl;
+            double samesurvey = intra[s][i];
+            std::cout << ";\t "<< constraints[s].GetConstraint(i) << ";\t " << samesurvey;
+            if(indicator[s][i] > 0) std::cout << ";\t ISC " << indicator[s][i] << std::endl;
             else std::cout << std::endl;
         }
     }
@@ -220,6 +221,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
     vector<unordered_map<int, double> > intra(dates.size());
+    vector<unordered_map<int, double> > inter(dates.size());
     vector<EvaluateRFlowAnchors> erfintra(dates.size(), EvaluateRFlowAnchors(_cam));
     vector<vector<vector<double> > > landmarks;
     
@@ -244,7 +246,6 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             intra[i][j] = erfintra[i].ComputeAnchorRError(anchor, POR[i], j, _pftbase+dates[i], landmarks[i]);
         }
     }
-    PrintStats();
     
     double totchanges = 0;
     for(int i=0; i<dates.size(); i++){
@@ -258,6 +259,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             int aidx = A[lpd.s1].PoseIdxToAnchorIdx(lpd.s1time);
             vector<double> shifted = A[lpd.s1].ShiftPose(aidx, POR[i].boat[lpd.s1time]);
             double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, shifted, landmarks, 0);
+            inter[i][j] = inter_error;
             double intra_errorS1 = intra[i][lpd.s1time];
             double intra_errorS0 = intra[lpd.s0][lpd.s0time];
             
@@ -304,6 +306,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         }
         inlier_ratio[i] = 1.0-(1.*coutliers/lpdi[i].localizations.size());
     }
+    PrintStats(intra, inter);
     exit(1);
     //returns avg num_changes.
     if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes

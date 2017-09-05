@@ -48,7 +48,7 @@ protected:
     std::vector<Anchors> A;
     std::vector<FactorsToConstraint> constraints;
     
-    void PrintStats();
+    void PrintStats(std::vector<std::unordered_map<int, double> >& intra, std::vector<std::unordered_map<int, double> >& inter);
     void IdentifyOptimizationDates();
     void Initialize();
     void BuildLandmarkSet();
