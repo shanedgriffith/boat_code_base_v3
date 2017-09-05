@@ -121,17 +121,31 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 
 
 void MultiAnchorsOptimization::PrintStats(){
+    int n = 100;
+    std::vector<std::vector<int> > indicator(dates.size(), std::vector<int>(n));
+    for(int i=0; i<dates.size(); i++){
+        for(int j=0; j<POR[i].boat.size(); j++){
+            int lpdcur = lpdi[i].GetLPDIdx(j);
+            if(lpdcur >= 0) {
+                int s0 = lpdi[i].localizations[lpdcur].s0;
+                int s0time = lpdi[i].localizations[lpdcur].s0time
+                if(j < n) indicator[i][j] = 1;
+                if(lpdi[i].localizations[lpdcur].s0time < n) indicator[s0][s0time] = 1;
+            }
+        }
+    }
+    
+    
     //rerror also?
     for(int s=0; s<dates.size(); s++){
         for(int i=0; i<100; i++){
-            int aidx = A[sidx].PoseIdxToAnchorIdx(i);
-            int lpdcur = lpdi[s].GetLPDIdx(i);
+            int aidx = A[s].PoseIdxToAnchorIdx(i);
             for(int j=0; j<A[s].anchors[aidx].size(); j++){
                 if(j==0) std::cout << aidx << ": " << A[s].anchors[aidx][j];
                 else std::cout << ", " << A[s].anchors[aidx][j];
             }
-            std::cout << "; "<< constraints[sidx].GetConstraint(i);
-            if(lpdcur >= 0) std::cout << "; ISC " << std::endl;
+            std::cout << ";\t "<< constraints[s].GetConstraint(i);
+            if(indicator[s][i] >= 0) std::cout << ";\t ISC " << std::endl;
             else std::cout << std::endl;
         }
     }
