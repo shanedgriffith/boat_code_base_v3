@@ -56,6 +56,7 @@ public:
     bool IsTransition(int t);
     gtsam::Pose3 GetAnchorAsPose(int idx);
     void Print();
+    void PrintStats();
 };
 
 

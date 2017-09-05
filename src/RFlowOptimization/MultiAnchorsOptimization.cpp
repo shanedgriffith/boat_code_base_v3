@@ -194,6 +194,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     for(int i=0; i<dates.size(); i++){
         vector<vector<double> > updatedanchors = GTS.GetOptimizedTrajectory(i, A[i].NumAnchors());
         A[i].UpdateAnchors(updatedanchors);
+        A[i].PrintStats();
         vector<vector<double> > surveylandmarks;
         for(int j=0; j<cached_landmarks[i].size(); j++) {
             //accounts for the 3D points that are all zeros?
@@ -201,7 +202,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
             surveylandmarks.push_back(shifted);
         }
         landmarks.push_back(surveylandmarks);
-        A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
+//        A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
         
         permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
         

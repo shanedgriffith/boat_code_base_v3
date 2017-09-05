@@ -151,9 +151,8 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
     EvaluateRFlowAnchors erfintra(_cam);
     for(int i=0; i<anchors.size(); i++) {
         int sidx = sections[i];
-        int eidx = 0;
+        int eidx = last;
         if(i<sections.size()-1) eidx = sections[i+1];
-        else eidx = last;
         if(eidx-sidx <= 1) continue;
         
         double rerror = 0;
@@ -171,13 +170,14 @@ std::vector<bool> Anchors::SplitAnchors(const std::vector<std::vector<double> >&
             split[i] = true;
             int news = (eidx-sidx)/2 + sidx;
             vector<double> a = anchors[i];
-            anchors.insert(anchors.begin() + i, a);
-            sections.insert(sections.begin() + i, news);
+            anchors.insert(anchors.begin() + i+1, a);
+            sections.insert(sections.begin() + i+1, news);
             split.insert(split.begin()+i+1, true);
             i++;
         }
     } std::cout <<"split " << nsplit << std::endl;
     
+    //SanityCheck();
     return split;
 }
 
@@ -226,26 +226,22 @@ int Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, st
             //i--; //Remove this for an O(n) pass. Keep it for an O(n^2) pass.
             countmerged++;
         }
-    }
-    std::cout << "Merged " << countmerged << std::endl;
+    } std::cout << "Merged " << countmerged << std::endl;
+    
+    //SanityCheck();
     return countmerged;
 }
 
 
-bool Anchors::SanityCheck(){
-    if(sections[0] != 0) return false;
-    for(int i=1; i<sections.size(); i++){
-        if(sections[i] < sections[i-1]) return false;
+void Anchors::SanityCheck(std::string func){
+    bool good=true;;
+    if(sections[0] != 0) good = false;
+    for(int i=1; good && i<sections.size(); i++){
+        if(sections[i] < sections[i-1])
+            good=false;
     }
-}
-
-
-void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
-    last = POR.boat.size();
-    std::vector<bool> split = SplitAnchors(landmarks, rerrors, POR, _pftset);
-    while(MergeAnchors(POR, _pftset, split, landmarks)>1);
-    if(!SanityCheck()){
-        std::cout << "Problem with the merge or split." << std::endl;
+    if(!good){
+        std::cout << "Problem with " << func << std::endl;
         for(int i=0; i<sections.size(); i++){
             std::cout << i<<": " << sections[i] << std::endl;
         }
@@ -254,52 +250,20 @@ void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, 
 }
 
 
-
-
-/*
-void Anchors::FindSections(Camera& _cam){
-    //a section is a discontinuity in the optimized trajectory (loss of visual feature tracks, high rerror, ).
-    //can I find all the discontinuities in the rerror information? Aren't they zero if the visual feature tracks are lost?
-    if(sections.size() > 0) {
-        std::cout << "Anchors::FindSections(): Already got sections for " << _date << std::endl;
-        exit(1);
-    }
-
-    vector<double> rerrs = EvaluateSLAM::LoadRerrorFile(_base, _date);
-    ParseOptimizationResults por(_base + _date);
-    if(rerrs.size() != por.boat.size()) {
-        std::cout << "Anchors::FindSections() Size issue." << std::endl;
-        std::cout << "POR File in dir " << _base << _date << std::endl;
-        exit(-1);
-    }
-    sections.push_back(0);
-    for(int i=0; i<por.boat.size(); i++) {
-        ParseFeatureTrackFile pftf = LoadFTF(_cam, por, i);
-        ModifyFTF(pftf, por);
-        int persistent_set_size = ProcessNewPoints(i, pftf);
-        if(persistent_set_size < 8) {
-            if(sections[sections.size()-1] < i-1) {
-                sections.push_back(i);
-                std::cout << "Anchor["<<sections.size()-1<<"] at section "<< i << " due to the loss of visual feature tracking. number of persistent visual features: " << persistent_set_size << std::endl;
-            }
-        } else if(rerrs[i] == 0 || rerrs[i] > avgbadthreshold) {
-            if(sections[sections.size()-1]<i-1){
-                sections.push_back(i);
-                std::cout << "Anchor["<<sections.size()-1<<"] at section "<< i <<" due to the high (or zero) reprojection error of " << rerrs[i] << std::endl;
-            }
-            std::cout << "reprojection error " << rerrs[i] << std::endl;
-        }
-    }
-
-    int last = por.boat.size()-1;
-    for(int i=sections.size()-1; i>=0; i--){
-        int diff = last - sections[i];
-        last = sections[i];
-        if(diff < 5) sections.erase(sections.begin()+i, sections.begin()+i+1);
-    }
-
-    anchor = std::vector<std::vector<double>>(sections.size(), std::vector<double>(6, 0.0));
-    std::cout << "Found " << sections.size() << " sections"<< std::endl;
+void Anchors::ModifyAnchors(const std::vector<std::vector<double> >& landmarks, std::vector<double>& rerrors, ParseOptimizationResults& POR, string _pftset){
+    last = POR.boat.size();
+    std::vector<bool> split = SplitAnchors(landmarks, rerrors, POR, _pftset);
+    while(MergeAnchors(POR, _pftset, split, landmarks)>1);
 }
 
-*/
+
+void Anchors::PrintStats(){
+    for(int i=0; i<100; i++){
+        for(int j=0; j<anchors[i].size(); j++){
+            if(j==0) std::cout << anchors[i][j];
+            else std::cout << ", " << anchors[i][j];
+        }
+        std::cout << std::endl;
+    }
+}
+
