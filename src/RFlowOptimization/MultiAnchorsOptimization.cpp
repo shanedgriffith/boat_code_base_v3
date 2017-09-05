@@ -122,13 +122,13 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
 
 void MultiAnchorsOptimization::PrintStats(){
     int n = 100;
-    std::vector<std::vector<int> > indicator(dates.size(), std::vector<int>(n));
+    std::vector<std::vector<int> > indicator(dates.size(), std::vector<int>(n, 0));
     for(int i=0; i<dates.size(); i++){
         for(int j=0; j<POR[i].boat.size(); j++){
             int lpdcur = lpdi[i].GetLPDIdx(j);
             if(lpdcur >= 0) {
                 int s0 = lpdi[i].localizations[lpdcur].s0;
-                int s0time = lpdi[i].localizations[lpdcur].s0time
+                int s0time = lpdi[i].localizations[lpdcur].s0time;
                 if(j < n) indicator[i][j] = 1;
                 if(lpdi[i].localizations[lpdcur].s0time < n) indicator[s0][s0time] = 1;
             }
@@ -145,7 +145,7 @@ void MultiAnchorsOptimization::PrintStats(){
                 else std::cout << ", " << A[s].anchors[aidx][j];
             }
             std::cout << ";\t "<< constraints[s].GetConstraint(i);
-            if(indicator[s][i] >= 0) std::cout << ";\t ISC " << std::endl;
+            if(indicator[s][i] > 0) std::cout << ";\t ISC " << std::endl;
             else std::cout << std::endl;
         }
     }
