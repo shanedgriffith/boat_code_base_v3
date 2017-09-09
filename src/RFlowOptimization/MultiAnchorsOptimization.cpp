@@ -170,6 +170,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
             if(A[sidx].IsTransition(i)) {
                 //add anchor.
                 gtsam::Pose3 anc = A[sidx].GetAnchorAsPose(aidx);
+                //gtsam::Pose3 anc = gtsam::Pose3(gtsam::Rot3::ypr(0., 0., 0.), gtsam::Point3(0., 0., 0.));
                 //if the latest survey and the first iteration, could use p1frame0 to estimate the anchor. (also, assuming that the set starts out with 1 per pose).
                 //with anchors, it would be p1frame0 = a1p1, because a0p0 would be used for localization. so the offset from a0p0
                 // p0.between(p1frame0)
@@ -188,16 +189,18 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                         }
                     }
                 }*/
-                rfFG->AddPose(survey, aidx, anc);
+//                int lpdcur = lpdi[sidx].GetLPDIdx(i);
+//                anc = gtsam::Pose3(gtsam::Rot3::ypr(0., 0., 0.), gtsam::Point3(0., 0., 0.));
+//                if(lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0){
+//                    anc = A[sidx].GetAnchorAsPose(aidx);
+//                }
+                
+                rfFG->AddPose(survey, aidx, anc, true);
                 GTS.InitializeValue(rfFG->GetSymbol(survey, aidx), &anc);
                 ca++;
                 if(aidx>0) {
                     //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
-                    gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
-                    gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
-                    gtsam::Pose3 btwn = last1.between(cur1);
-                    //this model may be better approximated using a chow-liu tree.
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, last1, cur1, btwn, constraints[sidx].GetConstraint(i));//0.0001);
+                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, gtsam::Pose3::identity(), 0.0001);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
@@ -207,7 +210,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                 int a0idx = A[s0idx].PoseIdxToAnchorIdx(lpdi[sidx].localizations[lpdcur].s0time);
                 gtsam::Pose3 p1 = POR[survey].CameraPose(i);
                 gtsam::Pose3 p0 = POR[lpdi[sidx].localizations[lpdcur].s0].CameraPose(lpdi[sidx].localizations[lpdcur].s0time);
-                double noise = pow(2, lpd_eval[sidx][lpdcur]/3.0) * 0.0001;
+                double noise = 0.0002;//pow(2, lpd_eval[sidx][lpdcur]/3.0) * 0.0001;
                 rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
                 iscs++;
             }
@@ -224,6 +227,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
     vector<unordered_map<int, double> > inter(dates.size());
     vector<EvaluateRFlowAnchors> erfintra(dates.size(), EvaluateRFlowAnchors(_cam));
     vector<vector<vector<double> > > landmarks;
+    
     
     SolveForMap shiftedmap(_cam);
     for(int i=0; i<dates.size(); i++){
@@ -288,10 +292,10 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
                (inlier && lpd_rerror[i][j] < 0) ||
                (!inlier && lpd_rerror[i][j] > 0)) {
                 nchanges++;
-                if(!firstiter){
+            /*    if(!firstiter){
                     if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
                     else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                }
+                }*/
             }
             
             lpd_rerror[i][j] = 1;
@@ -306,8 +310,8 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         }
         inlier_ratio[i] = 1.0-(1.*coutliers/lpdi[i].localizations.size());
     }
-    PrintStats(intra, inter);
-    exit(1);
+//    PrintStats(intra, inter);
+//    exit(1);
     //returns avg num_changes.
     if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
     return (int) (totchanges/(dates.size()-optstart));

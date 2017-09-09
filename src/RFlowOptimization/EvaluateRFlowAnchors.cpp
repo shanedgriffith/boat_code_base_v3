@@ -27,6 +27,8 @@ double EvaluateRFlowAnchors::ComputeNewReprojectionError(std::vector<double>& an
     gtsam::Pose3 atf(gtsam::Rot3::ypr(anchor[5],anchor[4],anchor[3]), gtsam::Point3(anchor[0],anchor[1],anchor[2]));
     gtsam::Pose3 ptf(gtsam::Rot3::ypr(pose[5],pose[4],pose[3]), gtsam::Point3(pose[0],pose[1],pose[2]));
     gtsam::Pose3 shiftedp = atf.compose(ptf);
+    gtsam::Pose3 comp = shiftedp;
+    std::cout << "composed: " << comp.x() <<","<< comp.y()<<","<< comp.z()<<","<< comp.rotation().roll()<<","<< comp.rotation().pitch()<<","<< comp.rotation().yaw() << std::endl;
     
     double total_error=0, count=0, num_bad=0;
     int iter = -1;

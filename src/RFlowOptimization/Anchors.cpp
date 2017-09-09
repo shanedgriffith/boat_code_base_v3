@@ -140,7 +140,7 @@ void Anchors::Print() {
 
 gtsam::Pose3 Anchors::GetAnchorAsPose(int idx){
     vector<double>& anc = anchors[idx];
-    return gtsam::Pose3(gtsam::Rot3::RzRyRx(anc[3],anc[4],anc[5]), gtsam::Point3(anc[0],anc[1],anc[2]));
+    return gtsam::Pose3(gtsam::Rot3::ypr(anc[5], anc[4], anc[3]), gtsam::Point3(anc[0],anc[1],anc[2]));
 }
 
 
@@ -191,7 +191,7 @@ int Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, st
     int countmerged = 0;
     for(int i=1; i<anchors.size(); i++) {
         iters++;
-        std::cout << iters <<" iters " << i << ", " << sections[i] << std::endl;
+//        std::cout << iters <<" iters " << i << ", " << sections[i] << std::endl;
         if(split[i] || split[i-1]) continue;
         int s = sections[i-1];
         int e = (i==anchors.size()-1)?last:sections[i+1];
@@ -216,7 +216,7 @@ int Anchors::MergeAnchors(ParseOptimizationResults& POR, std::string _pftset, st
             }
             if(tot/mergedrerror.size() < bound) merged = true;
         }
-        std::cout << "section test: endpoints: "<<sections[i]-1<<", " <<sections[i] <<", error: " << mergedrerror[sections[i]-s-1] << ", " << mergedrerror[sections[i]-s] << ", merged? " << merged << std::endl;
+//        std::cout << "section test: endpoints: "<<sections[i]-1<<", " <<sections[i] <<", error: " << mergedrerror[sections[i]-s-1] << ", " << mergedrerror[sections[i]-s] << ", merged? " << merged << std::endl;
         //shrink the set
         if(merged) {
             anchors.erase(anchors.begin()+i);

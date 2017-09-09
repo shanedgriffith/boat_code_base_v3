@@ -100,6 +100,8 @@ double FactorsToConstraint::MapToConstraint(double val){
     val /=3200;
     if(val>0) return 0.0001/val;
     else val *= -0.0001;
+//    val = std::min(val, 0.01);
+//    val = std::max(val, 0.000001);
     return val;
 }
 
