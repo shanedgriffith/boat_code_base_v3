@@ -68,37 +68,26 @@ public:
         Pose3 nearzero;
         if(Ha0) {
             //maybe the gradient could be computed for each one separately to simplify computing H?
+            //presumably, although the min shifts with the changing variable values, the cost field
+            //and the trajectory towards the min are similar over the iterations.
             
             Pose3 est_a0 = a1.compose(p1).compose(_tf_p0_to_p1frame0.inverse()).compose(p0.inverse());
-            a0.between(est_a0, Ha0);
+            a0.between(est_a0, *Ha0);
             
             Pose3 est_a1 = a0.compose(p0).compose(_tf_p0_to_p1frame0).compose(p1.inverse());
-            a1.between(est_a1, Ha1);
+            a1.between(est_a1, *Ha1);
             
             Pose3 est_p0 = a0.inverse().compose(a1).compose(p1).compose(_tf_p0_to_p1frame0.inverse());
-            p0.between(est_p0, Hp0);
+            p0.between(est_p0, *Hp0);
             
             Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
-            p1.between(est_p1, Hp1);
-            
-            
-            
-//            gtsam::Matrix dH1, dH2, dHo;
-//            Pose3 comp1 = a1.compose(_p1, Ha1);
-//            Pose3 comp2 = a2.compose(p2, Ha2, Hp2);
-//            Pose3 offguess = comp1.between(comp2, dH1, dH2);
-//            nearzero = offguess.between(_offset, dHo);
-//            //            nearzero = ((a1.compose(_p1, Ha1)).between((a2.compose(_p2, Ha2)), dH1, dH2)).between(_offset, dHo);
-//            
-//            *Ha0 = dHo * dH1 * (*Ha0);
-//            *Ha1 = dHo * dH2 * (*Ha1);
-//            *Hp0 = dHo * dH2 * (*Hp0);
-//            *Hp1 = dHo * dH2 * (*Hp1);
+            nearzero = p1.between(est_p1, *Hp1);
         } else {
-//            nearzero = ((a1.compose(_p1)).between((a2.compose(p2)))).between(_offset);
+            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0)
+            nearzero = p1.between(est_p1);
         }
-//        gtsam::Pose3 zeros = gtsam::Pose3::identity(); //needed?
-//        return zeros.localCoordinates(nearzero);
+        gtsam::Pose3 zeros = gtsam::Pose3::identity();
+        return zeros.localCoordinates(nearzero);
     }
 };
 
