@@ -44,7 +44,7 @@ protected:
     std::vector<std::vector<double> > rerrs;
     std::vector<double> AverageRerror;
     
-    gtsam::Pose3 ComputeP1frame0(std::vector<double>& a0, std::vector<double>& a1, std::vector<double>& p1);
+    std::vector<double> ComputeP1frame0(std::vector<double>& a0, std::vector<double>& a1, std::vector<double>& p1);
     
     void IdentifyOptimizationDates();
     void Initialize();

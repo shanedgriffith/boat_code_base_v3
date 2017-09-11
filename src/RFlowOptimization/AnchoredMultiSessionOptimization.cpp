@@ -126,7 +126,8 @@ void AnchoredMultiSessionOptimization::ConstructFactorGraph() {
         GTS.InitializeValue(rfFG->GetSymbol(survey, POR[survey].boat.size()), &anc);
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
-            rfFG->AddPose(survey, i, traj);
+            if(i==0) rfFG->AddPose(survey, i, traj, true);
+            else rfFG->AddPose(survey, i, traj, false);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
             
             if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
@@ -163,11 +164,11 @@ void AnchoredMultiSessionOptimization::AddAllTheLandmarkTracks(){
     }
 }
 
-gtsam::Pose3 AnchoredMultiSessionOptimization::ComputeP1frame0(std::vector<double>& a0, std::vector<double>& a1, std::vector<double>& p1){
+std::vector<double> AnchoredMultiSessionOptimization::ComputeP1frame0(std::vector<double>& a0, std::vector<double>& a1, std::vector<double>& p1){
     gtsam::Pose3 ga0(gtsam::Rot3::ypr(a0[5],a0[4],a0[3]), gtsam::Point3(a0[0],a0[1],a0[2]));
-    gtsam::Pose3 gp1(gtsam::Rot3::ypr(p1[5],p1[4],p1[3]), gtsam::Point3(p1[0],p1[1],p1[2]));
     gtsam::Pose3 ga1(gtsam::Rot3::ypr(a1[5],a1[4],a1[3]), gtsam::Point3(a1[0],a1[1],a1[2]));
-    gtsam::Pose3 p1frame0 = ga0.inv() * ga1 * gp1;
+    gtsam::Pose3 gp1(gtsam::Rot3::ypr(p1[5],p1[4],p1[3]), gtsam::Point3(p1[0],p1[1],p1[2]));
+    gtsam::Pose3 p1frame0 = ga0.inverse() * ga1 * gp1;
     return {p1frame0.x(), p1frame0.y(), p1frame0.z(), p1frame0.rotation().roll(), p1frame0.rotation().pitch(), p1frame0.rotation().yaw()};
 }
 

@@ -106,7 +106,7 @@ bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     return true;
 }
 
-void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int survey1, int anum1, pnum1, gtsam::Pose3 btwn, double val){
+void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int survey1, int anum1, int pnum1, gtsam::Pose3 btwn, double val){
     //anchor numbering should start from POR.size().
     gtsam::Symbol symba0 = GetSymbol(survey0, anum0);
     gtsam::Symbol symbp0 = GetSymbol(survey0, pnum0);
@@ -115,7 +115,7 @@ void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int su
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(gtsam::AnchorFactor<gtsam::Pose3>(symba0, symbp0, symba1, symbp1, btwn, btwnnoise));
+    graph.add(AnchorFactor<gtsam::Pose3>(symba0, symbp0, symba1, symbp1, btwn, btwnnoise));
 }
 
 void RFlowFactorGraph::BuildAndAddBetweenFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){

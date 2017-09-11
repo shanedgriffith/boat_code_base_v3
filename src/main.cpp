@@ -13,6 +13,7 @@
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
 #include <RFlowOptimization/MultiAnchorsOptimization.hpp>
+#include <RFlowOptimization/AnchoredMultiSessionOptimization.hpp>
 #include <Tests/TestTransforms.hpp>
 
 using namespace std;
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
-        MultiAnchorsOptimization mao(axisptz, results_dir, pftbase, query_loc, argv[2]);
+        AnchoredMultiSessionOptimization mao(axisptz, results_dir, pftbase, query_loc, argv[2]);
         mao.IterativeMerge();
 //        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
 //        mso.SetDryRun();

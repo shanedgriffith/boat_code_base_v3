@@ -83,7 +83,7 @@ public:
             Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
             nearzero = p1.between(est_p1, *Hp1);
         } else {
-            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0)
+            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
             nearzero = p1.between(est_p1);
         }
         gtsam::Pose3 zeros = gtsam::Pose3::identity();
