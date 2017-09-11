@@ -200,7 +200,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                 ca++;
                 if(aidx>0) {
                     //add an AnchorISC factor between the consecutive anchors for the odometry constraint.
-                    rfFG->AddAnchorFactor(sidx, aidx-1, sidx, aidx, gtsam::Pose3::identity(), 0.0001);
+                    rfFG->AddCustomBTWNFactor(sidx, aidx-1, sidx, aidx, gtsam::Pose3::identity(), 0.0001);
                 }
             }
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
@@ -211,7 +211,7 @@ void MultiAnchorsOptimization::ConstructFactorGraph(bool firstiter) {
                 gtsam::Pose3 p1 = POR[survey].CameraPose(i);
                 gtsam::Pose3 p0 = POR[lpdi[sidx].localizations[lpdcur].s0].CameraPose(lpdi[sidx].localizations[lpdcur].s0time);
                 double noise = 0.0002;//pow(2, lpd_eval[sidx][lpdcur]/3.0) * 0.0001;
-                rfFG->AddAnchorFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
+                rfFG->BuildAndAddBetweenFactor(s0idx, a0idx, sidx, aidx, p0, p1, lpdi[sidx].localizations[lpdcur].GetTFP0ToP1F0(), noise);
                 iscs++;
             }
         }

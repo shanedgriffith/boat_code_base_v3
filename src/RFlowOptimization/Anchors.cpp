@@ -73,14 +73,14 @@ int Anchors::NumAnchors(){
 
 vector<double> Anchors::ShiftPose(int s, gtsam::Pose3& gtp){
     vector<double>& a = anchors[s];
-    gtsam::Pose3 gta(gtsam::Rot3::RzRyRx(a[3],a[4],a[5]), gtsam::Point3(a[0],a[1],a[2]));
+    gtsam::Pose3 gta(gtsam::Rot3::ypr(a[5],a[4],a[3]), gtsam::Point3(a[0],a[1],a[2]));
     gtsam::Pose3 comp = gta * gtp;
     return {comp.x(), comp.y(), comp.z(), comp.rotation().roll(), comp.rotation().pitch(), comp.rotation().yaw()};
 }
 
 
 vector<double> Anchors::ShiftPose(int s, vector<double>& p){
-    gtsam::Pose3 gtp(gtsam::Rot3::RzRyRx(p[3],p[4],p[5]), gtsam::Point3(p[0],p[1],p[2]));
+    gtsam::Pose3 gtp(gtsam::Rot3::ypr(p[5],p[4],p[3]), gtsam::Point3(p[0],p[1],p[2]));
     return ShiftPose(s, gtp);
 }
 

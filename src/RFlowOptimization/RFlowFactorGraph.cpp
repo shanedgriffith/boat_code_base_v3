@@ -22,6 +22,7 @@
 
 #include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
+#include "AnchorFactor.hpp"
 
 void RFlowFactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v60;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
@@ -105,18 +106,21 @@ bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     return true;
 }
 
-void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 btwn, double val){
-    gtsam::Symbol symb1 = GetSymbol(survey0, anum0);
-    gtsam::Symbol symb3 = GetSymbol(survey1, anum1);
+void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int survey1, int anum1, pnum1, gtsam::Pose3 btwn, double val){
+    //anchor numbering should start from POR.size().
+    gtsam::Symbol symba0 = GetSymbol(survey0, anum0);
+    gtsam::Symbol symbp0 = GetSymbol(survey0, pnum0);
+    gtsam::Symbol symba1 = GetSymbol(survey1, anum1);
+    gtsam::Symbol symbp1 = GetSymbol(survey1, pnum1);
     gtsam::Vector6 v6;
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb1, symb3, btwn, btwnnoise));
+    graph.add(gtsam::AnchorFactor<gtsam::Pose3>(symba0, symbp0, symba1, symbp1, btwn, btwnnoise));
 }
 
-void RFlowFactorGraph::BuildAndAddAnchorFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){
+void RFlowFactorGraph::BuildAndAddBetweenFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){
     gtsam::Pose3 isc = p0.compose(btwn).compose(p1.inverse());
-    AddAnchorFactor(survey0, anum0, survey1, anum1, isc, val);
+    AddCustomBTWNFactor(survey0, anum0, survey1, anum1, isc, val);
 }
 
 void RFlowFactorGraph::AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers) {
