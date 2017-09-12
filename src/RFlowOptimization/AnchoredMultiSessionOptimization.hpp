@@ -1,7 +1,7 @@
 /*
  * AnchoredMultiSessionOptimization.hpp
  *
- *  Created on: ~June 28, 2017
+ *  Created on: ~Sep 10, 2017
  *      Author: shane
  */
 
