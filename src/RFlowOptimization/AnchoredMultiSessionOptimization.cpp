@@ -172,7 +172,6 @@ std::vector<double> AnchoredMultiSessionOptimization::ComputeP1frame0(std::vecto
     return {p1frame0.x(), p1frame0.y(), p1frame0.z(), p1frame0.rotation().roll(), p1frame0.rotation().pitch(), p1frame0.rotation().yaw()};
 }
 
-
 double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
