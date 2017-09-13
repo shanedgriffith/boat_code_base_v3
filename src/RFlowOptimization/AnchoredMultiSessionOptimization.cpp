@@ -191,7 +191,7 @@ double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     for(int i=optstart; i<dates.size(); i++){
         int sidx = i-optstart;
         rfFG->ChangeLandmarkSet(sidx);
-        poses.push_back(GTS.GetOptimizedTrajectory(i, 500));//POR[i].boat.size()));
+        poses.push_back(GTS.GetOptimizedTrajectory(i, 501));//POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
         
         intra.push_back(unordered_map<int, double>());
@@ -212,7 +212,8 @@ double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
             if(lpd.s0time >= 500 || lpd.s1time >= 500) continue;
             
-            vector<double> p1frame0 = ComputeP1frame0(poses[lpd.s0][POR[lpd.s0].boat.size()], poses[lpd.s1][POR[sidx].boat.size()], poses[sidx][lpd.s1time]);
+            vector<double> p1frame0 = ComputeP1frame0(poses[lpd.s0][500], poses[lpd.s1][500], poses[sidx][lpd.s1time]);
+//            vector<double> p1frame0 = ComputeP1frame0(poses[lpd.s0][POR[lpd.s0].boat.size()], poses[lpd.s1][POR[sidx].boat.size()], poses[sidx][lpd.s1time]);
             double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, p1frame0, landmarks, 0);
 //            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
             double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
