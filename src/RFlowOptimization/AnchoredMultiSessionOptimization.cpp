@@ -121,6 +121,11 @@ void AnchoredMultiSessionOptimization::ConstructFactorGraph() {
         bool latestsurvey = survey == POR.size()-1;
         int sidx = survey - optstart;
         
+        gtsam::Pose3 anc = gtsam::Pose3(gtsam::Rot3::ypr(0., 0., 0.), gtsam::Point3(0., 0., 0.));
+        if(survey==0) rfFG->AddPose(survey, POR[survey].boat.size(), anc, true);
+        else rfFG->AddPose(survey, POR[survey].boat.size(), anc, false);
+        GTS.InitializeValue(rfFG->GetSymbol(survey, POR[survey].boat.size()), &anc);
+        
         LocalizePose lp(_cam);
         for(int i=0; i<500; i++){ //POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
@@ -128,7 +133,6 @@ void AnchoredMultiSessionOptimization::ConstructFactorGraph() {
             if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
                 traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
             }
-            //        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
             rfFG->AddPose(survey, i, traj);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
             
@@ -148,10 +152,13 @@ void AnchoredMultiSessionOptimization::AddLocalizations(bool firstiter){
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             if(lpd_rerror[i][j] < 0) continue;
-            if(lpd.s0time >= 500 || lpd.s1time >= 500) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
+            if(lpd.s0time >= 500 || lpd.s1time >= 500) continue;
             double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-            rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
+            int anum0 = POR[lpd.s0].boat.size();
+            int anum1 = POR[lpd.s1].boat.size();
+            rfFG->AddAnchorFactor(lpd.s0, anum0, lpd.s0time, lpd.s1, anum1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
+//            rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
         }
     }
 }
@@ -164,6 +171,14 @@ void AnchoredMultiSessionOptimization::AddAllTheLandmarkTracks(){
         rfFG->ChangeLandmarkSet(i);
         AddLandmarkTracks(cached_landmarks[i]);
     }
+}
+
+std::vector<double> AnchoredMultiSessionOptimization::ComputeP1frame0(std::vector<double>& a0, std::vector<double>& a1, std::vector<double>& p1){
+    gtsam::Pose3 ga0(gtsam::Rot3::ypr(a0[5],a0[4],a0[3]), gtsam::Point3(a0[0],a0[1],a0[2]));
+    gtsam::Pose3 ga1(gtsam::Rot3::ypr(a1[5],a1[4],a1[3]), gtsam::Point3(a1[0],a1[1],a1[2]));
+    gtsam::Pose3 gp1(gtsam::Rot3::ypr(p1[5],p1[4],p1[3]), gtsam::Point3(p1[0],p1[1],p1[2]));
+    gtsam::Pose3 p1frame0 = ga0.inverse() * ga1 * gp1;
+    return {p1frame0.x(), p1frame0.y(), p1frame0.z(), p1frame0.rotation().roll(), p1frame0.rotation().pitch(), p1frame0.rotation().yaw()};
 }
 
 double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
@@ -197,7 +212,9 @@ double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
             if(lpd.s0time >= 500 || lpd.s1time >= 500) continue;
             
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
+            vector<double> p1frame0 = ComputeP1frame0(poses[lpd.s0][POR[lpd.s0].boat.size()], poses[lpd.s1][POR[sidx].boat.size()], poses[sidx][lpd.s1time]);
+            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, p1frame0, landmarks, 0);
+//            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
             double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
             intra[sidx][lpd.s1time] = intra_errorS1;
             double intra_errorS0 = 0;
