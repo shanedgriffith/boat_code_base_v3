@@ -29,22 +29,7 @@ SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
     
-    std::cout << "Multi-Session Optimization up to " << date << std::endl;
-    
-    std::cout << "  Initializing.."<<std::endl;
-    IdentifyOptimizationDates();
-    Initialize();
-    rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
-}
-
-
-AnchoredMultiSessionOptimization::AnchoredMultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
-_map_dir(results_dir + "maps/"), _pftbase(pftbase),
-SurveyOptimizer(cam, rfFG, date, results_dir, false) {
-    rfFG = new RFlowFactorGraph();
-    FG = rfFG;
-    
-    std::cout << "Multi-Session Optimization up to " << date << std::endl;
+    std::cout << "Anchored Multi-Session Optimization up to " << date << std::endl;
     
     std::cout << "  Initializing.."<<std::endl;
     IdentifyOptimizationDates();
