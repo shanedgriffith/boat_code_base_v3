@@ -155,8 +155,8 @@ void AnchoredMultiSessionOptimization::AddLocalizations(bool firstiter){
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             if(lpd.s0time >= 500 || lpd.s1time >= 500) continue;
             double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-            int anum0 = POR[lpd.s0].boat.size();
-            int anum1 = POR[lpd.s1].boat.size();
+            int anum0 = 500;//POR[lpd.s0].boat.size();
+            int anum1 = 500;//POR[lpd.s1].boat.size();
             rfFG->AddAnchorFactor(lpd.s0, anum0, lpd.s0time, lpd.s1, anum1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
 //            rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
         }

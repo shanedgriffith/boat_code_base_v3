@@ -311,7 +311,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         inlier_ratio[i] = 1.0-(1.*coutliers/lpdi[i].localizations.size());
     }
 //    PrintStats(intra, inter);
-//    exit(1);
+    exit(1);
     //returns avg num_changes.
     if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
     return (int) (totchanges/(dates.size()-optstart));

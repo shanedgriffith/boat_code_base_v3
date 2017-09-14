@@ -71,20 +71,38 @@ public:
             //presumably, although the min shifts with the changing variable values, the cost field
             //and the trajectory towards the min are similar over the iterations.
             
-            Pose3 est_a0 = a1.compose(p1).compose(_tf_p0_to_p1frame0.inverse()).compose(p0.inverse());
-            a0.between(est_a0, *Ha0);
+            gtsam::Matrix da0, dp0, da1, dp1, de;
+            gtsam::Pose3 c0 = a0.compose(p0, da0, dp0);
+            gtsam::Pose3 c1 = a1.compose(p1, da1, dp1);
+            gtsam::Pose3 est = c0.between(c1, db0, db1);
+            nearzero = est.between(_tf_p0_to_p1frame0, de);
             
-            Pose3 est_a1 = a0.compose(p0).compose(_tf_p0_to_p1frame0).compose(p1.inverse());
-            a1.between(est_a1, *Ha1);
+            *Ha0 = de * db0 * da0; //right to left or left to right?
+            *Ha1 = de * db1 * da1;
+            *Hp0 = de * db0 * dp0;
+            *Hp1 = de * db1 * dp1;
             
-            Pose3 est_p0 = a0.inverse().compose(a1).compose(p1).compose(_tf_p0_to_p1frame0.inverse());
-            p0.between(est_p0, *Hp0);
             
-            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
-            nearzero = p1.between(est_p1, *Hp1);
+            //this sort of approach worked for VirtualBetweenFactor.h (but maybe that's not right either, and only works because it's simple; closer to the correct thing?)
+//            Pose3 est_a0 = a1.compose(p1).compose(_tf_p0_to_p1frame0.inverse()).compose(p0.inverse());
+//            a0.between(est_a0, *Ha0);
+//            
+//            Pose3 est_a1 = a0.compose(p0).compose(_tf_p0_to_p1frame0).compose(p1.inverse());
+//            a1.between(est_a1, *Ha1);
+//            
+//            Pose3 est_p0 = a0.inverse().compose(a1).compose(p1).compose(_tf_p0_to_p1frame0.inverse());
+//            p0.between(est_p0, *Hp0);
+//            
+//            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
+//            nearzero = p1.between(est_p1, *Hp1);
         } else {
-            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
-            nearzero = p1.between(est_p1);
+//            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
+//            nearzero = p1.between(est_p1);
+            gtsam::Matrix da0, dp0, da1, dp1;
+            gtsam::Pose3 c0 = a0.compose(p0, da0, dp0);
+            gtsam::Pose3 c1 = a1.compose(p1, da1, dp1);
+            gtsam::Pose3 est = c0.between(c1, db0, db1);
+            nearzero = est.between(_tf_p0_to_p1frame0);
         }
         gtsam::Pose3 zeros = gtsam::Pose3::identity();
         return zeros.localCoordinates(nearzero);
