@@ -29,6 +29,10 @@
 #include "Anchors.hpp"
 #include "FactorsToConstraint.hpp"
 
+/*GOAL: scalable multi-survey optimization that's robust to outliers.
+ Tries to replace all the survey data using anchors and then optimize using the information
+ among the interconnections.
+ */
 class MultiAnchorsOptimization: public SurveyOptimizer {
 protected:
     //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.

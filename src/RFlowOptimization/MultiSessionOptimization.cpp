@@ -192,7 +192,7 @@ void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses
 double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     double mult = 3;
     static vector<vector<double> > permerr;
-    vector<unordered_map<int, double> > intra;
+    vector<unordered_map<int, double> > intra(dates.size());
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
     
@@ -201,9 +201,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         rfFG->ChangeLandmarkSet(sidx);
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
-        
-        intra.push_back(unordered_map<int, double>());
-        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
+        if(permerr.size() < dates.size()-optstart-1) permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
     }
     
     double totchanges = 0;
@@ -220,7 +218,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
             
             double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
+            double intra_errorS1 = erfintraS1.OnlineRError(cached_landmarks[sidx], lpd.s1time, poses[sidx][lpd.s1time], landmarks[sidx]);
             intra[sidx][lpd.s1time] = intra_errorS1;
             double intra_errorS0 = 0;
             if(lpd.s0 >= optstart) {
@@ -229,7 +227,7 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
                 if(search != intra[s0idx].end())
                     intra_errorS0 = search->second;
                 else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], poses[s0idx][lpd.s0time], landmarks[s0idx]);
+                    intra_errorS0 = erfintraS0.OnlineRError(cached_landmarks[lpd.s0], lpd.s0time, poses[s0idx][lpd.s0time], landmarks[s0idx]);
                     intra[s0idx][lpd.s0time] = intra_errorS0;
                 }
             }
@@ -432,7 +430,7 @@ void MultiSessionOptimization::SaveResults() {
 void MultiSessionOptimization::IterativeMerge() {
     time_t beginning,optstart,end;
     time (&beginning);
-    LocalizePose lp(_cam);
+    
     double last_nchanges = 10000000000;
     double avg_nchanges= last_nchanges - 1;
     for(int i=0; avg_nchanges>0 && last_nchanges>avg_nchanges && i<MAX_ITERATIONS; i++) {

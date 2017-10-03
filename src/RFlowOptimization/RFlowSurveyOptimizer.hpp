@@ -25,6 +25,10 @@
 #include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 
+/*GOAL: to add the latest survey to the set of optimized surveys. 
+ Does so in an iterative way to add robustness to ISC outliers. 
+ Only the latest survey is optimized. So it's fast, but it doesn't produce a consistent map across multiple surveys.
+ */
 class RFlowSurveyOptimizer: public SurveyOptimizer {
 protected:
     int MAX_ITERATIONS = 10;

@@ -284,7 +284,7 @@ ParseFeatureTrackFile ParseFeatureTrackFile::LoadFTF(Camera& _cam, string base, 
     return pftf;
 }
 
-void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3> p3d){
+void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3>& p3d){
     //Finds and keeps only the landmarks that were good in the stand-alone optimization.
     //vector<gtsam::Point3> p3d = POR.GetSubsetOf3DPoints(pftf.ids);
     vector<int> subset_ids;
@@ -381,3 +381,46 @@ ParseFeatureTrackFile& ParseFeatureTrackFile::operator=(ParseFeatureTrackFile ot
     return *this;
 }
 
+int ParseFeatureTrackFile::FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end){
+    //binary search with repeats.
+    if(ckey<0) return 0;
+    if(ckey>=landmarks.size()) return landmarks.size()-1;
+    int top = landmarks.size();
+    int bot = 0;
+    int med = bot + (top - bot)/2;
+    int ckeycomp;
+    while(top-bot>0){
+        ckeycomp = landmarks[med].camera_keys[0].index();
+        if(end) ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
+        if(ckeycomp == ckey) break;
+        else if(ckeycomp > ckey) top = med;
+        else bot = med;
+    }
+    if(ckeycomp != ckey) return -1;
+    while(ckeycomp == ckey) {
+        if(end) {
+            med++;
+            if(med >= landmarks.size()) return landmarks.size()-1;
+            ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
+        } else {
+            med--;
+            if(med <= 0) return 0;
+            ckeycomp = landmarks[med].camera_keys[0].index();
+        }
+    }
+    return med;
+}
+
+ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
+    int beg = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey+1, false);
+    int end = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey-1, true);
+    int offset = 0;
+    ParseFeatureTrackFile pftf ParseFeatureTrackFile(cam);
+    
+    for(int i=beg; i<=end; i++) {
+        while(landmarks[i].camera_keys[offset].index() < ckey) offset++;
+        pftf.ids.push_back(landmarks[i].key);
+        pftf.imagecoord.push_back(landmarks[i].points[offset]);
+    }
+    return pftf;
+}

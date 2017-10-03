@@ -87,7 +87,37 @@ std::vector<double> SolveForMap::GetPoint(ParseOptimizationResults& POR, Anchors
     return {p3D.x(), p3D.y(), p3D.z(), (double) landmark.key, rerror_whitened};
 }
 
-
+std::vector<double> SolveForMap::GetPoint(std::vector<std::vector<double> >& poses, LandmarkTrack& landmark){
+    double dimensions = 2.0; //there are two dimensions to an image observation
+    double dev = 3.0;
+    gtsam::noiseModel::Isotropic::shared_ptr pixelNoise = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
+    
+    int ldist = 100; //this threshold specifies the distance between the camera and the landmark.
+    int onoise = 100; //the threshold specifies at what point factors are discarded due to reprojection error.
+    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
+    
+    gtsam::Cal3_S2::shared_ptr calib = _cam.GetGTSAMCam();
+    
+    //can use double totalReprojectionError(const Cameras& cameras, const Point3& point)
+    typedef gtsam::PinholeCamera<gtsam::Cal3_S2> Camera;
+    typedef std::vector<Camera> Cameras;
+    Cameras cameras;
+    for(int i=0; i<landmark.Length(); i++){
+        int pidx = landmark.camera_keys[i].index();
+        gtsam::Pose3 gtpose = VectorToPose(poses[pidx]);
+        cameras.push_back(Camera(gtpose, *calib));
+        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, calib);
+    }
+    
+    //TODO: test.
+    // and this version of the reprojection error may or may not be within the same limits.
+    sppf.triangulateSafe(cameras);
+    boost::optional<gtsam::Point3> p = sppf.point();
+    gtsam::Point3 p3D(0,0,0);
+    if(p) p3D = *p;
+    double rerror_whitened = sppf.totalReprojectionError(cameras);
+    return {p3D.x(), p3D.y(), p3D.z(), (double) landmark.key, rerror_whitened};
+}
 
 
 

@@ -148,13 +148,16 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
     for(int i=0; i<landmark.points.size(); i++) {
-        if(landmark.constraint_on[i])
+        int count_on = 0;
+        if(landmark.constraint_on[i]) {
             sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
+            count_on++;
+        }
     }
     
     landmark_factors[active_landmark_set].push_back(sppf);
     landmark_keys[active_landmark_set].push_back(landmark.key);
-    if(landmark.used) graph.add(sppf);
+    if(landmark.used && count_on>1) graph.add(sppf);
 }
 
 void FactorGraph::Clear(){

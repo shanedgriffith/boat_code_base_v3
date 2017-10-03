@@ -35,7 +35,7 @@ public:
     double InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<double>& boat,
                                           const std::vector<std::vector<std::vector<double> > >& landmarks = {}, const int optstart = INT_MAX);
     
-    double OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks);
+    double OnlineRError(std::vector<LandmarkTrack>& cached_landmarks, int idx, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks);
     
     void VisualizeDivergenceFromLocalizations(std::vector<LocalizedPoseData>& localizations, std::vector<double>& error);
     void VisualizeFrameChange(std::vector<std::vector<double> >& traj, std::vector<LocalizedPoseData>& localizations);

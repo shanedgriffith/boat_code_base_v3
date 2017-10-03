@@ -33,6 +33,7 @@ public:
     SolveForMap(Camera cam): _cam(cam){}
     
     std::vector<double> GetPoint(ParseOptimizationResults& POR, Anchors& anchors, LandmarkTrack& landmark);
+    std::vector<double> GetPoint(std::vector<std::vector<double> >& poses, LandmarkTrack& landmark);
 };
 
 

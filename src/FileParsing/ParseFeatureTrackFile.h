@@ -84,11 +84,14 @@ public:
     gtsam::Point2 GetAverageOpticalFlowFrom(ParseFeatureTrackFile& compared);
     void WriteFeatureTrackFile();
     void SetPFTContents(std::string base, int ftnum, double timestamp, std::vector<int>& _ids, std::vector<cv::Point2f>& _points);
-    void ModifyFTFData(std::vector<gtsam::Point3> p3d);
+    void ModifyFTFData(std::vector<gtsam::Point3>& p3d);
     std::vector<LandmarkTrack> ProcessNewPoints(int survey, int ckey, std::vector<LandmarkTrack>& active, double percent_of_tracks=100.0);
     bool CheckImageDuplication(std::vector<LandmarkTrack>& active);
     
     static ParseFeatureTrackFile LoadFTF(Camera& _cam, std::string base, int ftfileno);
+    
+    static int FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end);
+    static ParseFeatureTrackFile ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
 };
 
 

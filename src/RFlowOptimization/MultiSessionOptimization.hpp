@@ -27,6 +27,10 @@
 #include "LPDInterface.hpp"
 #include "LocalizedPoseData.hpp"
 
+/*GOAL: To create a consistent map from multiple surveys using the TF from ISC constraints.
+ Does so in an iterative way to add robustness to ISC outliers. 
+ Multiple surveys are optimized at once.
+ */
 class MultiSessionOptimization: public SurveyOptimizer {
 protected:
     //number of surveys optimized before a survey is ''locked-in''. Constrained by the memory.

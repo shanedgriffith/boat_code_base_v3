@@ -242,7 +242,7 @@ double MultiAnchorsOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
 //        A[i].ModifyAnchors(surveylandmarks, rerrs[i], POR[i], _pftbase+dates[i]);
         
-        permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
+        if(permerr.size() < dates.size()-optstart-1) permerr.push_back(vector<double>(lpdi[i].localizations.size(),0));
         
         for(int j=0; j<POR[i].boat.size(); j++){
             int aidx = A[i].PoseIdxToAnchorIdx(j);

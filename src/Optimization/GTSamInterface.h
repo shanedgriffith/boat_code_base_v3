@@ -82,7 +82,6 @@ public:
     void InitializeValue(char c, int num, gtsam::Value * p);
 
     std::vector<double> MAPPoseEstimate(gtsam::Symbol s);
-    std::vector<double> MAPPoseEstimate(int num);
     gtsam::Pose3 PoseResult(gtsam::Symbol s);
     gtsam::Point3 MAPLandmarkEstimate(int idx);
     std::vector<std::vector<double> > GetOptimizedLandmarks(bool sorted=false);
