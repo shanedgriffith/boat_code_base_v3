@@ -27,6 +27,24 @@ using namespace std;
 EfficientMultiSessionOptimization::EfficientMultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
 MultiSessionOptimization(cam, results_dir, pftbase, date){}
 
+void EfficientMultiSessionOptimization::Initialize() {
+    MultiSessionOptimization::Initialize();
+    
+    for(int i=0; i<dates.size(); i++){
+        //ahh, but each one depends on whether there's an isc at the pose.
+        //called after the localizations are initialized?
+        poseactivations.push_back(vector<bool>(POR[i].boat.size(), true));
+        for(int j=0; j<POR[i].boat.size(); j++){
+            int lpdcur = lpdi[i].GetLPDIdx(j);
+            if(lpdcur >= 0) {
+                poseactivations[i][j] = false;
+                //initially, landmarks for all isc poses are deactivated.
+                ToggleLandmarksAtPose(i, j, false);
+            }
+        }
+    }
+}
+
 void EfficientMultiSessionOptimization::ToggleLandmarksAtPose(int survey, int ckey, bool active) {
     //this would seem to have to be called in the update step.
     std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
@@ -73,55 +91,79 @@ void EfficientMultiSessionOptimization::ConstructFactorGraph() {
     TestLandmarkRange();
     
     for(int survey=optstart; survey<dates.size(); survey++){
-        
         bool latestsurvey = survey == POR.size()-1;
         int sidx = survey - optstart;
         
-        //here, don't yet add odom constraints between eliminated variables.
-        //ah, but the remaining variables need them.
-        bool haveprev = false;
-        LocalizePose lp(_cam);
+        //here, odom constraints are only added between activated pose variables.
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
-            int lpdcur = lpdi[sidx].GetLPDIdx(i);
-            if(lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
-                haveprev = false;
-                continue;
-            }
+            //this lookup corresponds to the multiple ISCs at this location.
+            if(!poseactivations[survey][i]) continue;
             rfFG->AddPose(survey, i, traj);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
             
-            if(haveprev) { //order matters; this has to be after the variables it depends on are initialized.
+            if(i>0 && poseactivations[survey][i-1]) {
                 gtsam::Pose3 cur1 = POR[survey].CameraPose(i);
                 gtsam::Pose3 last1 = POR[survey].CameraPose(i-1);
                 gtsam::Pose3 btwn = last1.between(cur1);
+                //order matters; this has to be after the variables it depends on are initialized.
                 rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
             }
-            haveprev = true;
         }
     }
 }
 
-void EfficientMultiSessionOptimization::AddLocalizations(){
+void EfficientMultiSessionOptimization::AddLocalizations(bool firstiter){
     //changes:
-    // each isc is assumed to be correct. rather than add a tf at the location of the isc,
-    //  multiple tfs are added to the variable it connects with.
+    // because a variable is eliminated for an accepted isc, rather than add a tf at the location of the isc,
+    //  a tf is added to the variable it connects with.
     cout << "   adding the localizations."<<endl;
+    
+    LocalizePose lp(_cam);
     for(int i=0; i<lpdi.size(); i++) {
+        LocalizedPoseData prev;
+        int prevc = i;
+        int prevctime = 0;
+        int prevstime = 0;
+        gtsam::Pose3 prevchain = gtsam::Pose3::Identity();
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             
+            //get the backward chain.
+            if(prevstime < lpd.s1time-1) {
+                prevstime = lpd.s1time-1;
+                gtsam::Pose3 cur1 = POR[i].CameraPose(lpd.s1time);
+                gtsam::Pose3 last1 = POR[i].CameraPose(lpd.s1time-1);
+                prevchain = last1.between(cur1);
+                prevc = i;
+                prevctime = lpd.s1time-1;
+                while(!rfFG->VariableExists(prevc, prevctime)){
+                    int lpdref = lpdi[prevc].GetLPDIdx(prevctime);
+                    while(lpd_rerror[prevc][lpdref] < 0) lpdref++;
+                    prevc = lpdi[prevc].localizations[lpdref].s0;
+                    prevctime = lpdi[prevc].localizations[lpdref].s0time;
+                    prevchain = lpdi[prevc].localizations[lpdref].GetTFP0ToP1F0().compose(prevchain);
+                }
+            }
             
+            //get the forward chain.
+            gtsam::Pose3 forwardchain = lpd.GetTFP0ToP1F0().inverse();
+            while(!rfFG->VariableExists(lpd.s0, lpd.s0time)) {
+                //assuming the lpdcur points to the first one for the pose:
+                int lpdref = lpdi[lpd.s0].GetLPDIdx(lpd.s0time);
+                while(lpd_rerror[lpd.s0][lpdref] < 0) lpdref++;
+                lpd = lpdi[lpd.s0].localizations[lpdref];
+                forwardchain = forwardchain.compose(lpd.GetTFP0ToP1F0().inverse());
+            }
             
-//            if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
-//                std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
-//                rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
-//            } else {
-//                //rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
-//                double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-//                rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
-//            }
+            //add the constraint
+            if(j>0) {
+                //add link to the previous.
+                gtsam::Pose3 constraint = prevchain.compose(forwardchain);
+                double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
+                rfFG->AddCustomBTWNFactor(prevc, prevctime, lpd.s0, lpd.s0time, constraint, noise);
+            }
         }
     }
 }
@@ -138,7 +180,7 @@ std::vector<std::vector<std::vector<double> > > EfficientMultiSessionOptimizatio
             } else {
                 //estimate the eliminated pose assuming the lpd is correct.
                 int lpdcur = lpdi[sidx].GetLPDIdx(i);
-                //TEST pose retrieval/elimination.
+                //TESTs pose retrieval/elimination.
                 if(lpdcur < 0) {
                     std::cout << "EfficientMultiSessionOptimization::GetPoses() Error. neither the variable nor the lpd is available for (" << survey <<"," <<i<<")"<<std::endl;
                     exit(-1);
@@ -166,6 +208,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     vector<unordered_map<int, double> > inter(dates.size());
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
+    vector<vector<bool> > curactivations;
     
     poses = GetPoses();
     SolveForMap sfm(_cam);
@@ -179,6 +222,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
         
         if(permerr.size() < dates.size()-optstart-1) permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
+        curactivations.push_back(vector<bool>(POR[i].boat.size(), true));
     }
     
     double totchanges = 0;
@@ -233,7 +277,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
                (inlier && lpd_rerror[sidx][j] < 0) ||
                (!inlier && lpd_rerror[sidx][j] > 0)) {
                 nchanges++;
-                ToggleLandmarksAtPose(i, lpd.s1time, inlier);
+                
                 if(!firstiter){
                     if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
                     else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
@@ -242,8 +286,18 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
+            curactivations[i][lpd.s1time] &= !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
         }
         totchanges += nchanges;
+        
+        //based on the last activations, determines whether the set of landmarks viewed from a pose need to be updated.
+        for(int j=0; j<curactivations[i].size(); j++) {
+            if(curactivations[i][j] != poseactivations[i][j]){
+                if(curactivations[i][j]) ToggleLandmarksAtPose(i, j, true);
+                else ToggleLandmarksAtPose(i, j, false);
+                poseactivations[i][j] = curactivations[i][j]; //if this is false, the pose variable shouldn't be eliminated.
+            }
+        }
         
         if(i > 0) {
             erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
@@ -259,7 +313,10 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     return (int) (totchanges/(dates.size()-optstart));
 }
 
-
+void EfficientMultiSessionOptimization::SaveResults() {
+    std::cout << "Save disabled. Update this function." << std::endl;
+    return;
+}
 
 
 

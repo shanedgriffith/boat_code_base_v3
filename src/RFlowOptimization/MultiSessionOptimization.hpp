@@ -52,14 +52,14 @@ protected:
     void GetHeight(std::vector<std::vector<std::vector<double> > >& poses);
     
     void IdentifyOptimizationDates();
-    void Initialize();
+    virtual void Initialize();
     void BuildLandmarkSet();
-    void ConstructFactorGraph();
-    void AddLocalizations(bool firstiter);
+    virtual void ConstructFactorGraph();
+    virtual void AddLocalizations(bool firstiter);
     void AddAllTheLandmarkTracks();
     double UpdateErrorPrune(bool firstiter);
-    double UpdateErrorAdaptive(bool firstiter);
-    void SaveResults();
+    virtual double UpdateErrorAdaptive(bool firstiter);
+    virtual void SaveResults();
     
     RFlowFactorGraph* rfFG;
 public:

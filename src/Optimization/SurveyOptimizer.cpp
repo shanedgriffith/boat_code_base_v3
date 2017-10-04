@@ -161,6 +161,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
 }
 
 void SurveyOptimizer::Optimize(ParseSurvey& PS){
+    //TODO: implement pose decimation, rather than the 1 by 10 (CAM_SKIP) rule currently used.
 	if(!initialized){cout << "SurveyOptimizer::Optimize() check initialization"<<endl; exit(1);}
     
     EvaluateSLAM es(_cam, _date, _results_dir);

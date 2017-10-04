@@ -17,18 +17,9 @@
 #include <fcntl.h>
 #include <vector>
 #include <unordered_map>
-//
-//#include <Optimization/SurveyOptimizer.h>
-//#include <Optimization/GTSamInterface.h>
-//#include <FileParsing/ParseOptimizationResults.h>
-//#include <DataTypes/Camera.hpp>
-//
-//#include "RFlowFactorGraph.hpp"
-//#include "LPDInterface.hpp"
-//#include "LocalizedPoseData.hpp"
+
 #include "MultiSessionOptimization.hpp"
 
-//extend MSO?
 /*GOAL:
   To work like MSO, but eliminate pose-graph variables if they are part of an ISC.
  Also works somewhat like the anchor approach, in that the map is resolved after the optimization.
@@ -36,18 +27,20 @@
 class EfficientMultiSessionOptimization: public MultiSessionOptimization {
 protected:
     
-//    int FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end);
+    std::vector<std::vector<bool> > poseactivations;
+    
     void ToggleLandmarksAtPose(int survey, int ckey, bool active);
     void TestLandmarkRange();
     
     void ConstructFactorGraph();
+    void AddLocalizations(bool firstiter);
     std::vector<std::vector<std::vector<double> > > GetPoses();
     double UpdateErrorAdaptive(bool firstiter);
+    void SaveResults();
+    
 public:
     
     EfficientMultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "");
-    
-//    void IterativeMerge();
 };
 
 
