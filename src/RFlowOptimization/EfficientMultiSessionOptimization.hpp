@@ -32,6 +32,7 @@ protected:
     void ToggleLandmarksAtPose(int survey, int ckey, bool active);
     void TestLandmarkRange();
     
+    void Initialize();
     void ConstructFactorGraph();
     void AddLocalizations(bool firstiter);
     std::vector<std::vector<std::vector<double> > > GetPoses();

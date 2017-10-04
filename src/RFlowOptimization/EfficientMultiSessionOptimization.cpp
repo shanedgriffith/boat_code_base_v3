@@ -190,7 +190,7 @@ std::vector<std::vector<std::vector<double> > > EfficientMultiSessionOptimizatio
                 }
                 
                 gtsam::Pose3 refpose = lp.VectorToPose(allposes[lpd.s0][lpd.s0time]);
-                gtsam::Pose3 offset = lp.GetTFP0ToP1F0();
+                gtsam::Pose3 offset = lpd.GetTFP0ToP1F0();
                 gtsam::Pose3 ap = refpose.compose(offset);
                 pose = lp.PoseToVector(ap);
             }
@@ -289,7 +289,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-            curactivations[i][lpd.s1time] &&= !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
+            curactivations[i][lpd.s1time] = curactivations[i][lpd.s1time] && !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
         }
         totchanges += nchanges;
         
