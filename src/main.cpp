@@ -14,6 +14,7 @@
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
 #include <RFlowOptimization/MultiAnchorsOptimization.hpp>
 #include <RFlowOptimization/AnchoredMultiSessionOptimization.hpp>
+#include <RFlowOptimization/EfficientMultiSessionOptimization.hpp>
 #include <Tests/TestTransforms.hpp>
 
 using namespace std;
@@ -53,8 +54,8 @@ int main(int argc, char *argv[]) {
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
-        AnchoredMultiSessionOptimization mao(axisptz, results_dir, pftbase, argv[2]); //query_loc, 
-        mao.IterativeMerge();
+        EfficientMultiSessionOptimization emso(axisptz, results_dir, pftbase, argv[2]);
+        emso.IterativeMerge();
 //        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
 //        mso.SetDryRun();
 //        mso.IterativeMerge();
