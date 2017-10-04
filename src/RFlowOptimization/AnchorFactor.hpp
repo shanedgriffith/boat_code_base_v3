@@ -71,7 +71,7 @@ public:
             //presumably, although the min shifts with the changing variable values, the cost field
             //and the trajectory towards the min are similar over the iterations.
             
-            gtsam::Matrix da0, dp0, da1, dp1, de;
+            gtsam::Matrix da0, dp0, da1, dp1, db0, db1, de;
             gtsam::Pose3 c0 = a0.compose(p0, da0, dp0);
             gtsam::Pose3 c1 = a1.compose(p1, da1, dp1);
             gtsam::Pose3 est = c0.between(c1, db0, db1);
@@ -98,10 +98,9 @@ public:
         } else {
 //            Pose3 est_p1 = a1.inverse().compose(a0).compose(p0).compose(_tf_p0_to_p1frame0);
 //            nearzero = p1.between(est_p1);
-            gtsam::Matrix da0, dp0, da1, dp1;
-            gtsam::Pose3 c0 = a0.compose(p0, da0, dp0);
-            gtsam::Pose3 c1 = a1.compose(p1, da1, dp1);
-            gtsam::Pose3 est = c0.between(c1, db0, db1);
+            gtsam::Pose3 c0 = a0.compose(p0);
+            gtsam::Pose3 c1 = a1.compose(p1);
+            gtsam::Pose3 est = c0.between(c1);
             nearzero = est.between(_tf_p0_to_p1frame0);
         }
         gtsam::Pose3 zeros = gtsam::Pose3::identity();

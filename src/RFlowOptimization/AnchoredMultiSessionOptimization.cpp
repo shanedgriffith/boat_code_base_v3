@@ -217,7 +217,7 @@ double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
 //            vector<double> p1frame0 = ComputeP1frame0(poses[lpd.s0][POR[lpd.s0].boat.size()], poses[lpd.s1][POR[sidx].boat.size()], poses[sidx][lpd.s1time]);
             double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, p1frame0, landmarks, 0);
 //            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
+            double intra_errorS1 = erfintraS1.OnlineRError(cached_landmarks[sidx], lpd.s1time, poses[sidx][lpd.s1time], landmarks[sidx]);
             intra[sidx][lpd.s1time] = intra_errorS1;
             double intra_errorS0 = 0;
             if(lpd.s0 >= optstart) {
@@ -226,7 +226,7 @@ double AnchoredMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
                 if(search != intra[s0idx].end())
                     intra_errorS0 = search->second;
                 else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], poses[s0idx][lpd.s0time], landmarks[s0idx]);
+                    intra_errorS0 = erfintraS0.OnlineRError(cached_landmarks[lpd.s0], lpd.s0time, poses[s0idx][lpd.s0time], landmarks[s0idx]);
                     intra[s0idx][lpd.s0time] = intra_errorS0;
                 }
             }
