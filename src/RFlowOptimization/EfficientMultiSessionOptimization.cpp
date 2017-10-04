@@ -15,12 +15,12 @@
 //#include <Optimization/EvaluateSLAM.h>
 //
 //#include "SFlowDREAM2RF.hpp"
-//#include "LocalizePose.hpp"
-//#include "EvaluateRFlow.hpp"
 //#include "HopcountLog.hpp"
 //#include <FileParsing/FileParsing.hpp>
 //#include <DataTypes/LandmarkTrack.h>
 #include "SolveForMap.hpp"
+#include "LocalizePose.hpp"
+#include "EvaluateRFlow.hpp"
 
 using namespace std;
 
@@ -68,8 +68,8 @@ void EfficientMultiSessionOptimization::TestLandmarkRange() {
     for(int survey=0; survey<dates.size(); survey++){
         std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
         for(int i=0; i<POR[survey].boat.size(); i++) {
-            int beg = FindLandmarkRange(landmarks, i+1, false);
-            int end = FindLandmarkRange(landmarks, i-1, true);
+            int beg = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i+1, false);
+            int end = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i-1, true);
             
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
@@ -127,7 +127,7 @@ void EfficientMultiSessionOptimization::AddLocalizations(bool firstiter){
         int prevc = i;
         int prevctime = 0;
         int prevstime = 0;
-        gtsam::Pose3 prevchain = gtsam::Pose3::Identity();
+        gtsam::Pose3 prevchain = gtsam::Pose3::identity();
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
