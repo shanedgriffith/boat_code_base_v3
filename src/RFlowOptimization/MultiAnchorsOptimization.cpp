@@ -108,7 +108,8 @@ void MultiAnchorsOptimization::BuildLandmarkSet() {
         
         for(int i=0; i<POR[survey].boat.size(); i++) {
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
-            pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
+            std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
+            pftf.ModifyFTFData(p3d);
             vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active);
             CacheLandmarks(tracks);
         }

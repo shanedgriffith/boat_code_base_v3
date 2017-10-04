@@ -20,6 +20,7 @@
 //#include "HopcountLog.hpp"
 //#include <FileParsing/FileParsing.hpp>
 //#include <DataTypes/LandmarkTrack.h>
+#include "SolveForMap.hpp"
 
 using namespace std;
 
@@ -67,11 +68,12 @@ void EfficientMultiSessionOptimization::TestLandmarkRange() {
     for(int survey=0; survey<dates.size(); survey++){
         std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
         for(int i=0; i<POR[survey].boat.size(); i++) {
-            int beg = FindLandmarkRange(landmarks, ckey+1, false);
-            int end = FindLandmarkRange(landmarks, ckey-1, true);
+            int beg = FindLandmarkRange(landmarks, i+1, false);
+            int end = FindLandmarkRange(landmarks, i-1, true);
             
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
-            pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
+            std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
+            pftf.ModifyFTFData(p3d);
             if(pftf.ids.size() != end-beg+1){
                 std::cout << "Found difference in the number of visual feature tracks at (" << survey << ", " << i <<"), expected " << pftf.ids.size()<<", got : " << end-beg+1 << std::endl;
                 exit(-1);
@@ -176,10 +178,11 @@ std::vector<std::vector<std::vector<double> > > EfficientMultiSessionOptimizatio
         for(int i=0; i<POR[survey].boat.size(); i++) {
             vector<double> pose;
             if(rfFG->VariableExists(survey, i)) {
-                pose = GTS.MAPPoseEstimate(survey, i);
+                pose = GTS.MAPPoseEstimate(rfFG->GetSymbol(survey, i));
             } else {
                 //estimate the eliminated pose assuming the lpd is correct.
-                int lpdcur = lpdi[sidx].GetLPDIdx(i);
+                int lpdcur = lpdi[survey].GetLPDIdx(i);
+                LocalizedPoseData& lpd = lpdi[survey].localizations[lpdcur];
                 //TESTs pose retrieval/elimination.
                 if(lpdcur < 0) {
                     std::cout << "EfficientMultiSessionOptimization::GetPoses() Error. neither the variable nor the lpd is available for (" << survey <<"," <<i<<")"<<std::endl;
@@ -286,7 +289,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-            curactivations[i][lpd.s1time] &= !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
+            curactivations[i][lpd.s1time] &&= !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
         }
         totchanges += nchanges;
         

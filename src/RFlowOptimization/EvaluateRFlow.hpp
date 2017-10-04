@@ -18,6 +18,7 @@
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Point3.h>
 #include <DataTypes/Camera.hpp>
+#include <DataTypes/LandmarkTrack.h>
 
 #include <Optimization/EvaluateSLAM.h>
 #include <FileParsing/ParseOptimizationResults.h>

@@ -53,9 +53,10 @@ void RFlowSurveyOptimizer::StandAloneFactorGraph() {
             rfFG->AddBTWNFactor(latestsurvey, i-1, latestsurvey, i, btwn);
         }
 
-        ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + _date, POR.ftfilenos[i]);
-        pftf1.ModifyFTFData(POR.GetSubsetOf3DPoints(pftf1.ids));
-        vector<LandmarkTrack> tracks = pftf1.ProcessNewPoints(latestsurvey, i, active);
+        ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + _date, POR.ftfilenos[i]);
+        std::vector<gtsam::Point3> p3d = POR.GetSubsetOf3DPoints(pftf.ids);
+        pftf.ModifyFTFData(p3d);
+        vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(latestsurvey, i, active);
         AddLandmarkTracks(tracks);
     }
 
