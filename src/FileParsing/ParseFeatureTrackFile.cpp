@@ -404,17 +404,17 @@ int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, b
     return med;
 }
 
-std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey){
+std::vector<int> ParseFeatureTrackFile::FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey){
     //all visual features between:
     //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
     vector<int> range(2,0);
     range[0] = BinarySearchLandmarkRange(landmarks, ckey-1, true);
-    range[1] = BinarySearchLandmarkRange(landmarks, ckey+1, false);
+    range[1] = BinarySearchLandmarkRange(landmarks, ckey+1, false)-1;
     return range;
 }
 
 ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
-    vector<int> range = FindLandmarkRange(landmarks, ckey);
+    vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
     int offset = 0;
     ParseFeatureTrackFile pftf(cam);
     

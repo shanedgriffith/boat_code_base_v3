@@ -65,7 +65,7 @@ void EfficientMultiSessionOptimization::TestLandmarkRange() {
     for(int survey=0; survey<dates.size(); survey++){
         std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
         for(int i=0; i<POR[survey].boat.size(); i++) {
-            vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
+            vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i);
             
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
