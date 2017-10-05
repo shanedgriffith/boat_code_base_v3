@@ -27,7 +27,7 @@
 class EfficientMultiSessionOptimization: public MultiSessionOptimization {
 protected:
     
-    std::vector<std::vector<int> > poseactivations;
+    std::vector<std::vector<bool> > poseactivations;
     
     void ConstructFactorGraph();
     void AddLocalizations(bool firstiter);

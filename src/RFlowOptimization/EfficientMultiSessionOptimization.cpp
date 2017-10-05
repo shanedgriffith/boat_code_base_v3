@@ -28,8 +28,7 @@ using namespace std;
 EfficientMultiSessionOptimization::EfficientMultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
 MultiSessionOptimization(cam, results_dir, pftbase, date){
     for(int i=0; i<dates.size(); i++)
-        poseactivations.push_back(vector<int>(POR[i].boat.size(), 1));
-    std::cout << "initialized the vector " << std::endl;
+        poseactivations.push_back(vector<bool>(POR[i].boat.size(), true));
 }
 
 void EfficientMultiSessionOptimization::ConstructFactorGraph() {
@@ -45,9 +44,6 @@ void EfficientMultiSessionOptimization::ConstructFactorGraph() {
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
             //this lookup corresponds to the multiple ISCs at this location.
-            std::cout << "size: " << poseactivations.size() <<" of " << dates.size() << std::endl;
-            if(poseactivations.size() ==dates.size()) std::cout << "num elements: " << poseactivations[survey].size() << " of " << POR[survey].boat.size() << std::endl;
-            exit(1);
             if(!poseactivations[survey][i]) continue;
             rfFG->AddPose(survey, i, traj);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
@@ -159,7 +155,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     vector<unordered_map<int, double> > inter(dates.size());
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
-    vector<vector<int> > curactivations;
+    vector<vector<bool> > curactivations;
     
     poses = GetPoses();
     SolveForMap sfm(_cam);
@@ -173,7 +169,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
         
         if(permerr.size() < dates.size()-optstart-1) permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
-        curactivations.push_back(vector<int>(POR[i].boat.size(), 1));
+        curactivations.push_back(vector<bool>(POR[i].boat.size(), true));
     }
     
     double totchanges = 0;
@@ -237,8 +233,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-            int bitval = inlier? 1:0;
-            curactivations[i][lpd.s1time] = curactivations[i][lpd.s1time] & !bitval; //accumulates the decision about whether the landmarks for a given pose should be active
+            curactivations[i][lpd.s1time] = curactivations[i][lpd.s1time] && !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
         }
         totchanges += nchanges;
         
