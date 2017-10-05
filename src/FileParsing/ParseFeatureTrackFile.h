@@ -41,6 +41,7 @@ private:
     
     void ReadNewTypeFile(std::string file);
     void Load();
+    static int FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey);
     
 	Camera& _cam;
 protected:
@@ -90,7 +91,7 @@ public:
     
     static ParseFeatureTrackFile LoadFTF(Camera& _cam, std::string base, int ftfileno);
     
-    static int FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end);
+    static std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey);
     static ParseFeatureTrackFile ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
 };
 

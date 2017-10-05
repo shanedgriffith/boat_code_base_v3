@@ -387,33 +387,34 @@ int ParseFeatureTrackFile::FindLandmarkRange(std::vector<LandmarkTrack>& landmar
     if(ckey>=landmarks.size()) return landmarks.size()-1;
     int top = landmarks.size();
     int bot = 0;
-    int med = bot + (top - bot)/2;
+    int med;
     int ckeycomp;
-    while(top-bot>0){
+    double comp = (end)? ckey+0.1:ckey-0.1;
+    std::cout << "start binary search " << std::endl;
+    while(top-bot>1) {
+        med = bot + (top - bot)/2;
         ckeycomp = landmarks[med].camera_keys[0].index();
         if(end) ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
-        if(ckeycomp == ckey) break;
-        else if(ckeycomp > ckey) top = med;
-        else bot = med;
+        std::cout << "range (" << bot << ", " << top << ") " << med << ", " <<ckeycomp << " compared to " << comp << std::endl;
+        if(ckeycomp < comp) bot = med;
+        else if(ckeycomp > comp) top = med;
+        else break;
     }
-    if(ckeycomp != ckey) return -1;
-    while(ckeycomp == ckey) {
-        if(end) {
-            med++;
-            if(med >= landmarks.size()) return landmarks.size()-1;
-            ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
-        } else {
-            med--;
-            if(med <= 0) return 0;
-            ckeycomp = landmarks[med].camera_keys[0].index();
-        }
-    }
+    std::cout << "finished binary search " << std::endl;
     return med;
 }
 
+std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey){
+    //all visual features between:
+    //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
+    vector<int> range(2,0);
+    range[0] = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey-1, true);
+    range[1] = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey+1, false);
+    return range;
+}
+
 ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
-    int beg = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey+1, false);
-    int end = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey-1, true);
+    vector<int> range = FindLandmarkRange(landmarks, ckey);
     int offset = 0;
     ParseFeatureTrackFile pftf(cam);
     

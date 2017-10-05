@@ -50,14 +50,11 @@ void EfficientMultiSessionOptimization::ToggleLandmarksAtPose(int survey, int ck
     //this would seem to have to be called in the update step.
     std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
     
-    //all visual features between:
-    //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
-    int beg = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey+1, false);
-    int end = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey-1, true);
+    vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
     //could test this by comparing to the number of visual feature tracks in the pfts
     
     int offset = 0;
-    for(int i=beg; i<=end; i++) {
+    for(int i=range[0]; i<=range[1]; i++) {
         while(landmarks[i].camera_keys[offset].index() < ckey) offset++;
         landmarks[i].constraint_on[offset]=active;
     }
@@ -68,14 +65,13 @@ void EfficientMultiSessionOptimization::TestLandmarkRange() {
     for(int survey=0; survey<dates.size(); survey++){
         std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
         for(int i=0; i<POR[survey].boat.size(); i++) {
-            int beg = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i+1, false);
-            int end = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i-1, true);
+            vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
             
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
             std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
             pftf.ModifyFTFData(p3d);
-            if(pftf.ids.size() != end-beg+1){
-                std::cout << "Found difference in the number of visual feature tracks at (" << survey << ", " << i <<"), expected " << pftf.ids.size()<<", got : " << end-beg+1 << std::endl;
+            if(pftf.ids.size() != range[1]-range[0]+1){
+                std::cout << "Found difference in the number of visual feature tracks at (" << survey << ", " << i <<"), expected " << pftf.ids.size()<<", got : " << range[1]-range[0]+1 << std::endl;
                 exit(-1);
             }
             count ++;
