@@ -41,7 +41,7 @@ private:
     
     void ReadNewTypeFile(std::string file);
     void Load();
-    static int FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey);
+    static int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey);
     
 	Camera& _cam;
 protected:

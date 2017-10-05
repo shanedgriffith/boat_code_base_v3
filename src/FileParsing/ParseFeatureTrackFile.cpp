@@ -408,8 +408,8 @@ std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ck
     //all visual features between:
     //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
     vector<int> range(2,0);
-    range[0] = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey-1, true);
-    range[1] = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey+1, false);
+    range[0] = ParseFeatureTrackFile::BinarySearchLandmarkRange(landmarks, ckey-1, true);
+    range[1] = ParseFeatureTrackFile::BinarySearchLandmarkRange(landmarks, ckey+1, false);
     return range;
 }
 
