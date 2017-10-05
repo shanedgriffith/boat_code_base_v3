@@ -26,13 +26,10 @@ using namespace std;
 
 
 EfficientMultiSessionOptimization::EfficientMultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
-MultiSessionOptimization(cam, results_dir, pftbase, date){}
-
-void EfficientMultiSessionOptimization::Initialize() {
-    MultiSessionOptimization::Initialize();
-    
+MultiSessionOptimization(cam, results_dir, pftbase, date){
     for(int i=0; i<dates.size(); i++)
         poseactivations.push_back(vector<int>(POR[i].boat.size(), 1));
+    std::cout << "initialized the vector " << std::endl;
 }
 
 void EfficientMultiSessionOptimization::ConstructFactorGraph() {
@@ -48,6 +45,9 @@ void EfficientMultiSessionOptimization::ConstructFactorGraph() {
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
             //this lookup corresponds to the multiple ISCs at this location.
+            std::cout << "size: " << poseactivations.size() <<" of " << dates.size() << std::endl;
+            if(poseactivations.size() ==dates.size()) std::cout << "num elements: " << poseactivations[survey].size() << " of " << POR[survey].boat.size() << std::endl;
+            exit(1);
             if(!poseactivations[survey][i]) continue;
             rfFG->AddPose(survey, i, traj);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
