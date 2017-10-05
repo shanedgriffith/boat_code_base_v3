@@ -390,38 +390,52 @@ int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, b
     int med;
     int ckeycomp;
     double comp = (end)? ckey+0.1:ckey-0.1;
-    std::cout << "start binary search " << std::endl;
+//    std::cout << "start binary search " << std::endl;
     while(top-bot>1) {
         med = bot + (top - bot)/2;
         ckeycomp = landmarks[med].camera_keys[0].index();
         if(end) ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
-        std::cout << "range (" << bot << ", " << top << ") " << med << ", " <<ckeycomp << " compared to " << comp << std::endl;
+//        std::cout << "range (" << bot << ", " << top << ") " << med << ", " <<ckeycomp << " compared to " << comp << std::endl;
         if(ckeycomp < comp) bot = med;
         else if(ckeycomp > comp) top = med;
         else break;
     }
-    std::cout << "finished binary search " << std::endl;
+//    std::cout << "finished binary search " << std::endl;
     return med;
 }
 
-std::vector<int> ParseFeatureTrackFile::FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey){
-    //all visual features between:
-    //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
-    vector<int> range(2,0);
-    range[0] = BinarySearchLandmarkRange(landmarks, ckey-1, true);
-    range[1] = BinarySearchLandmarkRange(landmarks, ckey+1, false)-1;
-    return range;
+std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<LandmarkTrack>& landmarks, int ckey){
+    //MAX_NOT_FOUND depends on a landmark's distance to the camera, as does the other one, which is why it's approximate.
+    int MAX_NOT_FOUND = 10;
+    
+    int end = BinarySearchLandmarkRange(landmarks, ckey+1, false);
+    vector<int> indices;
+    int not_found = 0;
+    while(1){
+        int s = landmarks[end].camera_keys[0];
+        int e = landmarks[end].camera_keys[0] + landmarks[end].camera_keys.size();
+        if(s <= ckey && s+e > ckey) {
+            indices.push_back(end);
+            end--;
+            not_found = 0;
+        } else if(not_found > MAX_NOT_FOUND || ckey <= 0) { //if a feature
+            break;
+        } else {
+            end = BinarySearchLandmarkRange(landmarks, ckey--, false);
+            not_found++;
+        }
+    }
+    
+    return indices;
 }
 
 ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
-    vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
-    int offset = 0;
+    vector<int> approxset = ParseFeatureTrackFile::ApproximateLandmarkSet(landmarks, ckey);
+
     ParseFeatureTrackFile pftf(cam);
-    
-    for(int i=range[0]; i<=range[1]; i++) {
-        while(landmarks[i].camera_keys[offset].index() < ckey) offset++;
-        pftf.ids.push_back(landmarks[i].key);
-        pftf.imagecoord.push_back(landmarks[i].points[offset]);
+    for(int i=approxset.size(); i>=0; i--) {
+        pftf.ids.push_back(landmarks[approxset[i]].key);
+        pftf.imagecoord.push_back(landmarks[approxset[i]].points[offset]);
     }
     return pftf;
 }

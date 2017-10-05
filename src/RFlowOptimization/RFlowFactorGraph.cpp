@@ -165,5 +165,33 @@ void RFlowFactorGraph::Clear(){
     surveycnum.clear();
 }
 
-
+void RFlowFactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark){
+    /*Add the landmark track to the graph.*/
+    
+    //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
+    //    SmartProjectionPoseFactor(const double rankTol = 1,
+    //                              const double linThreshold = -1, const bool manageDegeneracy = false,
+    //                              const bool enableEPI = false, boost::optional<POSE> body_P_sensor = boost::none,
+    //                              LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10,
+    //                              double dynamicOutlierRejectionThreshold = -1) :
+    //LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10, double dynamicOutlierRejectionThreshold = -1
+    //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
+    //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
+    //  and the factor is disregarded if the error is large
+    int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
+    int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
+    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
+    
+    int count_on = 0;
+    for(int i=0; i<landmark.points.size(); i++) {
+        if(VariableExists((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index())) {
+            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
+            count_on++;
+        }
+    }
+    
+    landmark_factors[active_landmark_set].push_back(sppf);
+    landmark_keys[active_landmark_set].push_back(landmark.key);
+    if(landmark.used && count_on>1) graph.add(sppf);
+}
 

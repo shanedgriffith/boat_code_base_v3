@@ -31,62 +31,14 @@ MultiSessionOptimization(cam, results_dir, pftbase, date){}
 void EfficientMultiSessionOptimization::Initialize() {
     MultiSessionOptimization::Initialize();
     
-    for(int i=0; i<dates.size(); i++){
-        //ahh, but each one depends on whether there's an isc at the pose.
-        //called after the localizations are initialized?
+    for(int i=0; i<dates.size(); i++)
         poseactivations.push_back(vector<bool>(POR[i].boat.size(), true));
-        for(int j=0; j<POR[i].boat.size(); j++){
-            int lpdcur = lpdi[i].GetLPDIdx(j);
-            if(lpdcur >= 0) {
-                poseactivations[i][j] = false;
-                //initially, landmarks for all isc poses are deactivated.
-                ToggleLandmarksAtPose(i, j, false);
-            }
-        }
-    }
-}
-
-void EfficientMultiSessionOptimization::ToggleLandmarksAtPose(int survey, int ckey, bool active) {
-    //this would seem to have to be called in the update step.
-    std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
-    
-    vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, ckey);
-    //could test this by comparing to the number of visual feature tracks in the pfts
-    
-    int offset = 0;
-    for(int i=range[0]; i<=range[1]; i++) {
-        while(landmarks[i].camera_keys[offset].index() < ckey) offset++;
-        landmarks[i].constraint_on[offset]=active;
-    }
-}
-
-void EfficientMultiSessionOptimization::TestLandmarkRange() {
-    int count = 0;
-    for(int survey=0; survey<dates.size(); survey++){
-        std::vector<LandmarkTrack> landmarks = cached_landmarks[survey];
-        for(int i=0; i<POR[survey].boat.size(); i++) {
-            vector<int> range = ParseFeatureTrackFile::FindLandmarkRange(landmarks, i);
-            
-            ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
-            std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
-            pftf.ModifyFTFData(p3d);
-            if(pftf.ids.size() != range[1]-range[0]+1){
-                std::cout << "Found difference in the number of visual feature tracks at (" << survey << ", " << i <<"), expected " << pftf.ids.size()<<", got : " << range[1]-range[0]+1 << std::endl;
-                exit(-1);
-            }
-            count ++;
-        }
-    }
-    std::cout << "All landmark ranges match. Tested " << count << std::endl;
-    exit(1);
 }
 
 void EfficientMultiSessionOptimization::ConstructFactorGraph() {
     //changes:
     // variables connected to an isc are eliminated.
     cout << "   adding the surveys"<<endl;
-    
-    TestLandmarkRange();
     
     for(int survey=optstart; survey<dates.size(); survey++){
         bool latestsurvey = survey == POR.size()-1;
@@ -290,13 +242,8 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         totchanges += nchanges;
         
         //based on the last activations, determines whether the set of landmarks viewed from a pose need to be updated.
-        for(int j=0; j<curactivations[i].size(); j++) {
-            if(curactivations[i][j] != poseactivations[i][j]){
-                if(curactivations[i][j]) ToggleLandmarksAtPose(i, j, true);
-                else ToggleLandmarksAtPose(i, j, false);
-                poseactivations[i][j] = curactivations[i][j]; //if this is false, the pose variable shouldn't be eliminated.
-            }
-        }
+        for(int j=0; j<curactivations[i].size(); j++)
+            poseactivations[i][j] = curactivations[i][j];
         
         if(i > 0) {
             erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);

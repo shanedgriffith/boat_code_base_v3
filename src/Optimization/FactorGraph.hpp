@@ -85,7 +85,7 @@ public:
     void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose);
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
-    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
+    virtual void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
     void SetLandmarkDeviation(double dev);
     
     void Clear();

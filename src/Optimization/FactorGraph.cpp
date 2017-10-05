@@ -147,17 +147,13 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
-    int count_on = 0;
     for(int i=0; i<landmark.points.size(); i++) {
-        if(landmark.constraint_on[i]) {
-            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
-            count_on++;
-        }
+        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
     }
     
     landmark_factors[active_landmark_set].push_back(sppf);
     landmark_keys[active_landmark_set].push_back(landmark.key);
-    if(landmark.used && count_on>1) graph.add(sppf);
+    if(landmark.used) graph.add(sppf);
 }
 
 void FactorGraph::Clear(){

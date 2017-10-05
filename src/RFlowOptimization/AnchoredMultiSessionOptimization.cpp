@@ -117,7 +117,9 @@ void AnchoredMultiSessionOptimization::BuildLandmarkSet() {
             const LandmarkTrack* arg2 = static_cast<const LandmarkTrack*>(b);
             
             if(arg1->camera_keys[0] < arg2->camera_keys[0]) return -1;
-            if(arg1->camera_keys[0] > arg2->camera_keys[0]) return 1;
+            else if(arg1->camera_keys[0] > arg2->camera_keys[0]) return 1;
+            else if(arg1->camera_keys.size() < arg2->camera_keys.size()) return -1;
+            else if(arg1->camera_keys.size() > arg2->camera_keys.size()) return 1;
             return 0;
         });
     }

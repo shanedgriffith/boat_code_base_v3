@@ -91,7 +91,7 @@ public:
     
     static ParseFeatureTrackFile LoadFTF(Camera& _cam, std::string base, int ftfileno);
     
-    static std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey);
+    static std::vector<int> ApproximateLandmarkSet(std::vector<LandmarkTrack>& landmarks, int ckey);
     static ParseFeatureTrackFile ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
 };
 
