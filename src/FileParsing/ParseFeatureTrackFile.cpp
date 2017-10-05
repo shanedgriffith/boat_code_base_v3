@@ -381,7 +381,7 @@ ParseFeatureTrackFile& ParseFeatureTrackFile::operator=(ParseFeatureTrackFile ot
     return *this;
 }
 
-int ParseFeatureTrackFile::FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end){
+int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end){
     //binary search with repeats.
     if(ckey<0) return 0;
     if(ckey>=landmarks.size()) return landmarks.size()-1;
@@ -408,8 +408,8 @@ std::vector<int> FindLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ck
     //all visual features between:
     //(the last of the set ending with ckey-1, the first of the set beginning with ckey+1)
     vector<int> range(2,0);
-    range[0] = ParseFeatureTrackFile::BinarySearchLandmarkRange(landmarks, ckey-1, true);
-    range[1] = ParseFeatureTrackFile::BinarySearchLandmarkRange(landmarks, ckey+1, false);
+    range[0] = BinarySearchLandmarkRange(landmarks, ckey-1, true);
+    range[1] = BinarySearchLandmarkRange(landmarks, ckey+1, false);
     return range;
 }
 
