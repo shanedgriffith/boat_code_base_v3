@@ -418,7 +418,7 @@ ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& ca
     int offset = 0;
     ParseFeatureTrackFile pftf(cam);
     
-    for(int i=beg; i<=end; i++) {
+    for(int i=range[0]; i<=range[1]; i++) {
         while(landmarks[i].camera_keys[offset].index() < ckey) offset++;
         pftf.ids.push_back(landmarks[i].key);
         pftf.imagecoord.push_back(landmarks[i].points[offset]);
