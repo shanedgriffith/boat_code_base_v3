@@ -120,8 +120,8 @@ void MultiSessionOptimization::BuildLandmarkSet() {
         
         //sort the cached landmarks by the pose order
         std::qsort(&cached_landmarks[survey][0], cached_landmarks[survey].size(), sizeof(LandmarkTrack), [](const void* a, const void* b) {
-            LandmarkTrack* arg1 = static_cast<const LandmarkTrack*>(a);
-            LandmarkTrack* arg2 = static_cast<const LandmarkTrack*>(b);
+            const LandmarkTrack* arg1 = static_cast<const LandmarkTrack*>(a);
+            const LandmarkTrack* arg2 = static_cast<const LandmarkTrack*>(b);
             
             if(arg1->camera_keys[0] < arg2->camera_keys[0]) return -1;
             if(arg1->camera_keys[0] > arg2->camera_keys[0]) return 1;
