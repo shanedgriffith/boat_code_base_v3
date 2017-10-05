@@ -32,7 +32,7 @@ void EfficientMultiSessionOptimization::Initialize() {
     MultiSessionOptimization::Initialize();
     
     for(int i=0; i<dates.size(); i++)
-        poseactivations.push_back(vector<bool>(POR[i].boat.size(), true));
+        poseactivations.push_back(vector<int>(POR[i].boat.size(), 1));
 }
 
 void EfficientMultiSessionOptimization::ConstructFactorGraph() {
@@ -159,7 +159,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     vector<unordered_map<int, double> > inter(dates.size());
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
-    vector<vector<bool> > curactivations;
+    vector<vector<int> > curactivations;
     
     poses = GetPoses();
     SolveForMap sfm(_cam);
@@ -173,7 +173,7 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
         landmarks.push_back(surveylandmarks);
         
         if(permerr.size() < dates.size()-optstart-1) permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
-        curactivations.push_back(vector<bool>(POR[i].boat.size(), true));
+        curactivations.push_back(vector<int>(POR[i].boat.size(), 1));
     }
     
     double totchanges = 0;
@@ -237,7 +237,8 @@ double EfficientMultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
             
             lpd_rerror[sidx][j] = 1;
             if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-            curactivations[i][lpd.s1time] = curactivations[i][lpd.s1time] && !inlier; //accumulates the decision about whether the landmarks for a given pose should be active
+            int bitval = inlier? 1:0;
+            curactivations[i][lpd.s1time] = curactivations[i][lpd.s1time] & !bitval; //accumulates the decision about whether the landmarks for a given pose should be active
         }
         totchanges += nchanges;
         
