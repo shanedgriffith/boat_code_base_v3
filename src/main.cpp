@@ -11,7 +11,13 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
+<<<<<<< HEAD
 #include <RFlowOptimization/MultiSessionIterativeSmoothingAndRefinement.hpp>
+=======
+#include <RFlowOptimization/MultiAnchorsOptimization.hpp>
+#include <RFlowOptimization/AnchoredMultiSessionOptimization.hpp>
+#include <RFlowOptimization/EfficientMultiSessionOptimization.hpp>
+>>>>>>> 6cd30ffd66bc20ccf9d12509d50f9cd50a83f239
 #include <Tests/TestTransforms.hpp>
 #include <Evaluation/SessionConvergence.hpp>
 #include <RFlowOptimization/MultiCascade.hpp>
