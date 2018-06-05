@@ -284,7 +284,7 @@ ParseFeatureTrackFile ParseFeatureTrackFile::LoadFTF(Camera& _cam, string base, 
     return pftf;
 }
 
-void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3> p3d){
+void ParseFeatureTrackFile::ModifyFTFData(vector<gtsam::Point3>& p3d){
     //Finds and keeps only the landmarks that were good in the stand-alone optimization.
     //vector<gtsam::Point3> p3d = POR.GetSubsetOf3DPoints(pftf.ids);
     vector<int> subset_ids;
@@ -305,6 +305,7 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
     int num_landmarks_skipped=0;
     int lasti=0;
     for(int i=0; i<ids.size(); i++) {
+        lasti=i;
         //remove features that aren't tracked anymore
         //add to the entry using the info from the new frame.
         while(active.size() > next_entry && active[next_entry].GetKey() < ids[i]) {
@@ -315,7 +316,6 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
         
         //create a new entry if its key is greater than anything that's active
         if(active.size() == next_entry) {
-            lasti=i;
             break;
         } else if(ids[i] < active[next_entry].key) {
             if(last_skipped < ids[i]){
@@ -330,6 +330,7 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
             if(debug) cout << "landmark measurement for " << active[next_entry].key << endl;
             //inc next_entry.
             next_entry++;
+            lasti=i+1;
         }
     }
     
@@ -381,3 +382,74 @@ ParseFeatureTrackFile& ParseFeatureTrackFile::operator=(ParseFeatureTrackFile ot
     return *this;
 }
 
+int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end){
+    //binary search with repeats.
+    if(ckey<0) return 0;
+    if(ckey>=landmarks.size()) return landmarks.size()-1;
+    int top = landmarks.size();
+    int bot = 0;
+    int med;
+    int ckeycomp;
+    double comp = (end)? ckey+0.1:ckey-0.1;
+//    std::cout << "start binary search " << std::endl;
+    while(top-bot>1) {
+        med = bot + (top - bot)/2;
+        ckeycomp = landmarks[med].camera_keys[0].index();
+        if(end) ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
+//        std::cout << "range (" << bot << ", " << top << ") " << med << ", " <<ckeycomp << " compared to " << comp << std::endl;
+        if(ckeycomp < comp) bot = med;
+        else if(ckeycomp > comp) top = med;
+        else break;
+    }
+//    std::cout << "finished binary search " << std::endl;
+    return med;
+}
+
+std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<LandmarkTrack>& landmarks, int ckey){
+    //MAX_NOT_FOUND depends on a landmark's distance to the camera, as does the other one, which is why it's approximate.
+    int MAX_NOT_FOUND = 10;
+    
+    int refkey = ckey;
+    int end = BinarySearchLandmarkRange(landmarks, ckey+1, false);
+    vector<int> indices;
+    int not_found = 0;
+    while(1){
+        int s = landmarks[end].camera_keys[0].index();
+        int e = s + landmarks[end].camera_keys.size();
+        if(s <= ckey && e > refkey) {
+            indices.push_back(end);
+            end--;
+            not_found = 0;
+        } else if(not_found > MAX_NOT_FOUND || ckey <= 0) {
+            break;
+        } else {
+            //while(landmarks[end].camera_keys[0].index() < ckey)
+            ckey = s-1;
+            end = BinarySearchLandmarkRange(landmarks, ckey--, false);
+            not_found++;
+        }
+    }
+    
+    return indices;
+}
+
+ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
+    vector<int> approxset = ParseFeatureTrackFile::ApproximateLandmarkSet(landmarks, ckey);
+
+    if(approxset.size() > 300){
+        std::cout << "approx set size: " << approxset.size()<< " for key " << ckey << std::endl;
+        for(int i=0; i<approxset.size(); i++){
+            int offset = ckey - landmarks[approxset[i]].camera_keys[0].index();
+            std::cout << "camera key: " << landmarks[approxset[i]].camera_keys[offset].index() << std::endl;
+        }
+        exit(1);
+    }
+    
+    ParseFeatureTrackFile pftf(cam);
+    for(int i=approxset.size()-1; i>=0; i--) {
+        pftf.ids.push_back(landmarks[approxset[i]].key);
+        int offset = ckey - landmarks[approxset[i]].camera_keys[0].index();
+        pftf.imagecoord.push_back(landmarks[approxset[i]].points[offset]);
+    }
+    return pftf;
+}

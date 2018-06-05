@@ -90,13 +90,15 @@ void GTSamInterface::Update() {
         printf(" >A prior was not specified for the first camera pose.\n");
         printf(" >landmarks need to be observed at least twice.");
         
-        printf("\nThe factor graph.\n");
-        _fg->PrintFactorGraph();
-        printf("\n\n\nThe initial estimates.\n");
-        initialEstimate.print();
-        printf("Terminated with an exception.");
-        std::cout << ex.what()<<std::endl;
-        exit(-1);
+        if(debug) {
+            printf("\nThe factor graph.\n");
+            _fg->PrintFactorGraph();
+            printf("\n\n\nThe initial estimates.\n");
+            initialEstimate.print();
+            printf("Terminated with an exception.");
+            std::cout << ex.what()<<std::endl;
+            exit(-1);
+        }
     }
 }
 
@@ -129,14 +131,14 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
         printf("  >A prior was not specified for the first camera pose.\n");
         printf("  >landmarks need to be observed at least twice.\n");
 
-//        if(debug) {
+        if(debug) {
             printf("\n The factor graph.\n");
             _fg->PrintFactorGraph();
             printf("\n\n\n The initial estimates.\n");
             initialEstimate.print();
             printf("Terminated with an exception.");
             std::cout << ex.what()<<std::endl;
-//        }
+        }
         exit(-1);
     }
 }
@@ -169,7 +171,7 @@ gtsam::Pose3 GTSamInterface::PoseResult(Symbol s) {
     else if(initialEstimate.exists<Pose3>(s))
         return initialEstimate.at<Pose3>(s);
     else {
-        cout<<"GTSamInterface Error: Key "<< s << " is not in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
+        cout<<"GTSamInterface Error: Key ("<< s.chr() << "."<<s.index() << ") is not in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
         exit(-1);
     }
 }

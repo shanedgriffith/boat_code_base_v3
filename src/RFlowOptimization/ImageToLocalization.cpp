@@ -251,7 +251,7 @@ void * ImageToLocalization::Run(){
     string image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[portimes[1]]);
     AlignmentResult ar = MatchToSet(image0, image1);
 
-    if(debug) std::cout<<"alignment success check: "<<ar._height<<std::endl;
+    //if(debug) std::cout<<"alignment success check: "<<ar._height<<std::endl;
     if(ar._height > 0) RobustAlignmentConstraints(ar, pftf0, pftf1);
 
     thread_state = state::FINISHED;

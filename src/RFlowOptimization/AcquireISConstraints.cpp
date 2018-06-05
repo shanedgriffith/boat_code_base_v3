@@ -270,11 +270,11 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         double hops = survey_est[topk[i][0]].avg_hop_distance;
         if(toverify->IsSet() && verified[i]){
             res[i].Save(_map_dir + res[i].date1); //save all the verified localizations.
-            if(leasthops > hops){
-                hasverified = true;
+            if(!hasverified || leasthops > hops){
                 leasthops = hops;
                 bestidx = i;
             }
+            hasverified = true;
         } else if(!hasverified && res[i].IsSet() && leasthops > hops){
             //if there's no verified pose, use the one with the least hops
             leasthops = hops;

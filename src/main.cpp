@@ -3,7 +3,6 @@
 #include <Optimization/SurveyOptimizer.h>
 #include <DataTypes/Camera.hpp>
 #include <RFlowOptimization/EvaluateRFlow.hpp>
-#include <RFlowOptimization/RFlowSurveyOptimizer.hpp>
 #include <RFlowOptimization/AcquireISConstraints.hpp>
 #include <RFlowEvaluation/AlignVisibilitySet.hpp>
 #include <Visualizations/FlickeringDisplay.h>
@@ -12,14 +11,17 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
-#include <RFlowOptimization/MultiAnchorsOptimization.hpp>
-#include <RFlowOptimization/AnchoredMultiSessionOptimization.hpp>
+#include <RFlowOptimization/MultiSessionIterativeSmoothingAndRefinement.hpp>
 #include <Tests/TestTransforms.hpp>
+#include <Evaluation/SessionConvergence.hpp>
+#include <RFlowOptimization/MultiCascade.hpp>
+#include <RFlowEvaluation/ForBMVCFigure.hpp>
 
 using namespace std;
 
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
+vector<string> home_paths = {"/Users/shane/Documents/research/data/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
 
 int main(int argc, char *argv[]) {
     if(argc<4) {
@@ -28,12 +30,11 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    
-    string results_dir = lab_paths[0];
-    string query_loc = lab_paths[1];
-    string pftbase = lab_paths[2];
-    string visibility_dir = "/mnt/tale/shaneg/results/visibility_poses/all/";
-    string bike_datasets = lab_paths[3];
+    string results_dir = home_paths[0];
+    string query_loc = home_paths[1];
+    string pftbase = home_paths[2];
+    string visibility_dir = "****USE COVISIBILITY****";
+    string bike_datasets = home_paths[3];
     if(argc>4){
         results_dir = cluster_paths[0];
         query_loc = cluster_paths[1];
@@ -53,14 +54,13 @@ int main(int argc, char *argv[]) {
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
-//        MultiAnchorsOptimization mao(axisptz, results_dir, pftbase, query_loc, argv[2]);
-        AnchoredMultiSessionOptimization mao(axisptz, results_dir, pftbase, argv[2]);
-        mao.IterativeMerge();
 //        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
+//        EfficientMultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
+        MultiCascade mso(axisptz, results_dir, pftbase, argv[2]);
+//        MultiSessionIterativeSmoothingAndRefinement mso(axisptz, results_dir, pftbase, argv[2]);
+        mso.IterativeMerge();
 //        mso.SetDryRun();
 //        mso.IterativeMerge();
-        //RFlowSurveyOptimizer ra(axisptz, argv[1], results_dir, pftbase);
-        //ra.IterativeMerge();
         break;}
     case 2:{
         //keep date 1 the same and change date 2 to have the images be aligned at the same places. 
@@ -112,8 +112,10 @@ int main(int argc, char *argv[]) {
         //test transform changes
 //        TestTransforms::CheckBtwn(axisptz);
 //        TestTransforms::TestLocalization(axisptz);
-        TestTransforms test;
-        test.TestConstraintProportions(axisptz);
+//        TestTransforms test;
+//        test.TestConstraintProportions(axisptz);
+        SessionConvergence sc(axisptz, pftbase);
+        sc.CompareSessions();
         
         break;}
     }

@@ -47,8 +47,10 @@ public:
 	    sppf_prune = false; //keep all the landmark tracks.
 	}
 
+    void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
 	bool AddPose(gtsam::Symbol s, gtsam::Pose3 p);
-	bool AddPose(int survey, int pnum, gtsam::Pose3 p, bool add_prior=true);
+    bool AddPose(int survey, int pnum, gtsam::Pose3 p, bool add_prior=true);
+    void AddPosePrior(gtsam::Symbol s, gtsam::Pose3 p, , double val=0.0001);
 	void AddVirtualBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 p0, gtsam::Pose3 p1, double val=0.001);
 	void AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
 	void AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight=false);

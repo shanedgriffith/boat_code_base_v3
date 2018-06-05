@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void ParseOptimizationResults::LoadOptimizationResult(bool sorted){
+void ParseOptimizationResults::LoadOptimizationResult(bool sorted) {
     ReadDelimitedFile(_base + boatfile, LINETYPE::pose);
     if(Exists(_base + velocityfile)) ReadDelimitedFile(_base + velocityfile, LINETYPE::vels);
     ReadDelimitedFile(_base + correspondencefile, LINETYPE::corres);
@@ -23,14 +23,14 @@ void ParseOptimizationResults::LoadOptimizationResult(bool sorted){
     if(sorted) SortPoints();
 }
 
-void ParseOptimizationResults::ProcessPoseEntries(vector<string> lp, vector<vector<double> >& poses){
+void ParseOptimizationResults::ProcessPoseEntries(vector<string> lp, vector<vector<double> >& poses) {
     if(lp.size()<7) return;
     vector<double> pose(lp.size()-1, 0.0);
     for(int i=1; i<lp.size(); i++) pose[i-1] = stod(lp[i]);
     poses.push_back(pose);
 }
 
-void ParseOptimizationResults::ProcessCorrespondenceEntries(vector<string> lp){
+void ParseOptimizationResults::ProcessCorrespondenceEntries(vector<string> lp) {
     if(lp.size()<4) return;
     ftfilenos.push_back(stoi(lp[1]));
     auxidx.push_back(stoi(lp[2]));
@@ -41,8 +41,7 @@ void ParseOptimizationResults::ProcessCorrespondenceEntries(vector<string> lp){
     if(lp.size()>4)timings.push_back(stod(lp[4]));
 }
 
-
-void ParseOptimizationResults::RemoveTransitionEntries(){
+void ParseOptimizationResults::RemoveTransitionEntries() {
 	for(int i=to_remove.size()-1; i>=0; i--){
 		int idx = to_remove[i];
 		boat.erase(boat.begin()+idx);
@@ -53,8 +52,7 @@ void ParseOptimizationResults::RemoveTransitionEntries(){
 	}
 }
 
-
-void ParseOptimizationResults::ProcessPointEntries(vector<string> lp){
+void ParseOptimizationResults::ProcessPointEntries(vector<string> lp) {
     if(lp.size() < 4) return;
     point_obj po;
     po.p_id = stoi(lp[0]);
@@ -62,8 +60,7 @@ void ParseOptimizationResults::ProcessPointEntries(vector<string> lp){
     p.push_back(po);
 }
 
-
-void ParseOptimizationResults::ProcessLineEntries(int type, vector<string> lp){
+void ParseOptimizationResults::ProcessLineEntries(int type, vector<string> lp) {
     switch(type){
         case LINETYPE::pose:
             ProcessPoseEntries(lp, boat);
@@ -80,9 +77,7 @@ void ParseOptimizationResults::ProcessLineEntries(int type, vector<string> lp){
     }
 }
 
-
-void ParseOptimizationResults::ReadDelimitedFile(string file, int type)
-{
+void ParseOptimizationResults::ReadDelimitedFile(string file, int type) {
     FILE * fp = OpenFile(file,"r");
     char line[LINESIZE];
     
@@ -95,9 +90,7 @@ void ParseOptimizationResults::ReadDelimitedFile(string file, int type)
     fclose(fp);
 }
 
-
-void ParseOptimizationResults::SortPoints()
-{
+void ParseOptimizationResults::SortPoints() {
     if(debug) cout << "Sorting the optimized points." << endl;
     /*note: sorting would be faster while loading.
      */
@@ -112,9 +105,7 @@ void ParseOptimizationResults::SortPoints()
     });
 }
 
-
-vector<double> ParseOptimizationResults::LoadReprojectionErrorFile(string evalfile)
-{
+vector<double> ParseOptimizationResults::LoadReprojectionErrorFile(string evalfile) {
     FILE * fe = OpenFile(evalfile, "r");
     vector<double> coarseeval;
     char bigline[100000];
@@ -175,14 +166,11 @@ vector<gtsam::Point3> ParseOptimizationResults::GetSubsetOf3DPoints(vector<int>&
     return pset;
 }
 
-
 gtsam::Pose3 ParseOptimizationResults::CameraPose(int idx){
     return gtsam::Pose3(gtsam::Rot3::ypr(boat[idx][5], boat[idx][4], boat[idx][3]), gtsam::Point3(boat[idx][0], boat[idx][1], boat[idx][2]));
 }
 
-
-double DistanceFunction(vector<double> pose1, vector<double> pose2)
-{
+double DistanceFunction(vector<double> pose1, vector<double> pose2) {
     double projx1 = pose1[0] + 10*cos(pose1[3]);
     double projy1 = pose1[1] + 10*sin(pose1[3]);
     
@@ -194,9 +182,7 @@ double DistanceFunction(vector<double> pose1, vector<double> pose2)
     return euc+euc2; //uncomment for both shore+pose.
 }
 
-
-vector<int> GetNearestShore(vector<double> pose1, vector<vector<double> > bps2, vector<double>& dist_res)
-{
+vector<int> GetNearestShore(vector<double> pose1, vector<vector<double> > bps2, vector<double>& dist_res) {
     /*
      Get indices for the two smallest poses and their distances.
      */
@@ -231,9 +217,7 @@ vector<int> GetNearestShore(vector<double> pose1, vector<vector<double> > bps2, 
     return mini;
 }
 
-
-int IdentifyBestLikelyImage(vector<double> q, vector<double> p1, vector<double> p2, int n, double * distres=NULL)
-{
+int IdentifyBestLikelyImage(vector<double> q, vector<double> p1, vector<double> p2, int n, double * distres=NULL) {
     //p2-p1/n
     vector<double> inc_amt;
     for(int i=0; i<p1.size(); i++)
@@ -265,7 +249,6 @@ int IdentifyBestLikelyImage(vector<double> q, vector<double> p1, vector<double> 
     return mini;
 }
 
-
 int ParseOptimizationResults::GetImageIndexGivenPose(vector<double> ref_pose, double* boat_pose){
     vector<double> dist_res;
     
@@ -274,8 +257,7 @@ int ParseOptimizationResults::GetImageIndexGivenPose(vector<double> ref_pose, do
     if(debug) cout << "distance: " << dist_res[0] << ", idx: " << idxs[0] << endl;
     
     int nearest_idx = -1;
-    if(dist_res[0] < 100)
-    {
+    if(dist_res[0] < 100) {
         //extra logic that may be unnecessary. This catches cases in which the nearest pose fell just out of range
         int botidx = max(idxs[0]-1, 0);
         int topidx = min(idxs[1]+1, GetNumberOfPoses()-1);
@@ -298,4 +280,27 @@ int ParseOptimizationResults::GetImageIndexGivenPose(vector<double> ref_pose, do
     
     return nearest_idx;
 }
+
+void ParseOptimizationResults::UpdateLandmarks(std::vector<std::vector<double> >& landmarks){
+    p.clear();
+    for(int i=0; i<landmarks.size(); i++){
+        gtsam::Point3 wp(landmarks[i][0], landmarks[i][1], landmarks[i][2]);
+        point_obj po;
+        po.p = wp;
+        po.p_id = (int)landmarks[i][3];
+        p.push_back(po);
+    }
+}
+
+std::vector<std::vector<double> > ParseOptimizationResults::GetLandmarkSet(){
+    std::vector<std::vector<double> > landmarks(p.size(), std::vector<double>(4, 0.0));
+    for(int i=0; i<p.size(); i++){
+        landmarks[i][0] = p[i].p.x();
+        landmarks[i][1] = p[i].p.y();
+        landmarks[i][2] = p[i].p.z();
+        landmarks[i][3] = p[i].p_id;
+    }
+    return landmarks;
+}
+
 

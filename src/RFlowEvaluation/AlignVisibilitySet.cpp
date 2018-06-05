@@ -58,7 +58,7 @@ std::vector<char> AlignVisibilitySet::LoadLabelsFile(std::string filepath){
 
 
 void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
-    vector<string> dates = {"140117", "140122", "140129", "140205", "140314"};
+    vector<string> dates = {"140117", "140122", "140129", "140205", "140314", "140409", "140424", "140502"};//"140416",
     
     vector<int> coarse(7000,0);
     vector<int> precise(7000,0);

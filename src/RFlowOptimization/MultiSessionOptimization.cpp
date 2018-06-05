@@ -23,8 +23,8 @@
 
 using namespace std;
 
-MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
-_map_dir(results_dir + "maps/"), _pftbase(pftbase),
+MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date, double plt):
+_map_dir(results_dir + "maps_MC_10/"), _pftbase(pftbase),
 SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
@@ -33,6 +33,7 @@ SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     
     std::cout << "  Initializing.."<<std::endl;
     IdentifyOptimizationDates();
+    percent_of_tracks = plt;
     Initialize();
     rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
 }
@@ -62,6 +63,7 @@ void MultiSessionOptimization::Initialize() {
         LPDInterface lint;
         int nloaded = lint.LoadLocalizations(_map_dir + dates[i]);
         lpdi.push_back(lint);
+        permerr.push_back(vector<double>(lint.localizations.size(),0));
         
         if(i > 0 && nloaded < POR[i].boat.size()*0.01) {
             std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimizing a set that was previously optimized."<<std::endl;
@@ -84,12 +86,27 @@ void MultiSessionOptimization::Initialize() {
         vector<double> rerror_set = hlog.LoadPriorRerror(dates[i], nloaded);
         lpd_rerror.push_back(rerror_set);
         lpd_eval.push_back(vector<double>(rerror_set.size(), 3.0));
+        lpd_sum.push_back(vector<double>(rerror_set.size(), 0.0));
         
         int ninliers = 0;
         for(int i=0; i<rerror_set.size(); i++)
             ninliers += (rerror_set[i]==1)?1:0;
-        inlier_ratio.push_back(1.*ninliers/rerror_set.size());
+        outliers.push_back(0);
     }
+    
+    //an adaptive threshold for the update step.
+    for(int survey=optstart; survey<dates.size(); survey++){
+        for(int j=0; j<POR[survey].boat.size(); j++){
+            rerrs[survey-optstart][j] = rerrs[survey-optstart][j]*update_mult_factor;
+            if(rerrs[survey-optstart][j] < 0) {
+                std::cout << "MultiSessionOptimization::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
+                exit(1);
+            } else if (rerrs[survey-optstart][j] < 6) { //this occurs at places in the rerr vector that are zero.
+                rerrs[survey-optstart][j] = AverageRerror[survey-optstart]*update_mult_factor;
+            }
+        }
+    }
+    
     heights = std::vector<double>(dates.size()-optstart, 0);
     BuildLandmarkSet();
 }
@@ -108,14 +125,27 @@ void MultiSessionOptimization::BuildLandmarkSet() {
         
         for(int i=0; i<POR[survey].boat.size(); i++) {
             ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[survey], POR[survey].ftfilenos[i]);
-            pftf.ModifyFTFData(POR[survey].GetSubsetOf3DPoints(pftf.ids));
-            vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active);
+            std::vector<gtsam::Point3> p3d = POR[survey].GetSubsetOf3DPoints(pftf.ids);
+            pftf.ModifyFTFData(p3d);
+            vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active, percent_of_tracks);
             CacheLandmarks(tracks);
         }
         
         //add the rest of the landmarks
         CacheLandmarks(active);
         active.clear();
+        
+        //sort the cached landmarks by the pose order
+        std::qsort(&cached_landmarks[survey][0], cached_landmarks[survey].size(), sizeof(LandmarkTrack), [](const void* a, const void* b) {
+            const LandmarkTrack* arg1 = static_cast<const LandmarkTrack*>(a);
+            const LandmarkTrack* arg2 = static_cast<const LandmarkTrack*>(b);
+            
+            if(arg1->camera_keys[0] < arg2->camera_keys[0]) return -1;
+            else if(arg1->camera_keys[0] > arg2->camera_keys[0]) return 1;
+            else if(arg1->camera_keys.size() < arg2->camera_keys.size()) return -1;
+            else if(arg1->camera_keys.size() > arg2->camera_keys.size()) return 1;
+            return 0;
+        });
     }
 }
 
@@ -132,10 +162,10 @@ void MultiSessionOptimization::ConstructFactorGraph() {
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
-            if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) { //lpd_eval[sidx][lpdcur] < 6){ //
+            if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
                 traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
             }
-    //        if(!firstiter) SetHeight(traj, heights[sidx]); //set all the poses to the same height.
+            
             rfFG->AddPose(survey, i, traj);
             GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
             
@@ -189,102 +219,107 @@ void MultiSessionOptimization::GetHeight(vector<vector<vector<double> > >& poses
     }
 }
 
+double MultiSessionOptimization::GetError(EvaluateRFlow& erflow, std::vector<double>& pose, std::vector<std::vector<double> >& landmarks, std::vector<LandmarkTrack>& cached_landmarks, int surveyTIME, std::unordered_map<int, double>& resultcache){
+    
+    return erflow.OnlineRError(cached_landmarks, surveyTIME, pose, landmarks);
+//    auto search = resultcache.find(surveyTIME);
+//    if(search != resultcache.end()) {
+//        std::cout << "result: " << (double) search->second << " " << std::endl;
+//        return search->second;
+//    } else {
+//        resultcache[surveyTIME] = erflow.OnlineRError(cached_landmarks, surveyTIME, pose, landmarks);
+//    }
+//    return resultcache[surveyTIME];
+}
+
+std::vector<bool> MultiSessionOptimization::LPDInlierTest(int s, int l, double LPD_RERROR_THRESHOLD, vector<double>& error){
+    //double errS0, double errS1, double errISC0, double errISC1
+    bool changed = false;
+    bool inlier = true;
+    if(std::isnan(error[2]) ||
+       error[2] > LPD_RERROR_THRESHOLD) inlier = false;
+    if(std::isnan(error[3]) ||
+       error[3] > LPD_RERROR_THRESHOLD) inlier = false;
+    if(std::isnan(error[0]) ||
+       std::isnan(error[1])) inlier = false;
+    if(error[0] > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
+       error[1] > LPD_RERROR_THRESHOLD) permerr[s][l] = 1;
+    if(permerr[s][l] > 0) inlier = false;
+    
+    lpd_eval[s][l] = std::max(3.0, (std::max(error[0], error[1]), std::max(error[2], error[3])));
+    for(int i=0; i<error.size(); i++) {
+        if(i==0) lpd_sum[s][l] = error[i];
+        else lpd_sum[s][l] += error[i];
+    }
+    lpd_sum[s][l] = error[2];
+    
+    if(lpd_rerror[s][l] == 0 ||
+       (inlier && lpd_rerror[s][l] < 0) ||
+       (!inlier && lpd_rerror[s][l] > 0)) {
+        changed = true;
+    }
+    
+    if(inlier) {lpd_rerror[s][l] = 1;}
+    else lpd_rerror[s][l] = -1;
+    
+    return {inlier, changed};
+}
+
+int MultiSessionOptimization::EvaluateLPD(vector<vector<vector<double> > >& poseresult, std::vector<std::vector<std::vector<double> > >& landmarks, int s, int j, vector<EvaluateRFlow*> perf, vector<unordered_map<int, double> >& errorcache){
+    LocalizedPoseData& l = lpdi[s].localizations[j];
+    
+    std::vector<double> p0 = GTS.MAPPoseEstimate(rfFG->GetSymbol(l.s0, l.s0time));
+    std::vector<double> p1 = GTS.MAPPoseEstimate(rfFG->GetSymbol(l.s1, l.s1time));
+    
+    vector<double> error(4, 0);
+    error[0] = GetError(*perf[0], p0, landmarks[l.s0], cached_landmarks[l.s0], l.s0time, errorcache[l.s0]);
+    error[1] = GetError(*perf[1], p1, landmarks[l.s1], cached_landmarks[l.s1], l.s1time, errorcache[l.s1]);
+    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
+    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[l.s1], l.b2d0, l.bids, l.rerrorb);
+    
+    std::vector<bool> result = LPDInlierTest(s, j, rerrs[l.s1][l.s1time], error);
+    //these aren't necessary, given whatever new evaluation metric is used.
+    //    coutliers += result[0]?0:1;
+    //    nchanges += result[1]?1:0;
+    if(result[0]) { //store the values
+        poseresult[l.s0][l.s0time] = p0; //backward
+        poseresult[l.s1][l.s1time] = p1; //forward
+    } else outliers[s]++; //TODO: although, for the directional one this isn't counting correctly, I think.
+    if(result[1]) return 1;
+    return 0;
+}
+
+void MultiSessionOptimization::PrintConvergenceStats(int s, const vector<EvaluateRFlow*> perf, int coutliers){
+    std::cout << " " << dates[s] << std::endl;
+    perf[0]->PrintTots("  connected intra", true);
+    perf[1]->PrintTots("  intra          ", true);
+    perf[2]->PrintTots("  inter          ", true);
+    if(coutliers>=0) std::cout << "number of (virtual) outliers: " << coutliers << std::endl;
+}
+
 double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
-    double mult = 3;
-    static vector<vector<double> > permerr;
-    vector<unordered_map<int, double> > intra;
+    vector<unordered_map<int, double> > errorcache(dates.size());
     vector<vector<vector<double> > > poses;
     vector<vector<vector<double> > > landmarks;
     
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
-        rfFG->ChangeLandmarkSet(sidx);
+    for(int i=0; i<dates.size(); i++){
+        rfFG->ChangeLandmarkSet(i);
         poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
         landmarks.push_back(GTS.GetOptimizedLandmarks(true));
-        
-        intra.push_back(unordered_map<int, double>());
-        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
     }
     
     double totchanges = 0;
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
+    for(int i=0; i<dates.size(); i++){
+        vector<EvaluateRFlow> erf = { EvaluateRFlow(_cam, "-", _map_dir),
+            EvaluateRFlow(_cam, dates[i], _map_dir),
+            EvaluateRFlow(_cam, dates[i], _map_dir)};
+        vector<EvaluateRFlow*> perf = {&erf[0], &erf[1], &erf[2]};
         
-        EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
-        EvaluateRFlow erfintraS0(_cam, "-", _map_dir);
-        EvaluateRFlow erfintraS1(_cam, dates[i], _map_dir);
+        for(int j=0; j<lpdi[i].localizations.size(); j++)
+            totchanges += EvaluateLPD(poses, landmarks, i, j, perf, errorcache);
         
-        int nchanges = 0;
-        int coutliers = 0;
-        for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
-            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-            
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
-            intra[sidx][lpd.s1time] = intra_errorS1;
-            double intra_errorS0 = 0;
-            if(lpd.s0 >= optstart) {
-                int s0idx = lpd.s0-optstart;
-                auto search = intra[s0idx].find(lpd.s0time);
-                if(search != intra[s0idx].end())
-                    intra_errorS0 = search->second;
-                else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], poses[s0idx][lpd.s0time], landmarks[s0idx]);
-                    intra[s0idx][lpd.s0time] = intra_errorS0;
-                }
-            }
-            
-            double newval = std::max(3.0, std::max(std::max(inter_error, intra_errorS1), intra_errorS0));
-//            if(lpd_eval[sidx][j] >= 2*newval || lpd_eval[sidx][j] <= newval/2) {
-//                nchanges++;
-//                if(!firstiter){
-//                    if(lpd_eval[sidx][j] > 2*newval) std::cout << "weakened   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-//                    else       std::cout << "strengthened ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-//                }
-//            }
-            
-            lpd_eval[sidx][j] = newval;
-//            if(newval > 15) coutliers++;
-            
-            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
-            if(LPD_RERROR_THRESHOLD < 0) {
-                std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
-                exit(1);
-            } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
-                LPD_RERROR_THRESHOLD = AverageRerror[sidx]*mult;
-            }
-            
-            bool inlier = true;
-            if(std::isnan(inter_error) ||
-               inter_error > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(intra_errorS0) ||
-               std::isnan(intra_errorS1)) inlier = false;
-            if(intra_errorS0 > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
-               intra_errorS1 > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
-            if(permerr[sidx][j] > 0) inlier = false;
-            
-            if(lpd_rerror[sidx][j] == 0 ||
-               (inlier && lpd_rerror[sidx][j] < 0) ||
-               (!inlier && lpd_rerror[sidx][j] > 0)) {
-                nchanges++;
-                if(!firstiter){
-                    if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                    else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                }
-            }
-            
-            lpd_rerror[sidx][j] = 1;
-            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
-        }
-        totchanges += nchanges;
-        
-        if(i > 0) {
-            erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
-            erfintraS1.PrintTots("intra " + dates[i]);
-            erfinter.PrintTots("inter");
-            std::cout << "number of (virtual) outliers: " << coutliers << std::endl;
-        }
-        inlier_ratio[sidx] = 1.0-(1.*coutliers/lpdi[sidx].localizations.size());
+//        if(i > 0)
+//            PrintConvergenceStats(i, perf, outliers[i]);
     }
     
     //returns avg num_changes.
@@ -292,105 +327,19 @@ double MultiSessionOptimization::UpdateErrorAdaptive(bool firstiter) {
     return (int) (totchanges/(dates.size()-optstart));
 }
 
-double MultiSessionOptimization::UpdateErrorPrune(bool firstiter) {
-    double mult = 3;
-    static vector<vector<double> > permerr;
-    vector<unordered_map<int, double> > intra;
-    vector<vector<vector<double> > > poses;
-    vector<vector<vector<double> > > landmarks;
-    
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
-        rfFG->ChangeLandmarkSet(sidx);
-        poses.push_back(GTS.GetOptimizedTrajectory(i, POR[i].boat.size()));
-        landmarks.push_back(GTS.GetOptimizedLandmarks(true));
-        intra.push_back(unordered_map<int, double>());
-        permerr.push_back(vector<double>(lpdi[sidx].localizations.size(),0));
-    }
-    //GetHeight(poses); //update heights.
-    
-    double totchanges = 0;
-    for(int i=optstart; i<dates.size(); i++){
-        int sidx = i-optstart;
-        
-        EvaluateRFlow erfinter(_cam, dates[i], _map_dir);
-        EvaluateRFlow erfintraS0(_cam, "-", _map_dir);
-        EvaluateRFlow erfintraS1(_cam, dates[i], _map_dir);
-        
-        int nchanges = 0;
-        int coutliers = 0;
-        for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
-            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-            
-            double inter_error = erfinter.InterSurveyErrorAtLocalization(lpd, poses[sidx][lpd.s1time], landmarks, optstart);
-            double intra_errorS1 = erfintraS1.OnlineRError(POR[i], lpd.s1time, _pftbase+dates[i], poses[sidx][lpd.s1time], landmarks[sidx]);
-            intra[sidx][lpd.s1time] = intra_errorS1;
-            double intra_errorS0 = 0;
-            if(lpd.s0 >= optstart) {
-                int s0idx = lpd.s0-optstart;
-                auto search = intra[s0idx].find(lpd.s0time);
-                if(search != intra[s0idx].end())
-                    intra_errorS0 = search->second;
-                else {
-                    intra_errorS0 = erfintraS0.OnlineRError(POR[lpd.s0], lpd.s0time, _pftbase+dates[lpd.s0], poses[s0idx][lpd.s0time], landmarks[s0idx]);
-                    intra[s0idx][lpd.s0time] = intra_errorS0;
-                }
-            }
-            
-            //adaptive threshold.
-            double LPD_RERROR_THRESHOLD = rerrs[sidx][lpd.s1time]*mult;
-            if(LPD_RERROR_THRESHOLD < 0) {
-                std::cout << "RFlowSurveyOptimizer::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
-                exit(1);
-            } else if (LPD_RERROR_THRESHOLD == 0) { //this occurs at places in the rerr vector that are zero.
-                LPD_RERROR_THRESHOLD = AverageRerror[sidx]*mult;
-            }
-            
-            bool inlier = true;
-            if(std::isnan(inter_error) ||
-               inter_error > LPD_RERROR_THRESHOLD) inlier = false;
-            if(std::isnan(intra_errorS0) ||
-               std::isnan(intra_errorS1)) inlier = false;
-            if(intra_errorS0 > LPD_RERROR_THRESHOLD || //this threshold corresponds to s1, but it's inessential to change it.
-               intra_errorS1 > LPD_RERROR_THRESHOLD) permerr[sidx][j] = 1;
-            if(permerr[sidx][j] > 0) inlier = false;
-            
-            if(lpd_rerror[sidx][j] == 0 ||
-               (inlier && lpd_rerror[sidx][j] < 0) ||
-               (!inlier && lpd_rerror[sidx][j] > 0)) {
-                nchanges++;
-                if(!firstiter){
-                if(inlier) std::cout << "activated   ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                else       std::cout << "deactivated ("<<lpd.s1<<"."<<lpd.s1time << ", "<<lpd.s0<<"."<<lpd.s0time<<")" << std::endl;
-                }
-            }
-            
-            lpd_rerror[sidx][j] = 1;
-            if(!inlier) {lpd_rerror[sidx][j] = -1; coutliers++;}
+bool MultiSessionOptimization::CheckSave(){
+    for(int survey=1; survey<outliers.size(); survey++) {
+        double inlier_ratio = 1.0-(1.*outliers[survey]/lpdi[survey].localizations.size());
+        if(inlier_ratio < 0.6){
+            std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[survey] << " with ratio " << inlier_ratio << std::endl;
+            return false;
         }
-        totchanges += nchanges;
-        
-        if(i > 0) {
-            erfintraS0.PrintTots("intra ISCs connected to " + dates[i]);
-            erfintraS1.PrintTots("intra " + dates[i]);
-            erfinter.PrintTots("inter");
-            std::cout << "number of outliers: " << coutliers << std::endl;
-        }
-        inlier_ratio[sidx] = 1.0-(1.*coutliers/lpdi[sidx].localizations.size());
     }
-    
-    //returns avg num_changes.
-    if(optstart==0) return (int) (totchanges/(dates.size()-1)); //convert to int to avoid unnecessary iterations due to very small changes
-    return (int) (totchanges/(dates.size()-optstart));
+    return true;
 }
 
 void MultiSessionOptimization::SaveResults() {
-    
-    for(int i=0; i<inlier_ratio.size(); i++)
-        if(inlier_ratio[i] < 0.6){
-            std::cout << "  Save disabled due to the inlier/outlier ratio for " << dates[i+optstart] << " with ratio " << inlier_ratio[i] << std::endl;
-            return;
-        }
+    if(!CheckSave()) return;
     
     vector<vector<vector<double> > > landmarks;
     for(int i=optstart; i<dates.size(); i++){
@@ -418,8 +367,9 @@ void MultiSessionOptimization::SaveResults() {
         if(i==0) continue;
         vector<double> inter_error(lpdi[sidx].localizations.size(), 0);
         for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
-            LocalizedPoseData& lpd = lpdi[sidx].localizations[j];
-            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpd, poses[lpd.s1time], landmarks, optstart);
+            LocalizedPoseData& l = lpdi[sidx].localizations[j];
+            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(poses[l.s1time], landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
+//            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpd, poses[lpd.s1time], landmarks, optstart);
         }
         erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erfinter.VisualizeDivergenceFromLocalizations(lpdi[sidx].localizations, lpd_rerror[sidx]);
@@ -429,36 +379,111 @@ void MultiSessionOptimization::SaveResults() {
     }
 }
 
+void MultiSessionOptimization::Reset(){
+    rfFG->Clear();
+    outliers = vector<int>(dates.size(), 0);
+}
+
+std::vector<double> MultiSessionOptimization::InlierOutlierStats(bool compact) {
+    vector<double> mean(dates.size(), 0);
+    vector<double> dev(dates.size(), 0);
+    vector<double> meani(dates.size(), 0);
+    vector<double> devi(dates.size(), 0);
+    vector<int> numo(dates.size(), 0);
+    int allo=0;
+    int sizes = 0;
+    double allmean=0;
+    double allmeani=0;
+    double alldev=0;
+    double alldevi=0;
+    int ninliers = 0;
+    for(int i=0; i<dates.size(); i++) {
+        int count = 0;
+        for(int j=0; j<lpd_sum[i].size(); j++){
+            mean[i] += lpd_sum[i][j];
+            if(lpd_rerror[i][j] >= 0){
+                meani[i] += lpd_sum[i][j];
+                count++;
+            } else numo[i]++;
+        }
+        allmeani += meani[i];
+        sizes += lpd_sum[i].size();
+        allmean += mean[i];
+        allo += numo[i];
+        mean[i] = mean[i]/lpd_sum[i].size();
+        meani[i] = meani[i]/count;
+        ninliers += count;
+        
+        for(int j=0; j<lpd_sum[i].size(); j++) {
+            dev[i] += pow(lpd_sum[i][j] - mean[i], 2);
+            if(lpd_rerror[i][j] == 1) {
+                devi[i] += pow(lpd_sum[i][j] - meani[i], 2);
+            }
+        }
+        dev[i] = pow(dev[i]/(lpd_sum[i].size()-1), 0.5);
+        devi[i] = pow(devi[i]/(count-1), 0.5);
+    }
+    allmean /= sizes;
+    allmeani /= ninliers;
+    
+    int c=0, ci=0;
+    for(int i=0; i<dates.size(); i++) {
+        for(int j=0; j<lpd_sum[i].size(); j++) {
+            alldev += pow(lpd_sum[i][j] - allmean, 2);
+            c++;
+            if(lpd_rerror[i][j] == 1) {
+                alldevi += pow(lpd_sum[i][j] - allmeani, 2);
+                ci++;
+            }
+        }
+    }
+    alldev = pow(alldev/(c-1), 0.5);
+    alldevi = pow(alldevi/(ci-1), 0.5);
+    
+    std::cout << " " << allo << "/"<<sizes<<" outliers. " << allmean << "("<<alldev<<") rerror (avg). " << allmeani << "("<<alldevi<<") rerror (inliers)."<< std::endl;
+    if(compact) return {allmean, allmeani};
+    for(int i=0; i<dates.size(); i++)
+        std::cout << "  " << dates[i] << ": " << numo[i] << " outliers (" << mean[i] << ", " << dev[i] << "), inliers: (" <<meani[i] << ", " << devi[i] <<")" << std::endl;
+    return {allmean, allmeani};
+}
+
 void MultiSessionOptimization::IterativeMerge() {
-    time_t beginning,optstart,end;
+    time_t beginning,optstart,optend,end;
     time (&beginning);
-    LocalizePose lp(_cam);
+    
     double last_nchanges = 10000000000;
     double avg_nchanges= last_nchanges - 1;
     for(int i=0; avg_nchanges>0 && last_nchanges>avg_nchanges && i<MAX_ITERATIONS; i++) {
-        rfFG->Clear();
+        Reset();
         
-        if(i>0) std::cout << "Merging Surveys. Iteration " << i << " of " << MAX_ITERATIONS << ", nchanges in last iteration: " << avg_nchanges << std::endl;
+        std::cout << "ITERATION " << i << " of " << MAX_ITERATIONS << std::endl;
+        std::cout << "(all dates)" <<std::endl;
         std::cout << "  Constructing the factor graph." << std::endl;
         ConstructFactorGraph();
         AddLocalizations(i==0);
         AddAllTheLandmarkTracks();
+        rfFG->PrintStats();
         
         std::cout << "  Optimizing..." << std::endl;
         time (&optstart);
         RunGTSAM();
+        time (&optend);
         
         std::cout << "  Updating Error." << std::endl;
         last_nchanges = avg_nchanges;
         avg_nchanges = UpdateErrorAdaptive(i==0);
+        InlierOutlierStats();
         
         std::cout << "  Finished." << std::endl;
         time (&end);
-        double optruntime = difftime (end, optstart);
+        double optruntime = difftime (optend, optstart);
+        double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
-        printf("ITERATION %d. AVG Nchanges %lf. Run time (HH:MM:SS) optimization %s, total %s\n", i, avg_nchanges, FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(totruntime).c_str());
-        std::cout << "changes, history: " <<last_nchanges << " -> " << avg_nchanges << std::endl;
+        std::cout << " " <<last_nchanges << " -> " << avg_nchanges << " changes " << std::endl;
+        printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
     }
+    
+    InlierOutlierStats();
     
     if(!dry_run){
         std::cout << "  Saving.." << std::endl;

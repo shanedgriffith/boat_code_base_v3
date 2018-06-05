@@ -31,8 +31,8 @@ private:
 	double pose_angle_threshold = 20.0; //degrees.
     
 	int CAM_SKIP = 0;
-	double ALIGN_ENERGY_THRESHOLD = 1120000; //energy of the low-res alignment
-	double ALIGN_CONSISTENCY_THRESHOLD = 0.95; //consistency of forward-backward alignment.
+//	double ALIGN_ENERGY_THRESHOLD = 1120000; //energy of the low-res alignment
+//	double ALIGN_CONSISTENCY_THRESHOLD = 0.95; //consistency of forward-backward alignment.
 	double DELTA = 70000; //for image retrieval search: a jump in alignment energy by this much indicates the images no longer capture the same scene.
     
 	double verification_threshold = 0.4;

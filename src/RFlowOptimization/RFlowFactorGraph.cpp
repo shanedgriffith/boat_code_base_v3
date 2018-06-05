@@ -91,6 +91,13 @@ bool RFlowFactorGraph::VariableExists(int survey, int pnum) {
     return false;
 }
 
+void RFlowFactorGraph::AddPosePrior(gtsam::Symbol s, gtsam::Pose3 p, double val){
+    gtsam::Vector6 v6;
+    v6.setConstant(val);
+    gtsam::noiseModel::Diagonal::shared_ptr pnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
+    graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, pnoise));
+}
+
 bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p, bool add_prior) {
     //only the p1frame0 poses are added, and only if they're not already added.
     if(VariableExists(survey, pnum)) return false;
@@ -103,6 +110,7 @@ bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     //NOTE: the poseNoise used here is what is used in the original FactorGraph.
     //Otherwise, RError is much worse, for inter, intra, or both.
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, poseNoiseP));
+    variables++;
     return true;
 }
 
@@ -116,20 +124,24 @@ void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int su
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
     graph.add(AnchorFactor<gtsam::Pose3>(symba0, symbp0, symba1, symbp1, btwn, btwnnoise));
+    variable_constraints++;
 }
 
 void RFlowFactorGraph::BuildAndAddBetweenFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){
     gtsam::Pose3 isc = p0.compose(btwn).compose(p1.inverse());
     AddCustomBTWNFactor(survey0, anum0, survey1, anum1, isc, val);
+    variable_constraints++;
 }
 
 void RFlowFactorGraph::AddLocalizationFactors(gtsam::Cal3_S2::shared_ptr k, int survey, int pnum, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers) {
     gtsam::Symbol symb = GetSymbol(survey, pnum);
     for(int i=0; i<p2d.size(); i++) {
-        if(inliers[i]<0.001 || inliers[i]>6.0) continue;
+        if(inliers.size()>0 && (inliers[i]<0.001 || inliers[i]>6.0)) continue;
+        if(p2d[i].x()==-1 || p2d[i].y()==-1) continue;
         if(p3d[i].x() == 0.0 && p3d[i].y()==0.0 && p3d[i].z()==0.0) continue;
         gtsam::noiseModel::Isotropic::shared_ptr measurementNoise1 = gtsam::noiseModel::Isotropic::Sigma(2, 1.0);//inliers[i]);
         graph.push_back(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d[i], p3d[i], measurementNoise1, symb, k));
+        variable_constraints++;
     }
 }
 
@@ -140,6 +152,7 @@ void RFlowFactorGraph::AddVirtualBTWNFactor(int survey0, int pnum0, int survey1,
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
     graph.add(VirtualBetweenFactor(symb1, symb3, p0, p1, btwnnoise));
+    variable_constraints++;
 }
 
 void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight) {
@@ -147,6 +160,7 @@ void RFlowFactorGraph::AddBTWNFactor(int survey0, int pnum0, int survey1, int pn
     gtsam::Symbol symb1 = GetSymbol(survey1, pnum1);
     if(tight) graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise1));
     else graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, poseNoise0));
+    variable_constraints++;
 }
 
 void RFlowFactorGraph::AddCustomBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, double val) {
@@ -156,6 +170,7 @@ void RFlowFactorGraph::AddCustomBTWNFactor(int survey0, int pnum0, int survey1, 
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr customnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(symb0, symb1, odom, customnoise));
+    variable_constraints++;
 }
 
 void RFlowFactorGraph::Clear(){
@@ -165,5 +180,35 @@ void RFlowFactorGraph::Clear(){
     surveycnum.clear();
 }
 
-
+void RFlowFactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark){
+    /*Add the landmark track to the graph.*/
+    
+    //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
+    //    SmartProjectionPoseFactor(const double rankTol = 1,
+    //                              const double linThreshold = -1, const bool manageDegeneracy = false,
+    //                              const bool enableEPI = false, boost::optional<POSE> body_P_sensor = boost::none,
+    //                              LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10,
+    //                              double dynamicOutlierRejectionThreshold = -1) :
+    //LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10, double dynamicOutlierRejectionThreshold = -1
+    //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
+    //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
+    //  and the factor is disregarded if the error is large
+    int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
+    int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
+    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
+    
+    int count_on = 0;
+    for(int i=0; i<landmark.points.size(); i++) {
+        if(VariableExists((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index())) {
+            landmark_constraints++;
+            gtsam::Symbol mappedS = GetSymbol((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index());
+            sppf.add(landmark.points[i], mappedS, pixelNoise, k);
+            count_on++;
+        }
+    }
+    
+    landmark_factors[active_landmark_set].push_back(sppf);
+    landmark_keys[active_landmark_set].push_back(landmark.key);
+    if(landmark.used && count_on>1) {graph.add(sppf); landmarks++;}
+}
 

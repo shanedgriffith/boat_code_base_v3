@@ -23,7 +23,7 @@ double HopcountLog::LoadHopDistance(string hopdate) {
         char line[LINESIZE];
         fgets(line, LINESIZE-1, fp);
         if(sscanf(line, "%lf\n", &avg_hop_distance)!=1) {
-            std::cout << "RFlowSurveyOptimizer::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
+            std::cout << "HopcountLog::LoadHopDistance(). Error scanning the file: " << fname << std::endl;
             exit(-1);
         }
         fclose(fp);

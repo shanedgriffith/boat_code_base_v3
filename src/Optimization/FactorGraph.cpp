@@ -87,6 +87,7 @@ void FactorGraph::SetLandmarkDeviation(double dev) {
 void FactorGraph::AddCamera(int camera_key, gtsam::Pose3 cam_est){
     /*Adds a camera prior factor*/
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key), cam_est, poseNoise));
+    variables++;
 }
 
 void FactorGraph::AddVelocity(int camera_key, gtsam::Pose3 vel_est){
@@ -94,6 +95,7 @@ void FactorGraph::AddVelocity(int camera_key, gtsam::Pose3 vel_est){
      >With velocity in only one direction, the pose may have to be constrained in a special way.
      */
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(gtsam::Symbol(key[(int)var::V], camera_key), vel_est, velNoise));
+    variables++;
 }
 
 void FactorGraph::AddKinematicConstraint(int camera_key, double delta_time){
@@ -104,12 +106,14 @@ void FactorGraph::AddKinematicConstraint(int camera_key, double delta_time){
      */
     gtsam::Pose3 p(gtsam::Rot3::RzRyRx(0,0,0), gtsam::Point3(0,0,0));
     graph.add(BetweenThree<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key), gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::V], camera_key-1), delta_time, p, kinNoise));
+    variable_constraints++;
 }
 
 void FactorGraph::AddSmoothVelocityConstraint(int camera_key){
     //adds a smoothness constraint on the velocity factor
     gtsam::Pose3 p(gtsam::Rot3::RzRyRx(0,0,0), gtsam::Point3(0,0,0));
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(gtsam::Symbol(key[(int)var::V], camera_key), gtsam::Symbol(key[(int) var::V], camera_key-1), p, dVNoise));
+    variable_constraints++;
 }
 
 void FactorGraph::AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose){
@@ -123,6 +127,7 @@ void FactorGraph::AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose){
     }
     
     graph.add(gtsam::BetweenFactor<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), delta_pose, kinNoise));
+    variable_constraints++;
 }
 
 gtsam::Symbol FactorGraph::GetSymbol(int survey, int pnum){
@@ -148,13 +153,13 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
     for(int i=0; i<landmark.points.size(); i++) {
-        if(landmark.constraint_on[i])
-            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
+        landmark_constraints++;
+        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k);
     }
     
     landmark_factors[active_landmark_set].push_back(sppf);
     landmark_keys[active_landmark_set].push_back(landmark.key);
-    if(landmark.used) graph.add(sppf);
+    if(landmark.used) {graph.add(sppf); landmarks++;}
 }
 
 void FactorGraph::Clear(){
@@ -163,6 +168,10 @@ void FactorGraph::Clear(){
     landmark_factors.clear();
     landmark_keys.clear();
     ChangeLandmarkSet(0);
+    landmarks = 0;
+    landmark_constraints = 0;
+    variables = 0;
+    variable_constraints = 0;
 }
 
 void FactorGraph::PrintFactorGraph() {
@@ -179,4 +188,13 @@ void FactorGraph::ChangeLandmarkSet(int set){
         std::exit(-1);
     }
     active_landmark_set = set;
+}
+
+void FactorGraph::PrintStats() {
+    std::cout << "--Factor Graph Stats--" << std::endl;
+    std::cout << " variables: \t\t" << variables << std::endl;
+    std::cout << " variable constraints: \t" << variable_constraints << std::endl;
+    std::cout << " landmarks: \t\t" << landmarks << std::endl;
+    std::cout << " landmark constraints: \t" << landmark_constraints << std::endl;
+    std::cout << "----------------------" << std::endl;
 }

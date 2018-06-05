@@ -23,7 +23,6 @@ class EvaluateSLAM: public FileParsing {
 protected:
     static const std::string reprofile;
     
-    double MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const std::vector<double>& rerror = {});
     double UpdateTots(std::vector<double>& stats);
     
     std::vector<double> tots;
@@ -41,13 +40,13 @@ public:
     
     std::vector<double> ErrorForSurvey(std::string _pftbase, bool save = false);
     
-    
+    double MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const std::vector<double>& rerror = {});
     double OfflineRError(ParseOptimizationResults& POR, int idx, std::string _pftbase);
     
     void SaveEvaluation(std::vector<double> evaluation, std::string altname="");
     std::vector<double> LoadRerrorFile();
     double GetAverageRerror(std::vector<double> rerrors);
-    void PrintTots(std::string name = "");
+    void PrintTots(std::string name = "", bool compact = false);
 };
 
 #endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */

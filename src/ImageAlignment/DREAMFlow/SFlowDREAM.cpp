@@ -63,6 +63,7 @@ double SFlowDREAM::ComputeVerificationRatio(SIFTImageLayer& sil, SIFTImageLayer&
 }
 
 void SFlowDREAM::VerifiedBP(SIFTImageLayer& sil, double gamma, int h, int nHierarchy, double scale, int imset, vector<vector<double> >* two_cycle_hypspace){
+    //NOTE: this can be parallelized. (may gain up to 0.8 seconds per full alignment attempt)
     RunBP(sil, gamma, h, nHierarchy, scale, imset, two_cycle_hypspace);
     if(!reprojection_flow && (ranverification || !verifyalignment)) return;
 

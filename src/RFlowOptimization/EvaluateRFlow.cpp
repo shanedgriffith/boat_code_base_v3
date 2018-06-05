@@ -55,19 +55,16 @@ vector<gtsam::Point3> EvaluateRFlow::GetSubsetOf3DPoints(const std::vector<std::
     return pset;
 }
 
-double EvaluateRFlow::OnlineRError(ParseOptimizationResults& POR, int idx, std::string _pftset, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks) {
-    ParseFeatureTrackFile PFT(_cam, _pftset, POR.ftfilenos[idx]);
+double EvaluateRFlow::OnlineRError(std::vector<LandmarkTrack>& cached_landmarks, int idx, const std::vector<double>& pose, const std::vector<std::vector<double> >& landmarks) {
+    ParseFeatureTrackFile PFT = ParseFeatureTrackFile::ReconstructFromCachedSet(_cam, cached_landmarks, idx);
     vector<gtsam::Point3> p_subset = GetSubsetOf3DPoints(landmarks, PFT.ids);
     return MeasureReprojectionError(pose, PFT.imagecoord, p_subset);
 }
 
 /*TODO: check this. It appears LPD either needs to be updated or I need to pass in the POR data. May need to use OnlineRError() */
-double EvaluateRFlow::InterSurveyErrorAtLocalization(const LocalizedPoseData& localization, const std::vector<double>& boat, const std::vector<std::vector<std::vector<double> > >& landmarks, const int optstart) {
-    vector<gtsam::Point3> p3d0;
-    int sidx = localization.s0 - optstart;
-    if(sidx < 0) p3d0 = localization.p3d0;
-    else p3d0 = GetSubsetOf3DPoints(landmarks[sidx], localization.pids);
-    return MeasureReprojectionError(boat, localization.p2d1, p3d0, localization.rerrorp);
+double EvaluateRFlow::InterSurveyErrorAtLocalization(const std::vector<double>& boat, const std::vector<std::vector<double> >& landmarks, const std::vector<gtsam::Point2>& p2d1, const std::vector<int> pids, const std::vector<double> rerrorp) {
+    vector<gtsam::Point3> p3d0 = GetSubsetOf3DPoints(landmarks, pids);
+    return MeasureReprojectionError(boat, p2d1, p3d0, rerrorp);
 }
 //std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
 

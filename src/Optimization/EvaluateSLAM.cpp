@@ -71,15 +71,19 @@ double EvaluateSLAM::UpdateTots(vector<double>& stats){
     return ret;
 }
 
-void EvaluateSLAM::PrintTots(string name){
+void EvaluateSLAM::PrintTots(string name, bool compact){
     if(tots[1] == 0) {
-        cout << "Average " + name + " Rerror: No data" << std::endl;
+        cout << name << " Rerror: No data" << std::endl;
         return;
     }
-    cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
-    if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
-    cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
-    cout << "  " << tots[3] << " of " << tots[6] << " average unacceptable (should be nearly zero)" << endl;
+    if(compact) {
+        cout << name << " Rerror: " << tots[0]/tots[1] << " (avg).  " << tots[3] << " of " << tots[6] << " unacceptable" << std::endl;
+    } else {
+        cout << "Average " + name + " Rerror: " << tots[0]/tots[1] << std::endl;
+        if(tots.size()>4) cout << "  " << tots[4]/tots[5] << " average " + name + " rerror for inliers" << endl;
+        cout << "  " << tots[2] << " unacceptable landmarks (not so high)" << endl;
+        cout << "  " << tots[3] << " of " << tots[6] << " average unacceptable (should be nearly zero)" << endl;
+    }
 }
 
 double EvaluateSLAM::MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const vector<double>& rerror) {

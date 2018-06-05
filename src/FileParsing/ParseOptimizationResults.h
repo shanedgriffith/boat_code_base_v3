@@ -66,8 +66,10 @@ public:
     
     int GetNumberOfPoses(){return (int) boat.size();}
     
-    //meant to be called with the feature tracking ids
+    //meant to be called with the feature track ids
     std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<int>& ids_subset);
+    void UpdateLandmarks(std::vector<std::vector<double> >& landmarks);
+    std::vector<std::vector<double> > GetLandmarkSet();
     
     std::vector<double> ReprojectionError(){
         //this just loads the reprojection error file.

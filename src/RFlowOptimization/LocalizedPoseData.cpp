@@ -20,6 +20,7 @@ string LocalizedPoseData::GetPath(string toppath, string altpath){
 
 void LocalizedPoseData::Save(string toppath, string altpath){
     string filepath = GetPath(toppath, altpath);
+    //std::cout << "Saving LPD " << to_string(s1time) + "_" + to_string(s0) + ".loc" << std::endl;
 
     try{
     FILE * fp = OpenFile(filepath,"w");
@@ -294,7 +295,7 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
     int count_in_both=0;
     double sum_rerror=0;
     int count_inliers=0;
-
+    
     gtsam::Pose3 p1frame0_t = VectorToPose(lpd.p1frame0);
     gtsam::Pose3 p1frame0_tm1 = VectorToPose(p1frame0);
 //    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1_tm1.between(p1_t)); //TODO: check this vs. the one below.
@@ -314,14 +315,18 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
         if(dist<=ACCEPTABLE_RERROR) count_inliers++;
     }
     
+    bool verified = true;
+    if(count_in_both == 0 || sum_rerror/count_in_both>ACCEPTABLE_RERROR) verified = false;
+    if(1.0*count_in_both/lpd.p3d.size() < ACCEPTABLE_OVERLAP) verified = false;
+    
     if(count_in_both > 0) // && debug
-        std::cout<<"LPD verification stats (" << s1time << " to " << lpd.s1time << ")" <<
+        std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") " <<
         100.0*count_in_both/lpd.p3d.size()<<"% overlap, "<<100.0*count_inliers/count_in_both <<
-        "% inliers, "<<sum_rerror/count_in_both<<" average rerror"<<std::endl;
-
-    if(count_in_both == 0 || sum_rerror/count_in_both>ACCEPTABLE_RERROR) return false;
-    if(1.0*count_in_both/lpd.p3d.size() < ACCEPTABLE_OVERLAP) return false;
-    return true;
+        "% inliers, "<<sum_rerror/count_in_both<<" average rerror. VERIFIED? " << verified <<std::endl;
+    else
+        std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") No overlap. VERIFIED? " << verified <<std::endl;
+    
+    return verified;
 }
 
 bool LocalizedPoseData::IsSet(){
