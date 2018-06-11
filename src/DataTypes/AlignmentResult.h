@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <cmath>
 
 class AlignmentResult{
 private:
@@ -238,7 +239,7 @@ public:
                 }
                 if(mark[i_idx/2]==1){
                 	//in case of reflections, use the flow that's closest to the original pixel.
-                	if(abs(res[i_idx]) + abs(res[i_idx+1]) < abs(fx) + abs(fy)) continue;
+                    if(std::abs(res[i_idx]) + std::abs(res[i_idx+1]) < std::abs(fx) + std::abs(fy)) continue;
                 }
                 res[i_idx] = -fx;
                 res[i_idx+1] = -fy;

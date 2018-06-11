@@ -99,7 +99,7 @@ void KLT::SuppressFeature(int index){
 void KLT::InitializeTracking(cv::Mat& view) {
     for (size_t i=0; i<2; i++) m_points[i].clear();
     
-    cv::goodFeaturesToTrack(view, m_points[1], max_features, m_qualityLevel, m_minDistance, cv::Mat(), m_blockSize, 0, m_harris_k);
+    cv::goodFeaturesToTrack(view, m_points[1], max_features, m_qualityLevel, m_minDistance, cv::Mat(), m_blockSize, false, m_harris_k);
     
     fid.clear();
     std::vector<cv::Point2f> feat = m_points[1];
@@ -154,7 +154,7 @@ void KLT::ContinueTracking(cv::Mat& view){
     double grid_delta_x = view.cols / (float) grid_cols;
     double grid_delta_y = view.rows / (float) grid_rows;
     cv::goodFeaturesToTrack(view, new_points, max_features, 0.01,
-                            std::min(grid_delta_x, grid_delta_y)/2, cv::Mat(), 3, 0, 0.04);
+                            std::min(grid_delta_x, grid_delta_y)/2, cv::Mat(), 3, false, 0.04);
     
     reset_grids();
     for (size_t i=0; i<new_points.size(); i++) {

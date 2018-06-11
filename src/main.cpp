@@ -11,13 +11,7 @@
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
 #include <RFlowOptimization/MultiSessionOptimization.hpp>
-<<<<<<< HEAD
 #include <RFlowOptimization/MultiSessionIterativeSmoothingAndRefinement.hpp>
-=======
-#include <RFlowOptimization/MultiAnchorsOptimization.hpp>
-#include <RFlowOptimization/AnchoredMultiSessionOptimization.hpp>
-#include <RFlowOptimization/EfficientMultiSessionOptimization.hpp>
->>>>>>> 6cd30ffd66bc20ccf9d12509d50f9cd50a83f239
 #include <Tests/TestTransforms.hpp>
 #include <Evaluation/SessionConvergence.hpp>
 #include <RFlowOptimization/MultiCascade.hpp>
@@ -36,7 +30,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    string results_dir = home_paths[0];
+    string results_dir = "/Users/shane/Documents/research/maps_debug/";//home_paths[0];
     string query_loc = home_paths[1];
     string pftbase = home_paths[2];
     string visibility_dir = "****USE COVISIBILITY****";
@@ -61,7 +55,6 @@ int main(int argc, char *argv[]) {
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
 //        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
-//        EfficientMultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
         MultiCascade mso(axisptz, results_dir, pftbase, argv[2]);
 //        MultiSessionIterativeSmoothingAndRefinement mso(axisptz, results_dir, pftbase, argv[2]);
         mso.IterativeMerge();

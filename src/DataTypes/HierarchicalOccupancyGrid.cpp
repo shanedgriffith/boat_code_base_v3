@@ -40,7 +40,7 @@
    -//seem to need the fov; could use both fov lines to check each box. if above and below, then expand, or add all points, or check all points.
   -
  
- */
+
 
 
 
@@ -57,7 +57,7 @@ vector<double> SLAMDraw::GetEquationOfLineForTest(double x, double y, double yaw
 }
 
 vector<double> SLAMDraw::EquationOfLine(Point2d p1, Point2d p2){
-    /*equation of a line*/
+    //equation of a line
     double m = (1.0*p1.y-p2.y)/(p1.x-p2.x);
     double b = p1.y - m*p1.x;
     return {m, b};
@@ -73,7 +73,7 @@ int SLAMDraw::LocationOfPointRelativeToLine(double m, double b, Point2d p){
     return 0;
 }
 
-
+*/
 
 
 

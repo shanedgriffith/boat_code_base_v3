@@ -167,7 +167,7 @@ void MultiSessionOptimization::ConstructFactorGraph() {
             }
             
             rfFG->AddPose(survey, i, traj);
-            GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
+            GTS.InitializeValue(rfFG->GetSymbol(survey, i), (gtsam::Value *) &traj);
             
             if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
                 gtsam::Pose3 cur1 = POR[survey].CameraPose(i);

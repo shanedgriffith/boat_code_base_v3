@@ -28,7 +28,9 @@ const vector<string> GTSamInterface::keys = {
 void GTSamInterface::SetupIncrementalSLAM() {
     /*Setup ISAM for the optimization.
      */
-    
+    /*
+     //double-check the examples to use this in GTSAM4.
+     
     FastMap<char,gtsam::Vector> thresholds;
     
     thresholds['x'] = (gtsam::Vector(6) << vals[Param::POS_RELINEARIZE_THRESH],
@@ -57,7 +59,7 @@ void GTSamInterface::SetupIncrementalSLAM() {
     //        parameters.evaluateNonlinearError = true;
     //        parameters.enablePartialRelinearizationCheck = false;
     ISAM2 isam(parameters);
-    i2 = isam;
+    i2 = isam;*/
     _fg->Clear();
     initialEstimate.clear();
 }

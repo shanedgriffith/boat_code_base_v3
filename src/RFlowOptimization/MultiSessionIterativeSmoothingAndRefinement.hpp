@@ -51,8 +51,8 @@ protected:
     std::vector<bool> LPDInlierTest(int s, int l, double LPD_RERROR_THRESHOLD, std::vector<double>& error);
     int EvaluateLPD(std::vector<std::vector<std::vector<double> > >& poseresult, std::vector<std::vector<std::vector<double> > >& landmarks, int s, int j, std::vector<EvaluateRFlow*> perf, std::vector<std::unordered_map<int, double> >& errorcache);
 //    void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, std::vector<gtsam::Point2>& p2d1, std::vector<int>& pids, std::vector<double>& inliers);
-    void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset);
-    void AddDirectionalLocalization(int s, int j, int d);
+    void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise);
+    int AddDirectionalLocalization(int s, int j, int d);
     void AddLocalizations(int survey);
     void SaveResults();
     

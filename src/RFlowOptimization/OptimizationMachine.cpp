@@ -51,7 +51,7 @@ void OptimizationMachine::ConstructFactorGraph() {
     for(int i=0; i<originPOR->boat.size(); i++) {
         gtsam::Pose3 traj = originPOR->CameraPose(i);
         rfFG->AddPose(survey, i, traj);
-        GTS.InitializeValue(rfFG->GetSymbol(survey, i), &traj);
+        GTS.InitializeValue(rfFG->GetSymbol(survey, i), (gtsam::Value *) &traj);
         
         if(i>0) {
             gtsam::Pose3 last = originPOR->CameraPose(i-1);

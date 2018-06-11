@@ -18,11 +18,9 @@
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include "RFlowFactorGraph.hpp"
-#include "AnchorISCFactor.h"
 
 #include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
-#include "AnchorFactor.hpp"
 
 void RFlowFactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v60;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
@@ -114,19 +112,6 @@ bool RFlowFactorGraph::AddPose(gtsam::Symbol s, gtsam::Pose3 p) {
     return true;
 }
 
-void RFlowFactorGraph::AddAnchorFactor(int survey0, int anum0, int pnum0, int survey1, int anum1, int pnum1, gtsam::Pose3 btwn, double val){
-    //anchor numbering should start from POR.size().
-    gtsam::Symbol symba0 = GetSymbol(survey0, anum0);
-    gtsam::Symbol symbp0 = GetSymbol(survey0, pnum0);
-    gtsam::Symbol symba1 = GetSymbol(survey1, anum1);
-    gtsam::Symbol symbp1 = GetSymbol(survey1, pnum1);
-    gtsam::Vector6 v6;
-    v6.setConstant(val);
-    gtsam::noiseModel::Diagonal::shared_ptr btwnnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
-    graph.add(AnchorFactor<gtsam::Pose3>(symba0, symbp0, symba1, symbp1, btwn, btwnnoise));
-    variable_constraints++;
-}
-
 void RFlowFactorGraph::BuildAndAddBetweenFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val){
     gtsam::Pose3 isc = p0.compose(btwn).compose(p1.inverse());
     AddCustomBTWNFactor(survey0, anum0, survey1, anum1, isc, val);
@@ -183,26 +168,23 @@ void RFlowFactorGraph::Clear(){
 void RFlowFactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark){
     /*Add the landmark track to the graph.*/
     
-    //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
-    //    SmartProjectionPoseFactor(const double rankTol = 1,
-    //                              const double linThreshold = -1, const bool manageDegeneracy = false,
-    //                              const bool enableEPI = false, boost::optional<POSE> body_P_sensor = boost::none,
-    //                              LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10,
-    //                              double dynamicOutlierRejectionThreshold = -1) :
-    //LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10, double dynamicOutlierRejectionThreshold = -1
     //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
     //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
     //  and the factor is disregarded if the error is large
     int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
-    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
     
+    gtsam::SmartProjectionParams params;
+    params.setLandmarkDistanceThreshold(ldist);
+    params.setDynamicOutlierRejectionThreshold(onoise);
+    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
+
     int count_on = 0;
     for(int i=0; i<landmark.points.size(); i++) {
         if(VariableExists((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index())) {
             landmark_constraints++;
             gtsam::Symbol mappedS = GetSymbol((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index());
-            sppf.add(landmark.points[i], mappedS, pixelNoise, k);
+            sppf.add(landmark.points[i], mappedS);
             count_on++;
         }
     }

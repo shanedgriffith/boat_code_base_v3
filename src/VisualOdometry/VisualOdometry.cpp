@@ -65,19 +65,18 @@ void VisualOdometry::AddOdom(gtsam::Symbol symb0, gtsam::Pose3 pguess0, gtsam::S
 void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark_key, vector<gtsam::Point2>& points, vector<gtsam::Symbol> camera_keys, bool used){
     /*Add the landmark track to the graph.*/
     
-    //    SmartProjectionPoseFactor<Pose3, Point3, Cal3_S2> sppf(1, -1, false, false, boost::none, HESSIAN, 1e10,20);
-    //    SmartProjectionPoseFactor(const double rankTol = 1,
-    //                              const double linThreshold = -1, const bool manageDegeneracy = false,
-    //                              const bool enableEPI = false, boost::optional<POSE> body_P_sensor = boost::none,
-    //                              LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10,
-    //                              double dynamicOutlierRejectionThreshold = -1) :
-    //LinearizationMode linearizeTo = HESSIAN, double landmarkDistanceThreshold = 1e10, double dynamicOutlierRejectionThreshold = -1
     //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
     //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
     //  and the factor is disregarded if the error is large
     int ldist = 5; //this threshold specifies the distance between the camera and the landmark.
     int onoise = 10; //the threshold specifies at what point factors are discarded due to reprojection error.
-    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise);
+    
+    gtsam::SmartProjectionParams params;
+    params.setLandmarkDistanceThreshold(ldist);
+    params.setDynamicOutlierRejectionThreshold(onoise);
+    
+    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
+
     
     //camera_keys[i]-posenum + poses.size();
     int tosub = 0;
@@ -88,7 +87,7 @@ void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark
         int idx  = camera_keys[i].index();
         if(idx < posenum) continue;
         gtsam::Symbol s(camera_keys[i].chr(), idx-tosub);
-        sppf.add(points[i], s, pixelNoise, k);
+        sppf.add(points[i], s);
     }
     
     landmark_factors.push_back(sppf);

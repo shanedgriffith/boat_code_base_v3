@@ -36,7 +36,7 @@ private:
 public:
     std::string _pftbase;
     
-    SessionConvergence(Camera cam, std::string pftbase):
+    SessionConvergence(Camera& cam, std::string pftbase):
     _cam(cam), _pftbase(pftbase) {}
     
     void CompareSessions();
