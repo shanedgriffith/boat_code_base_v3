@@ -70,7 +70,7 @@ public:
         /*double weight = 1/delta_t;
         gtsam::Rot3 r=hx.rotation();
         //only the x,y, and yaw are modified. The other values shouldn't change (for the boat, anyway)
-        hx = Pose3(gtsam::Rot3::ypr(r.yaw()*weight,r.pitch(),r.roll()), gtsam::Point3(hx.x()*weight, hx.y()*weight, hx.z()));*/
+        hx = Pose3(gtsam::Rot3::Ypr(r.yaw()*weight,r.pitch(),r.roll()), gtsam::Point3(hx.x()*weight, hx.y()*weight, hx.z()));*/
         Pose3 res = p3.between(hx, H3);
         
         return measured_.localCoordinates(res);

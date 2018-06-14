@@ -150,7 +150,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
             double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
             double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
-            gtsam::Pose3 vel_est = gtsam::Pose3(gtsam::Rot3::ypr(av*delta_t, 0, 0), gtsam::Point3(btwn_pos.x(), btwn_pos.y(), btwn_pos.z()));
+            gtsam::Pose3 vel_est = gtsam::Pose3(gtsam::Rot3::Ypr(av*delta_t, 0, 0), gtsam::Point3(btwn_pos.x(), btwn_pos.y(), btwn_pos.z()));
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, transition);
         } else {
             FG->AddOdomFactor(camera_key, btwn_pos);

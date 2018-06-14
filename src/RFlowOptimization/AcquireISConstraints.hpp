@@ -42,8 +42,9 @@
 class AcquireISConstraints{
 private:
     int MAX_NO_ALIGN = 2;//5;
-    double PERCENT_DENSE_CORRESPONDENCES = 0.3;//this threshold might be lowerable
-
+    double PERCENT_DENSE_CORRESPONDENCES = 0.4;//this threshold might be lowerable
+    double verification_threshold = 0.4;
+    
     static const std::string _logname;
     
     void Initialize();

@@ -28,7 +28,7 @@ vector<double> ParseSurvey::PoseToVector(gtsam::Pose3& cam) {
 }
 
 gtsam::Pose3 ParseSurvey::CameraPose(int idx){
-        return gtsam::Pose3(gtsam::Rot3::ypr(poses[idx][5], poses[idx][4], poses[idx][3]), gtsam::Point3(poses[idx][0], poses[idx][1], poses[idx][2]));
+        return gtsam::Pose3(gtsam::Rot3::Ypr(poses[idx][5], poses[idx][4], poses[idx][3]), gtsam::Point3(poses[idx][0], poses[idx][1], poses[idx][2]));
 }
 
 int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){

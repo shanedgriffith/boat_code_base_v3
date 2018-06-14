@@ -85,7 +85,7 @@ std::vector<double> ParseBikeRoute::InterpolatePoses(int idx, int a, int b, vect
 }
 
 gtsam::Pose3 ParseBikeRoute::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 void ParseBikeRoute::ModifyPoses(){

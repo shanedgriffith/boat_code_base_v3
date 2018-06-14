@@ -17,7 +17,7 @@ using namespace std;
 
 void ImageRetrieval::InitializeMachine(int nthreads){
     if(nthreads>1){
-        man.check_users = true;
+        man.check_users = false;
         for(int i=0; i<nthreads; i++){
             ws.push_back(new IRMachine());
             ws[i]->SetCamera(_cam);
@@ -251,13 +251,16 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
     std::vector<double> min_vals = {-1, 1000000000};
     if(neighbor_poses.size()>0) {
         int idx_max_ver = GetMax(ver); //why not choose the one with the max verification?
-        if(ver[idx_max_ver] < verification_threshold) {
-            std::cout << "ImageRetrieval::MultiThreadedSearch() Failed alignment verification. Value " << ver[idx_max_ver] << std::endl;
-            return {-1, 1000000000};
+        if(idx_max_ver < 0 || ver[idx_max_ver] < verification_threshold) {
+            std::cout << "ImageRetrieval::MultiThreadedSearch() Failed alignment verification. Value " << ver[idx_max_ver] <<  ", AE: " << res[idx_max_ver] << ", Session-Wise: " << res[res.size()/2] << std::endl;
+            //return {-1, 1000000000};
+        } else {
+            std::cout << "ImageRetrieval::MultiThreadedSearch() Passed alignment verification. Value " << ver[idx_max_ver] << ", AE: " << res[idx_max_ver] << ", Session-Wise: " << res[res.size()/2] << std::endl;
         }
-        else std::cout << "ImageRetrieval::MultiThreadedSearch() Passed alignment verification. Value " << ver[idx_max_ver] << std::endl;
-        if(idx_max_ver >= 0) min_vals[1] = ver[idx_max_ver]; //instead of saving ae, save the verification value.
-        min_vals[0] = neighbor_poses[idx_max_ver];
+        if(idx_max_ver >= 0) {
+            min_vals[1] = ver[idx_max_ver]; //instead of saving ae, save the verification value.
+            min_vals[0] = neighbor_poses[idx_max_ver];
+        }
     }
     return min_vals;
 }

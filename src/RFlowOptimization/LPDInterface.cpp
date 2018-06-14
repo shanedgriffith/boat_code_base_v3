@@ -25,6 +25,17 @@ bool LPDInterface::StoreLPD(std::string path, LocalizedPoseData lpd){
     return false;
 }
 
+int LPDInterface::NearestLPDTime(int s1time){
+    std::vector<int> dir = {-1, 1};
+    for(int i=2; i<20; i++){
+        int cur = dir[i%2]*(i/2) + s1time;
+        if(cur < 0) continue;
+        int idx = GetLPDIdx(cur);
+        if(idx>=0) return localizations[idx].s1time;
+    }
+    return -1;
+}
+
 LocalizedPoseData* LPDInterface::NearestLPD(int s1time){
     std::vector<int> dir = {-1, 1};
     for(int i=2; i<20; i++){

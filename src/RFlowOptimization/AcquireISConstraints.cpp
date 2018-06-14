@@ -67,6 +67,7 @@ int AcquireISConstraints::FindRestart() {
 }
 
 void AcquireISConstraints::Initialize(){
+    debug = true;
     if(!FileParsing::DirectoryExists(_map_dir)){
         std::cout << "AcquireISConstraints::Initialize() Error: Setup 'maps/'." << _map_dir << std::endl;
         exit(-1);
@@ -172,9 +173,9 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
                 iterator != end; ++iterator) {
             refsurvidx = *iterator;
             SurveyData refsurvey = survey_est[refsurvidx];
-            double ae;
-            por0time = ir.IdentifyClosestPose(_query_loc + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &ae);
-            if(por0time >= 0) {
+            double verval;
+            por0time = ir.IdentifyClosestPose(_query_loc + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &verval);
+            if(verval >= verification_threshold) {
                 withinthree.erase(iterator);
                 withinthree.push_front(refsurvidx);
                 found=true;
@@ -205,7 +206,17 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
     }
 
     //returns {snum, portime, gstat};
-    return msvs.TopKViewpoints(rf, poselists, dates, rfpose, nthreads);
+    std::vector<std::vector<double> > topk = msvs.TopKViewpoints(rf, poselists, dates, rfpose, nthreads);
+    
+    //ensure the verified one made it into the list.
+    if(run_initial_IR) {
+        for(int i=0; i<topk.size(); i++)
+            if(topk[i][0] == refsurvidx)
+                return topk;
+        topk[nthreads-1][0] = refsurvidx;
+        topk[nthreads-1][1] = por0time;
+    }
+    return topk;
 }
 
 std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vector<double> > topk, int por1time, bool hasRF, vector<double> pose1_est) {
@@ -266,6 +277,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
     double leasthops = 10000000000;
     bool hasverified = false;
     for(int i=0; i<topk.size(); i++) {
+        //std::cout << "date: " << survey_est[topk[i][0]].date << ", perc_dc: " << perc_dc[i] << ", verified? " << verified[i] << ", set? " << res[i].IsSet() << std::endl;
         if(perc_dc[i] <= PERCENT_DENSE_CORRESPONDENCES) continue;
         double hops = survey_est[topk[i][0]].avg_hop_distance;
         if(toverify->IsSet() && verified[i]){
@@ -351,9 +363,13 @@ void AcquireISConstraints::Run(int user_specified_start){
         por1time = user_specified_start;
     } else if(leftoffat > por1time) {
         por1time = leftoffat;
+        if(leftoffat - por1time < MAX_NO_ALIGN) {
+            haveconstraints = true;
+        }
     } else if(por1time > 0){
         haveconstraints = true;
     }
+    
     if(debug) std::cout << "Starting IS Acquisition with " << por1time << " of " << nentries << std::endl;
     
     while(por1time < nentries){

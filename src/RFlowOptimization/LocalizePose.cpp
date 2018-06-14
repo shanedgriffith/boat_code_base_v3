@@ -36,7 +36,7 @@ std::vector<double> LocalizePose::PoseToVector(gtsam::Pose3& cam){
 }
 
 gtsam::Pose3 LocalizePose::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 bool LocalizePose::EmptyPose(gtsam::Pose3& p){
@@ -93,6 +93,40 @@ std::vector<double> LocalizePose::Maximization(gtsam::Pose3& gtp, std::vector<gt
     return {(double)nchanges, (double)ninliers, sumall/p3d.size(), sumin/ninliers};
 }
 
+double LocalizePose::GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
+                                     std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
+                                                 std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1){
+    
+    std::vector<double> posevals(4, 0.0);
+    std::vector<double> inliers0(rerror0.size(), ACCEPTABLE_TRI_RERROR);
+    std::vector<double> inliers1(rerror1.size(), ACCEPTABLE_TRI_RERROR);
+    double bestval = 0.005;
+    int maxinliers = -1;
+    double err = ACCEPTABLE_TRI_RERROR;
+    //0.25, 0.125, 0.0625, 0.03125, 0.0156, 0.078
+    for(double val=0.005; val <= 0.4; val*=2){
+        bool success = DualBA(val,
+                         p0, p1frame0, f3d, f2d1, rerror0,
+                         p1, p0frame1, b3d, b2d0, rerror1);
+        if(!success) continue;
+        
+        std::vector<double> pv0 = Maximization(p1frame0, f3d, f2d1, inliers0, err);
+        std::vector<double> pv1 = Maximization(p0frame1, b3d, b2d0, inliers1, err);
+        
+        posevals[0] = pv0[0]+pv1[0];
+        posevals[1] = pv0[1]+pv1[1];
+        posevals[2] = (pv0[2]*f3d.size()+pv1[2]*b3d.size())/(f3d.size()+b3d.size());
+        posevals[3] = (pv0[3]*pv0[1] + pv1[3]*pv1[1])/(pv0[1]+pv1[1]);
+        
+        if(posevals[1] > maxinliers) {
+            maxinliers = posevals[1];
+            bestval = val;
+        }
+    }
+    
+    return bestval;
+}
+
 std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
         std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
         std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1){
@@ -101,14 +135,16 @@ std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0,
     int minpiter = -1;
     double best_score;
     
+    bool success = false;
     int nchanges=1;
     int i=0;
     double err = ACCEPTABLE_TRI_RERROR;
-    double val = ACCEPTABLE_INTERPOSE_VAR;
+    double val = GetBestValueForInterposeVar(p0, p1, p1frame0, p0frame1, f3d, f2d1, rerror0, b3d, b2d0, rerror1);
+    std::cout << "Best Value For Interpose Var: " << val << std::endl;
     for(; nchanges > 0 && i < MAX_ITERS; i++){
-        bool success = DualBA(val,
-                              p0, p1frame0, f3d, f2d1, rerror0,
-                              p1, p0frame1, b3d, b2d0, rerror1);
+        success = DualBA(val,
+                         p0, p1frame0, f3d, f2d1, rerror0,
+                         p1, p0frame1, b3d, b2d0, rerror1);
         if(!success) break;
         std::vector<double> pv0 = Maximization(p1frame0, f3d, f2d1, rerror0, err);
         std::vector<double> pv1 = Maximization(p0frame1, b3d, b2d0, rerror1, err);
@@ -127,11 +163,11 @@ std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0,
     
     if(i==0) return {};
     
-    if(debug) {
+    if(debug && success) {
         printf("iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
-               (int)i, (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)(f3d.size()+b3d.size()));
+               (int) (i-1), (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)(f3d.size()+b3d.size()));
     }
-
+    
     posevals[0] = i;
     return {PoseToVector(p1frame0), PoseToVector(p0frame1), posevals};
 }
@@ -275,7 +311,9 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     int iters=0;
     int last_save_iter = 0;
     double err = ACCEPTABLE_TRI_RERROR;
+    
     for(; iters<MAX_RANSAC_ITERS; iters++){
+        
         GenerateRandomSet(p3d.size(), rset);
         for(int j=0; j<rset.size(); j++){
             subp3d[j] = p3d[rset[j]];
@@ -283,6 +321,7 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
         }
         gtsam::Pose3 estp = best_pose;
         UseBA(estp, subp3d, subp2d1, subinliers);
+        
         if(EmptyPose(estp)) continue;
         std::vector<double> posevals = Maximization(estp, p3d, p2d1, inliers, err);
         if(posevals[1]>best_posevals[1]){
@@ -291,7 +330,8 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
             last_save_iter = iters;
         }
 
-        if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
+        //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
+        //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
 
     if(debug) {
@@ -299,6 +339,9 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
                (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
     }
 
+    //have to reset the inliers.
+    std::vector<double> posevals = Maximization(best_pose, p3d, p2d1, inliers, err);
+    
     p1guess = best_pose;
     best_posevals[0] = iters;
     return best_posevals;
@@ -310,14 +353,17 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     gtsam::Pose3 gp0 = VectorToPose(p0);
     gtsam::Pose3 gp1 = VectorToPose(p1);
     gtsam::Pose3 p1frame0(gp1.rotation(), gp0.translation());
+    struct timespec start, runir, end;
     
     if(p3d.size()<MIN_CORRESPONDENCES || b3d.size()<MIN_CORRESPONDENCES)  {
         std::cout << "Localization failed due to sizes: " <<p3d.size() << ", " << b3d.size() << std::endl;
         return {};
     }
-
+    
+    clock_gettime(CLOCK_MONOTONIC, &start);
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
     std::vector<double> posevals1f0 = RANSAC_BA(p1frame0, p3d, p2d1, rerrorp);
+    
     if(posevals1f0[1]<0.000001){
         std::cout << "Localization failed due to RANSAC failure on set p"<<std::endl;
         return {};
@@ -327,12 +373,22 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     //gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0)); //this also looks wrong.
     gtsam::Pose3 p0frame1 = gp1.compose(gp1.between(p1frame0)*p1frame0.between(gp0)*p1frame0.between(gp1));
     std::vector<double> posevals0f1 = RANSAC_BA(p0frame1, b3d, b2d0, rerrorb);
+    
+    clock_gettime(CLOCK_MONOTONIC, &runir);
     if(posevals0f1[1]<0.000001) {
         std::cout << "Localization failed due to RANSAC failure on set b"<<std::endl;
         return {};
    }
 
     //iterative localization (like EM), started with the good initial estimates found using RANSAC.
-    return DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
+    std::vector<std::vector<double> > results = DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    std::string irtime = std::to_string((runir.tv_sec - start.tv_sec) + (runir.tv_nsec - start.tv_nsec)/1000000000.0);
+    std::string altime = std::to_string((end.tv_sec - runir.tv_sec) + (end.tv_nsec - runir.tv_nsec)/1000000000.0);
+    std::string tottime = std::to_string((end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/1000000000.0);
+    if(debug) std::cout << "runtimes (s) "<<irtime << " + " << altime << " ~= " << tottime << std::endl;
+    
+    
+    return results;
 }
 

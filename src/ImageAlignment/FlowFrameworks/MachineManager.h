@@ -22,13 +22,11 @@ private:
     int OpenMachines();
 	bool CheckUsers();
 public:
-    bool check_users;
+    bool check_users = false;
     bool debug = false;
     std::vector<AlignmentMachine*> ams;
     
-    MachineManager(){
-    	check_users = true;
-    }
+    MachineManager(){}
 
     void AddMachine(AlignmentMachine* am){
         am->machine_id = ams.size();

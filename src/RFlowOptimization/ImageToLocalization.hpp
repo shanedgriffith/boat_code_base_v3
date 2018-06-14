@@ -31,7 +31,7 @@ private:
     gtsam::Pose3 CameraPose(std::vector<double>& p);
     
     CvScalar GetLandmarkColor(int id);
-    void DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<gtsam::Point3>& p3B, std::vector<gtsam::Point2>& p2dB, gtsam::Pose3 posea, gtsam::Pose3 poseb);
+    void DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<double> inliers, std::vector<gtsam::Point3>& p3B, std::vector<gtsam::Point2>& p2dB, gtsam::Pose3 posea, gtsam::Pose3 poseb);
     void DrawMatchPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<gtsam::Point2>& p0, std::vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers);
     
     AlignmentResult MatchToSet(std::string image1, std::string image2);

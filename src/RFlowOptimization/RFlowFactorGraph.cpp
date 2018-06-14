@@ -52,7 +52,7 @@ void RFlowFactorGraph::InitializeNoiseModels(){
 }
 
 gtsam::Pose3 RFlowFactorGraph::VectorToPose(std::vector<double>& p) {
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 gtsam::Symbol RFlowFactorGraph::GetSymbol(int survey, int pnum) {

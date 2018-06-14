@@ -37,10 +37,10 @@
 class LocalizePose{
 protected:
     double ACCEPTABLE_TRI_RERROR = 6.0;
-    double ACCEPTABLE_INTERPOSE_VAR = 0.05;//0.005 works for 140926, but is too tight for 140625
+//    double ACCEPTABLE_INTERPOSE_VAR = 0.05;//0.005 works for 140926, but is too tight for 140625 //now this parameter is adaptive.
     int MAX_ITERS = 15;
     int MAX_RANSAC_ITERS = 100;
-    int RANSAC_IMPROV_ITERS = 10;
+    int RANSAC_IMPROV_ITERS = 100;
     double RANSAC_PERC_DC = 0.5;
     int MIN_CORRESPONDENCES = 15;
 
@@ -56,6 +56,10 @@ protected:
                 gtsam::Pose3 p0, gtsam::Pose3& p1frame0, std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                 gtsam::Pose3 p1, gtsam::Pose3& p0frame1, std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
 
+    double GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
+                                                     std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
+                                                     std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
+    
     std::vector<std::vector<double> > DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
                                                      std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                                                      std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);

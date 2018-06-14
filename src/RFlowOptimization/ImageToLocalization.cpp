@@ -11,6 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <FileParsing/ParseSurvey.h>
+#include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/AlignmentResult.h>
 
@@ -23,7 +24,7 @@ using namespace std;
 using namespace cv;
 
 gtsam::Pose3 ImageToLocalization::CameraPose(std::vector<double>& p) {
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 CvScalar ImageToLocalization::GetLandmarkColor(int id){
@@ -33,19 +34,24 @@ CvScalar ImageToLocalization::GetLandmarkColor(int id){
     return CV_RGB(red, green, blue);
 }
 
-void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& p2dB, gtsam::Pose3 posea, gtsam::Pose3 poseb){
+void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<double> inliers, vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& p2dB, gtsam::Pose3 posea, gtsam::Pose3 poseb){
     double sum=0.0;
     int count=0;
     for(int i=0; i<p2dB.size(); i++){
+//        if(inliers[i] > 6.0) continue;
         gtsam::Point3 orig = posea.transform_to(p3[i]);
         gtsam::Point2 projA = _cam.ProjectToImage(orig);
         if(!_cam.InsideImage(projA)) continue;
         gtsam::Point3 res = poseb.transform_to(p3[i]);
         gtsam::Point2 projB = _cam.ProjectToImage(res);
-        if(!_cam.InsideImage(projB)) continue;
+        
         count++;
         double dist = p2dB[i].dist(projB);
         sum+=dist;
+        if(dist > 2*inliers[i]) {
+            std::cout << "projected to " << projB.x() << ", " << projB.y() <<"; dist: " <<dist << std::endl;
+        }
+        if(!_cam.InsideImage(projB)) continue;
         CvScalar col = GetLandmarkColor(i);
         CvScalar lblcol = CV_RGB(0,255,0);
         if(dist>6) {
@@ -59,7 +65,7 @@ void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, vecto
             circle(imageB, Point(p2dB[i].x(),p2dB[i].y()), 4, col, -1);
         }
     }
-    if(count==0)count++;
+    std::cout << "Drew: " << count << " of " << inliers.size() << ", average error: " << sum/count << std::endl;
 }
 
 void ImageToLocalization::DrawMatchPoints(cv::Mat& imageA, cv::Mat& imageB, vector<gtsam::Point2>& p0, vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers) {
@@ -121,7 +127,7 @@ int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& i
         if(p.x()==-1) { countoutsideimage++; continue; }
 
         //skip the forward/backward inconsistent set found by image alignment
-        if(!ar.IsPointConsistent(_cam, imagecoord[i], imset)) { countinconsistent++; continue;}
+        if(!ar.IsPointConsistent(_cam, imagecoord[i], imset)) { countinconsistent++;}// continue;}
 
         //create a subset of points to estimate the fundamental matrix from
         p1.push_back(imagecoord[i]);
@@ -130,7 +136,7 @@ int ImageToLocalization::MapPoints(AlignmentResult& ar, vector<gtsam::Point2>& i
         subsetids.push_back(ids[i]);
         count++;
     }
-    if(debug) std::cout << "MapPoints: "<<count << " good points. bad ("<<countbad3d<<", "<<countoutsideimage<< ", " <<countinconsistent<<")"<<std::endl;
+    if(debug) std::cout << "MapPoints: " << count << " of " << p3d.size() <<" ("<<countbad3d<<" bad 3D, "<<countoutsideimage<< " outside image, " <<countinconsistent<<" inconsistent)"<<std::endl;
     return count;
 }
 
@@ -155,7 +161,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     lpd.p3d = por[0]->GetSubsetOf3DPoints(pftf0.ids);
     lpd.b3d = por[1]->GetSubsetOf3DPoints(pftf1.ids);
     if(lpd.p3d.size()==0 || lpd.b3d.size()==0) return -1;
-    if(debug) std::cout << "3D set sizes: " << lpd.p3d.size() << ", " << lpd.b3d.size() << std::endl;
+//    if(debug) std::cout << "3D set sizes: " << lpd.p3d.size() << ", " << lpd.b3d.size() << std::endl;
 
     vector<gtsam::Point2> p0;
     vector<gtsam::Point2> p1;
@@ -169,28 +175,40 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     //is calculated with a tolerance=1.0. Consistent points match with tolerance=0.
     if(debug) std::cout<<"number of mapped points check: "<< p0.size() << ", count1: "<<count1 << ",  count2: " << count2 << std::endl;
     if(count1+count2 > 7){
-        std::vector<unsigned char> inliers(p0.size(),1);
-        if(ApplyEpipolarConstraints(p0, p1, inliers)){
+        std::vector<unsigned char> inliers(p0.size(), 1);
+        if(ApplyEpipolarConstraints(p0, p1, inliers)){ //true){ //
             lpd.SetPoints(inliers, p1, subset3d, subsetids, 0, count1);
             lpd.SetPoints(inliers, p0, subset3d, subsetids, count1, count1+count2);
 
             //Expectation Maximization with Bundle Adjustment to get the localized pose and identify inliers.
             LocalizePose lp(_cam);
-//            lp.debug = true;
+            lp.debug = true;
+            
             std::vector<std::vector<double> > candidates = lp.RobustDualBA(por[0]->boat[portimes[0]], por[1]->boat[portimes[1]],
                                                                              lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
             if(candidates.size()==0) return -1;
-
-            perc_dc = candidates[2][1]/(count1+count2);
-            if(debug) std::cout<<"localization quality check: \n\tForward and Backward:  "
+            
+//            perc_dc = candidates[2][1]/(count1+count2); //old. the percentage is of the points before applying the epipolar constraint. the effect is to make the threshold ... the
+            perc_dc = candidates[2][1]/(lpd.p3d0.size()+lpd.b3d1.size()); //percentage is based on the number of points used for localization.
+            if(debug) std::cout << dates[0] << ": localization quality check: \n\tForward and Backward:  "
                     <<((int)1000*perc_dc)/10.0 << "% inliers with "
                     << candidates[2][3] << " avg reprojection error" << std::endl;
+            
             if(perc_dc > PERCENT_DENSE_CORRESPONDENCES) {
                 lpd.SetPoses(por[0]->boat[portimes[0]], candidates[0], candidates[1]);
                 lpd.SetLocalizationQuality(perc_dc, candidates[2][3]);
                 
+                //printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,candidates[0][0],vp[1],vp[2],vp[3],vp[4],vp[5]);
+                
                 //save the alignment result (to debug or evaluate RF)
-//                DrawFlowPoints(ar.ref, ar.im2, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
+//            DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
+                std::string dir = "/Users/shane/Documents/research/experiments/2018/AE/" + to_string(portimes[1]) + "/";
+                FileParsing::MakeDir(dir);
+                dir = dir + dates[0] + "/";
+                FileParsing::MakeDir(dir);
+                ar.Save(dir);
+                
+//                DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
 //                string debugdir = _results_dir + dates[1] + "/debug/";
 //                FileParsing::MakeDir(debugdir);
 //                ar.Save(debugdir + to_string(portimes[1]) + "/");

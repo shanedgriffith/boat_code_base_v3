@@ -177,7 +177,7 @@ public:
         std::string filename = directory + "info.txt";
         FILE * fs = fopen(filename.c_str(), "w");
         if(!fs) {std::cout << "FileParsing: Error. Couldn't open " << filename << "." << std::endl; exit(-1);}
-        fprintf(fs, "%d,%d,%lf,%lf\n", _height, _width, alignment_energy, computation_time);
+        fprintf(fs, "%d,%d,%lf,%lf,%lf,%lf\n", _height, _width, alignment_energy, verified_ratio, consistency, computation_time);
         fclose(fs);
     }
     

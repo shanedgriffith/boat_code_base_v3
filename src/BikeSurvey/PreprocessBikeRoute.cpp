@@ -467,7 +467,7 @@ std::vector<double> PreprocessBikeRoute::InterpolatePoses(int idx, int a, int b,
 
 #include <VisualOdometry/VisualOdometry.hpp>
 gtsam::Pose3 PreprocessBikeRoute::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 vector<double> PreprocessBikeRoute::PoseToVector(gtsam::Pose3& cam) {

@@ -35,7 +35,7 @@ private:
 //	double ALIGN_CONSISTENCY_THRESHOLD = 0.95; //consistency of forward-backward alignment.
 	double DELTA = 70000; //for image retrieval search: a jump in alignment energy by this much indicates the images no longer capture the same scene.
     
-	double verification_threshold = 0.4;
+    double verification_threshold = 0.4;
     
 	void InitializeMachine(int nthreads);
     

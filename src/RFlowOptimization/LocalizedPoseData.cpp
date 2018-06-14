@@ -273,7 +273,7 @@ void LocalizedPoseData::SetLocalizationQuality(double pdc, double rerror){
 }
 
 gtsam::Pose3 LocalizedPoseData::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 void PrintVec(std::vector<double> p){
@@ -303,11 +303,12 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
     
     //check lpd.p3d onto p1frame0_tm1_est matches lpd.p3d onto p1frame0_tm1. (Tests points from t to tm1.)
     //NOTE: b3d isn't tested because s0 could be the same in both surveys. Thus odometry would be zero.
-    for(int i=0; i<lpd.p3d.size(); i++){
-        gtsam::Point3 p3t_est = p1frame0_t_est.transform_to(lpd.p3d[i]);
+    for(int i=0; i<lpd.b3d.size(); i++){
+        gtsam::Point3 p3t_est = p1frame0_t_est.transform_to(lpd.b3d[i]);
         gtsam::Point2 p2t_est = _cam.ProjectToImage(p3t_est);
-        gtsam::Point3 p3t = p1frame0_t.transform_to(lpd.p3d[i]);
+        gtsam::Point3 p3t = p1frame0_t.transform_to(lpd.b3d[i]);
         gtsam::Point2 p2t = _cam.ProjectToImage(p3t);
+//        if(i<10) std::cout << "point coordinates: ("<<p2t.x() << "," << p2t.y() << ") vs. (" <<p2t_est.x() << ", " << p2t_est.y() << ")"<<std::endl;
         if(!_cam.InsideImage(p2t_est) || !_cam.InsideImage(p2t)) continue;
         double dist = p2t_est.dist(p2t);
         sum_rerror += dist;
@@ -317,11 +318,11 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
     
     bool verified = true;
     if(count_in_both == 0 || sum_rerror/count_in_both>ACCEPTABLE_RERROR) verified = false;
-    if(1.0*count_in_both/lpd.p3d.size() < ACCEPTABLE_OVERLAP) verified = false;
+    if(1.0*count_in_both/lpd.b3d.size() < ACCEPTABLE_OVERLAP) verified = false;
     
     if(count_in_both > 0) // && debug
         std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") " <<
-        100.0*count_in_both/lpd.p3d.size()<<"% overlap, "<<100.0*count_inliers/count_in_both <<
+        100.0*count_in_both/lpd.b3d.size()<<"% overlap, "<<100.0*count_inliers/count_in_both <<
         "% inliers, "<<sum_rerror/count_in_both<<" average rerror. VERIFIED? " << verified <<std::endl;
     else
         std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") No overlap. VERIFIED? " << verified <<std::endl;

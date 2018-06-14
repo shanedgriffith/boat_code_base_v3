@@ -87,7 +87,7 @@ void EvaluateSLAM::PrintTots(string name, bool compact){
 }
 
 double EvaluateSLAM::MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const vector<double>& rerror) {
-    gtsam::Pose3 tf(gtsam::Rot3::ypr(boat[5],boat[4],boat[3]), gtsam::Point3(boat[0],boat[1],boat[2]));
+    gtsam::Pose3 tf(gtsam::Rot3::Ypr(boat[5],boat[4],boat[3]), gtsam::Point3(boat[0],boat[1],boat[2]));
     
     double total_error = 0;
     double count = 0;

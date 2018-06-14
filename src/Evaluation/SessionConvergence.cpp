@@ -8,8 +8,8 @@ using namespace std;
 
 double SessionConvergence::MeasureREDifference(std::vector<double>& bref, std::vector<double>& bcur, std::vector<gtsam::Point3>& p3dref, std::vector<gtsam::Point3>& p3dcur){
     
-    gtsam::Pose3 tfref(gtsam::Rot3::ypr(bref[5],bref[4],bref[3]), gtsam::Point3(bref[0],bref[1],bref[2]));
-    gtsam::Pose3 tfcur(gtsam::Rot3::ypr(bcur[5],bcur[4],bcur[3]), gtsam::Point3(bcur[0],bcur[1],bcur[2]));
+    gtsam::Pose3 tfref(gtsam::Rot3::Ypr(bref[5],bref[4],bref[3]), gtsam::Point3(bref[0],bref[1],bref[2]));
+    gtsam::Pose3 tfcur(gtsam::Rot3::Ypr(bcur[5],bcur[4],bcur[3]), gtsam::Point3(bcur[0],bcur[1],bcur[2]));
     
     double total_error = 0;
     double count = 0;

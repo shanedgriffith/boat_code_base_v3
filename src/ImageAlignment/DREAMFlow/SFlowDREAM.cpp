@@ -428,13 +428,14 @@ void SFlowDREAM::AlignImages(){
         if(num_imsets < 2) VerifiedBP(ip.layers[i], g, dubmult, nHierarchy, ip.layers[0].width()/ip.layers[i].width());
         else CyclicAlignment(ip.layers[i], g, dubmult, nHierarchy);
 
-    	term_layer = i;
-    	if(cycle_down_to_layer > i)  {
+        term_layer = i;
+    	if(i < ip.start_layer)  {
     	    ip.layers[i].consistency = ip.layers[i+1].consistency;
     	    ip.layers[i].verified_ratio = ip.layers[i+1].verified_ratio;
     	}
+        
     	if(mandatory_consistency_condition && ip.layers[i].consistency < consistency_threshold)  break;
-    	if(verifyalignment && ip.layers[i].verified_ratio < verification_threshold) break;
+    	if(verifyalignment && ip.layers[ip.start_layer].verified_ratio < verification_threshold) break;
     }
 
 	gettimeofday(&end, NULL);
@@ -450,10 +451,12 @@ AlignmentResult SFlowDREAM::GetAlignmentResult(){
 	AlignmentResult res = ip.GetAlignmentResult(l);
 	res.SetComputationTime( computation_time );
 	if(consistent_set.rows > 0) {
-	    std::cout << "consistent_set sizes: " << consistent_set.rows << ", "<<consistent_set.cols<<", "<<consistent_set.channels()<<std::endl;
+	    //std::cout << "consistent_set sizes: " << consistent_set.rows << ", "<<consistent_set.cols<<", "<<consistent_set.channels()<<std::endl;
 	    res.SetConsistentSet(consistent_set.data, consistent_set.rows, consistent_set.cols);
 	}
-	res.alignment_energy_lowres = ip.layers[ip.start_layer].alignment_energy;
+	res.alignment_energy_lowres = ip.layers[term_layer].alignment_energy;
+    res.verified_ratio = ip.layers[term_layer].verified_ratio;
+    res.consistency = ip.layers[term_layer].consistency;
 	return res;
 }
 

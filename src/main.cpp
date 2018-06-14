@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    string results_dir = "/Users/shane/Documents/research/maps_debug/";//home_paths[0];
+    string results_dir = "/Users/shane/Documents/research/";//home_paths[0]; maps_debug/
     string query_loc = home_paths[1];
     string pftbase = home_paths[2];
     string visibility_dir = "****USE COVISIBILITY****";

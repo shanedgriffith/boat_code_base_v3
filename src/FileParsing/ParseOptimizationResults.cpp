@@ -167,7 +167,7 @@ vector<gtsam::Point3> ParseOptimizationResults::GetSubsetOf3DPoints(vector<int>&
 }
 
 gtsam::Pose3 ParseOptimizationResults::CameraPose(int idx){
-    return gtsam::Pose3(gtsam::Rot3::ypr(boat[idx][5], boat[idx][4], boat[idx][3]), gtsam::Point3(boat[idx][0], boat[idx][1], boat[idx][2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(boat[idx][5], boat[idx][4], boat[idx][3]), gtsam::Point3(boat[idx][0], boat[idx][1], boat[idx][2]));
 }
 
 double DistanceFunction(vector<double> pose1, vector<double> pose2) {

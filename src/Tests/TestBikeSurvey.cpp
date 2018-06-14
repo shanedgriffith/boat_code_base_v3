@@ -67,7 +67,7 @@ std::vector<double> TestBikeSurvey::RotationMatrixToRPY(std::vector<double> R){
 }
 
 gtsam::Pose3 TestBikeSurvey::CameraPose(std::vector<double> p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p, int m1, int m2, int m3) {
@@ -189,7 +189,7 @@ void TestBikeSurvey::TestTriangulation(){
 }
 
 gtsam::Pose3 TestBikeSurvey::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 void TestBikeSurvey::TestVO(){
