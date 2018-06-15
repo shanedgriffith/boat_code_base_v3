@@ -143,7 +143,8 @@ vector<double> AcquireISConstraints::EstimateNextPose(int survey, int time, int 
     return lp.PoseToVector(est);
 }
 
-std::list<int> AcquireISConstraints::CreateList(MultiSurveyViewpointSelection& msvs) {
+std::list<int> AcquireISConstraints::CreateList() {
+    MultiSurveyViewpointSelection msvs(0); //used solely for the withinthree check.
     std::list<int> withinthree;
     for(int i=0; i<survey_est.size()-1; i++) {
         if(msvs.WithinThreeMonths(survey_est[i].date, survey_est[survey_est.size()-1].date)){
@@ -153,50 +154,11 @@ std::list<int> AcquireISConstraints::CreateList(MultiSurveyViewpointSelection& m
     return withinthree;
 }
 
-std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vector<double> pose1_est, string image1, bool run_initial_IR){
-    //This function finds the image with the ~best alignment given a reference pose/image and multiple surveys.
-    //It is much more efficient than exhaustive search. It takes either 0 or 1 rounds of the time of IR.
-    //returns {survey, surveytime, gstat}
-    static MultiSurveyViewpointSelection msvs;
-    static ImageRetrieval ir(_cam, nthreads); //These are necessarily global for efficiency. This avoids wait() when we want to terminate the threads.
-    static std::list<int> withinthree;
-    if(withinthree.size()==0) withinthree = CreateList(msvs);
-    int refsurvidx = survey_est.size()-2;
-    int por0time;
-
-    //step 1: identify a good viewpoint using IR on the previously referenced survey
-    if(run_initial_IR) {
-        //start at the last best survey, if no good viewpoint is found, decrement refsurvidx until one is.
-        //This approach isn't exhaustive, but that's probably OK for our application
-        bool found = false;
-        for (std::list<int>::iterator iterator = withinthree.begin(), end = withinthree.end();
-                iterator != end; ++iterator) {
-            refsurvidx = *iterator;
-            SurveyData refsurvey = survey_est[refsurvidx];
-            double verval;
-            por0time = ir.IdentifyClosestPose(_query_loc + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &verval);
-            if(verval >= verification_threshold) {
-                withinthree.erase(iterator);
-                withinthree.push_front(refsurvidx);
-                found=true;
-                break;
-            }
-        }
- 
-        if(!found) {
-            if(debug) std::cout<<"No good viewpoint was found during the IR step."<<std::endl;
-            return {};
-        }
-    }
-
-    //return the result if there's only one reference survey.
-    if(survey_est.size() == 2 && run_initial_IR){
-        return {{0.0, (double) por0time, 0}};
-    }
-
+std::vector<std::vector<double> > AcquireISConstraints::RFViewpointSelection(vector<double>& rfpose){
     //Step 2: run rf viewpoint selection to get the ~best pose for all the surveys within three months.
-    std::vector<double> rfpose = pose1_est;
-    if(run_initial_IR) rfpose = survey_est[refsurvidx].por.boat[por0time]; //use the pose of the image found by step 1) IR.
+    //the three month check is performed within MultiSurveyViewpointSelection.
+    static MultiSurveyViewpointSelection msvs;
+    
     int npriorsurveys = rf.size();
     std::vector<std::vector<std::vector<double> > *> poselists(npriorsurveys);
     std::vector<string> dates(npriorsurveys);
@@ -204,19 +166,74 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
         poselists[i] = &(survey_est[i].por.boat);
         dates[i] = survey_est[i].date;
     }
-
-    //returns {snum, portime, gstat};
-    std::vector<std::vector<double> > topk = msvs.TopKViewpoints(rf, poselists, dates, rfpose, nthreads);
     
-    //ensure the verified one made it into the list.
-    if(run_initial_IR) {
-        for(int i=0; i<topk.size(); i++)
-            if(topk[i][0] == refsurvidx)
-                return topk;
-        topk[nthreads-1][0] = refsurvidx;
-        topk[nthreads-1][1] = por0time;
+    //returns {snum, portime, gstat};
+    return msvs.TopViewpoints(rf, poselists, dates, rfpose);
+}
+
+std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vector<double> pose1_est, string image1){
+    //This function finds the image with the ~best alignment given a reference pose/image and multiple surveys.
+    //It is much more efficient than exhaustive search. It takes either 0 or 1 rounds of the time of IR.
+    //returns {survey, surveytime, gstat}
+    static ImageRetrieval ir(_cam, nthreads); //These are necessarily global for efficiency. This avoids wait() when we want to terminate the threads.
+    static std::list<int> withinthree;
+    if(withinthree.size()==0) withinthree = CreateList();
+    int refsurvidx = survey_est.size()-2;
+    int por0time;
+    std::vector<std::vector<double> > current_topk;
+    std::vector<std::vector<double> > last_topk;
+    
+
+    //step 1: identify a good viewpoint using IR on the previously referenced survey
+    //start at the last best survey, if no good viewpoint is found, decrement refsurvidx until one is.
+    //This approach isn't exhaustive, but that's probably OK for our application
+    for (std::list<int>::iterator iterator = withinthree.begin(), end = withinthree.end();
+         iterator != end; ++iterator) {
+        refsurvidx = *iterator;
+        SurveyData refsurvey = survey_est[refsurvidx];
+        double verval;
+        por0time = ir.IdentifyClosestPose(_query_loc + refsurvey.date, refsurvey.por.boat, refsurvey.por.cimage, pose1_est, image1, &verval);
+        if(por0time <0) continue;
+        
+        //return the result if it's good and there's only one reference survey.
+        if(survey_est.size() == 2 && verval >= verification_threshold){
+            return {{(double) refsurvidx, (double) por0time, 0.0}};
+        }
+        
+        //Check if image retrieval verified the most covisible pose.
+        for(int i=0; i<last_topk.size(); i++)
+            if(last_topk[i][0] == refsurvidx){
+                if(last_topk[i][1] == por0time){
+                    if(debug) std::cout<<"The most covisible pose was verified."<<std::endl;
+                    return last_topk;
+                }
+                break;
+            }
+        
+        //acquire the covisible set for refsurvidx.por0time
+        std::vector<double> rfpose = survey_est[refsurvidx].por.boat[por0time];
+        current_topk = RFViewpointSelection(rfpose);
+        
+        //Check if image retrieval found a verified alignment.
+        if(verval >= verification_threshold) {
+            withinthree.erase(iterator);
+            withinthree.push_front(refsurvidx);
+            
+            //ensure the verified one made it into the top of the list.
+            for(int i=0; i<nthreads; i++)
+                if(current_topk[i][0] == refsurvidx)
+                    return current_topk;
+            current_topk[nthreads-1][0] = refsurvidx;
+            current_topk[nthreads-1][1] = por0time;
+            
+            return current_topk;
+        }
+        
+        last_topk = current_topk;
     }
-    return topk;
+    
+    if(debug) std::cout<<"No good viewpoint was found during the IR step."<<std::endl;
+    return {};
 }
 
 std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vector<double> > topk, int por1time, bool hasRF, vector<double> pose1_est) {
@@ -241,12 +258,12 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
 
     std::cout << " The most adv lpd is: " << lpdi.most_adv_lpd.s1time << ". The one used for LPD verification is: " << toverify->s1time << std::endl;
 
-    vector<LocalizedPoseData> res(topk.size());
-    vector<double> perc_dc(topk.size(), 0.0);
-    bool verified[topk.size()];
+    vector<LocalizedPoseData> res(loc_nthreads);
+    vector<double> perc_dc(loc_nthreads, 0.0);
+    vector<double> verified(loc_nthreads, 0.0);
 
     //run alignment and localization in parallel among the topk
-    for(int i=0; i<topk.size(); i++) {
+    for(int i=0; i<loc_nthreads; i++) {
         int tidx = man.GetOpenMachine();
         int s0 = topk[i][0];
         int por0time = topk[i][1];
@@ -267,29 +284,32 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         ws[tidx]->SetVPose(p1_tm1);
         ws[tidx]->Setup(&res[i], &perc_dc[i], &verified[i]);
 
-        if(topk.size()==1) ws[tidx]->Run();
+        if(loc_nthreads==1) ws[tidx]->Run();
         else man.RunMachine(tidx);
     }
     man.WaitForMachine(true);
     
     //get the best result, the verified one with the least avg_hop_distance
     int bestidx = -1;
-    double leasthops = 10000000000;
+//    double leasthops = 10000000000;
+    double leastrerror = 10000000000;
+    double most_perc_dc = 0;
     bool hasverified = false;
-    for(int i=0; i<topk.size(); i++) {
+    for(int i=0; i<loc_nthreads; i++) {
         //std::cout << "date: " << survey_est[topk[i][0]].date << ", perc_dc: " << perc_dc[i] << ", verified? " << verified[i] << ", set? " << res[i].IsSet() << std::endl;
         if(perc_dc[i] <= PERCENT_DENSE_CORRESPONDENCES) continue;
-        double hops = survey_est[topk[i][0]].avg_hop_distance;
-        if(toverify->IsSet() && verified[i]){
+//        double hops = survey_est[topk[i][0]].avg_hop_distance;
+        if(toverify->IsSet() && verified[i]>=0){
             res[i].Save(_map_dir + res[i].date1); //save all the verified localizations.
-            if(!hasverified || leasthops > hops){
-                leasthops = hops;
+            if(!hasverified || leastrerror > verified[i]){
+                leastrerror = verified[i];
                 bestidx = i;
             }
             hasverified = true;
-        } else if(!hasverified && res[i].IsSet() && leasthops > hops){
+        } else if(!hasverified && res[i].IsSet() && most_perc_dc < perc_dc[i]){
             //if there's no verified pose, use the one with the least hops
-            leasthops = hops;
+//            leasthops = hops;
+            most_perc_dc = perc_dc[i];
             bestidx = i;
         }
     }
@@ -318,9 +338,14 @@ bool AcquireISConstraints::GetConstraints(int por1time, bool hasRF){
     clock_gettime(CLOCK_MONOTONIC, &start);
     SurveyData latest = survey_est[latestsurvey];
     vector<double> pose1_est = latest.por.boat[por1time];
-    if(hasRF) pose1_est = EstimateNextPose(latestsurvey, por1time, por1time, false);
-    string image1 = ParseSurvey::GetImagePath(_query_loc + latest.date, latest.por.cimage[por1time]);
-    std::vector<std::vector<double> > topk = IdentifyClosestPose(pose1_est, image1, !hasRF);
+    std::vector<std::vector<double> > topk;
+    if(hasRF) {
+        pose1_est = EstimateNextPose(latestsurvey, por1time, por1time, false);
+        topk = RFViewpointSelection(pose1_est);
+    } else {
+        string image1 = ParseSurvey::GetImagePath(_query_loc + latest.date, latest.por.cimage[por1time]);
+        topk = IdentifyClosestPose(pose1_est, image1);
+    }
 
     clock_gettime(CLOCK_MONOTONIC, &runir);
     std::vector<double> logdata = FindLocalization(topk, por1time, hasRF, pose1_est);
@@ -362,10 +387,10 @@ void AcquireISConstraints::Run(int user_specified_start){
     if(user_specified_start > 0) {
         por1time = user_specified_start;
     } else if(leftoffat > por1time) {
-        por1time = leftoffat;
-        if(leftoffat - por1time < MAX_NO_ALIGN) {
+        if(leftoffat - por1time <= MAX_NO_ALIGN) {
             haveconstraints = true;
         }
+        por1time = leftoffat;
     } else if(por1time > 0){
         haveconstraints = true;
     }

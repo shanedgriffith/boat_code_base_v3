@@ -105,7 +105,7 @@ public:
     void SetPoses(std::vector<double> p0, std::vector<double> p1frame0_, std::vector<double> p0frame1_);
     void SetLocalizationQuality(double pdc, double rerror);
 
-    bool VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1);
+    double VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1);
     
     bool IsSet();
 

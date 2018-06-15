@@ -50,8 +50,9 @@ private:
     void Initialize();
     void WriteLog(std::vector<double> data, std::vector<std::string> paths = {});
     
-    std::list<int> CreateList(MultiSurveyViewpointSelection& msvs);
-    std::vector<std::vector<double> > IdentifyClosestPose(std::vector<double> pose1_est, std::string image1, bool run_initial_IR);
+    std::list<int> CreateList();
+    std::vector<std::vector<double> > RFViewpointSelection(std::vector<double>& rfpose);
+    std::vector<std::vector<double> > IdentifyClosestPose(std::vector<double> pose1_est, std::string image1);
     std::vector<double> FindLocalization(std::vector<std::vector<double> > topk, int por1time, bool hasRF, std::vector<double> pose1_est);
 
     std::vector<double> EstimateNextPose(int survey, int time, int por1time, bool ref);

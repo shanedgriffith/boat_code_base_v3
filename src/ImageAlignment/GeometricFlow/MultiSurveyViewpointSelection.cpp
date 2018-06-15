@@ -44,8 +44,8 @@ bool MultiSurveyViewpointSelection::IsSameScene(double gstatistic){
     return ret;
 }
 
-std::vector<std::vector<double> > MultiSurveyViewpointSelection::TopKViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
-                                                                  std::vector<string>& dates, std::vector<double>& pref, int k){
+std::vector<std::vector<double> > MultiSurveyViewpointSelection::TopViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
+                                                                  std::vector<string>& dates, std::vector<double>& pref){
     //Assumes the reference survey is the last one in the list. Thus the loop only goes to rf.size()-1.
     int nsurveys = rf.size();
     std::vector<double> gstat(nsurveys, -1);
@@ -72,7 +72,7 @@ std::vector<std::vector<double> > MultiSurveyViewpointSelection::TopKViewpoints(
 
     //return the list.
     std::vector<std::vector<double> > topk;
-    for(int i=nsurveys-1; topk.size()<k && i>=0; i--){
+    for(int i=nsurveys-1; i>=0; i--){ //topk.size()<k &&
         if(!IsSameScene(both[i].g)) break;
         if(pidx[both[i].idx]==-1) break;
         std::vector<double> kthres = {(double)both[i].idx, (double) pidx[both[i].idx], both[i].g};

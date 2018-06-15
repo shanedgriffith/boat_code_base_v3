@@ -287,7 +287,7 @@ std::vector<double> LocalizedPoseData::PoseToVector(gtsam::Pose3& cam){
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1){
+double LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1){
     //given the last flow, verify the next one.
     //use the estimate of the next pose (i.e., the odom.) to predict where the points should project.
     //and then verify that they actually do project to those locations.
@@ -327,7 +327,8 @@ bool LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::
     else
         std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") No overlap. VERIFIED? " << verified <<std::endl;
     
-    return verified;
+    if(verified) return sum_rerror/count_in_both;
+    else return -1;
 }
 
 bool LocalizedPoseData::IsSet(){

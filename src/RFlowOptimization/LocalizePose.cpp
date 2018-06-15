@@ -140,7 +140,7 @@ std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0,
     int i=0;
     double err = ACCEPTABLE_TRI_RERROR;
     double val = GetBestValueForInterposeVar(p0, p1, p1frame0, p0frame1, f3d, f2d1, rerror0, b3d, b2d0, rerror1);
-    std::cout << "Best Value For Interpose Var: " << val << std::endl;
+    if(debug) std::cout << "Best Value For Interpose Var: " << val << std::endl;
     for(; nchanges > 0 && i < MAX_ITERS; i++){
         success = DualBA(val,
                          p0, p1frame0, f3d, f2d1, rerror0,

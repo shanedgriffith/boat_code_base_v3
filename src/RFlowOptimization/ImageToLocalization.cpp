@@ -38,20 +38,19 @@ void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::
     double sum=0.0;
     int count=0;
     for(int i=0; i<p2dB.size(); i++){
-//        if(inliers[i] > 6.0) continue;
+        if(inliers[i] > 6.0) continue;
         gtsam::Point3 orig = posea.transform_to(p3[i]);
         gtsam::Point2 projA = _cam.ProjectToImage(orig);
         if(!_cam.InsideImage(projA)) continue;
         gtsam::Point3 res = poseb.transform_to(p3[i]);
         gtsam::Point2 projB = _cam.ProjectToImage(res);
-        
+        if(!_cam.InsideImage(projB)) continue;
         count++;
         double dist = p2dB[i].dist(projB);
         sum+=dist;
-        if(dist > 2*inliers[i]) {
-            std::cout << "projected to " << projB.x() << ", " << projB.y() <<"; dist: " <<dist << std::endl;
-        }
-        if(!_cam.InsideImage(projB)) continue;
+//        if(dist > 2*inliers[i]) {
+//            std::cout << "projected to " << projB.x() << ", " << projB.y() <<"; dist: " <<dist << std::endl;
+//        }
         CvScalar col = GetLandmarkColor(i);
         CvScalar lblcol = CV_RGB(0,255,0);
         if(dist>6) {
@@ -65,7 +64,7 @@ void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::
             circle(imageB, Point(p2dB[i].x(),p2dB[i].y()), 4, col, -1);
         }
     }
-    std::cout << "Drew: " << count << " of " << inliers.size() << ", average error: " << sum/count << std::endl;
+//    std::cout << "Drew: " << count << " of " << inliers.size() << ", average error: " << sum/count << std::endl;
 }
 
 void ImageToLocalization::DrawMatchPoints(cv::Mat& imageA, cv::Mat& imageB, vector<gtsam::Point2>& p0, vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers) {
@@ -151,7 +150,7 @@ bool ImageToLocalization::ApplyEpipolarConstraints(vector<gtsam::Point2>& p0, ve
     }
     int ninliers = fme.IdentifyInliersAndOutliers(_cam, cvp0, cvp1, inliers);
     bool mean = fme.AreInliersMeaningful(ninliers);
-    if(debug) std::cout << "Are inliers meaningful? num inliers: " << ninliers << " of " << inliers.size() << ". fme says: " << mean << std::endl;
+    if(debug) std::cout << "Are inliers meaningful? " << ninliers << " of " << inliers.size() << ". fme says: " << mean << std::endl;
     return mean;
 }
 
@@ -173,7 +172,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     //Failure here is typically due to a lack of alignment consistency.
     // An image can have high consistency %, yet few consistent points because the %
     //is calculated with a tolerance=1.0. Consistent points match with tolerance=0.
-    if(debug) std::cout<<"number of mapped points check: "<< p0.size() << ", count1: "<<count1 << ",  count2: " << count2 << std::endl;
+    if(debug) std::cout<<"Number of mapped points check: "<< p0.size() << ", count1: "<<count1 << ",  count2: " << count2 << std::endl;
     if(count1+count2 > 7){
         std::vector<unsigned char> inliers(p0.size(), 1);
         if(ApplyEpipolarConstraints(p0, p1, inliers)){ //true){ //
@@ -182,7 +181,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
 
             //Expectation Maximization with Bundle Adjustment to get the localized pose and identify inliers.
             LocalizePose lp(_cam);
-            lp.debug = true;
+//            lp.debug = true;
             
             std::vector<std::vector<double> > candidates = lp.RobustDualBA(por[0]->boat[portimes[0]], por[1]->boat[portimes[1]],
                                                                              lpd.p3d0, lpd.p2d1, lpd.rerrorp, lpd.b3d1, lpd.b2d0, lpd.rerrorb);
@@ -201,7 +200,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
                 //printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,candidates[0][0],vp[1],vp[2],vp[3],vp[4],vp[5]);
                 
                 //save the alignment result (to debug or evaluate RF)
-//            DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
+                DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
                 std::string dir = "/Users/shane/Documents/research/experiments/2018/AE/" + to_string(portimes[1]) + "/";
                 FileParsing::MakeDir(dir);
                 dir = dir + dates[0] + "/";
@@ -225,7 +224,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     return -1;
 }
 
-void ImageToLocalization::Setup(LocalizedPoseData * res, double * perc_dc, bool * verified){
+void ImageToLocalization::Setup(LocalizedPoseData * res, double * perc_dc, double * verified){
     thread_state = state::LOCKED;
     _res = res;
     _perc_dc = perc_dc;
@@ -246,7 +245,7 @@ void ImageToLocalization::Reset(){
     toverify = NULL;
     _res = NULL;
     p1_tm1 = gtsam::Pose3();
-    ver_result = false;
+    ver_result = -1.0;
     perc_dc = -1;
     _perc_dc = NULL;
     _verified = NULL;

@@ -61,10 +61,12 @@ void MultiSessionOptimization::Initialize() {
     cache_landmarks = true;
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
+        std::cout <<  dates[i] << ": ";
         int nloaded = lint.LoadLocalizations(_map_dir + dates[i]);
         lpdi.push_back(lint);
         permerr.push_back(vector<double>(lint.localizations.size(),0));
         
+        /*
         if(i > 0 && nloaded < POR[i].boat.size()*0.01) {
             std::cout<<"RFlowSurveyOptimizer Warning: There are too few localizations for " << dates[i] <<". Optimizing a set that was previously optimized."<<std::endl;
             POR.erase(POR.end()-1);
@@ -72,7 +74,7 @@ void MultiSessionOptimization::Initialize() {
             dates.erase(dates.end()-1);
             i--;
             continue;
-        }
+        }*/
         
         EvaluateSLAM ESlam(_cam, dates[i], _map_dir);
         rerrs.push_back(ESlam.LoadRerrorFile());

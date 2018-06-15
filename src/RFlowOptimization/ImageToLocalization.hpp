@@ -56,8 +56,8 @@ private:
     //return vals
     double perc_dc = -1;
     double * _perc_dc;
-    bool ver_result = false;
-    bool * _verified;
+    double ver_result = false;
+    double * _verified;
     
     Camera& _cam;
 public:
@@ -75,7 +75,7 @@ public:
     void SetSurveyIDs(std::vector<int> s){sids=s;}
     void SetPORTimes(std::vector<int> ps){portimes = ps;}
     void SetVPose(gtsam::Pose3 p){p1_tm1 = p;}
-    void Setup(LocalizedPoseData * res, double * perc_dc, bool * verified);
+    void Setup(LocalizedPoseData * res, double * perc_dc, double * verified);
     
     void Reset();
     void * Run();

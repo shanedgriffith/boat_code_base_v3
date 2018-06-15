@@ -38,8 +38,8 @@ public:
         }
     }
     
-    std::vector<std::vector<double> > TopKViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
-                                                       std::vector<std::string>& dates, std::vector<double>& pref, int k=8);
+    std::vector<std::vector<double> > TopViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
+                                                       std::vector<std::string>& dates, std::vector<double>& pref);
 
     bool WithinThreeMonths(std::string date1, std::string date2);
     ~MultiSurveyViewpointSelection(){
