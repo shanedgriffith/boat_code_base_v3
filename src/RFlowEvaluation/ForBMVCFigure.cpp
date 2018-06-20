@@ -61,38 +61,39 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     string _savename_ref = _savebase + to_string(num) + "_ref_" + date1+"_" +to_string(offset)+"_.jpg";
     string _savename_refp = _savebase + to_string(num) + "_refp_" + date1+"_" +to_string(offset)+"_.jpg";
     string _savename_im2 = _savebase + to_string(num) + "_im2_" + date1+"_" +to_string(offset)+"_.jpg";
+    string _savename_sf = _savebase + to_string(num) + "_warped_sf_" + date1+"_" +to_string(offset)+ "_.jpg";
 
 	AlignmentResult ar = sf.GetAlignmentResult();
 	ar.SaveWarpedImage(_savename_rf);
-	ImageOperations::Save(ar.ref, _savename_ref);
-	ImageOperations::Save(ar.im2, _savename_im2);
-	rf[0]->DrawFlowPoints(ar.im2);
-	ImageOperations::Save(ar.im2, _savename_up);
-	rf[0]->DrawMapPoints(ar.ref);
-	ImageOperations::Save(ar.ref, _savename_refp);
+//	ImageOperations::Save(ar.ref, _savename_ref);
+//	ImageOperations::Save(ar.im2, _savename_im2);
+//	rf[0]->DrawFlowPoints(ar.im2);
+//	ImageOperations::Save(ar.im2, _savename_up);
+//	rf[0]->DrawMapPoints(ar.ref);
+//	ImageOperations::Save(ar.ref, _savename_refp);
+    
+    std::cout << "not running the sift flow version" << std::endl;
+    return;
     
     SFlowDREAM2RF sfbasic(_cam);
     sfbasic.ConstructImagePyramid(_image0, _image1);
     sfbasic.AlignImages();
-    string _savename_sf = _savebase + to_string(num) + "_warped_sf_" + date1+"_" +to_string(offset)+ "_.jpg";
     AlignmentResult arbasic = sfbasic.GetAlignmentResult();
     arbasic.SaveWarpedImage(_savename_sf);
 }
 
 
-void ForBMVCFigure::GetAlignmentAtSection(string ref, int num){
-	bool viewpoint_variance = false;
-
+void ForBMVCFigure::GetAlignmentAtSection(string ref_date, int num, bool viewpoint_variance){
 	vector<int> offset = {-15, -10, -5, 0, 5, 10, 15};
 
 	for(int i=0; i<_dates.size(); i++){
+        if(ref_date == _dates[i]) continue;
 		if(viewpoint_variance){
 			for(int j=0; j<offset.size(); j++){
-                if(ref==_dates[i]) continue;
-				AlignSection(num+offset[j], ref, _dates[i], offset[j]);
+				AlignSection(num+offset[j], ref_date, _dates[i], offset[j]);
 			}
 		}
-		else AlignSection(num, ref, _dates[i], 0);
+		else AlignSection(num, ref_date, _dates[i], 0);
 	}
 }
 

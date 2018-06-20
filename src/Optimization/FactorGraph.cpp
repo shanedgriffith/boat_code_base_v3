@@ -182,7 +182,7 @@ void FactorGraph::ChangeLandmarkSet(int set){
         landmark_keys.push_back({});
     }
     else if(set<0 || set > landmark_factors.size()){
-        std::cout << "FactorGraph::ChangeLandmarkSet() Error. Specify an existing set or the next one. " << std::endl;
+        std::cout << "FactorGraph::ChangeLandmarkSet() Error. Specify an existing set or the next one. ("<<set<< ", size: " << landmark_factors.size()<< ")" << std::endl;
         std::exit(-1);
     }
     active_landmark_set = set;

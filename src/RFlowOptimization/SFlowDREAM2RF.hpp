@@ -26,6 +26,7 @@
  * */
 class SFlowDREAM2RF: public SFlowDREAM{
 protected:
+    virtual void SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLayer& il, int imset);
 	virtual void ApplyRFlowConstraints(BPFlow& bpflow, SIFTImageLayer& il, double scale, int imset);
 	virtual void AdaptiveOffsetConstraint(int height, int width);
 	virtual void EpipolarConstraintsFromRF();

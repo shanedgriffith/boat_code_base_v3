@@ -83,12 +83,12 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
     //the island transition. if the pan/tilt camera moves, use a simple odom factor to get around the yaw constraint.
     if(!transition) {
         if(transition_prevstep) {
-            GTS.InitializeValue(FG->key[(int)FactorGraph::var::V], camera_key-1, (gtsam::Value *) &vel_est);
+            GTS.InitializePose(FG->key[(int)FactorGraph::var::V], camera_key-1, vel_est);
             FG->AddVelocity(camera_key-1, vel_est);
             transition_prevstep = false;
         }
         
-        GTS.InitializeValue(FG->key[(int)FactorGraph::var::V], camera_key, (gtsam::Value *) &vel_est);
+        GTS.InitializePose(FG->key[(int)FactorGraph::var::V], camera_key, vel_est);
         FG->AddVelocity(camera_key, vel_est);
         
         FG->AddKinematicConstraint(camera_key, delta_time);
@@ -104,7 +104,7 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
 int SurveyOptimizer::AddCamera(gtsam::Pose3 cam){
     num_cameras_in_traj++;
     int camera_key = FG->GetNextCameraKey();
-    GTS.InitializeValue(FG->key[(int)FactorGraph::var::X], camera_key, (gtsam::Value *) &cam);
+    GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, cam);
     FG->AddCamera(camera_key, cam);
     return camera_key;
 }

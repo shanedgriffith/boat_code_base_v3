@@ -186,6 +186,12 @@ void BPFlow::LoadImages(int _width, int _height, int _nchannels, const T_input *
 	memcpy(pIm2,pImage2,sizeof(T_input)*Width2*Height2*nChannels);
 }*/
 
+void BPFlow::setPixelWinsize(int x, int y, int winSizeX, int winSizeY){
+    int idx = y*Width + x;
+    pWinSize[0][idx] = winSizeX;
+    pWinSize[1][idx] = winSizeY;
+}
+
 //------------------------------------------------------------------------------------------------
 // function to set the homogeneous MRF parameters
 // There is no offset, and the window size is identical for each pixel (winSize)
@@ -292,182 +298,6 @@ void BPFlow::ComputeRangeTerm(double _gamma) {
             }
 		}
 	}
-}
-
-
-int BPFlow::ImageValue(cv::Mat& img, int i, int j, int k) {
-    /*Indices are: i=row, j=col, k=channel.*/
-    
-    int idx = (i*img.cols + j)*img.channels() + k;
-    
-    if(img.type()==CV_64FC(img.channels())) {
-        double * pixelPtr = (double *) img.data;
-        return (int) pixelPtr[idx];
-    }
-    else if(img.type()==CV_8UC(img.channels())) {
-        unsigned char * pixelPtr = (unsigned char *) img.data;
-        return (int) pixelPtr[idx];
-    }
-    else {
-    	//commented out because eclipse dislikes it.
-    	printf("The image has an unexpected format: %d\n", img.type());
-        exit(1);
-    }
-}
-
-
-cv::Mat BPFlow::ComputeDataTerm2(cv::Mat si1, cv::Mat si2) {
-    /*
-     * Compute the data term, compute the data truncation parameter, and then truncate the data term. The data term is
-     * the L1 SIFT descriptor distance. The truncation parameter is automatically set as the median match score (a
-     * heuristic).
-     *
-     * TODO: check the pDataTerm --> function
-     * */
-    
-    
-    double HistMin,HistMax;
-    double HistInterval;
-    int* pHistogramBuffer;
-    //nBins defines the resolution of the default matching score
-    int nBins=20000;
-    int total=0; // total is the total number of plausible matches, used to normalize the histogram
-    pHistogramBuffer=new int[nBins];
-    memset(pHistogramBuffer,0,sizeof(int)*nBins);
-    HistMin= 32767;
-    HistMax=0;
-    
-    int wsize = 5;
-    int numLabels = wsize*2+1;
-    int Height = si1.rows;
-    int Width = si1.cols;
-    
-    cv::Mat pData = cv::Mat(Height, Width, CV_64FC(numLabels*numLabels), cv::Scalar::all(0));
-    
-    double * pDataTerm = (double *) pData.data;
-    //--------------------------------------------------------------------------------------------------
-    // step 1. the first sweep to compute the data term for the visible matches
-    //--------------------------------------------------------------------------------------------------
-    for(int i=0;i<Height;i++)			// index over y
-        for(int j=0;j<Width;j++)		// index over x
-        {
-            //CHECK: MASK HERE? May not be necessary due to step 3.
-            int index=i*Width+j;
-            // loop over a local window
-            for(int k=-wsize;k<=wsize;k++)  // index over y
-                for(int l=-wsize;l<=wsize;l++)  // index over x
-                {
-                    
-                    int x=j+l;
-                    int y=i+k;
-                    int flow_hyp_y = k+wsize;
-                    int flow_hyp_x = l+wsize;
-                    int _ptr = flow_hyp_y*numLabels + flow_hyp_x;
-                    
-                    // if the point is outside the image boundary then continue
-                    if(!InsideImage(x,y))
-                        continue;
-                    
-                    //compute the cost
-                    double foo=0;
-                    for(int n=0;n<nChannels;n++) {
-                        foo += abs(ImageValue(si1, i, j, n) - ImageValue(si2, y, x, n)); // L1 norm
-                        //                        cout << "foo["<<n<<"] = " << foo << ", im1(" << i << ","<<j<<")= " << ImageValue(si1, i, j, n)<< ", im2(" <<y<<","<<x<<")= " <<  ImageValue(si2, y, x, n)<< endl;
-                    }
-                    
-                    //set the cost
-                    //                    pDataTerm[index][_ptr]=foo;
-                    int datix = index * numLabels*numLabels + _ptr;
-                    pDataTerm[datix] = foo;
-                    
-                    //get the range for the histogram
-                    HistMin= min(HistMin,foo);
-                    HistMax= max(HistMax,foo);
-                    total++;
-                }
-        }
-    // compute the histogram info
-    HistInterval=(double)(HistMax-HistMin)/nBins;
-    
-    //without defining the range, is it still possible to get the median by defining a default range?
-    //the resolution won't be as good, but we'll skip a computation.
-    
-    //--------------------------------------------------------------------------------------------------
-    // step 2. get the histogram of the matching
-    // everything else here is to compute the truncation term, t, using a histogram of match values.
-    //--------------------------------------------------------------------------------------------------
-    for(int i=0;i<Height;i++)			// index over y
-        for(int j=0;j<Width;j++)		// index over x
-        {
-            int index=i*Width+j;
-            // loop over a local window
-            for(int k=-wsize;k<=wsize;k++)  // index over y
-                for(int l=-wsize;l<=wsize;l++)  // index over x
-                {
-                    int x=j+l;
-                    int y=i+k;
-                    int flow_hyp_y = k+wsize;
-                    int flow_hyp_x = l+wsize;
-                    int _ptr = flow_hyp_y*numLabels + flow_hyp_x;
-                    
-                    // if the point is outside the image boundary then continue
-                    if(!InsideImage(x,y)) continue;
-                    
-                    //update the histogram counter for a particular bin
-                    int datix = index * numLabels*numLabels + _ptr;
-                    int foo = (int) min((double) pDataTerm[datix]/HistInterval,(double) nBins-1);
-                    pHistogramBuffer[foo]++;
-                }
-        }
-    
-    //find the median of the match score.
-    // the truncation term is the median of all the match scores for the image
-    double DefaultMatchingScore = 0.1;
-    double Prob=0;
-    double medianpoint = total/2.0;
-    for(int i=0;i<nBins;i++) {
-        Prob+=pHistogramBuffer[i];
-        if(Prob>=medianpoint) // find the matching score
-        {
-            DefaultMatchingScore=max((double)i, 1.0)*HistInterval+HistMin;
-            break;
-        }
-    }
-    delete[] pHistogramBuffer;
-    
-    //--------------------------------------------------------------------------------------------------
-    // step 3. assigning the default matching score to the outside matches
-    //--------------------------------------------------------------------------------------------------
-    for(int i=0;i<Height;i++)			// index over pixel y
-        for(int j=0;j<Width;j++)		// index over pixel x
-        {
-            int index=i*Width+j;
-            
-//            size_t shape[] = {(size_t) numLabels, (size_t) numLabels};
-//            ExplicitFunction f(shape, shape + 2, DefaultMatchingScore); //initializes entries to this value..
-            
-            // loop over a local window
-            for(int k=-wsize;k<=wsize;k++)  // index over flow y
-                for(int l=-wsize;l<=wsize;l++)  // index over flow x
-                {
-                    int x=j+l;
-                    int y=i+k;
-                    int flow_hyp_y = k+wsize;
-                    int flow_hyp_x = l+wsize;
-                    int _ptr = flow_hyp_y*numLabels + flow_hyp_x;
-                    
-                    //truncate the match score.
-                    int datix = index * numLabels*numLabels + _ptr;
-                    double score =  min(pDataTerm[datix], DefaultMatchingScore);
-                    // if the point is outside the image boundary then continue
-                    if(!InsideImage(x,y)) {score=DefaultMatchingScore;}
-                    
-                    //are the function inputs always positive? (seem to be, they don't need to be negative, as long as the score corresponds to the right flow; maybe.)
-                    //f(flow_hyp_x, flow_hyp_y) = score; //f(l, k) = score; //ordered by u plane, v plane
-                    pDataTerm[datix] = score;
-                }
-        }
-    return pData;
 }
 
 
@@ -657,7 +487,7 @@ double BPFlow::ComputeDataTerm()
             if(rconstraints)
             	rterms = ComputeReprojectionTerms((int) index, pWinSize[0][index], DefaultMatchingScore);
 
-
+            
 			// loop over a local window
 			for(ptrdiff_t k=-pWinSize[1][index];k<=pWinSize[1][index];k++)  // index over y
 				for(ptrdiff_t l=-pWinSize[0][index];l<=pWinSize[0][index];l++)  // index over x
@@ -682,7 +512,13 @@ double BPFlow::ComputeDataTerm()
                     //reprojection constraints
                     if(rconstraints && rterms.size() > 0) pDataTerm[index][_ptr] = rterms[_ptr];
                     
+                    //cycle consistency
                     if(twocycleconsistency) pDataTerm[index][_ptr] += (*twocyclehypspaceweights)[index][_ptr];
+                    
+                    //adaptive hypothesis space
+                    if(hypspaces.size()>0){
+                        if(abs(k)>hypspaces[i][j][1] || abs(l)>hypspaces[i][j][0]) pDataTerm[index][_ptr] = 1000*DefaultMatchingScore;
+                    }
 				}
 		}
 	}
@@ -690,6 +526,15 @@ double BPFlow::ComputeDataTerm()
     return DefaultMatchingScore;
 }
 
+void BPFlow::CreateHypSpace(int sizex, int sizey){
+    if(hypspaces.size()!=sizey || hypspaces[0].size()!=sizex)
+        hypspaces = std::vector<std::vector<std::vector<double> > >(sizey, std::vector<std::vector<double> >(sizex, vector<double>(2,0)));
+}
+
+void BPFlow::SetHypSpaces(int hx, int hy, int x, int y){
+    hypspaces[y][x][0] = hx;
+    hypspaces[y][x][1] = hy;
+}
 
 void BPFlow::AddHypSpaceWeights(vector<vector<double> >* _two_cycle_hypspace){
 	twocycleconsistency = true;
@@ -816,65 +661,6 @@ void BPFlow::AddConstraint(int px, int py, double fx, double fy, double r){
 //        }
 }
 
-void BPFlow::TestDataTerm() {
-    int ptrnum = 3;
-    int ntests=15;
-    double binsize = 1.0*Height*Width/(ntests+1);
-    //double * pDataTerm = (double *) pData.data;
-    int numLabels = 11;
-    
-    for(int i=1; i<ntests+1; i++) {
-        int idx = (int) binsize * i;
-        int datix = idx * numLabels * numLabels + ptrnum;
-        cout << i << " (" << datix << "):  "<< pDataTerm[idx][ptrnum] << endl;
-    }
-}
-
-void BPFlow::CompareDataTerms(cv::Mat pData) {
-    int wsize = 5;
-    int numLabels = wsize*2+1;
-    
-    double * pDT = (double *) pData.data;
-    int countdiff = 0;
-    int countsame = 0;
-    double suma=0.0, sumb=0.0;
-    for(int i=0; i<Height;i++)
-    {
-        for(int j=0; j<Width; j++)
-        {
-            int index = i*Width + j;
-            int nflows = numLabels*numLabels;
-            int zeroflow = wsize*numLabels + wsize;
-            
-            for(int k=0; k<nflows; k++)
-            {
-                int a = (int) pDT[index*nflows + k];
-                int b = (int) pDataTerm[index][k];
-                if(a != b)
-                {
-                    countdiff++;
-                    cout << "idx: " << index<<", k: " << k << endl;
-                    cout << "bad: " << pDT[index*nflows + k] << ", good: " << pDataTerm[index][k] << endl;
-                    exit(1);
-                }
-                else
-                    countsame++;
-                
-            }
-            
-            suma += pDT[index*nflows + zeroflow];
-            sumb += pDataTerm[index][zeroflow];
-        }
-    }
-    
-    cout << "Data term comparison:" << endl;
-    cout << " same: " << countsame << endl;
-    cout << " diff: " << countdiff << endl;
-    
-    cout << "Energy comparison: " << endl;
-    cout << "energy mod: " << suma << endl;
-    cout << "energy orig: " << sumb << endl;
-}
 
 //------------------------------------------------------------------------------------------------
 //	function to allocate buffer for the messages

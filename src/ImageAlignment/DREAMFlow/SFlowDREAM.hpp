@@ -70,6 +70,7 @@ protected:
 	bool ComputeEpipolarWeights(SIFTImageLayer& ref, SIFTImageLayer& comp, int imset, int h);
 	void CyclicAlignment(SIFTImageLayer& sil, double g, int h, int nHierarchy);
 
+    virtual void SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLayer& il, int imset);
     virtual void ApplyRFlowConstraints(BPFlow& bpflow, SIFTImageLayer& il, double scale, int imset);
     virtual void AdaptiveOffsetConstraint(int height, int width);
 	virtual void EpipolarConstraintsFromRF();

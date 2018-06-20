@@ -148,8 +148,6 @@ private:
 	size_t nTotalBelifElements[2];
 
 	int *pX; // the final states
-    
-//	DImage mFlow; // the flow field
 
 	int nNeighbors;
     double epi; //the weight for epipolar line constraints.
@@ -158,6 +156,7 @@ private:
 	DImage Im_s,Im_d;  // per pixel parameterization
     std::vector<int> isconstraint;
     std::vector<double> reprojection_errors;
+    std::vector<std::vector<std::vector<double> > > hypspaces;
     std::vector<std::vector<double> > cflows;
     std::vector<std::vector<double> >* twocyclehypspaceweights;
     std::vector<std::vector<double> >* epihypspace;
@@ -170,36 +169,18 @@ public:
 	~BPFlow(void);
 	void ReleaseBuffer();
 	void setPara(double _s,double _d);
-//	void setPara(const DImage& im_s,const DImage& im_d){Im_s=im_s;Im_d=im_d;};
 	void setDataTermTruncation(bool isTruncated){IsDataTermTruncated=isTruncated;};
 	void setDisplay(bool isDisplay){IsDisplay=isDisplay;};
 	void setTRW(bool isTRW){IsTRW=isTRW;};
 	void setCTRW(double cTRW){CTRW=cTRW;};
     void LoadImages(int _width, int _height, int _nchannels, std::vector<T_input*> imgs);
-//	void LoadImages(int _width,int _height,int _nchannels,const T_input* pImage1,const T_input* pImage2);
-//    void LoadImages(int _width, int _height, int _nchannels, const T_input *pImage1, const T_input *pImage2, const T_input * img2mask);
-//	void LoadImages(int _width,int _height,int _nchannels,const T_input* pImage1, int _width2,int _height2,const T_input* pImage2);
     
+    void setPixelWinsize(int x, int y, int winSizeX, int winSizeY);
 	void setHomogeneousMRF(int winSize);
     void SetOffset(double* flowOffset);
     void UseMasks(){masked1 = true; masked2=true;}
     void UseRConstraints(){rconstraints=true;}
 
-	
-    //template<class T>
-//    void SetOffset(double* pOffset);
-    
-    //My own code to test the data terms.
-    //    bpflow.TestDataTerm();
-    //    Mat dt = bpflow.ComputeDataTerm2(img1, img2);
-    //    bpflow.CompareDataTerms(dt);
-    //    double before = bpflow.GetEnergy();
-    //    cout << "Before energy: " << before << endl;
-    //    exit(1);
-    void TestDataTerm();
-    int ImageValue(cv::Mat& img, int i, int j, int k);
-    cv::Mat ComputeDataTerm2(cv::Mat si1, cv::Mat si2);
-    void CompareDataTerms(cv::Mat pData);
     
 	template<class T>
 	void LoadOffset(T* pOffsetX,T* pOffsetY);
@@ -211,6 +192,8 @@ public:
     std::vector<double> ComputeReprojectionTerms(int index, int win, double DefaultMatchingScore);
     double GetMedian(int winsize, int i, int j);
 	double ComputeDataTerm();
+    void CreateHypSpace(int sizex, int sizey);
+    void SetHypSpaces(int hx, int hy, int x, int y);
 	void AddHypSpaceWeights(std::vector<std::vector<double> >* _two_cycle_hypspace);
 	void AddEpiWeights(std::vector<std::vector<double> >* hypspace);
     void AddConstraint(int px, int py, double fx, double fy, double v);

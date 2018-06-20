@@ -25,7 +25,7 @@
 
 class MultiCascade: public MultiSessionOptimization {
 protected:
-    const int MAX_CASC_ITERS = 100;
+    const int MAX_CASC_ITERS = 5;
     
     std::vector<std::vector<std::vector<double> > > landmarks;
     std::vector<std::vector<std::vector<double> > > poses;

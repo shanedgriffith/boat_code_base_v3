@@ -86,6 +86,7 @@ public:
     std::vector<double> GetAverageConstraint(int active_set);
     std::vector<double> GetMaxConstraint(int active_set);
     std::vector<double> GetConstraintBounds(int active_set);
+    std::vector<double> GetkNNConstraint(int active_set, int x, int y, int k);
     
     std::vector<double> MeasureFlowAgreement(cv::Mat& flow, int active_set=0);
     std::vector<double> MeasureDeviationsPerSurvey(cv::Mat &flow);

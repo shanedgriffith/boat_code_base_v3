@@ -126,7 +126,7 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
         }
         initialEstimate.clear();
     } catch(const std::exception& ex) {
-        printf("GTSamInterface::RunBundleAdjustment. Exception.");
+        printf("GTSamInterface::RunBundleAdjustment() Exception.");
         printf(" There was an exception while attempting to solve the factor graph.");
         printf(" Known causes of the exception:\n");
         printf("  >The camera pose used to create landmark observations was not initialized\n");
@@ -145,14 +145,14 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
     }
 }
 
-void GTSamInterface::InitializeValue(gtsam::Symbol s, Value * p) {
+void GTSamInterface::InitializePose(gtsam::Symbol s, gtsam::Pose3 p) {
     if(print_symbol_number) cout << "initializing " << s.key() << ": (" << (int) s.chr() << ", " << s.index() << ") " << endl;
-    initialEstimate.insert(s, *p);
+    initialEstimate.insert(s, p);
 }
 
-void GTSamInterface::InitializeValue(char c, int num, Value * p) {
+void GTSamInterface::InitializePose(char c, int num, gtsam::Pose3 p) {
     Symbol s(c, num);
-    InitializeValue(s, p);
+    InitializePose(s, p);
 }
 
 //void GTSamInterface::ClearInitialEstimate(){
@@ -164,7 +164,12 @@ Point3 GTSamInterface::MAPLandmarkEstimate(int idx) {
     Values* v;
     if(results.size()==0) v = &initialEstimate;
     else                  v = &results;
-    return _fg->landmark_factors[_fg->GetActiveLandmarkSet()][idx].point(*v).get();
+    boost::optional<gtsam::Point3> worldpoint = _fg->landmark_factors[_fg->GetActiveLandmarkSet()][idx].point(*v);
+    if(worldpoint) return worldpoint.get();
+    else {
+        if(debug) std::cout << "GTSamInterface::MAPLandmarkEstimate() encountered degeneracy with landmark " << _fg->GetActiveLandmarkSet() << "." << idx << ". " << std::endl;
+        return gtsam::Point3(0,0,0);
+    }
 }
 
 gtsam::Pose3 GTSamInterface::PoseResult(Symbol s) {
@@ -187,7 +192,7 @@ bool GTSamInterface::HasResult(Symbol s) {
 vector<double> GTSamInterface::MAPPoseEstimate(Symbol s) {
     gtsam::Pose3 ev = PoseResult(s);
     gtsam::Rot3 r = ev.rotation();
-    vector<double> pose = {ev.x(), ev.y(), ev.z(), r.roll(), r.pitch(), r.yaw(), (double) s.index()};
+    vector<double> pose = {ev.x(), ev.y(), ev.z(), r.roll(), r.pitch(), r.yaw()};//, (double) s.index()
     return pose;
 }
 
@@ -210,7 +215,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedLandmarks(bool sorted) {
 }
 
 vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N) {
-    vector<vector<double> > vel(N, vector<double>(7, 0));
+    vector<vector<double> > vel(N, vector<double>(6, 0));
     
     for(int i=0; i<N; i++) {
     	vector<double> pose;
@@ -220,7 +225,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N
     	} else {
             if(debug)
                 cout<<"GTSamInterface WARNING: Symbol ("<<(char)s.chr()<<", "<<s.index() << ") isn't in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
-    		pose = {0,0,0,0,0,0,(double)i};
+    		pose = {0,0,0,0,0,0};
     	}
         vel[i] = pose;
     }

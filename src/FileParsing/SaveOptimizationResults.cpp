@@ -58,7 +58,7 @@ void SaveOptimizationResults::SavePoses(string file, vector<vector<double> >& po
     if(poses.size()==0) return;
     FILE * boat_f = OpenFile(file, "w");
     for(int i=0; i<poses.size(); i++){
-        fprintf(boat_f, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", (int)poses[i][6], poses[i][0], poses[i][1], poses[i][2], poses[i][3], poses[i][4], poses[i][5]);
+        fprintf(boat_f, "%d, %lf, %lf, %lf, %lf, %lf, %lf\n", i, poses[i][0], poses[i][1], poses[i][2], poses[i][3], poses[i][4], poses[i][5]);
     }
     fclose(boat_f);
 }

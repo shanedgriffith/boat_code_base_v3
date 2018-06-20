@@ -13,6 +13,11 @@
 using namespace cv;
 using namespace std;
 
+void SFlowDREAM::SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLayer& il, int imset){
+    std::cout << "SFlowDREAM::SetHeterogeneousHypothesisSpace() Not implemented." << std::endl;
+    exit(-1);
+}
+
 void SFlowDREAM::ApplyRFlowConstraints(BPFlow& bpflow, SIFTImageLayer& il, double scale, int imset){
 	bpflow.UseRConstraints();
 	int nc = rf->GetNumberOfConstraints(imset);
@@ -65,7 +70,7 @@ double SFlowDREAM::ComputeVerificationRatio(SIFTImageLayer& sil, SIFTImageLayer&
 void SFlowDREAM::VerifiedBP(SIFTImageLayer& sil, double gamma, int h, int nHierarchy, double scale, int imset, vector<vector<double> >* two_cycle_hypspace){
     //NOTE: this can be parallelized. (may gain up to 0.8 seconds per full alignment attempt)
     RunBP(sil, gamma, h, nHierarchy, scale, imset, two_cycle_hypspace);
-    if(!reprojection_flow && (ranverification || !verifyalignment)) return;
+    if(reprojection_flow || ranverification || !verifyalignment) return;
 
     int x=3, y=3;
     SIFTImageLayer woff(sil.im);
@@ -83,9 +88,8 @@ void SFlowDREAM::RunBP(SIFTImageLayer& il, double gamma, int h, int nHierarchy, 
     //set the offset.
     double * offset = (double *) il.f.data;
     //if reprojection_flow and we're at the top layer.
-    if(reprojection_flow && offsets[imset].rows == il.height()){
-    	offset = (double *) offsets[imset].data;
-    }
+    if(reprojection_flow && offsets[imset].rows == il.height())
+        offset = (double *) offsets[imset].data;
 
     //set the input and parameters
     BPFlow bpflow;
@@ -94,6 +98,9 @@ void SFlowDREAM::RunBP(SIFTImageLayer& il, double gamma, int h, int nHierarchy, 
     bpflow.setPara(alpha,d);
     bpflow.setDataTermTruncation(true);
     bpflow.setHomogeneousMRF(h);
+    if(reprojection_flow && il.width() == 44){
+        SetHeterogeneousHypothesisSpace(bpflow, il, imset);
+    }
 
     //set the constraints
     if(twocycle && two_cycle_hypspace != NULL) bpflow.AddHypSpaceWeights(two_cycle_hypspace);
@@ -302,12 +309,13 @@ void SFlowDREAM::AdaptiveOffsetConstraint(int height, int width){
 		//size the hypothesis space.
 		int hx = max((double) abs(mcur[1]-mcur[2]), (double) abs(mcur[2]-mcur[0]));
 		int hy = max((double) abs(mcur[4]-mcur[5]), (double) abs(mcur[5]-mcur[3]));
-		int hmax = max(hmax, max(hx, hy));
-		if(debug) cout << "i: " << i<< "hx, hy: " << hx <<", " << hy << "; hmax: " << hmax << endl;
+		hmax = max(hmax, max(hx, hy));
+		if(debug)
+            cout << "Image Alignment " << i<< " offset: ["<<mcur[2] << "," <<mcur[5] << "] bounds: [" << hx <<", " << hy << "] actual bound: " << hmax << " + " << HYP_SPACE_PADDING << endl;
 	}
 
 	//set the hypothesis space size
-	topwsize = hmax + HYP_SPACE_PADDING;
+    topwsize = hmax + HYP_SPACE_PADDING;
 }
 
 void SFlowDREAM::CyclicAlignment(SIFTImageLayer& sil, double g, int h, int nHierarchy){
@@ -327,7 +335,7 @@ void SFlowDREAM::CyclicAlignment(SIFTImageLayer& sil, double g, int h, int nHier
 		res[imset].CopyResult(sil);
 		if(cycle_iter > 0) res[0].consistency = MeasureConsistency(res, 0);
 		if(res[0].consistency > best.consistency) best.CopyResult(res[0]);
-		if(debug) cout << ""<<cycle_iter<< "|"<<imset << ", energy: " <<res[imset].alignment_energy << ", consistency: " << res[imset].consistency << endl;
+		if(debug) cout << ""<<cycle_iter<< "|"<<imset << ", energy: " <<res[imset].alignment_energy << ", consistency: " << res[0].consistency << endl;
 
 		//stop looping if any flow is consistent with all the other flows.
 		if(res[0].consistency > consistency_threshold)  {
@@ -370,7 +378,6 @@ void SFlowDREAM::EpipolarConstraintsFromRF(){
 	}
 }
 
-
 void SFlowDREAM::AlignImages(){
 	/*With each image layer, the parameters change as follows:
 	 * nhierarchy: 2, 1, 2, 3. (specifies a within-bpflow matching hierarchy)
@@ -388,7 +395,10 @@ void SFlowDREAM::AlignImages(){
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
+    
+
     if(reprojection_flow) {
+        if(debug) cout << "SFlowDREAM::AlignImages() using RF" << endl;
 		SIFTImageLayer& sil = ip.layers[ip.TopLayer()];
 
 	    //adaptive offset and window size constraints from RF.
@@ -399,11 +409,11 @@ void SFlowDREAM::AlignImages(){
     	int winsize = topwsize*2+1;
     	hypspace = vector<vector<vector<double> > >(2, vector<vector<double> >(sil.height()*sil.width(), vector<double>(winsize*winsize, 0.0)));
     	EpipolarConstraintsFromRF();
-    }
+    } else if(debug) cout << "SFlowDREAM::AlignImages() without RF" << endl;
 
 	//align images from the top of the image pyramid to the bottom.
     for(int i=ip.start_layer; i>=ip.stop_layer; i--) {
-        int num_imsets = ((twocycle || reprojection_flow) && cycle_down_to_layer <= i)?2:1;
+        int num_imsets = (twocycle && cycle_down_to_layer <= i)?2:1; //  || reprojection_flow)
         double g = gamma*pow(2,i-1);
         int dubmult = topwsize;
         int nHierarchy=2;

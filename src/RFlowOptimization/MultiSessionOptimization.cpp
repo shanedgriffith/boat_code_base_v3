@@ -24,7 +24,7 @@
 using namespace std;
 
 MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date, double plt):
-_map_dir(results_dir + "maps_MC_10/"), _pftbase(pftbase),
+_map_dir(results_dir + "maps/"), _pftbase(pftbase),
 SurveyOptimizer(cam, rfFG, date, results_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
@@ -169,7 +169,7 @@ void MultiSessionOptimization::ConstructFactorGraph() {
             }
             
             rfFG->AddPose(survey, i, traj);
-            GTS.InitializeValue(rfFG->GetSymbol(survey, i), (gtsam::Value *) &traj);
+            GTS.InitializePose(rfFG->GetSymbol(survey, i), traj);
             
             if(i > 0) { //order matters; this has to be after the variables it depends on are initialized.
                 gtsam::Pose3 cur1 = POR[survey].CameraPose(i);

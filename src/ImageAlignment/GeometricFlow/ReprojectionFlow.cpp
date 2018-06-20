@@ -365,6 +365,29 @@ vector<double> ReprojectionFlow::GetConstraintBounds(int active_set){
     return {minx, maxx, avgx, miny, maxy, avgy};
 }
 
+std::vector<double> ReprojectionFlow::GetkNNConstraint(int active_set, int x, int y, int k){
+    //brute force to test. if it's a constraint, them improve.
+    //k=1 for now.
+    std::vector<ReprojectionFlow::rfpoint>* csearch = &viewset;
+    if(active_set>=0) csearch = &restrictedset[active_set];
+    
+    int minidx = -1;
+    double mindist = 100000;
+    for(int i=0; i<csearch->size(); i++){
+        ReprojectionFlow::rfpoint rfp = (*csearch)[i];
+        Point2f pixel_scaled = Scale(Point2f(rfp.pim1.x(), rfp.pim1.y()), false);
+        double dist = pow(pixel_scaled.x-x,2.0) + pow(pixel_scaled.y-y,2.0);
+        if(dist < mindist){
+            mindist = dist;
+            minidx = i;
+        }
+    }
+    if(minidx==-1) return {};
+    
+    rfpoint rfp = (*csearch)[minidx];
+    Point2f flow_scaled = Scale(Point2f(rfp.pflow.x(), rfp.pflow.y()), false);
+    return {flow_scaled.x, flow_scaled.y};
+}
 
 Point2f ReprojectionFlow::Scale(Point2f p, bool up){
 	if(outw==0){
@@ -443,6 +466,7 @@ vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
 /******************************** DRAWING RELATED (for visualization and debugging) *******************************/
 void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
     IMDraw art(image);
+    art.SetPointSize(15);
     for(int i=0; i<restrictedset[active_set].size(); i++)
         art.DrawPoint(restrictedset[active_set][i].pim2.x(),
                 restrictedset[active_set][i].pim2.y(),
@@ -451,6 +475,7 @@ void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
 
 void ReprojectionFlow::DrawMapPoints(cv::Mat& image, int active_set){
     IMDraw art(image);
+    art.SetPointSize(15);
     for(int i=0; i<restrictedset[active_set].size(); i++)
         art.DrawPoint(restrictedset[active_set][i].pim1.x(),
                         restrictedset[active_set][i].pim1.y(),

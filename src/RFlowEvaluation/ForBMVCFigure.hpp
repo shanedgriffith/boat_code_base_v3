@@ -25,8 +25,6 @@
 class ForBMVCFigure{
 private:
 
-	void AlignSection(int num, std::string date1, std::string date2, int offset=0);
-
     Camera& _cam;
     std::vector<std::string>& _dates;
 public:
@@ -35,11 +33,12 @@ public:
     ForBMVCFigure(Camera& cam, std::vector<std::string>& dates, std::string pftbase,
                   std::string query_loc, std::string results_dir):
     _cam(cam), _dates(dates), _pftbase(pftbase), _query_loc(query_loc), _savebase(results_dir + "aligned_images/"),
-    _map_base(results_dir + "maps_MC/")
+    _map_base(results_dir + "maps/")
     {}
 
-	void GetAlignmentAtSection(std::string ref, int num);
-
+	void GetAlignmentAtSection(std::string ref_date, int num, bool viewpoint_variance = false);
+    
+    void AlignSection(int num, std::string date1, std::string date2, int offset=0);
 
 };
 

@@ -200,12 +200,13 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
                 //printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,candidates[0][0],vp[1],vp[2],vp[3],vp[4],vp[5]);
                 
                 //save the alignment result (to debug or evaluate RF)
+                /*
                 DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
                 std::string dir = "/Users/shane/Documents/research/experiments/2018/AE/" + to_string(portimes[1]) + "/";
                 FileParsing::MakeDir(dir);
                 dir = dir + dates[0] + "/";
                 FileParsing::MakeDir(dir);
-                ar.Save(dir);
+                ar.Save(dir);*/
                 
 //                DrawFlowPoints(ar.ref, ar.im2, lpd.rerrorp, lpd.p3d0, lpd.p2d1, por[0]->CameraPose(portimes[0]), CameraPose(candidates[0]));
 //                string debugdir = _results_dir + dates[1] + "/debug/";

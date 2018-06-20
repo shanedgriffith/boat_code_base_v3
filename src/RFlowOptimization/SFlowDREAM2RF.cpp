@@ -9,6 +9,41 @@
 
 using namespace std;
 
+void SFlowDREAM2RF::SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLayer& il, int imset){
+    int HYP_SPACE_PADDING = 2;
+    double * offset = (double *) offsets[imset].data;
+    
+    std::vector<double> mcur = rflows[imset]->GetConstraintBounds(0);
+    if(mcur.size()<6){
+        std::cout << "SFlowDREAM2RF::SetHeterogeneousHypothesisSpace() Error. Not using hxhy."<<std::endl;
+        return;
+    }
+    
+    bpflow.CreateHypSpace(il.width(), il.height());
+    int winSizex = max(0.0, max((double) abs(mcur[1]-mcur[2]), (double) abs(mcur[2]-mcur[0])));
+    int winSizey = max(0.0, max((double) abs(mcur[4]-mcur[5]), (double) abs(mcur[5]-mcur[3])));
+//    std::cout << "flow values: (" << mcur[0] << "," << mcur[1] << "," << mcur[2] << ","<< mcur[3] << "," << mcur[4] << "," << mcur[5] << ")"<<std::endl;
+//    std::cout << "winsizes: "<<winSizex << ","<<winSizey << std::endl;
+    
+//    std::cout <<"------------------------------------------------------------------"<<imset<<std::endl;
+    for(int i=0; i<il.height(); i++){
+        for(int j=0; j<il.width(); j++){
+//            int idx = (i*il.width() + j)*2;
+//            vector<double> flow_scaled = rflows[imset]->GetkNNConstraint(0, j, i, 1);
+//            if(flow_scaled.size() == 0) return;
+//            
+//            int winSizex = max(0.0,abs(flow_scaled[0]-offset[idx]));
+//            int winSizey = max(0.0,abs(flow_scaled[1]-offset[idx+1]));
+//            int winSizex = HYP_SPACE_PADDING + abs(flow_scaled[0]-offset[idx]);
+//            int winSizey = HYP_SPACE_PADDING + abs(flow_scaled[1]-offset[idx+1]);
+//            std::cout << winSizex<<"|";//","<<winSizey<<
+            ///* bpflow.setPixelWinsize(j, i, winSizex, winSizey);// won't work. the hyp space indexing is different for the other constraints*/
+            bpflow.SetHypSpaces(winSizex, winSizey, j, i);
+        }
+//        std::cout << std::endl;
+    }
+}
+
 void SFlowDREAM2RF::ApplyRFlowConstraints(BPFlow& bpflow, SIFTImageLayer& il, double scale, int imset){
 	bpflow.UseRConstraints();
 	int nc = rflows[imset]->GetNumberOfConstraints(0);
@@ -25,21 +60,36 @@ void SFlowDREAM2RF::AdaptiveOffsetConstraint(int height, int width){
 	 * Generate an offset image that's in the middle of min and max of the constraints, then set h
 	 * to be HYP_SPACE_PADDING outside of this range.
 	 * */
-	int hmax = 0;
-	for(int i=0; i<2; i++){
-        rflows[i]->OutputSize(width, height);
-		std::vector<double> mcur = rflows[i]->GetConstraintBounds(0);
+    HYP_SPACE_PADDING = 0;
+    int hmax = 0;
+	for(int imset=0; imset<2; imset++){
+        rflows[imset]->OutputSize(width, height);
+		std::vector<double> mcur = rflows[imset]->GetConstraintBounds(0);
 		offsets.push_back(cv::Mat(height, width, CV_64FC2, cv::Scalar(mcur[2], mcur[5])));
+        
+        /*
+        double * offset = (double *) offsets[imset].data;
+        
+        for(int i=0; i<height; i++){
+            for(int j=0; j<width; j++){
+                int idx = (i*width + j)*2;
+                vector<double> flow_scaled = rflows[imset]->GetkNNConstraint(0, j, i, 1);
+                if(flow_scaled.size() == 0) return;
+                offset[idx] = (int) flow_scaled[0];
+                offset[idx+1] = (int) flow_scaled[1];
+            }
+        }*/
 
 		//size the hypothesis space.
 		int hx = max((double) abs(mcur[1]-mcur[2]), (double) abs(mcur[2]-mcur[0]));
 		int hy = max((double) abs(mcur[4]-mcur[5]), (double) abs(mcur[5]-mcur[3]));
-		int hmax = max(hmax, max(hx, hy));
-		if(debug) std::cout << "i: " << i<< "hx, hy: " << hx <<", " << hy << "; hmax: " << hmax << std::endl;
+		hmax = max(hmax, max(hx, hy));
+		if(debug)
+            cout << "Image Alignment " << imset<< " offset: ["<<mcur[2] << "," <<mcur[5] << "] bounds: [" << hx <<", " << hy << "] actual bound: " << hmax << " + " << HYP_SPACE_PADDING << endl;
 	}
-
+    
 	//set the hypothesis space size
-	topwsize = hmax + HYP_SPACE_PADDING;
+    topwsize = hmax + HYP_SPACE_PADDING;
 }
 
 void SFlowDREAM2RF::EpipolarConstraintsFromRF(){

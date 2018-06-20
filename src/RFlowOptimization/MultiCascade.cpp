@@ -127,10 +127,7 @@ double MultiCascade::UpdateErrorIterative() {
     vector<unordered_map<int, double> > errorcache(dates.size());
     vector<int> nchanges(dates.size());
     
-    double totchanges = 0;
-    bool stop = false;
     for(int survey=1; survey<dates.size(); survey++){
-        int nchangesurvey = 0;
         vector<EvaluateRFlow> erf = { EvaluateRFlow(_cam, "-", _map_dir),
             EvaluateRFlow(_cam, dates[survey], _map_dir),
             EvaluateRFlow(_cam, dates[survey], _map_dir)};
@@ -138,20 +135,11 @@ double MultiCascade::UpdateErrorIterative() {
         
         for(int j=0; j<lpdi[survey].localizations.size(); j++)
             nchanges[survey] += (int) EvaluateLPD(poses, landmarks, survey, j, perf, errorcache);
-        
-        totchanges += nchangesurvey;
     }
     
-    double minchanges = 10000000;
-    for(int i=0; i<runset.size(); i++){
-        if(runset[i]==-1)break;
-        if(runset[i]==0) continue;
-        minchanges = std::min((double) minchanges, (double) nchanges[runset[i]]);
-    }
+    std::cout << " " <<nchanges[dates.size()-1] << " changes to " << dates[dates.size()-1] << std::endl;
     
-    std::cout << " " <<totchanges << " total changes. " << minchanges << " fewest." << std::endl;
-    
-    return minchanges;
+    return nchanges[dates.size()-1];
 }
 
 void MultiCascade::SaveResults() {

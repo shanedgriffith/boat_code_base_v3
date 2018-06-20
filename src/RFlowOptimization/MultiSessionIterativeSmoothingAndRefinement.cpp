@@ -83,7 +83,7 @@ void MultiSessionIterativeSmoothingAndRefinement::ConstructFactorGraph(int surve
     for(int i=0; i<poses[survey].size(); i++) {
         gtsam::Pose3 traj = originPOR[survey].CameraPose(i);
         rfFG->AddPose(survey, i, traj);
-        GTS.InitializeValue(rfFG->GetSymbol(survey, i), (gtsam::Value *) &traj);
+        GTS.InitializePose(rfFG->GetSymbol(survey, i), traj);
         
         if(i>0) {
             gtsam::Pose3 last = originPOR[survey].CameraPose(i-1);

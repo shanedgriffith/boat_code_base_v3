@@ -115,7 +115,13 @@ int main(int argc, char *argv[]) {
 //        test.TestConstraintProportions(axisptz);
         SessionConvergence sc(axisptz, pftbase);
         sc.CompareSessions();
-        
+        break;}
+    case 11:{
+        std::vector<std::string > dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140416"};
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        ForBMVCFigure forfig(axisptz, dates, pftbase, query_loc, results_dir);
+//        forfig.AlignSection(150, "140106", "140416", 0);
+        forfig.GetAlignmentAtSection("140106", 150, false);
         break;}
     }
 

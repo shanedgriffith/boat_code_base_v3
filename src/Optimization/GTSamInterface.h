@@ -78,8 +78,8 @@ public:
 //    void ClearInitialEstimate();//doesn't this already clear upon update?
     bool HasResult(gtsam::Symbol s);
     
-    void InitializeValue(gtsam::Symbol s, gtsam::Value * p);
-    void InitializeValue(char c, int num, gtsam::Value * p);
+    void InitializePose(gtsam::Symbol s, gtsam::Pose3 p);
+    void InitializePose(char c, int num, gtsam::Pose3 p);
 
     std::vector<double> MAPPoseEstimate(gtsam::Symbol s);
     gtsam::Pose3 PoseResult(gtsam::Symbol s);
