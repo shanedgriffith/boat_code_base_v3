@@ -93,12 +93,16 @@ double ReprojectionFlow::GStatisticForPose(vector<double>& camA, vector<double>&
 	return g;
 }
 
+gtsam::Pose3 ReprojectionFlow::VectorToPose(std::vector<double>& p){
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
 vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vector<bool>& valid_indices){
     if(boat.size()<6){
         std::cout << "ReprojectionFlow::ProjectPoints() expected a pose vector. Check the code." <<std::endl;
         exit(-1);
     }
-    gtsam::Pose3 tf(gtsam::Rot3::RzRyRx(boat[3],boat[4],boat[5]), gtsam::Point3(boat[0],boat[1],boat[2]));
+    gtsam::Pose3 tf VectorToPose(boat);
     vector<gtsam::Point2> validset(_map.map.size(), gtsam::Point2(-1, -1));
     for(int j=0; j<_map.map.size(); j++) {
         if(_map.map[j].x()==0.0 && _map.map[j].y()==0.0 && _map.map[j].z()==0.0) continue;

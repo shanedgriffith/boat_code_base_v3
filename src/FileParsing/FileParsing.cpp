@@ -33,7 +33,7 @@ std::vector<std::string> FileParsing::ListFilesInDir(std::string dir_name, std::
         closedir(directory);
     } else {
         /* could not open directory */
-        perror ("");
+        perror (dir_name.c_str());
         exit(-1);
     }
     std::sort(files.begin(), files.end());
@@ -55,7 +55,7 @@ std::vector<std::string> FileParsing::ListDirsInDir(std::string dir_name) {
         closedir(directory);
     } else {
         /* could not open directory */
-        perror ("");
+        perror (dir_name.c_str());
         exit(-1);
     }
 

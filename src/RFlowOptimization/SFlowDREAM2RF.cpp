@@ -22,25 +22,11 @@ void SFlowDREAM2RF::SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLay
     bpflow.CreateHypSpace(il.width(), il.height());
     int winSizex = max(0.0, max((double) abs(mcur[1]-mcur[2]), (double) abs(mcur[2]-mcur[0])));
     int winSizey = max(0.0, max((double) abs(mcur[4]-mcur[5]), (double) abs(mcur[5]-mcur[3])));
-//    std::cout << "flow values: (" << mcur[0] << "," << mcur[1] << "," << mcur[2] << ","<< mcur[3] << "," << mcur[4] << "," << mcur[5] << ")"<<std::endl;
-//    std::cout << "winsizes: "<<winSizex << ","<<winSizey << std::endl;
-    
-//    std::cout <<"------------------------------------------------------------------"<<imset<<std::endl;
+
     for(int i=0; i<il.height(); i++){
         for(int j=0; j<il.width(); j++){
-//            int idx = (i*il.width() + j)*2;
-//            vector<double> flow_scaled = rflows[imset]->GetkNNConstraint(0, j, i, 1);
-//            if(flow_scaled.size() == 0) return;
-//            
-//            int winSizex = max(0.0,abs(flow_scaled[0]-offset[idx]));
-//            int winSizey = max(0.0,abs(flow_scaled[1]-offset[idx+1]));
-//            int winSizex = HYP_SPACE_PADDING + abs(flow_scaled[0]-offset[idx]);
-//            int winSizey = HYP_SPACE_PADDING + abs(flow_scaled[1]-offset[idx+1]);
-//            std::cout << winSizex<<"|";//","<<winSizey<<
-            ///* bpflow.setPixelWinsize(j, i, winSizex, winSizey);// won't work. the hyp space indexing is different for the other constraints*/
             bpflow.SetHypSpaces(winSizex, winSizey, j, i);
         }
-//        std::cout << std::endl;
     }
 }
 
