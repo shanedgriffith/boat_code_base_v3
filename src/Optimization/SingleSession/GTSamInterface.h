@@ -59,7 +59,7 @@ private:
     
     
 public:
-    
+    std::string _identifier;
     FactorGraph * _fg;
     
     GTSamInterface():_fg(NULL){}
@@ -89,11 +89,16 @@ public:
     
     void PrintInitialEstimate();
     void PrintResults();
+    void SetIdentifier(std::string identifier) {_identifier = identifier;}
     
     std::vector<double> Params(){return vals;}
     static std::vector<std::string> Keys(){return keys;}
     void SetParams(std::vector<double> params){vals = params;}
     void SetPrintSymbols(){print_symbol_number = true; std::cout <<"set print symbols"<<std::endl;}
+    
+    
+    static std::vector<double> PoseToVector(gtsam::Pose3& cam);
+    static gtsam::Pose3 VectorToPose(std::vector<double>& p);
 };
 
 

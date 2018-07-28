@@ -18,15 +18,15 @@
 #include <vector>
 #include <unordered_map>
 
-#include <Optimization/SurveyOptimizer.h>
-#include <Optimization/GTSamInterface.h>
+#include <Optimization/SingleSession/SurveyOptimizer.h>
+#include <Optimization/SingleSession/GTSamInterface.h>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <DataTypes/Camera.hpp>
 
 #include "RFlowFactorGraph.hpp"
-#include "LPDInterface.hpp"
-#include "LocalizedPoseData.hpp"
-#include "EvaluateRFlow.hpp"
+#include "RFlowOptimization/LPDInterface.hpp"
+#include "RFlowOptimization/LocalizedPoseData.hpp"
+#include "RFlowOptimization/EvaluateRFlow.hpp"
 
 /*GOAL: To create a consistent map from multiple surveys using the TF from ISC constraints.
  Does so in an iterative way to add robustness to ISC outliers. 
@@ -71,13 +71,14 @@ protected:
     virtual void PrintConvergenceStats(int s, const std::vector<EvaluateRFlow*> perf, int coutliers=-1);
     std::vector<double> InlierOutlierStats(bool compact = false);
     void Reset();
+    int DateToIndex(std::string date);
     
     RFlowFactorGraph* rfFG;
 public:
     std::string _map_dir;
     std::string _pftbase;
     
-    MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "", double percent_of_tracks = 100.0);
+    MultiSessionOptimization(Camera& cam, std::string map_dir, std::string pftbase, std::string date = "", double percent_of_tracks = 100.0);
 
     ~MultiSessionOptimization(){
         delete(rfFG);

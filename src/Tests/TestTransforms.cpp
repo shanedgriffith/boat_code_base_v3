@@ -15,18 +15,18 @@
 #include <BoatSurvey/ParseBoatSurvey.hpp>
 #include <gtsam/base/Vector.h>
 #include <math.h>
-#include <Optimization/EvaluateSLAM.h>
 #include <random>
+
+#include "Optimization/SingleSession/EvaluateSLAM.h"
+#include "Optimization/SingleSession/GTSamInterface.h"
 
 using namespace std;
 
 void TestTransforms::CheckBtwn(Camera& _cam){
-    LocalizePose lp(_cam);
-    
     vector<double> p = {5, 4, 0, 0.2, 0.1, 1.5};
     vector<double> t = {3, 4, 1, 0.3, 0.4, 1.3};
-    gtsam::Pose3 gp = lp.VectorToPose(p);
-    gtsam::Pose3 gt = lp.VectorToPose(t);
+    gtsam::Pose3 gp = GTSamInterface::VectorToPose(p);
+    gtsam::Pose3 gt = GTSamInterface::VectorToPose(t);
     std::cout << "p btwn t: " << gp.between(gt) << std::endl;
     std::cout << "t btwn p: " << gt.between(gp) << std::endl;
     std::cout << "(p btwn t)^-1: " << gp.between(gt).inverse() << std::endl;
@@ -35,8 +35,8 @@ void TestTransforms::CheckBtwn(Camera& _cam){
 void TestTransforms::TestLocalization(Camera& _cam){
     std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/289.loc";
     LocalizedPoseData lpd = LocalizedPoseData::Read(lpdfile);
-    ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/140106");
-    ParseOptimizationResults POR1("/cs-share/dream/results_consecutive/maps/140117");
+    ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/", "140106");
+    ParseOptimizationResults POR1("/cs-share/dream/results_consecutive/maps/", "140117");
     
     LocalizePose lp(_cam);
     lp.debug = true;
@@ -125,7 +125,7 @@ double TestTransforms::MapToConstraint(double val){
 
 void TestTransforms::TestConstraintProportions(Camera& _cam){
     int nsamples = 100;
-    ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/140106");
+    ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/", "140106");
     ParseBoatSurvey PS("/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "140106");
     EvaluateSLAM ESlam(_cam, "140106", "/cs-share/dream/results_consecutive/maps/");
     vector<double> rerrs = ESlam.LoadRerrorFile();

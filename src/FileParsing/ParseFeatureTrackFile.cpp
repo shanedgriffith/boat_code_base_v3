@@ -321,7 +321,8 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
             if(last_skipped < ids[i]){
                 last_skipped = ids[i];
                 num_landmarks_skipped++;
-                if(debug) cout << "ParseFeatureTrackFile::ProcessNewPoints() Skipped landmark " << ids[i] << " of file " << siftfile << endl;
+                if(debug)
+                    cout << "ParseFeatureTrackFile::ProcessNewPoints() Skipped landmark " << ids[i] << " of file " << siftfile << endl;
             }
             continue;
         } else if(ids[i] == active[next_entry].key) {

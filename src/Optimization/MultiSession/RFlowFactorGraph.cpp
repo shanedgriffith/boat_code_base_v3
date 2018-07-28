@@ -22,6 +22,7 @@
 #include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
 
+
 void RFlowFactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v60;//GPS_NOISE, GPS_NOISE, 0.03, 0.05, 0.05, COMPASS_NOISE
     v60(0,0) = 0.2;
@@ -49,10 +50,6 @@ void RFlowFactorGraph::InitializeNoiseModels(){
     v62(4,0) = 0.05;
     v62(5,0) = 0.1745;
     poseNoiseP = gtsam::noiseModel::Diagonal::Sigmas(v62);
-}
-
-gtsam::Pose3 RFlowFactorGraph::VectorToPose(std::vector<double>& p) {
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 gtsam::Symbol RFlowFactorGraph::GetSymbol(int survey, int pnum) {

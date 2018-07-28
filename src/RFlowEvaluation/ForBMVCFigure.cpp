@@ -30,12 +30,15 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     rf.push_back(&r1);
     rf.push_back(&r2);
     
-    ParseOptimizationResults por0(_map_base + date0);
-    ParseOptimizationResults por1(_map_base + date1);
+    ParseOptimizationResults por0(_map_base, date0);
+    ParseOptimizationResults por1(_map_base, date1);
     
     double gstatistic = 0;
     int poseloc = rf[0]->IdentifyClosestPose(por1.boat, por0.boat[num], &gstatistic);
-    if(poseloc == -1)  return;
+    if(poseloc == -1)  {
+        std::cout << "no poses between " << date0 << "." <<num <<  " and " << date1 << std::endl;
+        return;
+    }
     
     ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + date0, por0.ftfilenos[num]);
     ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + date1, por1.ftfilenos[poseloc]);
@@ -61,25 +64,50 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     string _savename_ref = _savebase + to_string(num) + "_ref_" + date1+"_" +to_string(offset)+"_.jpg";
     string _savename_refp = _savebase + to_string(num) + "_refp_" + date1+"_" +to_string(offset)+"_.jpg";
     string _savename_im2 = _savebase + to_string(num) + "_im2_" + date1+"_" +to_string(offset)+"_.jpg";
-    string _savename_sf = _savebase + to_string(num) + "_warped_sf_" + date1+"_" +to_string(offset)+ "_.jpg";
+    string _savename_sf = _savebase + to_string(num) + "_warped_sf_basic_" + date1+"_" +to_string(offset)+ "_.jpg";
+    string _savename_sfepi = _savebase + to_string(num) + "_warped_sf_basicepi_" + date1+"_" +to_string(offset)+ "_.jpg";
+    string _savename_sfcons = _savebase + to_string(num) + "_warped_sf_basiccons_" + date1+"_" +to_string(offset)+ "_.jpg";
+    string _savename_sfbrf = _savebase + to_string(num) + "_warped_sf_basicrf_" + date1+"_" +to_string(offset)+ "_.jpg";
 
 	AlignmentResult ar = sf.GetAlignmentResult();
 	ar.SaveWarpedImage(_savename_rf);
-//	ImageOperations::Save(ar.ref, _savename_ref);
-//	ImageOperations::Save(ar.im2, _savename_im2);
-//	rf[0]->DrawFlowPoints(ar.im2);
-//	ImageOperations::Save(ar.im2, _savename_up);
-//	rf[0]->DrawMapPoints(ar.ref);
-//	ImageOperations::Save(ar.ref, _savename_refp);
+	ImageOperations::Save(ar.ref, _savename_ref);
+	ImageOperations::Save(ar.im2, _savename_im2);
+	rf[0]->DrawFlowPoints(ar.im2);
+	ImageOperations::Save(ar.im2, _savename_up);
+	rf[0]->DrawMapPoints(ar.ref);
+	ImageOperations::Save(ar.ref, _savename_refp);
     
-    std::cout << "not running the sift flow version" << std::endl;
-    return;
+//    std::cout << "not running the sift flow version" << std::endl;
+//    return;
+//    
+//    SFlowDREAM2RF sfbasic(_cam);
+//    sfbasic.ConstructImagePyramid(_image0, _image1);
+//    sfbasic.AlignImages();
+//    AlignmentResult arbasic = sfbasic.GetAlignmentResult();
+//    arbasic.SaveWarpedImage(_savename_sf);
+//    
+//    SFlowDREAM2RF sfbasicepi(_cam);
+//    sfbasicepi.SetEpipolar();
+//    sfbasicepi.ConstructImagePyramid(_image0, _image1);
+//    sfbasicepi.AlignImages();
+//    AlignmentResult arbasice = sfbasicepi.GetAlignmentResult();
+//    arbasice.SaveWarpedImage(_savename_sfepi);
     
-    SFlowDREAM2RF sfbasic(_cam);
-    sfbasic.ConstructImagePyramid(_image0, _image1);
-    sfbasic.AlignImages();
-    AlignmentResult arbasic = sfbasic.GetAlignmentResult();
-    arbasic.SaveWarpedImage(_savename_sf);
+    SFlowDREAM2RF sfbasiccons(_cam);
+//    sfbasiccons.SetEpipolar();
+    sfbasiccons.SetTwoCycleConsistency();
+    sfbasiccons.ConstructImagePyramid(_image0, _image1);
+    sfbasiccons.AlignImages();
+    AlignmentResult arbasicc = sfbasiccons.GetAlignmentResult();
+    arbasicc.SaveWarpedImage(_savename_sfcons);
+    
+//    SFlowDREAM2RF sfbasicrf(_cam);
+//    sf.SetReprojectionFlow(rf);
+//    sfbasicrf.ConstructImagePyramid(_image0, _image1);
+//    sfbasicrf.AlignImages();
+//    AlignmentResult arbasicr = sfbasicrf.GetAlignmentResult();
+//    arbasicr.SaveWarpedImage(_savename_sfbrf);
 }
 
 

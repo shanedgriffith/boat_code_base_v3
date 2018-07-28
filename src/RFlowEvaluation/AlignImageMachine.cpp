@@ -17,9 +17,10 @@
 
 using namespace std;
 
-void AlignImageMachine::Setup(int ploc0) {
+void AlignImageMachine::Setup(int ploc0, std::string saveloc) {
     thread_state = state::LOCKED;
     poseloc0 = ploc0;
+    _saveloc = saveloc;
 }
 
 void AlignImageMachine::SetDirs(std::string pftbase, std::string query_loc, std::string results_dir) {
@@ -34,6 +35,7 @@ void AlignImageMachine::Reset(){
     por = {};
     dates = {};
     maps = {};
+    _saveloc = "";
 }
 
 AlignmentResult AlignImageMachine::RunSFlowWithRF(vector<ReprojectionFlow*> rf, string image1, string image2){
@@ -57,8 +59,7 @@ void AlignImageMachine::RunRFlow() {
     int poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
     if(poseloc1 == -1)  return;
 
-    string saveloc =  _results_dir + dates[0] + "_to_" + dates[1] + "/" + to_string(poseloc0) + "/";
-    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << saveloc << std::endl;
+    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << _saveloc << std::endl;
     
     ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[0]->ftfilenos[poseloc0]);
     ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[1]->ftfilenos[poseloc1]);
@@ -72,7 +73,7 @@ void AlignImageMachine::RunRFlow() {
     string _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
     AlignmentResult ar = RunSFlowWithRF(rf, _image0, _image1);
     
-    ar.Save(saveloc);
+    ar.Save(_saveloc);
 }
 
 void * AlignImageMachine::Run() {

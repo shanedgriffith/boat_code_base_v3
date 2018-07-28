@@ -1,8 +1,9 @@
 
 
-#include "LocalizedPoseData.hpp"
-#include "LocalizePose.hpp"
+#include "RFlowOptimization/LocalizedPoseData.hpp"
+#include "RFlowOptimization/LocalizePose.hpp"
 
+#include "Optimization/SingleSession/GTSamInterface.h"
 #include "OptimizationMachine.hpp"
 
 using namespace std;
@@ -66,8 +67,7 @@ void OptimizationMachine::ConstructFactorGraph() {
 }
 
 void OptimizationMachine::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    LocalizePose lp(_cam);
-    gtsam::Pose3 base = lp.VectorToPose(posesTimeT1[sISC][sTIME]);
+    gtsam::Pose3 base = GTSamInterface::VectorToPose(posesTimeT1[sISC][sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }
@@ -76,8 +76,8 @@ int OptimizationMachine::AddDirectionalLocalization(int s, int j, int d){
     if((*lpd_rerror)[s][j] < 0) return 0;
     LocalizedPoseData& l = (*lpdi)[s].localizations[j];
     double noise = 0.0001;
-    if(d==Direction::BACKWARD) AddLocalization(l.s0, l.s0time, l.s1, l.s1time, l.GetTFP0ToP1F0(), noise);
-    else AddLocalization(l.s1, l.s1time, l.s0, l.s0time, l.GetTFP0ToP1F0().inverse(), noise);
+    if(d==Direction::BACKWARD) AddLocalization(SessionToNum(l.date0), l.s0time, SessionToNum(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
+    else AddLocalization(SessionToNum(l.date1), l.s1time, SessionToNum(l.date0), l.s0time, l.GetTFP0ToP1F0().inverse(), noise);
     return 1;
 }
 
@@ -93,12 +93,26 @@ void OptimizationMachine::AddLocalizations(){
 //    std::cout << "    Forward: " << cf << " of " << forwardLMap->size()<< "."<< std::endl;
 }
 
+int OptimizationMachine::SessionToNum(std::string session){
+    for(int i=0; i<sessiondates.size(); i++){
+        if(session.compare(sessiondates[i])==0) return i;
+    }
+    std::cout << "OptimizationMachine::SessionToNum() Error. Session not found. " << std::endl;
+    exit(-1);
+    return -1;
+}
+
+void OptimizationMachine::SessionDates(std::vector<std::string>& dates){
+    sessiondates = dates;
+}
+
 void * OptimizationMachine::Run() {
     thread_state = state::RUNNING;
     ConstructFactorGraph();
     
     AddLocalizations();
     
+    GTS.SetIdentifier(originPOR->_date);
     GTS.RunBundleAdjustment();
     
     //update.

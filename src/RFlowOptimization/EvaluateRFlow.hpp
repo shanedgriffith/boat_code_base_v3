@@ -20,7 +20,7 @@
 #include <DataTypes/Camera.hpp>
 #include <DataTypes/LandmarkTrack.h>
 
-#include <Optimization/EvaluateSLAM.h>
+#include <Optimization/SingleSession/EvaluateSLAM.h>
 #include <FileParsing/ParseOptimizationResults.h>
 #include "LocalizedPoseData.hpp"
 

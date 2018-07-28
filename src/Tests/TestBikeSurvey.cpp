@@ -13,6 +13,8 @@
 
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
 #include <VisualOdometry/VisualOdometry.hpp>
+#include "Optimization/SingleSession/GTSamInterface.h"
+
 
 
 using namespace std;
@@ -118,8 +120,8 @@ void TestBikeSurvey::TestTriangulation(){
 //        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
 //        gtsam::Pose3 u = pbr.CameraPose(one);
 //        gtsam::Pose3 v = vop.compose(u);
-//        vector<double> ub = PoseToVector(u);
-//        vector<double> vb = PoseToVector(v);
+//        vector<double> ub = GTSamInterface::PoseToVector(u);
+//        vector<double> vb = GTSamInterface::PoseToVector(v);
 //        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
 //        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
         
@@ -188,10 +190,6 @@ void TestBikeSurvey::TestTriangulation(){
     cvDestroyAllWindows();
 }
 
-gtsam::Pose3 TestBikeSurvey::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 void TestBikeSurvey::TestVO(){
     string bdbase = "/mnt/tale/shaneg/bike_datasets/";
     string name = "20160831_171816";
@@ -211,7 +209,7 @@ void TestBikeSurvey::TestVO(){
     start[0] = 0;
     start[1] = 0;
     start[2] = 0;
-    gtsam::Pose3 u = VectorToPose(start);
+    gtsam::Pose3 u = GTSamInterface::VectorToPose(start);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
@@ -230,12 +228,12 @@ void TestBikeSurvey::TestVO(){
             updateset = false;
         }
         
-        vector<double> ub = PoseToVector(u);
+        vector<double> ub = GTSamInterface::PoseToVector(u);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> up = TransformPose(ub, m1, m2, m3);
-        gtsam::Pose3 cur = VectorToPose(up);
+        gtsam::Pose3 cur = GTSamInterface::VectorToPose(up);
         v = cur.compose(vop);
-        vector<double> vb = PoseToVector(v);
+        vector<double> vb = GTSamInterface::PoseToVector(v);
         vector<double> a = pbr.GetPose(one);
         printf("pose actual (%lf,%lf,%lf,%lf,%lf,%lf)\n",a[0],a[1],a[2],a[3],a[4],a[5]);
         printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
@@ -331,7 +329,7 @@ void TestBikeSurvey::GenerateTrajectory(){
 //    for(int i=2; i<2000; i=i+2){
 //        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
 //        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-//        vector<double> vp = PoseToVector(vop);
+//        vector<double> vp = GTSamInterface::PoseToVector(vop);
 //        if(i>2){
 //            bool jump = DistanceCriterion(vp, lastp);
 //            printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf) jump? %d\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],(int)!jump);
@@ -345,13 +343,13 @@ void TestBikeSurvey::GenerateTrajectory(){
     for(int i=2; i<2000; i=i+2){
         ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = PoseToVector(vop);
+        vector<double> vp = GTSamInterface::PoseToVector(vop);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
                 PFT1.Next(++i);
                 gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = PoseToVector(vop);
+                vp = GTSamInterface::PoseToVector(vop);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
@@ -361,10 +359,6 @@ void TestBikeSurvey::GenerateTrajectory(){
         lastp = vp;
     }
     
-}
-
-std::vector<double> TestBikeSurvey::PoseToVector(gtsam::Pose3& cam){
-    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
 void TestBikeSurvey::TestVisualOdometry() {
@@ -383,7 +377,7 @@ void TestBikeSurvey::TestVisualOdometry() {
     
     VisualOdometry vo(nexus);
     gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-    vector<double> vp = PoseToVector(vop);
+    vector<double> vp = GTSamInterface::PoseToVector(vop);
     printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
     vector<double> ub = pbr.GetPose(one);
     vector<double> vb = pbr.GetPose(two);
@@ -392,7 +386,7 @@ void TestBikeSurvey::TestVisualOdometry() {
     
     gtsam::Pose3 u = pbr.CameraPose(one);
     gtsam::Pose3 vpu = u.compose(vop);
-    vector<double> vvpu = PoseToVector(vpu);
+    vector<double> vvpu = GTSamInterface::PoseToVector(vpu);
     printf("pose u+odom (%lf,%lf,%lf,%lf,%lf,%lf)\n",vvpu[0],vvpu[1],vvpu[2],vvpu[3],vvpu[4],vvpu[5]);
 }
 

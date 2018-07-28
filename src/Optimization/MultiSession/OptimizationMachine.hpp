@@ -11,13 +11,13 @@
 
 #include <stdio.h>
 #include <ImageAlignment/FlowFrameworks/AlignmentMachine.h>
-#include <Optimization/GTSamInterface.h>
-#include <Optimization/FactorGraph.hpp>
+#include <Optimization/SingleSession/GTSamInterface.h>
+#include <Optimization/SingleSession/FactorGraph.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParamsInterface.h>
 #include <DataTypes/Camera.hpp>
 #include "RFlowFactorGraph.hpp"
-#include "LPDInterface.hpp"
+#include "RFlowOptimization/LPDInterface.hpp"
 
 class OptimizationMachine: public AlignmentMachine{
 private:
@@ -35,12 +35,14 @@ private:
     void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise);
     int AddDirectionalLocalization(int s, int j, int d);
     void AddLocalizations();
+    int SessionToNum(std::string session);
     
     enum Direction {
         BACKWARD = 0,
         FORWARD = 1
     };
     
+    std::vector<std::string> sessiondates;
     RFlowFactorGraph* rfFG;
     GTSamInterface GTS;
     Camera& _cam;
@@ -66,6 +68,7 @@ public:
                std::vector<std::vector<int> > * forwardLMap_,
                std::vector<LPDInterface> * lpdi_,
                int survey_);
+    void SessionDates(std::vector<std::string>& dates);
     void Reset();
     void * Run();
     void LogResults();

@@ -1,7 +1,8 @@
 #include "MultiSessionIterativeSmoothingAndRefinement.hpp"
-#include "LocalizePose.hpp"
-#include "EvaluateRFlow.hpp"
-#include "HopcountLog.hpp"
+#include "RFlowOptimization/LocalizePose.hpp"
+#include "RFlowOptimization/EvaluateRFlow.hpp"
+#include "RFlowOptimization/HopcountLog.hpp"
+#include "Optimization/SingleSession/GTSamInterface.h"
 
 using namespace std;
 
@@ -23,8 +24,8 @@ MultiSessionOptimization(cam, results_dir, pftbase, date, 10){
     
     for(int survey=0; survey<dates.size(); survey++) {
         for(int i=0; i<lpdi[survey].localizations.size(); i++)
-            forwardLMap[lpdi[survey].localizations[i].s0].push_back({survey,i});
-        ParseOptimizationResults oPOR(_origin_dir + dates[survey]);
+            forwardLMap[DateToIndex(lpdi[survey].localizations[i].date0)].push_back({survey,i});
+        ParseOptimizationResults oPOR(_origin_dir, dates[survey]);
         originPOR.push_back(oPOR);
         poses.push_back(POR[survey].boat);
         std::vector<std::vector<double> > lset = POR[survey].GetLandmarkSet();
@@ -166,8 +167,7 @@ vector<gtsam::Point3> MultiSessionIterativeSmoothingAndRefinement::GetSubsetOf3D
 }
 
 void MultiSessionIterativeSmoothingAndRefinement::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    LocalizePose lp(_cam);
-    gtsam::Pose3 base = lp.VectorToPose(poses[sISC][sTIME]);
+    gtsam::Pose3 base = GTSamInterface::VectorToPose(poses[sISC][sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }
@@ -176,8 +176,8 @@ int MultiSessionIterativeSmoothingAndRefinement::AddDirectionalLocalization(int 
     if(lpd_rerror[s][j] < 0) return 0;
     LocalizedPoseData& l = lpdi[s].localizations[j];
     double noise = 0.0001;// pow(2, lpd_eval[s][j]/3.0) * 0.0001;
-    if(d==Direction::BACKWARD) AddLocalization(l.s0, l.s0time, l.s1, l.s1time, l.GetTFP0ToP1F0(), noise);
-    else AddLocalization(l.s1, l.s1time, l.s0, l.s0time, l.GetTFP0ToP1F0().inverse(), noise);
+    if(d==Direction::BACKWARD) AddLocalization(DateToIndex(l.date0), l.s0time, DateToIndex(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
+    else AddLocalization(DateToIndex(l.date1), l.s1time, DateToIndex(l.date0), l.s0time, l.GetTFP0ToP1F0().inverse(), noise);
     return 1;
 }
 
@@ -229,16 +229,16 @@ std::vector<bool> MultiSessionIterativeSmoothingAndRefinement::LPDInlierTest(int
 int MultiSessionIterativeSmoothingAndRefinement::EvaluateLPD(vector<vector<vector<double> > >& poseresult, std::vector<std::vector<std::vector<double> > >& landmarks, int s, int j, vector<EvaluateRFlow*> perf, vector<unordered_map<int, double> >& errorcache){
     LocalizedPoseData& l = lpdi[s].localizations[j];
     
-    std::vector<double> p0 = poseresult[l.s0][l.s0time];
-    std::vector<double> p1 = poseresult[l.s1][l.s1time];
+    std::vector<double> p0 = poseresult[DateToIndex(l.date0)][l.s0time];
+    std::vector<double> p1 = poseresult[DateToIndex(l.date1)][l.s1time];
     
     vector<double> error(4, 0);
-    error[0] = GetError(*perf[0], p0, landmarks[l.s0], cached_landmarks[l.s0], l.s0time, errorcache[l.s0]);
-    error[1] = GetError(*perf[1], p1, landmarks[l.s1], cached_landmarks[l.s1], l.s1time, errorcache[l.s1]);
-    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
-    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[l.s1], l.b2d0, l.bids, l.rerrorb);
+    error[0] = GetError(*perf[0], p0, landmarks[DateToIndex(l.date0)], cached_landmarks[DateToIndex(l.date0)], l.s0time, errorcache[DateToIndex(l.date0)]);
+    error[1] = GetError(*perf[1], p1, landmarks[DateToIndex(l.date1)], cached_landmarks[DateToIndex(l.date1)], l.s1time, errorcache[DateToIndex(l.date1)]);
+    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp);
+    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[DateToIndex(l.date1)], l.b2d0, l.bids, l.rerrorb);
     
-    std::vector<bool> result = LPDInlierTest(s, j, rerrs[l.s1][l.s1time], error);
+    std::vector<bool> result = LPDInlierTest(s, j, rerrs[DateToIndex(l.date1)][l.s1time], error);
     //these aren't necessary, given whatever new evaluation metric is used.
     
     if(!result[0]) outliers[s]++; //TODO: although, for the directional one this isn't counting correctly, I think.
@@ -310,7 +310,7 @@ void MultiSessionIterativeSmoothingAndRefinement::SaveResults() {
         vector<double> inter_error(lpdi[survey].localizations.size(), 0);
         for(int j=0; j<lpdi[survey].localizations.size(); j++) {
             LocalizedPoseData& l = lpdi[survey].localizations[j];
-            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(poses[l.s1][l.s1time], landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
+            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(poses[DateToIndex(l.date1)][l.s1time], landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp);
         }
         erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
         erfinter.VisualizeDivergenceFromLocalizations(lpdi[survey].localizations, lpd_rerror[survey]);

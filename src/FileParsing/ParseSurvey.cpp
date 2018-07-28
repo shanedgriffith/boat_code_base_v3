@@ -8,7 +8,7 @@
 
 #include "ParseSurvey.h"
 #include "ParseFeatureTrackFile.h"
-
+#include "Optimization/SingleSession/GTSamInterface.h"
 
 using namespace std;
 
@@ -21,10 +21,6 @@ int ParseSurvey::GetImageNumberFromImagePath(string imagepath) {
     string imgno =imagepath.substr(s+1,l-s-1);
     string mil = imagepath.substr(f+1, s-f-1);
     return stod(mil)*1000+stod(imgno);
-}
-
-vector<double> ParseSurvey::PoseToVector(gtsam::Pose3& cam) {
-    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
 gtsam::Pose3 ParseSurvey::CameraPose(int idx){

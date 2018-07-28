@@ -6,13 +6,15 @@
  */
 
 #include "LocalizedPoseData.hpp"
+#include "Optimization/SingleSession/GTSamInterface.h"
+
 
 using namespace std;
 
 const string LocalizedPoseData::lpath = "/localizations/";
 
 string LocalizedPoseData::GetPath(string toppath, string altpath){
-    string fname = to_string(s1time) + "_" + to_string(s0) + ".loc";
+    string fname = to_string(s1time) + "_" + date0 + ".loc";
     string filepath = toppath + lpath + fname;
     if(altpath.length()>0) filepath = toppath + altpath + fname;
     return filepath;
@@ -27,7 +29,7 @@ void LocalizedPoseData::Save(string toppath, string altpath){
     fprintf(fp, "%s, %s, %lf, %lf, %lf, %lf, %lf, %lf\n", date0.c_str(), date1.c_str(),
             tf_p0_to_p1frame0[0], tf_p0_to_p1frame0[1], tf_p0_to_p1frame0[2],
             tf_p0_to_p1frame0[3], tf_p0_to_p1frame0[4], tf_p0_to_p1frame0[5]);
-    fprintf(fp, "%d, %d, %d, %d\n", s0, s1, s0time, s1time);
+    fprintf(fp, "%d, %d\n", s0time, s1time);
     fprintf(fp, "%lf, %lf\n", perc_dc, avg_rerror_inl);
     fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf\n",
             p1frame0[0], p1frame0[1], p1frame0[2], p1frame0[3], p1frame0[4], p1frame0[5]);
@@ -85,7 +87,7 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
 
     char line[LINESIZE];
     int d0, d1;
-    std::vector<int> expectedperline = {8, 4, 2, 6, 6, 4, 3, 7, 3, 7};
+    std::vector<int> expectedperline = {8, 2, 2, 6, 6, 4, 3, 7, 3, 7};
     std::vector<int> numofline = {1, 1, 1, 1, 1, 1, -1, -1, -1, -1};
     int countofline = 0;
     int nump=0;
@@ -101,7 +103,7 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
         case 0: ret = sscanf(line, "%d, %d, %lf, %lf, %lf, %lf, %lf, %lf\n", &d0, &d1,
                                  &l.tf_p0_to_p1frame0[0], &l.tf_p0_to_p1frame0[1], &l.tf_p0_to_p1frame0[2],
                                  &l.tf_p0_to_p1frame0[3], &l.tf_p0_to_p1frame0[4], &l.tf_p0_to_p1frame0[5]); break;
-        case 1: ret = sscanf(line, "%d, %d, %d, %d\n", &l.s0, &l.s1, &l.s0time, &l.s1time); break;
+        case 1: ret = sscanf(line, "%d, %d\n", &l.s0time, &l.s1time); break;
         case 2: ret = sscanf(line, "%lf, %lf\n", &l.perc_dc, &l.avg_rerror_inl); break;
         case 3: ret = sscanf(line, "%lf, %lf, %lf, %lf, %lf, %lf\n",
                     &l.p1frame0[0], &l.p1frame0[1], &l.p1frame0[2], &l.p1frame0[3], &l.p1frame0[4], &l.p1frame0[5]);
@@ -188,8 +190,6 @@ void swap(LocalizedPoseData& first, LocalizedPoseData& second){
     swap(first.date0, second.date0);
     swap(first.date1, second.date1);
     swap(first.tf_p0_to_p1frame0, second.tf_p0_to_p1frame0);
-    swap(first.s0, second.s0);
-    swap(first.s1, second.s1);
     swap(first.s0time, second.s0time);
     swap(first.s1time, second.s1time);
     swap(first.p1frame0, second.p1frame0);
@@ -219,9 +219,9 @@ LocalizedPoseData& LocalizedPoseData::operator=(LocalizedPoseData other){
 }
 
 bool LocalizedPoseData::operator<(const LocalizedPoseData& str) const {
-    return ((s1 < str.s1) ||
-            (s1==str.s1 && s1time < str.s1time) ||
-            (s1==str.s1 && s1time==str.s1time && s0 < str.s0));
+    return ( (date1.compare(str.date1) < 0) ||
+            (date1.compare(str.date1)==0 && s1time < str.s1time) ||
+            (date1.compare(str.date1)==0 && s1time==str.s1time && date0.compare(str.date0) < 0));
 }
 
 void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gtsam::Point2>& p2d, vector<gtsam::Point3>& p3d, vector<int> ids, int bot, int top){
@@ -259,10 +259,10 @@ void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gt
 }
 
 void LocalizedPoseData::SetPoses(std::vector<double> p0_, std::vector<double> p1frame0_, std::vector<double> p0frame1_){
-    gtsam::Pose3 p0 = VectorToPose(p0_);
-    gtsam::Pose3 p1f0 = VectorToPose(p1frame0_);
+    gtsam::Pose3 p0 = GTSamInterface::VectorToPose(p0_);
+    gtsam::Pose3 p1f0 = GTSamInterface::VectorToPose(p1frame0_);
     gtsam::Pose3 res = p0.between(p1f0);
-    tf_p0_to_p1frame0 = PoseToVector(res);
+    tf_p0_to_p1frame0 = GTSamInterface::PoseToVector(res);
     swap(p1frame0, p1frame0_);
     swap(p0frame1, p0frame1_);
 }
@@ -272,10 +272,6 @@ void LocalizedPoseData::SetLocalizationQuality(double pdc, double rerror){
     avg_rerror_inl = rerror;
 }
 
-gtsam::Pose3 LocalizedPoseData::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 void PrintVec(std::vector<double> p){
     for(int i=0; i<p.size(); i++){
         std::cout << p[i]<<",";
@@ -283,21 +279,17 @@ void PrintVec(std::vector<double> p){
     std::cout << std::endl;
 }
 
-std::vector<double> LocalizedPoseData::PoseToVector(gtsam::Pose3& cam){
-    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
-}
-
 double LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1){
     //given the last flow, verify the next one.
     //use the estimate of the next pose (i.e., the odom.) to predict where the points should project.
     //and then verify that they actually do project to those locations.
-    if(s0==-1 || lpd.s0==-1) return false;
+    if(date0.length()==-1 || lpd.date0.length() ==-1) return false;
     int count_in_both=0;
     double sum_rerror=0;
     int count_inliers=0;
     
-    gtsam::Pose3 p1frame0_t = VectorToPose(lpd.p1frame0);
-    gtsam::Pose3 p1frame0_tm1 = VectorToPose(p1frame0);
+    gtsam::Pose3 p1frame0_t = GTSamInterface::VectorToPose(lpd.p1frame0);
+    gtsam::Pose3 p1frame0_tm1 = GTSamInterface::VectorToPose(p1frame0);
 //    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1_tm1.between(p1_t)); //TODO: check this vs. the one below.
     gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1frame0_tm1.between(p1_tm1)*p1_tm1.between(p1_t)*p1_tm1.between(p1frame0_tm1));
     
@@ -321,24 +313,24 @@ double LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam
     if(1.0*count_in_both/lpd.b3d.size() < ACCEPTABLE_OVERLAP) verified = false;
     
     if(count_in_both > 0) // && debug
-        std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") " <<
+        std::cout<<"LPD verification stats (" << s1time << "." << date0 << " to " << lpd.s1time << "." <<lpd.date0<< ") " <<
         100.0*count_in_both/lpd.b3d.size()<<"% overlap, "<<100.0*count_inliers/count_in_both <<
         "% inliers, "<<sum_rerror/count_in_both<<" average rerror. VERIFIED? " << verified <<std::endl;
     else
-        std::cout<<"LPD verification stats (" << s1time << "." << s0 << " to " << lpd.s1time << "." <<lpd.s0<< ") No overlap. VERIFIED? " << verified <<std::endl;
+        std::cout<<"LPD verification stats (" << s1time << "." << date0 << " to " << lpd.s1time << "." <<lpd.date0<< ") No overlap. VERIFIED? " << verified <<std::endl;
     
     if(verified) return sum_rerror/count_in_both;
     else return -1;
 }
 
 bool LocalizedPoseData::IsSet(){
-    return s0>=0;
+    return date0.length() > 0;
 }
 
 void LocalizedPoseData::Print(string opt){
     printf("LocalizedPoseData----------%s\n", opt.c_str());
     printf("reference date: %s, date of current set: %s\n", date0.c_str(), date1.c_str());
-    printf("s0: %d, s1: %d, s0time: %d, s1time: %d\n", s0, s1, s0time, s1time);
+    printf("s0time: %d, s1time: %d\n", s0time, s1time);
     printf("perc_dc: %lf, avg_rerror_inl: %lf\n", perc_dc, avg_rerror_inl);
     printf("tf_p0_to_p1frame0: "); PrintVec(tf_p0_to_p1frame0);
     printf("p1frame0: "); PrintVec(p1frame0);
@@ -353,13 +345,13 @@ void LocalizedPoseData::Print(string opt){
 }
 
 gtsam::Pose3 LocalizedPoseData::GetP0frame1(){
-    return VectorToPose(p0frame1);
+    return GTSamInterface::VectorToPose(p0frame1);
 }
 
 gtsam::Pose3 LocalizedPoseData::GetP1frame0(){
-    return VectorToPose(p1frame0);
+    return GTSamInterface::VectorToPose(p1frame0);
 }
 
 gtsam::Pose3 LocalizedPoseData::GetTFP0ToP1F0(){
-    return VectorToPose(tf_p0_to_p1frame0);
+    return GTSamInterface::VectorToPose(tf_p0_to_p1frame0);
 }

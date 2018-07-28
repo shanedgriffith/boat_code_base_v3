@@ -19,7 +19,7 @@ bool LPDInterface::StoreLPD(std::string path, LocalizedPoseData lpd){
     if(GetLPDIdx(lpd.s1time) < 0){
         localizations.push_back(lpd);
         lpdtable[lpd.s1time] = localizations.size()-1;
-        lpd.Save(path + lpd.date1);
+        lpd.Save(path);
         return true;
     }
     return false;

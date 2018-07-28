@@ -66,7 +66,6 @@ double EvaluateRFlow::InterSurveyErrorAtLocalization(const std::vector<double>& 
     vector<gtsam::Point3> p3d0 = GetSubsetOf3DPoints(landmarks, pids);
     return MeasureReprojectionError(boat, p2d1, p3d0, rerrorp);
 }
-//std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
 
 /*plot each of the localized poses p1frame0; and every 10 or so of the optimized poses, each with their FOV.
  * -and different colors so they can be differentiated.

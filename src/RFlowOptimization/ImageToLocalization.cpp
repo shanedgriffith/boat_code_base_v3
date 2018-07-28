@@ -156,7 +156,7 @@ bool ImageToLocalization::ApplyEpipolarConstraints(vector<gtsam::Point2>& p0, ve
 
 double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, ParseFeatureTrackFile& pftf0,  ParseFeatureTrackFile& pftf1){
     //Localize the pose offset and identify the set of valid inter-survey constraints.
-    lpd = LocalizedPoseData(dates[0], dates[1], sids[0], sids[1], portimes[0], portimes[1]);
+    lpd = LocalizedPoseData(dates[0], dates[1], portimes[0], portimes[1]); //sids[0], sids[1], 
     lpd.p3d = por[0]->GetSubsetOf3DPoints(pftf0.ids);
     lpd.b3d = por[1]->GetSubsetOf3DPoints(pftf1.ids);
     if(lpd.p3d.size()==0 || lpd.b3d.size()==0) return -1;

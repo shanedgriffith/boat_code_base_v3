@@ -15,6 +15,8 @@
 #include <gtsam/slam/BetweenFactor.h>
 #include <RFlowOptimization/LocalizePose.hpp>
 
+#include "Optimization/SingleSession/GTSamInterface.h"
+
 using namespace std;
 
 void VisualOdometry::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
@@ -187,10 +189,10 @@ gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseF
     
     std::vector<double> inliers(p3d.size(), 1);
     LocalizePose lp(_cam);
-    std::vector<double> pguess = lp.PoseToVector(est);
+    std::vector<double> pguess = GTSamInterface::PoseToVector(est);
     std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
     if(res.size()==0) return est; //no solution was found.
-    return lp.VectorToPose(res[0]);
+    return GTSamInterface::VectorToPose(res[0]);
 }
 
 void VisualOdometry::CopyLast(ParseFeatureTrackFile& PFT){
@@ -230,10 +232,6 @@ void VisualOdometry::PrintVec(std::vector<double> p){
         std::cout << p[i]<<",";
     }
     std::cout << std::endl;
-}
-
-std::vector<double> VisualOdometry::PoseToVector(gtsam::Pose3& cam){
-    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
 

@@ -82,7 +82,7 @@ void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<Loca
     for(int i=0; i<localizations.size(); i++){
         if(lpd_rerror[i]<=0) continue;
         count++;
-        sum += hopcounts[localizations[i].s0];
+        sum += 0;//hopcounts[localizations[i].s0]; //
     }
     double avg_hop_distance = 1 + sum/count;
     
@@ -92,7 +92,7 @@ void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<Loca
     int countout = 0;
     for(int i=0; i<localizations.size(); i++){
         int verified = (i < numverified)?1:0;
-        fprintf(fp, "%d, %d, %d, %lf\n", localizations[i].s1time, verified, (int)lpd_rerror[i], 1 + hopcounts[localizations[i].s0]);
+        fprintf(fp, "%d, %d, %d, %lf\n", localizations[i].s1time, verified, (int)lpd_rerror[i], 0.0);//1 + hopcounts[localizations[i].s0]
     }
     
     fflush(fp);

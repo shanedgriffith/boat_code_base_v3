@@ -1,27 +1,28 @@
 #include <iostream>
 
-#include <Optimization/SurveyOptimizer.h>
+#include <Optimization/SingleSession/SurveyOptimizer.h>
 #include <DataTypes/Camera.hpp>
-#include <RFlowOptimization/EvaluateRFlow.hpp>
-#include <RFlowOptimization/AcquireISConstraints.hpp>
-#include <RFlowEvaluation/AlignVisibilitySet.hpp>
 #include <Visualizations/FlickeringDisplay.h>
 #include <BoatSurvey/ParseBoatSurvey.hpp>
 #include <BikeSurvey/PreprocessBikeRoute.hpp>
 #include <BikeSurvey/ParseBikeRoute.hpp>
 #include <Tests/TestBikeSurvey.h>
-#include <RFlowOptimization/MultiSessionOptimization.hpp>
-#include <RFlowOptimization/MultiSessionIterativeSmoothingAndRefinement.hpp>
 #include <Tests/TestTransforms.hpp>
 #include <Evaluation/SessionConvergence.hpp>
-#include <RFlowOptimization/MultiCascade.hpp>
+#include <RFlowOptimization/EvaluateRFlow.hpp>
+#include <RFlowOptimization/InitialISCAcquisition.hpp>
+#include <RFlowOptimization/SessionLocalization.hpp>
+#include <Optimization/MultiSession/MultiCascade.hpp>
+#include <Optimization/MultiSession/MultiSessionOptimization.hpp>
+#include <Optimization/MultiSession/MultiSessionIterativeSmoothingAndRefinement.hpp>
 #include <RFlowEvaluation/ForBMVCFigure.hpp>
+#include <RFlowEvaluation/AlignVisibilitySet.hpp>
 
 using namespace std;
 
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
-vector<string> home_paths = {"/Users/shane/Documents/research/data/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
+vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
 
 int main(int argc, char *argv[]) {
     if(argc<4) {
@@ -30,7 +31,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    string results_dir = "/Users/shane/Documents/research/";//home_paths[0]; maps_debug/
+    string results_dir = home_paths[0]; //maps_debug/ "/Users/shane/Documents/research/";//
     string query_loc = home_paths[1];
     string pftbase = home_paths[2];
     string visibility_dir = "****USE COVISIBILITY****";
@@ -48,14 +49,14 @@ int main(int argc, char *argv[]) {
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        AcquireISConstraints acq(axisptz, argv[1], query_loc, pftbase, results_dir);
+        SessionLocalization acq(axisptz, argv[1], query_loc, pftbase, results_dir);
         acq.Run(start);
         break;}
     case 1:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         //argv[2] is used here to specify an optimize-up-to date. When not specified, all possible dates are used.
 //        MultiSessionOptimization mso(axisptz, results_dir, pftbase, argv[2]);
-        MultiCascade mso(axisptz, results_dir, pftbase, argv[2]);
+        MultiCascade mso(axisptz, results_dir, pftbase, argv[1]);
 //        MultiSessionIterativeSmoothingAndRefinement mso(axisptz, results_dir, pftbase, argv[2]);
         mso.IterativeMerge();
 //        mso.SetDryRun();
@@ -66,6 +67,7 @@ int main(int argc, char *argv[]) {
         Camera axisptz = ParseBoatSurvey::GetCamera();
         AlignVisibilitySet avs(axisptz, argv[1], argv[2], pftbase, query_loc, results_dir, visibility_dir);
         avs.Visibility();
+//        avs.AlignMapBasedViewset();
         break;}
     case 3:{
         FlickeringDisplay fd(argv[1], argv[2]);
@@ -123,7 +125,26 @@ int main(int argc, char *argv[]) {
 //        forfig.AlignSection(150, "140106", "140416", 0);
         forfig.GetAlignmentAtSection("140106", 150, false);
         break;}
+    case 12:{
+        int start = -1;
+        if(argc == 5) start = atoi(argv[4]);
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        SessionLocalization acq(axisptz, argv[1], query_loc, pftbase, results_dir, "mapsinpar/");
+        acq.Run(start);
+        break;}
+    case 13:{
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        MultiCascade mso(axisptz, results_dir, pftbase, argv[2]);
+        mso.SetStaticMaps();
+        mso.IterativeMerge();
+        break;}
+    case 14:{
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        InitialISCAcquisition acq(axisptz, argv[1], argv[2], query_loc, pftbase, results_dir, results_dir + "origin/");
+        acq.Run(294);
+        break;}
     }
+
 
 /*
       FlickeringDisplay fd(argv[1], argv[2]);

@@ -3,6 +3,8 @@
 #include <VisualOdometry/VisualOdometry.hpp>
 #include <chrono>
 
+#include "Optimization/SingleSession/GTSamInterface.h"
+
 using namespace std;
 
 void ParseBikeRoute::ProcessLineEntries(int type, vector<string>& lp){
@@ -84,10 +86,6 @@ std::vector<double> ParseBikeRoute::InterpolatePoses(int idx, int a, int b, vect
     return p;
 }
 
-gtsam::Pose3 ParseBikeRoute::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 void ParseBikeRoute::ModifyPoses(){
     
     Camera nexus = ParseBikeRoute::GetCamera();
@@ -104,7 +102,7 @@ void ParseBikeRoute::ModifyPoses(){
     for(int i=2; i<poses.size(); i=i+2){
         ParseFeatureTrackFile PFT1(nexus, _base + _date, i);
         gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = PoseToVector(vop);
+        vector<double> vp = GTSamInterface::PoseToVector(vop);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
@@ -112,17 +110,17 @@ void ParseBikeRoute::ModifyPoses(){
                 PFT1.Next(++i);
                 if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
                 gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = PoseToVector(vop);
+                vp = GTSamInterface::PoseToVector(vop);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
         printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         if(i==2) curpose = vp;
         else {
-            gtsam::Pose3 lip = VectorToPose(lastp);
-            gtsam::Pose3 vip = VectorToPose(vp);
+            gtsam::Pose3 lip = GTSamInterface::VectorToPose(lastp);
+            gtsam::Pose3 vip = GTSamInterface::VectorToPose(vp);
             gtsam::Pose3 cip = lip.compose(vip);
-            curpose = PoseToVector(cip);
+            curpose = GTSamInterface::PoseToVector(cip);
         }
         filtered.push_back(curpose);
         indices.push_back(i);

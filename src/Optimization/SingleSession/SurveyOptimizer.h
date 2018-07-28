@@ -67,14 +67,9 @@ public:
     std::string _date;
     std::string _results_dir;
     
-    SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments=false):
-    _cam(cam), _results_dir(results_dir), FG(_fg), _date(date), _print_data_increments(print_data_increments){}
+    SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments=false);
     
-    SurveyOptimizer(Camera& cam, std::string date, std::string results_dir, bool print_data_increments=false):
-    	_cam(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_data_increments){
-    	FG = new FactorGraph();
-    	clean_up = true;
-    }
+    SurveyOptimizer(Camera& cam, std::string date, std::string results_dir, bool print_data_increments=false);
     
     ~SurveyOptimizer() {
     	if(clean_up) delete(FG);

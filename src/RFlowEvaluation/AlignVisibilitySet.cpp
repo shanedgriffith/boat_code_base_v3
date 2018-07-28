@@ -8,8 +8,10 @@
 
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <DataTypes/Map.hpp>
+#include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseVisibilityFile.h>
 #include <Visualizations/SLAMDraw.h>
+#include <ImageAlignment/GeometricFlow/MinViewsetOfMap.hpp>
 
 #include "AlignVisibilitySet.hpp"
 
@@ -26,7 +28,8 @@ void AlignVisibilitySet::Visibility() {
         
         //spawn a job to handle the alignment.
         int tidx = man.GetOpenMachine();
-        ws[tidx]->Setup(vis.boat1[i]);
+        std::string saveloc =  _results_dir + _date1 + "_to_" + _date2 + "/" + to_string(vis.boat1[i]) + "/";
+        ws[tidx]->Setup(vis.boat1[i], saveloc);
         ws[tidx]->SetMaps({&maps[0], &maps[1]});
         ws[tidx]->SetDates({_date1, _date2});
         ws[tidx]->SetPOR({&por[0], &por[1]});
@@ -35,6 +38,39 @@ void AlignVisibilitySet::Visibility() {
     man.WaitForMachine(true);
     
     std::cout << "Finished aligning the visibility set for " << _date1 << " to " << _date2 <<". Num images: " << vis.boat1.size() << std::endl;
+}
+
+/*Creates timelapses.
+ For a reference session, it finds viewset, then the covisibility set
+ of images from all the other sessions, and then aligns them.*/
+void AlignVisibilitySet::AlignMapBasedViewset(){
+    
+    MinViewsetOfMap views(_cam, maps[0], por[0].boat, _date1, _results_dir + "maps/", _pftbase);
+    std::vector<int> poses = views.ComputeMinViewset();//ComputeMinCoViewset();//
+    views.PrintStatistics(poses);
+    exit(1);
+    
+//    ParseVisibilityFile vis(_visibility_dir, _date1, _date2);
+    
+    std::string savebase =_results_dir + _date1 + "_timelapses/";
+    FileParsing::MakeDir(savebase);
+    
+    for(int i=0; i<poses.size(); i++) {
+        std::cout << "Iteration: " << i << std::endl;
+        
+        //spawn a job to handle the alignment.
+        int tidx = man.GetOpenMachine();
+        std::string saveloc =  savebase + to_string(poses[i]) + "/";
+        FileParsing::MakeDir(saveloc);
+        ws[tidx]->Setup(poses[i], saveloc + _date2 + "/");
+        ws[tidx]->SetMaps({&maps[0], &maps[1]});
+        ws[tidx]->SetDates({_date1, _date2});
+        ws[tidx]->SetPOR({&por[0], &por[1]});
+        man.RunMachine(tidx);
+    }
+    man.WaitForMachine(true);
+    
+    std::cout << "Finished aligning the visibility set for " << _date1 << " to " << _date2 <<". Num images: " << poses.size() << std::endl;
 }
 
 
@@ -84,7 +120,7 @@ void AlignVisibilitySet::VisualizeAllLabelsInOneMap(){
         }
     }
     
-    std::cout << "using poses of file: "<< por[0]._base << std::endl;
+    std::cout << "using poses of file: "<< por[0]._date << std::endl;
     
     SLAMDraw draw;
     draw.SetScale(-300,300,-300,300);

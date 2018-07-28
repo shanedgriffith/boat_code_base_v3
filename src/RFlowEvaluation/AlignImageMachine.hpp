@@ -24,6 +24,7 @@ private:
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
     int poseloc0;
+    std::string _saveloc;
     
     Camera& _cam;
 public:
@@ -34,7 +35,7 @@ public:
     void RunRFlow();
     
     void SetDirs(std::string pftbase, std::string query_loc, std::string results_dir);
-    void Setup(int ploc0);
+    void Setup(int ploc0, std::string saveloc);
     void Reset();
     void * Run();
     void LogResults();

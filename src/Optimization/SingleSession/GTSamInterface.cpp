@@ -25,6 +25,14 @@ const vector<string> GTSamInterface::keys = {
     "GTSAM_SKIP", "UPDATE_ITERATIONS"
 };
 
+std::vector<double> GTSamInterface::PoseToVector(gtsam::Pose3& cam){
+    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
+}
+
+gtsam::Pose3 GTSamInterface::VectorToPose(std::vector<double>& p){
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+}
+
 void GTSamInterface::SetupIncrementalSLAM() {
     /*Setup ISAM for the optimization.
      */
@@ -91,6 +99,7 @@ void GTSamInterface::Update() {
         printf(" >The camera pose used to create landmark observations was not initialized\n");
         printf(" >A prior was not specified for the first camera pose.\n");
         printf(" >landmarks need to be observed at least twice.");
+        std::cout << ex.what()<<std::endl;
         
         if(debug) {
             printf("\nThe factor graph.\n");
@@ -125,14 +134,16 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
                 break;
         }
         initialEstimate.clear();
-    } catch(const std::exception& ex) {
+    } catch(std::exception& ex) {
         printf("GTSamInterface::RunBundleAdjustment() Exception.");
         printf(" There was an exception while attempting to solve the factor graph.");
         printf(" Known causes of the exception:\n");
         printf("  >The camera pose used to create landmark observations was not initialized\n");
         printf("  >A prior was not specified for the first camera pose.\n");
         printf("  >landmarks need to be observed at least twice.\n");
+        std::cout << "Process for: " << _identifier << std::endl;
 
+        std::cout << ex.what()<<std::endl;
         if(debug) {
             printf("\n The factor graph.\n");
             _fg->PrintFactorGraph();

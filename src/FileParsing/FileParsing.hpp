@@ -27,8 +27,6 @@ private:
 protected:
 	const static int LINESIZE = 10000;
 
-    bool debug = false;
-    bool verbose = false;
     
     static FILE * OpenFile(std::string filename, const char * op, bool required = true);
     static std::vector<std::string> ParseLine(char * line);
@@ -38,6 +36,9 @@ protected:
     virtual void ReadDelimitedFile(std::string file, int type);
     virtual void ProcessLineEntries(int type, std::vector<std::string>& lp){}
 public:
+    bool debug = false;
+    bool verbose = false;
+    
     static std::string formattime(double seconds);
     static bool DirectoryExists(std::string pzPath );
     static bool Exists(std::string file);

@@ -31,7 +31,7 @@ public:
     gtsam::Point2 GetCoord(int ckey){
         if(camera_keys.size() == 0) return gtsam::Point2(-1,-1);
         int s = camera_keys[0].index();
-        int e = camera_keys[0].index() + camera_keys.size();
+        int e = s + camera_keys.size();
         if(ckey < s || ckey > s+e) return gtsam::Point2(-1,-1);
         return points[ckey-s];
     }

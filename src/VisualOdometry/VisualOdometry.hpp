@@ -60,7 +60,6 @@ protected:
     gtsam::Values RunBA();
     
     void PrintVec(std::vector<double> p);
-    std::vector<double> PoseToVector(gtsam::Pose3& cam);
 
     void AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess);
     void AddOdom(gtsam::Symbol symb0, gtsam::Pose3 pguess0, gtsam::Symbol symb1, gtsam::Pose3 pguess1);

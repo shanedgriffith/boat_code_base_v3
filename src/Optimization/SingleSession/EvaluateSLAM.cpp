@@ -17,7 +17,7 @@ using namespace std;
 
 const std::string EvaluateSLAM::reprofile = "/reprojection_error.csv";
 
-vector<double> EvaluateSLAM::LoadRerrorFile(){
+std::vector<double> EvaluateSLAM::LoadRerrorFile(){
     std::string fname = _results_dir + _date + reprofile;
     std::vector<double> rerrors;
     FILE * fp = OpenFile(fname, "r");
@@ -120,7 +120,7 @@ double EvaluateSLAM::OfflineRError(ParseOptimizationResults& POR, int idx, std::
 std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase, bool save){
     time_t start,interm,end;
     time (&start);
-    ParseOptimizationResults POR(_results_dir + _date);
+    ParseOptimizationResults POR(_results_dir, _date);
 
     std::vector<double> result(POR.boat.size(), 0.0);
     for(int i=0; i<POR.boat.size(); i++) {

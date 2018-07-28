@@ -102,7 +102,7 @@ vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vect
         std::cout << "ReprojectionFlow::ProjectPoints() expected a pose vector. Check the code." <<std::endl;
         exit(-1);
     }
-    gtsam::Pose3 tf VectorToPose(boat);
+    gtsam::Pose3 tf = VectorToPose(boat);
     vector<gtsam::Point2> validset(_map.map.size(), gtsam::Point2(-1, -1));
     for(int j=0; j<_map.map.size(); j++) {
         if(_map.map[j].x()==0.0 && _map.map[j].y()==0.0 && _map.map[j].z()==0.0) continue;

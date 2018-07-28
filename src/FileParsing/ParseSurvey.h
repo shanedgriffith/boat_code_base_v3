@@ -56,7 +56,6 @@ public:
     void SetPFTBase(std::string pftbase){_pftbase = pftbase;}
     bool CheckGap(int last_auxidx, int next_auxidx);
     static int GetImageNumberFromImagePath(std::string imagepath);
-    static std::vector<double> PoseToVector(gtsam::Pose3& cam);
     static std::string GetImagePath(std::string base, int no, bool makedir=false);
     
     bool ConstantVelocity(){return constant_velocity;}

@@ -23,7 +23,7 @@
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/nonlinear/Symbol.h>
 
-#include "Optimization/FactorGraph.hpp"
+#include "Optimization/SingleSession/FactorGraph.hpp"
 
 class RFlowFactorGraph: public FactorGraph {
 private:
@@ -35,8 +35,6 @@ private:
     gtsam::noiseModel::Diagonal::shared_ptr poseNoiseP;
 
 	void InitializeNoiseModels();
-
-	gtsam::Pose3 VectorToPose(std::vector<double>& p);
 
 	std::vector<int> lastcnums;
 	std::vector<std::unordered_map<int, int> > pnum_to_ckey;

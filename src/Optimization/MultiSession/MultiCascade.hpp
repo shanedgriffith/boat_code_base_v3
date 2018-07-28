@@ -21,7 +21,7 @@
 
 #include "MultiSessionOptimization.hpp"
 #include "OptimizationMachine.hpp"
-#include "EvaluateRFlow.hpp"
+#include "RFlowOptimization/EvaluateRFlow.hpp"
 
 class MultiCascade: public MultiSessionOptimization {
 protected:
@@ -48,6 +48,7 @@ protected:
     MachineManager man;
     std::vector<OptimizationMachine*> ws;
 public:
+    bool staticmaps;
     std::string _origin_dir;
     
     MultiCascade(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "", int nthreads=8);
@@ -59,6 +60,8 @@ public:
     }
     
     void IterativeMerge();
+    
+    bool SetStaticMaps(bool set=true);
 };
 
 

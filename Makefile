@@ -4,7 +4,7 @@ PREFIX    := /Volumes/Untitled/installs
 #use -O0 -g in CC and -g in LD for debugging segfaults.
 #use -O3 in CC for fast code.
 
-MODULES   := . FileParsing DataTypes Visualizations Optimization RFlowOptimization RFlowEvaluation ImageAlignment/DREAMFlow ImageAlignment/GeometricFlow ImageAlignment/LiuFlow ImageAlignment/FlowFrameworks BikeSurvey BoatSurvey VisualOdometry Tests Evaluation
+MODULES   := . FileParsing DataTypes Visualizations Optimization/SingleSession Optimization/MultiSession RFlowOptimization RFlowEvaluation ImageAlignment/DREAMFlow ImageAlignment/GeometricFlow ImageAlignment/LiuFlow ImageAlignment/FlowFrameworks BikeSurvey BoatSurvey VisualOdometry Tests Evaluation
 SRC_DIR   := $(addprefix src/,$(MODULES))
 BUILD_DIR := $(addprefix build/,$(MODULES))
 

@@ -20,8 +20,9 @@
 #include <unordered_map>
 #include <cmath>
 
-#include "LocalizationFactor.h"
-#include "VirtualBetweenFactor.h"
+#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/MultiSession/LocalizationFactor.h"
+#include "Optimization/MultiSession/VirtualBetweenFactor.h"
 #include "LocalizePose.hpp"
 
 void LocalizePose::PrintVec(std::vector<double> p){
@@ -31,21 +32,13 @@ void LocalizePose::PrintVec(std::vector<double> p){
     std::cout << std::endl;
 }
 
-std::vector<double> LocalizePose::PoseToVector(gtsam::Pose3& cam){
-    return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
-}
-
-gtsam::Pose3 LocalizePose::VectorToPose(std::vector<double>& p){
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 bool LocalizePose::EmptyPose(gtsam::Pose3& p){
     gtsam::Pose3 zeros = gtsam::Pose3::identity();
     return zeros.equals(p);
 }
 
 double LocalizePose::MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers){
-    gtsam::Pose3 gtp = VectorToPose(pnppose);
+    gtsam::Pose3 gtp = GTSamInterface::VectorToPose(pnppose);
     double sumall=0;
     double sumin=0;
     int cin=0;
@@ -169,7 +162,7 @@ std::vector<std::vector<double> > LocalizePose::DualIterativeBA(gtsam::Pose3 p0,
     }
     
     posevals[0] = i;
-    return {PoseToVector(p1frame0), PoseToVector(p0frame1), posevals};
+    return {GTSamInterface::PoseToVector(p1frame0), GTSamInterface::PoseToVector(p0frame1), posevals};
 }
 
 bool LocalizePose::DualBA(double val,
@@ -210,7 +203,7 @@ std::vector<std::vector<double> > LocalizePose::UseBAIterative(std::vector<doubl
     std::vector<double> best_posevals;
     double best_score;
     int minpiter = -1;
-    gtsam::Pose3 estp = VectorToPose(pguess);
+    gtsam::Pose3 estp = GTSamInterface::VectorToPose(pguess);
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
     std::vector<double> posevalsransac = RANSAC_BA(estp, p3d, p2d, inliers);
@@ -242,7 +235,7 @@ std::vector<std::vector<double> > LocalizePose::UseBAIterative(std::vector<doubl
     if(minpiter != iters-1) Maximization(best_pose, p3d, p2d, inliers, err); //reset the inliers.
     if(best_posevals.size()==0)return {};
     best_posevals[0] = iters;
-    return {PoseToVector(best_pose), best_posevals};
+    return {GTSamInterface::PoseToVector(best_pose), best_posevals};
 }
 
 void LocalizePose::UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers){
@@ -350,8 +343,8 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
 std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double> p0, std::vector<double> p1,
                                                             std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
                                                             std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb){
-    gtsam::Pose3 gp0 = VectorToPose(p0);
-    gtsam::Pose3 gp1 = VectorToPose(p1);
+    gtsam::Pose3 gp0 = GTSamInterface::VectorToPose(p0);
+    gtsam::Pose3 gp1 = GTSamInterface::VectorToPose(p1);
     gtsam::Pose3 p1frame0(gp1.rotation(), gp0.translation());
     struct timespec start, runir, end;
     

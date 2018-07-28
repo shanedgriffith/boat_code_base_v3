@@ -6,10 +6,8 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#include "MultiSurveyViewpointSelection.hpp"
-
-
-#include "IndependenceTest.hpp"
+#include <ImageAlignment/GeometricFlow/IndependenceTest.hpp>
+#include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
 
 using namespace std;
 

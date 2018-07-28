@@ -31,8 +31,6 @@ private:
     std::vector<LandmarkTrack> active;
     
     void SetZ(std::vector<double>& unkz, std::vector<double> nmlzd);
-    gtsam::Pose3 VectorToPose(std::vector<double>& p);
-    std::vector<double> PoseToVector(gtsam::Pose3& cam);
     std::vector<double> InterpolatePoses(int idx, int a, int b, std::vector<double> pa, std::vector<double> pb);
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
     void ModifyPoses();

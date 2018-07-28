@@ -31,7 +31,7 @@ public:
     LocalizedPoseData most_adv_lpd;
     
     LPDInterface(){
-        most_adv_lpd.s0 = -1;
+        most_adv_lpd.date0 = "";
     }
     
     int GetLPDIdx(int por1time);

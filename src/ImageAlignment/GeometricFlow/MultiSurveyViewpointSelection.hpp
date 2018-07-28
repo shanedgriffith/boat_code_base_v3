@@ -10,8 +10,8 @@
 #define SRC_GEOMETRICFLOW_MULTISURVEYVIEWPOINTSELECTION_HPP_
 
 #include <stdio.h>
-#include "ViewpointMachine.hpp"
-#include "ReprojectionFlow.hpp"
+#include <ImageAlignment/GeometricFlow/ViewpointMachine.hpp>
+#include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <ImageAlignment/FlowFrameworks/MachineManager.h>
 
 class MultiSurveyViewpointSelection{

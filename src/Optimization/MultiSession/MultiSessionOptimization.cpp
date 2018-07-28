@@ -12,20 +12,20 @@
 #include <string>
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <FileParsing/SaveOptimizationResults.h>
-#include <Optimization/EvaluateSLAM.h>
+#include <Optimization/SingleSession/EvaluateSLAM.h>
+#include "Optimization/SingleSession/GTSamInterface.h"
 
-#include "SFlowDREAM2RF.hpp"
-#include "LocalizePose.hpp"
-#include "EvaluateRFlow.hpp"
-#include "HopcountLog.hpp"
+#include "RFlowOptimization/LocalizePose.hpp"
+#include "RFlowOptimization/EvaluateRFlow.hpp"
+#include "RFlowOptimization/HopcountLog.hpp"
 #include <FileParsing/FileParsing.hpp>
 #include <DataTypes/LandmarkTrack.h>
 
 using namespace std;
 
-MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string results_dir, std::string pftbase, std::string date, double plt):
-_map_dir(results_dir + "maps/"), _pftbase(pftbase),
-SurveyOptimizer(cam, rfFG, date, results_dir, false) {
+MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string map_dir, std::string pftbase, std::string date, double plt):
+_map_dir(map_dir), _pftbase(pftbase),
+SurveyOptimizer(cam, rfFG, date, map_dir, false) {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
     
@@ -44,10 +44,10 @@ void MultiSessionOptimization::IdentifyOptimizationDates(){
     
     dates = FileParsing::ListDirsInDir(_map_dir);
     for(int i=0; i<dates.size(); i++){
-        ParseOptimizationResults datePOR(_map_dir + dates[i]);
+        ParseOptimizationResults datePOR(_map_dir, dates[i]);
         POR.push_back(datePOR);
         if(_date.compare(dates[i])==0) break;
-        if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
+//        if(i>0 && !HopcountLog::LogExists(_map_dir, dates[i])) break; //if I need to re-run, won't this method fail?
     }
     
     optstart = std::max(((int) POR.size()-K), 0);
@@ -160,12 +160,11 @@ void MultiSessionOptimization::ConstructFactorGraph() {
         bool latestsurvey = survey == POR.size()-1;
         int sidx = survey - optstart;
         
-        LocalizePose lp(_cam);
         for(int i=0; i<POR[survey].boat.size(); i++) {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
             if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
-                traj = lp.VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
+                traj = GTSamInterface::VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
             }
             
             rfFG->AddPose(survey, i, traj);
@@ -182,19 +181,28 @@ void MultiSessionOptimization::ConstructFactorGraph() {
     }
 }
 
+int MultiSessionOptimization::DateToIndex(std::string date){
+    for(int i=0; i<dates.size(); i++){
+        if(date.compare(dates[i])==0) return i;
+    }
+    std::cout << "MultiSessionOptimization::DateToIndex() Error. Session not found. " << std::endl;
+    exit(-1);
+    return -1;
+}
+
 void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
             if(lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
-            if(lpd.s0 < optstart) { //add localization factors for locked-in surveys
-                std::vector<gtsam::Point3> p3d0 = POR[lpd.s0].GetSubsetOf3DPoints(lpd.pids);
-                rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), lpd.s1, lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
+            if(DateToIndex(lpd.date0) < optstart) { //add localization factors for locked-in surveys
+                std::vector<gtsam::Point3> p3d0 = POR[DateToIndex(lpd.date0)].GetSubsetOf3DPoints(lpd.pids);
+                rfFG->AddLocalizationFactors(_cam.GetGTSAMCam(), DateToIndex(lpd.date1), lpd.s1time, p3d0, lpd.p2d1, lpd.rerrorp);
             } else {
-                //rfFG->AddBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), true);
+                //rfFG->AddBTWNFactor(DateToIndex(lpd.date0), lpd.s0time, DateToIndex(lpd.date1), lpd.s1time, lpd.GetTFP0ToP1F0(), true);
                 double noise = pow(2, lpd_eval[i][j]/3.0) * 0.0001;
-                rfFG->AddCustomBTWNFactor(lpd.s0, lpd.s0time, lpd.s1, lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
+                rfFG->AddCustomBTWNFactor(DateToIndex(lpd.date0), lpd.s0time, DateToIndex(lpd.date1), lpd.s1time, lpd.GetTFP0ToP1F0(), noise);
             }
         }
     }
@@ -270,22 +278,22 @@ std::vector<bool> MultiSessionOptimization::LPDInlierTest(int s, int l, double L
 int MultiSessionOptimization::EvaluateLPD(vector<vector<vector<double> > >& poseresult, std::vector<std::vector<std::vector<double> > >& landmarks, int s, int j, vector<EvaluateRFlow*> perf, vector<unordered_map<int, double> >& errorcache){
     LocalizedPoseData& l = lpdi[s].localizations[j];
     
-    std::vector<double> p0 = GTS.MAPPoseEstimate(rfFG->GetSymbol(l.s0, l.s0time));
-    std::vector<double> p1 = GTS.MAPPoseEstimate(rfFG->GetSymbol(l.s1, l.s1time));
+    std::vector<double> p0 = GTS.MAPPoseEstimate(rfFG->GetSymbol(DateToIndex(l.date0), l.s0time));
+    std::vector<double> p1 = GTS.MAPPoseEstimate(rfFG->GetSymbol(DateToIndex(l.date1), l.s1time));
     
     vector<double> error(4, 0);
-    error[0] = GetError(*perf[0], p0, landmarks[l.s0], cached_landmarks[l.s0], l.s0time, errorcache[l.s0]);
-    error[1] = GetError(*perf[1], p1, landmarks[l.s1], cached_landmarks[l.s1], l.s1time, errorcache[l.s1]);
-    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
-    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[l.s1], l.b2d0, l.bids, l.rerrorb);
+    error[0] = GetError(*perf[0], p0, landmarks[DateToIndex(l.date0)], cached_landmarks[DateToIndex(l.date0)], l.s0time, errorcache[DateToIndex(l.date0)]);
+    error[1] = GetError(*perf[1], p1, landmarks[DateToIndex(l.date1)], cached_landmarks[DateToIndex(l.date1)], l.s1time, errorcache[DateToIndex(l.date1)]);
+    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp);
+    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[DateToIndex(l.date1)], l.b2d0, l.bids, l.rerrorb);
     
-    std::vector<bool> result = LPDInlierTest(s, j, rerrs[l.s1][l.s1time], error);
+    std::vector<bool> result = LPDInlierTest(s, j, rerrs[DateToIndex(l.date1)][l.s1time], error);
     //these aren't necessary, given whatever new evaluation metric is used.
     //    coutliers += result[0]?0:1;
     //    nchanges += result[1]?1:0;
     if(result[0]) { //store the values
-        poseresult[l.s0][l.s0time] = p0; //backward
-        poseresult[l.s1][l.s1time] = p1; //forward
+        poseresult[DateToIndex(l.date0)][l.s0time] = p0; //backward
+        poseresult[DateToIndex(l.date1)][l.s1time] = p1; //forward
     } else outliers[s]++; //TODO: although, for the directional one this isn't counting correctly, I think.
     if(result[1]) return 1;
     return 0;
@@ -359,7 +367,7 @@ void MultiSessionOptimization::SaveResults() {
         curSOR.PlotAndSaveCurrentEstimate(landmarks[sidx], ts, vs, {});
         
         /* The reprojectionerror.csv is used for the adaptive pruning. 
-        EvaluateSLAM es(_cam, _date, _results_dir);
+        EvaluateSLAM es(_cam, _date, _map_dir);
         es.debug=true;
         es.ErrorForSurvey(_pftbase, true);
         es.PrintTots(); */
@@ -370,7 +378,7 @@ void MultiSessionOptimization::SaveResults() {
         vector<double> inter_error(lpdi[sidx].localizations.size(), 0);
         for(int j=0; j<lpdi[sidx].localizations.size(); j++) {
             LocalizedPoseData& l = lpdi[sidx].localizations[j];
-            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(poses[l.s1time], landmarks[l.s0], l.p2d1, l.pids, l.rerrorp);
+            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(poses[l.s1time], landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp);
 //            inter_error[j] = erfinter.InterSurveyErrorAtLocalization(lpd, poses[lpd.s1time], landmarks, optstart);
         }
         erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");

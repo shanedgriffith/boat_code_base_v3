@@ -78,8 +78,6 @@ public:
 
     std::vector<std::vector<double> > UseBAIterative(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
 
-    std::vector<double> PoseToVector(gtsam::Pose3& cam);
-    gtsam::Pose3 VectorToPose(std::vector<double>& p);
     void PrintVec(std::vector<double> p);
     
     std::vector<std::vector<double> > RobustDualBA(std::vector<double> p0, std::vector<double> p1,

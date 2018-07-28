@@ -21,6 +21,16 @@ const vector<string> SurveyOptimizer::keys = {
     "OPT_OFFSET", "OPT_SKIP", "CAM_OFFSET", "CAM_SKIP"
 };
 
+SurveyOptimizer::SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments):
+_cam(cam), _results_dir(results_dir), FG(_fg), _date(date), _print_data_increments(print_data_increments) {}
+
+SurveyOptimizer::SurveyOptimizer(Camera& cam, std::string date, std::string results_dir, bool print_data_increments):
+_cam(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_data_increments)
+{
+    FG = new FactorGraph();
+    clean_up = true;
+}
+
 void SurveyOptimizer::Initialize(){
     initialized = true;
     

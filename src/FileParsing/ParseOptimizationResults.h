@@ -48,7 +48,7 @@ public:
     } point_obj;
 
     bool debug = false;
-    std::string _base;
+    std::string _map_base, _date;
     std::vector<std::vector<double> > boat;//optimized camera poses (misnomer)
     std::vector<std::vector<double> > velocities;//optimized boat velocities
     std::vector<int> cimage;//image correspondences
@@ -59,8 +59,8 @@ public:
     
     ParseOptimizationResults(){};
     
-    ParseOptimizationResults(std::string base, bool sorted = true):
-    _base(base) {
+    ParseOptimizationResults(std::string map_base, std::string date, bool sorted = true):
+    _map_base(map_base), _date(date) {
         LoadOptimizationResult(sorted);
     }
     
@@ -74,7 +74,7 @@ public:
     std::vector<double> ReprojectionError(){
         //this just loads the reprojection error file.
         if(rerror.size() == 0)
-            rerror = LoadReprojectionErrorFile(_base + reprofile);
+            rerror = LoadReprojectionErrorFile(_map_base + _date + reprofile);
         return rerror;
     }
     

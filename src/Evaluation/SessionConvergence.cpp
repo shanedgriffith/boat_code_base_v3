@@ -44,7 +44,7 @@ void SessionConvergence::CompareSessions(){
     string refsetdir = optbase + optset[optset.size()-1] + "/";
     std::vector<std::string> optref = FileParsing::ListDirsInDir(refsetdir);
     for(int i=0; i<optref.size(); i++) {
-        ParseOptimizationResults POR(refsetdir + optref[i]);
+        ParseOptimizationResults POR(refsetdir, optref[i]);
         ref.push_back(POR);
         maps.push_back(new Map(refsetdir));
         maps[i]->LoadMap(optref[i]);
@@ -56,10 +56,10 @@ void SessionConvergence::CompareSessions(){
     for(int i=0; i<optset.size(); i++) {
         string cursetdir = optbase + optset[i] + "/";
         std::vector<std::string> optcur = FileParsing::ListDirsInDir(cursetdir);
-        ParseOptimizationResults PORzero(cursetdir + optcur[0]);
+        ParseOptimizationResults PORzero(cursetdir, optcur[0]);
         vector<vector<double> > resset(optcur.size()-1, vector<double>());
         for(int j=1; j<optcur.size(); j++) {
-            ParseOptimizationResults POR(cursetdir + optcur[j]);
+            ParseOptimizationResults POR(cursetdir, optcur[j]);
             //compute RE for each pose wrt the nearest one of session 0
             std::vector<double> stats = {0,0};
             std::vector<double> errs;

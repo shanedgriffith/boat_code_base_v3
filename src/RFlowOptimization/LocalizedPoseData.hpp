@@ -30,16 +30,12 @@ protected:
 
     static const std::string lpath;
 
-    std::vector<double> PoseToVector(gtsam::Pose3& cam);
-    gtsam::Pose3 VectorToPose(std::vector<double>& p);
     static void CheckLine(std::string& filepath, int numr, int expected);
 
 public:
     std::string date0, date1;
     //this is used for the "back-end", since the relative frames are subject to change as new surveys are reoptimized.
     std::vector<double> tf_p0_to_p1frame0;
-    int s0=-1;
-    int s1=-1;
     int s0time=0;
     int s1time=0;
     std::vector<double> p1frame0;
@@ -57,21 +53,21 @@ public:
     double perc_dc=0;
     double avg_rerror_inl=0;
 
-    LocalizedPoseData(std::string d0, std::string d1, int s0_, int s1_, int s0time_, int s1time_):
+    LocalizedPoseData(std::string d0, std::string d1, int s0time_, int s1time_):
         date0(d0), date1(d1),
         tf_p0_to_p1frame0(6),
-        s0(s0_), s0time(s0time_), s1(s1_), s1time(s1time_),
+        s0time(s0time_), s1time(s1time_),
         p1frame0(6), p0frame1(6), p3d(0), b3d(0),
         p3d0(0), p2d1(0), rerrorp(0),
         b3d1(0), b2d0(0), rerrorb(0),
         perc_dc(0), avg_rerror_inl(0)
         {}
 
-    LocalizedPoseData():LocalizedPoseData("", "", 0,0,0,0) {}
+    LocalizedPoseData():LocalizedPoseData("", "", 0,0) {}
 
     LocalizedPoseData(const LocalizedPoseData& l):
         date0(l.date0), date1(l.date1), tf_p0_to_p1frame0(6),
-        s0(l.s0), s1(l.s1), s0time(l.s0time), s1time(l.s1time),
+        s0time(l.s0time), s1time(l.s1time),
         p1frame0(6), p0frame1(6), p3d(l.p3d.size()), b3d(l.b3d.size()),
         pids(l.pids.size()), bids(l.bids.size()),
         p3d0(l.p3d0.size()), p2d1(l.p2d1.size()), rerrorp(l.rerrorp.size()),

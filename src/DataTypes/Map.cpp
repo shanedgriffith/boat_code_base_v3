@@ -39,7 +39,7 @@ void Map::LoadISCMap(vector<string>& dates){
 }
 
 void Map::LoadMap(string date){
-    ParseOptimizationResults pm(_map_base + date);
+    ParseOptimizationResults pm(_map_base, date);
     int survey_label = stoi(date);
     
     for(int j=0; j<pm.p.size(); j++){

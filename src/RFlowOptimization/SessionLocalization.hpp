@@ -1,12 +1,12 @@
 /*
- * AcquireISConstraints.hpp
+ * SessionLocalization.hpp
  *
  *  Created on: Feb 16, 2017
  *      Author: shane
  */
 
-#ifndef SRC_RFLOWOPTIMIZATION_ACQUIREISCONSTRAINTS_HPP_
-#define SRC_RFLOWOPTIMIZATION_ACQUIREISCONSTRAINTS_HPP_
+#ifndef SRC_RFLOWOPTIMIZATION_SessionLocalization_HPP_
+#define SRC_RFLOWOPTIMIZATION_SessionLocalization_HPP_
 
 
 #include <stdio.h>
@@ -17,10 +17,6 @@
 #include <fcntl.h>
 #include <vector>
 
-#include "RFlowFactorGraph.hpp"
-
-#include <Optimization/SurveyOptimizer.h>
-#include <Optimization/GTSamInterface.h>
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <ImageAlignment/DREAMFlow/ImageRetrieval.hpp>
 #include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
@@ -39,7 +35,7 @@
 #include "LocalizedPoseData.hpp"
 #include "LPDInterface.hpp"
 
-class AcquireISConstraints{
+class SessionLocalization{
 private:
     int MAX_NO_ALIGN = 2;//5;
     double PERCENT_DENSE_CORRESPONDENCES = 0.4;//this threshold might be lowerable
@@ -57,9 +53,10 @@ private:
 
     std::vector<double> EstimateNextPose(int survey, int time, int por1time, bool ref);
     bool GetConstraints(int por1time, bool hasRF);
-    int AcquireISConstraintsWithRF(int por1time, int dir);
+    int SessionLocalizationWithRF(int por1time, int dir);
     int FindRestart();
 
+    int DateToIndex(std::string date);
     
     typedef struct {
         std::string date;
@@ -78,20 +75,15 @@ private:
 public:
     std::string _date;
     std::string _query_loc, _pftbase;
-    std::string _map_dir;
+    std::string _map_dir, _store_dir;
     bool debug = false;
     int nthreads = 8;
     
-    AcquireISConstraints(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir):
-    _cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/") {
-        //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
-        std::cout << "Adding IS constraints." << std::endl;
-        Initialize();
-    }
+    SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir, std::string store="");
     
     void Run(int user_specified_start=-1);
 };
 
 
 
-#endif /* SRC_RFLOWOPTIMIZATION_ACQUIREISCONSTRAINTS_HPP_ */
+#endif /* SRC_RFLOWOPTIMIZATION_SessionLocalization_HPP_ */

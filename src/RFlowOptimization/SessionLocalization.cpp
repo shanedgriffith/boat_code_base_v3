@@ -1,5 +1,5 @@
 /*
- * AcquireISConstraints.cpp
+ * SessionLocalization.cpp
  *
  *  Created on: Feb 16, 2017
  *      Author: shane
@@ -7,7 +7,7 @@
 
 
 
-#include "AcquireISConstraints.hpp"
+#include "SessionLocalization.hpp"
 
 #include <random>
 #include <string>
@@ -18,17 +18,28 @@
 #include "HopcountLog.hpp"
 #include "LocalizePose.hpp"
 #include "ImageToLocalization.hpp"
+#include "Optimization/SingleSession/GTSamInterface.h"
 
 using namespace std;
 
-const string AcquireISConstraints::_logname = "/RFlowISC.log";
+const string SessionLocalization::_logname = "/RFlowISC.log";
 
-void AcquireISConstraints::WriteLog(vector<double> data, vector<string> paths) {
+//i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
+SessionLocalization::SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir, std::string store):
+_cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/"), _store_dir(results_dir + "maps/") {
+    
+    if(store.length()>0)
+        _store_dir = results_dir + store;
+    std::cout << "Adding IS constraints." << std::endl;
+    Initialize();
+}
+
+void SessionLocalization::WriteLog(vector<double> data, vector<string> paths) {
     // logfile: camera_key, poseloc, g-statistic, null_rejected?, ar.consistency, ar.alignment_energy_lowres, ar.alignment_energy
-    string fname = _map_dir + _date + _logname;
+    string fname = _store_dir + _date + _logname;
     FILE * fp = fopen(fname.c_str(), "a");
     if(!fp){
-        std::cout << "AcquireISConstraints::WriteLog() Something went wrong with the log."<<std::endl;
+        std::cout << "SessionLocalization::WriteLog() Something went wrong with the log."<<std::endl;
         exit(-1);
     }
     string line="";
@@ -44,8 +55,8 @@ void AcquireISConstraints::WriteLog(vector<double> data, vector<string> paths) {
     fclose(fp);
 }
 
-int AcquireISConstraints::FindRestart() {
-    string fname = _map_dir + _date + _logname;
+int SessionLocalization::FindRestart() {
+    string fname = _store_dir + _date + _logname;
     int res=-1;
     ifstream fin;
     fin.open(fname);
@@ -66,72 +77,86 @@ int AcquireISConstraints::FindRestart() {
     return res+1;
 }
 
-void AcquireISConstraints::Initialize(){
+void SessionLocalization::Initialize(){
     debug = true;
-    if(!FileParsing::DirectoryExists(_map_dir)){
-        std::cout << "AcquireISConstraints::Initialize() Error: Setup 'maps/'." << _map_dir << std::endl;
+    if(!FileParsing::DirectoryExists(_map_dir) || !FileParsing::DirectoryExists(_store_dir)){
+        std::cout << "SessionLocalization::Initialize() Error: Setup " << _map_dir << " and " << _store_dir << std::endl;
         exit(-1);
     }
     
-    HopcountLog hlog(_map_dir);
-    
     vector<string> dates = FileParsing::ListFilesInDir(_map_dir, "1");
+    if(dates.size() <= 1 || (dates[dates.size()-1].compare(_date) != 0 && _store_dir.compare(_map_dir) == 0)){
+        std::cout << "SessionLocalization::Initialize() Error: 'maps/' doesn't have " << _date << std::endl;
+        exit(-1);
+    } else if(dates[dates.size()-1].compare(_date)==0) {
+        dates.erase(dates.begin() + dates.size()-1);
+    }
+    
     std::cout << "Loading maps."<<std::endl;
     bool hasdate = false;
     for(int i=0; i<dates.size(); i++){
-        if(hasdate) break;
-        if(dates[i].compare(_date) == 0) {hasdate=true;}
         if(dates[i].length() != _date.length()) continue;
         std::cout<<"  survey "<<dates[i]<<std::endl;
         _maps.push_back( new Map(_map_dir));
         _maps[_maps.size()-1]->LoadMap(dates[i]);
         
-        //initialize trajectory estimates (the odom used by RF)
-        ParseOptimizationResults por(_map_dir + dates[i]);
-        SurveyData sd = { dates[i], por, 0.0 };
-        sd.avg_hop_distance = hlog.LoadHopDistance(dates[i]);
-        survey_est.push_back(sd);
-        
         //create an RF instance for the survey's data
-        if(!hasdate) rf.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
-        else {
-            for(int i=0; i<nthreads; i++)
-                rf_latest.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
-            latestsurvey = survey_est.size()-1;
-            SurveyData& refsurvey = survey_est[latestsurvey];
-        }
+        rf.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
+        
+        //initialize trajectory estimates (the odom used by RF)
+        ParseOptimizationResults por(_map_dir, dates[i]);
+        SurveyData sd = { dates[i], por, 0.0 };
+        survey_est.push_back(sd);
     }
     
-    if(dates.size() <= 1 || !hasdate) {
-        std::cout << "AcquireISConstraints::Initialize() Error: 'maps/' doesn't have " << _date << std::endl;
-        exit(-1);
+    std::string store = _map_dir;
+    if(_store_dir.compare(_map_dir) !=0 ){
+        store = _store_dir;
     }
+    std::cout<<"  survey "<<_date<<std::endl;
     
-    if(rf.size()>0) {
-        //add the unoptimized survey. this is the last one in the set.
-        lpdi.LoadLocalizations(_map_dir + _date);
-    }
+    //add the unoptimized survey. this is the last one in the set.
+    lpdi.LoadLocalizations(store + _date);
+    
+    _maps.push_back( new Map(store));
+    _maps[_maps.size()-1]->LoadMap(_date);
+    
+    for(int i=0; i<nthreads; i++)
+        rf_latest.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
+    
+    ParseOptimizationResults por(store, _date);
+    SurveyData sd = { _date, por, 0.0 };
+    survey_est.push_back(sd);
+    latestsurvey = survey_est.size()-1;
+    SurveyData& refsurvey = survey_est[latestsurvey];
 }
 
-vector<double> AcquireISConstraints::EstimateNextPose(int survey, int time, int por1time, bool ref){
+int SessionLocalization::DateToIndex(std::string date){
+    for(int i=0; i<survey_est.size(); i++){
+        if(survey_est[i].date.compare(date)==0) return i;
+    }
+    std::cout << "SessionLocalization::DateToIndex() Error. Date not found." << std::endl;
+    exit(-1);
+}
+
+vector<double> SessionLocalization::EstimateNextPose(int survey, int time, int por1time, bool ref){
     std::cout<<"EstimateNextPose(): survey "<<survey<<", time "<<time<<std::endl;
     LocalizedPoseData * lpd = lpdi.NearestLPD(por1time);
     if(lpd == NULL || time < 0 || time >= survey_est[survey].por.boat.size()){
-        std::cout << "Error. AcquireISConstraints::EstimateNextPose() Out of bounds. No valid pose was found." << std::endl;
+        std::cout << "Error. SessionLocalization::EstimateNextPose() Out of bounds. No valid pose was found." << std::endl;
         exit(-1);
     }
 
-    int lastsurvey = lpd->s1;
+    int lastsurvey = DateToIndex(lpd->date1);
     int lasttime = lpd->s1time;
     std::vector<double> lastpose = lpd->p1frame0;
     if(ref) {
-        lastsurvey = lpd->s0;
+        lastsurvey = DateToIndex(lpd->date0);
         lasttime = lpd->s0time;
         lastpose = lpd->p0frame1;
     }
 
-    LocalizePose lp(_cam);
-    gtsam::Pose3 last = lp.VectorToPose(lastpose);
+    gtsam::Pose3 last = GTSamInterface::VectorToPose(lastpose);
     gtsam::Pose3 p_tm1 = survey_est[lastsurvey].por.CameraPose(lasttime);
     gtsam::Pose3 p_t = survey_est[survey].por.CameraPose(time);
 //    gtsam::Pose3 est = last.compose(p_tm1.between(p_t));
@@ -140,10 +165,10 @@ vector<double> AcquireISConstraints::EstimateNextPose(int survey, int time, int 
     //above should equal below.
 //    gtsam::Pose3 est = last.compose(last.between(p_tm1)*p_tm1.between(p_t)*last.between(p_tm1).inverse());
     
-    return lp.PoseToVector(est);
+    return GTSamInterface::PoseToVector(est);
 }
 
-std::list<int> AcquireISConstraints::CreateList() {
+std::list<int> SessionLocalization::CreateList() {
     MultiSurveyViewpointSelection msvs(0); //used solely for the withinthree check.
     std::list<int> withinthree;
     for(int i=0; i<survey_est.size()-1; i++) {
@@ -154,7 +179,7 @@ std::list<int> AcquireISConstraints::CreateList() {
     return withinthree;
 }
 
-std::vector<std::vector<double> > AcquireISConstraints::RFViewpointSelection(vector<double>& rfpose){
+std::vector<std::vector<double> > SessionLocalization::RFViewpointSelection(vector<double>& rfpose){
     //Step 2: run rf viewpoint selection to get the ~best pose for all the surveys within three months.
     //the three month check is performed within MultiSurveyViewpointSelection.
     static MultiSurveyViewpointSelection msvs;
@@ -171,7 +196,7 @@ std::vector<std::vector<double> > AcquireISConstraints::RFViewpointSelection(vec
     return msvs.TopViewpoints(rf, poselists, dates, rfpose);
 }
 
-std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vector<double> pose1_est, string image1){
+std::vector<std::vector<double> > SessionLocalization::IdentifyClosestPose(vector<double> pose1_est, string image1){
     //This function finds the image with the ~best alignment given a reference pose/image and multiple surveys.
     //It is much more efficient than exhaustive search. It takes either 0 or 1 rounds of the time of IR.
     //returns {survey, surveytime, gstat}
@@ -236,7 +261,7 @@ std::vector<std::vector<double> > AcquireISConstraints::IdentifyClosestPose(vect
     return {};
 }
 
-std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vector<double> > topk, int por1time, bool hasRF, vector<double> pose1_est) {
+std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vector<double> > topk, int por1time, bool hasRF, vector<double> pose1_est) {
     //topk: vector of {snum, portime, gstat};
     vector<double> logdata = {(double)por1time, -1.0, -1.0, (double) hasRF, -1.0, 0.0};
     if(topk.size()==0) return logdata;
@@ -254,7 +279,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
     if(hasRF) toverify = lpdi.NearestLPD(por1time);
     else toverify = &lpdi.most_adv_lpd;
     gtsam::Pose3 p1_tm1;
-    if(toverify->IsSet()) p1_tm1 = survey_est[toverify->s1].por.CameraPose(toverify->s1time);
+    if(toverify->IsSet()) p1_tm1 = survey_est[survey_est.size()-1].por.CameraPose(toverify->s1time);
 
     std::cout << " The most adv lpd is: " << lpdi.most_adv_lpd.s1time << ". The one used for LPD verification is: " << toverify->s1time << std::endl;
 
@@ -300,7 +325,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
         if(perc_dc[i] <= PERCENT_DENSE_CORRESPONDENCES) continue;
 //        double hops = survey_est[topk[i][0]].avg_hop_distance;
         if(toverify->IsSet() && verified[i]>=0){
-            res[i].Save(_map_dir + res[i].date1); //save all the verified localizations.
+            res[i].Save(_store_dir + res[i].date1); //save all the verified localizations.
             if(!hasverified || leastrerror > verified[i]){
                 leastrerror = verified[i];
                 bestidx = i;
@@ -316,14 +341,14 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
 
     //prepare to store/store the result.
     if(bestidx >= 0) {
-        logdata[1] = res[bestidx].s0;
+        logdata[1] = DateToIndex(res[bestidx].date0);
         logdata[2] = res[bestidx].s0time;
         logdata[4] = perc_dc[bestidx];
         if(hasverified) {
-            back_two = lpdi.StoreLPD(_map_dir, *toverify);
-            lpdi.StoreLPD(_map_dir, res[bestidx]);
+            back_two = lpdi.StoreLPD(_store_dir, *toverify);
+            lpdi.StoreLPD(_store_dir, res[bestidx]);
             logdata[5] = 1.0;
-        } //else res[bestidx].Save(_map_dir + _date, "/unverified/"); //rather than save unverified, save all the verified, and use a different naming convention.
+        } //else res[bestidx].Save(_store_dir + _date, "/unverified/"); //rather than save unverified, save all the verified, and use a different naming convention.
         lpdi.SetMostAdvLPD(res[bestidx]);
     }
 
@@ -331,7 +356,7 @@ std::vector<double> AcquireISConstraints::FindLocalization(std::vector<std::vect
     return logdata;
 }
 
-bool AcquireISConstraints::GetConstraints(int por1time, bool hasRF){
+bool SessionLocalization::GetConstraints(int por1time, bool hasRF){
     std::cout << "\n" << _date << " GetConstraints() with RF? " << hasRF <<" por1time -> " << por1time <<std::endl;
     struct timespec start, runir, end;
 
@@ -364,7 +389,7 @@ bool AcquireISConstraints::GetConstraints(int por1time, bool hasRF){
     return logdata[5] > 0;
 }
 
-int AcquireISConstraints::AcquireISConstraintsWithRF(int por1time, int dir){
+int SessionLocalization::SessionLocalizationWithRF(int por1time, int dir){
     int count_fail = 0;
     int nentries = survey_est[latestsurvey].por.boat.size();
     while(count_fail <= MAX_NO_ALIGN && por1time >= 0 && por1time < nentries){
@@ -376,7 +401,7 @@ int AcquireISConstraints::AcquireISConstraintsWithRF(int por1time, int dir){
     return por1time;
 }
 
-void AcquireISConstraints::Run(int user_specified_start){
+void SessionLocalization::Run(int user_specified_start){
     bool debug=true;
     int nentries = survey_est[latestsurvey].por.boat.size();
     bool haveconstraints = false;
@@ -410,13 +435,13 @@ void AcquireISConstraints::Run(int user_specified_start){
         int lcuridx = lpdi.localizations.size()-1;
         if(back_two){
             //backward from the first verified pose.
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::LastLPD, LPDInterface::DIRECTION::Backward), -1);
+        SessionLocalizationWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::LastLPD, LPDInterface::DIRECTION::Backward), -1);
             //forward from the first verified pose.
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::LastLPD, LPDInterface::DIRECTION::Forward), 1);}
+        SessionLocalizationWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::LastLPD, LPDInterface::DIRECTION::Forward), 1);}
             //backward from the second verified pose.
-        AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::CurLPD, LPDInterface::DIRECTION::Backward), -1);
+        SessionLocalizationWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::CurLPD, LPDInterface::DIRECTION::Backward), -1);
             //forward from the second verified pose.
-        por1time = AcquireISConstraintsWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::CurLPD, LPDInterface::DIRECTION::Forward), 1);
+        por1time = SessionLocalizationWithRF(lpdi.GetStartingPoint(lcuridx, LPDInterface::FROM::CurLPD, LPDInterface::DIRECTION::Forward), 1);
         haveconstraints = false;
     }
 }
