@@ -29,7 +29,6 @@ protected:
     
     std::vector<std::vector<std::vector<double> > > landmarks;
     std::vector<std::vector<std::vector<double> > > poses;
-    std::vector<int> runset;
     std::vector<ParseOptimizationResults> originPOR;
     
     std::vector<std::vector<double>> isc_rerror;
@@ -44,6 +43,7 @@ protected:
     void SaveResults();
     
     void RunIteration(bool firstiter);
+    void ContinueUntilAligned();
     
     MachineManager man;
     std::vector<OptimizationMachine*> ws;
@@ -60,6 +60,7 @@ public:
     }
     
     void IterativeMerge();
+    void CreateReferenceSet();
     
     bool SetStaticMaps(bool set=true);
 };

@@ -24,6 +24,7 @@ vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBag
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
 vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
 
+
 int main(int argc, char *argv[]) {
     if(argc<4) {
         std::cout << "need 3 input arguments" << std::endl;
@@ -144,6 +145,7 @@ int main(int argc, char *argv[]) {
         acq.Run(294);
         break;}
     }
+    
 
 
 /*

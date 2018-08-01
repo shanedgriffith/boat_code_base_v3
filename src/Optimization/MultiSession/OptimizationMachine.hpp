@@ -21,6 +21,8 @@
 
 class OptimizationMachine: public AlignmentMachine{
 private:
+    bool bFilter = true;
+    
     std::vector<std::vector<std::vector<double> > > * posesTimeT2;
     std::vector<std::vector<std::vector<double> > > posesTimeT1;
     std::vector<std::vector<std::vector<double> > > * landmarks;
@@ -72,6 +74,7 @@ public:
     void Reset();
     void * Run();
     void LogResults();
+    void FilterBad(bool filter=true);
 };
 
 

@@ -43,7 +43,6 @@ MultiSessionOptimization(cam, results_dir + "maps/", pftbase, date, 10){
             man.AddMachine(ws[i]);
         }
     }
-    runset = vector<int>(dates.size(), 0);
 }
 
 void MultiCascade::BuildLandmarkSet() {
@@ -125,8 +124,9 @@ int MultiCascade::EvaluateLPD(vector<vector<vector<double> > >& poseresult, std:
 double MultiCascade::UpdateErrorIterative() {
     vector<unordered_map<int, double> > errorcache(dates.size());
     vector<int> nchanges(dates.size());
+    double sum = 0;
     
-    for(int survey=1; survey<dates.size(); survey++){
+    for(int survey=0; survey<dates.size(); survey++){ //CHANGED FROM 1 TO 0
         vector<EvaluateRFlow> erf = { EvaluateRFlow(_cam, "-", _map_dir),
             EvaluateRFlow(_cam, dates[survey], _map_dir),
             EvaluateRFlow(_cam, dates[survey], _map_dir)};
@@ -134,11 +134,13 @@ double MultiCascade::UpdateErrorIterative() {
         
         for(int j=0; j<lpdi[survey].localizations.size(); j++)
             nchanges[survey] += (int) EvaluateLPD(poses, landmarks, survey, j, perf, errorcache);
+        
+        std::cout << " " <<nchanges[survey] << " changes to " << dates[survey] << std::endl;
+        sum += nchanges[survey];
     }
     
-    std::cout << " " <<nchanges[dates.size()-1] << " changes to " << dates[dates.size()-1] << std::endl;
-    
-    return nchanges[dates.size()-1];
+//    return nchanges[dates.size()-1];
+    return sum/dates.size();
 }
 
 void MultiCascade::SaveResults() {
@@ -188,16 +190,81 @@ void MultiCascade::RunIteration(bool firstiter){
         int tidx = man.GetOpenMachine();
         ws[tidx]->Setup(&poses, &landmarks, &lpd_rerror, &(originPOR[snum[i]]), &(cached_landmarks[snum[i]]), &(forwardLMap[snum[i]]), &lpdi, snum[i]);
         ws[tidx]->SessionDates(dates);
+        ws[tidx]->FilterBad(true);
         man.RunMachine(tidx);
     }
     man.WaitForMachine(true);
-    for(int i=0; i<snum.size(); i++)
-        runset[i] = snum[i];
+}
+
+void MultiCascade::ContinueUntilAligned(){
+    std::cout << "INITIAL SESSION ALIGNMENT. NO ISC FILTERING. " << std::endl;
+    time_t beginning,optstart,optend,end;
+    time (&beginning);
+    
+    double averagechange=100000000000;
+    double last = 10000000000;
+    bool filterbad = false;
+    int count = 5; //five iterations of ISC filtering
+    int iteration = 0;
+    
+    while(count > 0){
+        if(averagechange > last || last < 1)
+            filterbad = true;
+        if(filterbad)
+            count--;
+        averagechange = last;
+        
+        std::cout << "ITERATION " << iteration++ << " reached ISC filter stage? " << filterbad << std::endl;
+        
+        time (&optstart);
+        //an iteration of aligning all the sessions.
+        for(int i=0; i<dates.size(); i++){
+            std::cout << "    " << dates[i] << " at " << i << std::endl;
+            
+            int tidx = man.GetOpenMachine();
+            ws[tidx]->Setup(&poses, &landmarks, &lpd_rerror, &(originPOR[i]), &(cached_landmarks[i]), &(forwardLMap[i]), &lpdi, i);
+            ws[tidx]->SessionDates(dates);
+            ws[tidx]->FilterBad(filterbad);
+            man.RunMachine(tidx);
+        }
+        man.WaitForMachine(true);
+        time (&optend);
+        
+        std::cout << "  Updating Error." << std::endl;
+        double last = UpdateErrorIterative();
+
+        time (&end);
+        double optruntime = difftime (optend, optstart);
+        double updateruntime = difftime (end, optend);
+        double totruntime = difftime (end, beginning);
+        printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
+    }
 }
 
 bool MultiCascade::SetStaticMaps(bool set){
     staticmaps = set;
 }
+
+void MultiCascade::CreateReferenceSet() {
+    vector<vector<double>> rerror;
+    //save the state so this update can be used as a data acquisition step.
+    for(int survey=0; survey<dates.size(); survey++) {
+        rerror.push_back(vector<double>(lpd_rerror[survey].size(), 0));
+        for(int j=0; j<lpdi[survey].localizations.size(); j++)
+            rerror[survey][j] = lpd_rerror[survey][j];
+    }
+    
+    UpdateErrorIterative();
+    InlierOutlierStats();
+    
+    for(int survey=0; survey<dates.size(); survey++) {
+        for(int j=0; j<lpdi[survey].localizations.size(); j++)
+            lpd_rerror[survey][j] = rerror[survey][j];
+    }
+    
+    ContinueUntilAligned();
+}
+
 
 void MultiCascade::IterativeMerge() {
     time_t beginning,optstart,optend,end;
@@ -238,7 +305,7 @@ void MultiCascade::IterativeMerge() {
         double optruntime = difftime (optend, optstart);
         double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
-        printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).    c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
+        printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
     }
     
     if(!dry_run){

@@ -73,7 +73,7 @@ void OptimizationMachine::AddLocalization(int sISC, int sTIME, int survey, int s
 }
 
 int OptimizationMachine::AddDirectionalLocalization(int s, int j, int d){
-    if((*lpd_rerror)[s][j] < 0) return 0;
+    if(bFilter && (*lpd_rerror)[s][j] < 0) return 0;
     LocalizedPoseData& l = (*lpdi)[s].localizations[j];
     double noise = 0.0001;
     if(d==Direction::BACKWARD) AddLocalization(SessionToNum(l.date0), l.s0time, SessionToNum(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
@@ -127,7 +127,9 @@ void * OptimizationMachine::Run() {
 
 void OptimizationMachine::LogResults() { }
 
-
+void FilterBad(bool filter){
+    bFilter = filter;
+}
 
 
 
