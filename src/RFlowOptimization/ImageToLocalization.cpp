@@ -23,10 +23,6 @@
 using namespace std;
 using namespace cv;
 
-gtsam::Pose3 ImageToLocalization::CameraPose(std::vector<double>& p) {
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 CvScalar ImageToLocalization::GetLandmarkColor(int id){
     int red = (71*(id%10) + id%255)%255;
     int green = (111*(id%10) + (2*id)%255)%255;

@@ -127,7 +127,7 @@ void * OptimizationMachine::Run() {
 
 void OptimizationMachine::LogResults() { }
 
-void FilterBad(bool filter){
+void OptimizationMachine::FilterBad(bool filter){
     bFilter = filter;
 }
 

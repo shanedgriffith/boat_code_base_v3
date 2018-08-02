@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
     case 14:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
         InitialISCAcquisition acq(axisptz, argv[1], argv[2], query_loc, pftbase, results_dir, results_dir + "origin/");
-        acq.Run(294);
+        acq.Run();
         break;}
     }
     

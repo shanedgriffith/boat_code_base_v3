@@ -28,8 +28,6 @@ class ImageToLocalization : public AlignmentMachine{
 private:
     double PERCENT_DENSE_CORRESPONDENCES = 0.4;
     
-    gtsam::Pose3 CameraPose(std::vector<double>& p);
-    
     CvScalar GetLandmarkColor(int id);
     void DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<double> inliers, std::vector<gtsam::Point3>& p3B, std::vector<gtsam::Point2>& p2dB, gtsam::Pose3 posea, gtsam::Pose3 poseb);
     void DrawMatchPoints(cv::Mat& imageA, cv::Mat& imageB, std::vector<gtsam::Point2>& p0, std::vector<gtsam::Point2>& p1, std::vector<unsigned char>& inliers);

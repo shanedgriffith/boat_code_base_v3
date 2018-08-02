@@ -24,7 +24,7 @@ int ParseSurvey::GetImageNumberFromImagePath(string imagepath) {
 }
 
 gtsam::Pose3 ParseSurvey::CameraPose(int idx){
-        return gtsam::Pose3(gtsam::Rot3::Ypr(poses[idx][5], poses[idx][4], poses[idx][3]), gtsam::Point3(poses[idx][0], poses[idx][1], poses[idx][2]));
+    return GTSamInterface::VectorToPose(poses[idx]);
 }
 
 int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){

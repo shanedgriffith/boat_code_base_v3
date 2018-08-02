@@ -38,7 +38,6 @@ private:
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
     static double GStatistic(std::vector<int>& contingency_table);
     std::vector<int> ExtractContingencyTable(std::vector<bool>& vi1, std::vector<bool>& vi2);
-    gtsam::Pose3 VectorToPose(std::vector<double>& p);
     std::vector<gtsam::Point2> ProjectPoints(std::vector<double>& boat, std::vector<bool>& valid_indices);
     void SparseFlow(std::vector<bool>& iA, std::vector<bool>& iB, std::vector<gtsam::Point2>& rpA, std::vector<gtsam::Point2>& rpB);
     void EliminateOutliers(int active_set);

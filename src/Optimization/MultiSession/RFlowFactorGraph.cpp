@@ -170,18 +170,20 @@ void RFlowFactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTr
     //  and the factor is disregarded if the error is large
     int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
-    
+    /*
     gtsam::SmartProjectionParams params;
     params.setLandmarkDistanceThreshold(ldist);
     params.setDynamicOutlierRejectionThreshold(onoise);
-    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
+    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);*/
+    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
 
     int count_on = 0;
     for(int i=0; i<landmark.points.size(); i++) {
         if(VariableExists((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index())) {
             landmark_constraints++;
             gtsam::Symbol mappedS = GetSymbol((int) landmark.camera_keys[i].chr(), landmark.camera_keys[i].index());
-            sppf.add(landmark.points[i], mappedS);
+//            sppf.add(landmark.points[i], mappedS);  //GTSAM 4.0
+            sppf.add(landmark.points[i], mappedS, pixelNoise, k); //GTSAM 3.2.1
             count_on++;
         }
     }

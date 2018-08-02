@@ -24,8 +24,6 @@ protected:
     std::vector<double> TransformPose(std::vector<double> p, int m1, int m2, int m3);
     
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
-    
-    gtsam::Pose3 CameraPose(std::vector<double> p);
 public:
     TestBikeSurvey(){}
     

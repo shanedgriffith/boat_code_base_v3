@@ -113,7 +113,7 @@ gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var)
     vector<double> p(mean.size(), 0);
     for(int i=0; i<mean.size(); i++)
         p[i] = SampleValue(mean[i], var[i]);
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
+    return GTSamInterface::VectorToPose(p);
 }
 
 double TestTransforms::MapToConstraint(double val){

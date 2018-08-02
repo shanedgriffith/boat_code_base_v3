@@ -68,10 +68,6 @@ std::vector<double> TestBikeSurvey::RotationMatrixToRPY(std::vector<double> R){
     return rpy;
 }
 
-gtsam::Pose3 TestBikeSurvey::CameraPose(std::vector<double> p){
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
-}
-
 std::vector<double> TestBikeSurvey::TransformPose(std::vector<double> p, int m1, int m2, int m3) {
     vector<double> cam = YPRToRotationMatrix(p[5], p[4], p[3]);
     vector<double> align_with_world = YPRToRotationMatrix(m1*M_PI_2, m2*M_PI_2, m3*M_PI_2);
@@ -128,8 +124,8 @@ void TestBikeSurvey::TestTriangulation(){
         printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
         vector<double> up = TransformPose(ub, m1, m2, m3);
         vector<double> vp = TransformPose(vb, m1, m2, m3);
-        gtsam::Pose3 u = CameraPose(up);
-        gtsam::Pose3 v = CameraPose(vp);
+        gtsam::Pose3 u = GTSamInterface::VectorToPose(up);
+        gtsam::Pose3 v = GTSamInterface::VectorToPose(vp);
         printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
         printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         

@@ -64,7 +64,8 @@ public:
     char key[3]={'l', 'v', 'x'};
     
     gtsam::NonlinearFactorGraph graph;
-    std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > > landmark_factors; //used by the GTSamInterface
+//    std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > > landmark_factors; //used by the GTSamInterface // GTSAM 4.0
+    std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > > landmark_factors; // GTSAM 3.2.1
     std::vector<std::vector<int> > landmark_keys; //used by the GTSamInterface
     
     
