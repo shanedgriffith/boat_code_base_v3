@@ -164,15 +164,23 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
     return l;
 }
 
-std::vector<LocalizedPoseData> LocalizedPoseData::LoadAll(string toppath, string altpath){
+std::vector<LocalizedPoseData> LocalizedPoseData::LoadAll(string toppath, string altpath, std::vector<std::string> dates){
     string dirpath = toppath + lpath;
     if(altpath.length()>0) dirpath = toppath + altpath;
     std::vector<LocalizedPoseData> res;
     if(!DirectoryExists(dirpath)) MakeDir(dirpath);
     else {
         std::vector<string> files = ListFilesInDir(dirpath, ".loc");
-        for(int i=0; i<files.size(); i++)
-            res.push_back(Read(dirpath + files[i]));
+        for(int i=0; i<files.size(); i++) {
+            if(dates.size() > 0){
+                for(int j=0; j<dates.size(); j++) {
+                    if(files[i].find(dates[j]) != string::npos) {
+                        res.push_back(Read(dirpath + files[i]));
+                        break;
+                    }
+                }
+            } else res.push_back(Read(dirpath + files[i]));
+        }
         std::sort(res.begin(), res.end()); //necessary. The file name lacks leading zeros, which makes the file order different.
         std::cout << "Found " << res.size() << " localizations.";
         if(res.size()>0) std::cout << " Last one: " << res[res.size()-1].s1time << std::endl;

@@ -29,16 +29,28 @@ void OptimizationMachine::Setup(std::vector<std::vector<std::vector<double> > > 
     survey = survey_;
 }
 
+void OptimizationMachine::toLogPoseChange(double * apc, double * aoc){
+    avgposchange = apc;
+    avgorientchange = aoc;
+}
+
+void OptimizationMachine::SetWeight(double weight){
+    _weight = weight;
+}
+
 void OptimizationMachine::Reset(){
     rfFG->Clear();
     posesTimeT1 = {};
-    posesTimeT2 = NULL;
-    landmarks = NULL;
-    lpd_rerror = NULL;
-    originPOR = NULL;
-    cached_landmarks = NULL;
-    forwardLMap = NULL;
-    lpdi = NULL;
+    posesTimeT2 = nullptr;
+    landmarks = nullptr;
+    lpd_rerror = nullptr;
+    originPOR = nullptr;
+    avgposchange = nullptr;
+    avgorientchange = nullptr;
+    cached_landmarks = nullptr;
+    forwardLMap = nullptr;
+    lpdi = nullptr;
+    weight = 2.0/3;
     survey = -1;
     thread_state = state::OPEN;
 }
@@ -75,6 +87,7 @@ void OptimizationMachine::AddLocalization(int sISC, int sTIME, int survey, int s
 int OptimizationMachine::AddDirectionalLocalization(int s, int j, int d){
     if(bFilter && (*lpd_rerror)[s][j] < 0) return 0;
     LocalizedPoseData& l = (*lpdi)[s].localizations[j];
+    if(SessionToNum(l.date0) == -1 || SessionToNum(l.date1) == -1) return 0;
     double noise = 0.0001;
     if(d==Direction::BACKWARD) AddLocalization(SessionToNum(l.date0), l.s0time, SessionToNum(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
     else AddLocalization(SessionToNum(l.date1), l.s1time, SessionToNum(l.date0), l.s0time, l.GetTFP0ToP1F0().inverse(), noise);
@@ -97,13 +110,28 @@ int OptimizationMachine::SessionToNum(std::string session){
     for(int i=0; i<sessiondates.size(); i++){
         if(session.compare(sessiondates[i])==0) return i;
     }
-    std::cout << "OptimizationMachine::SessionToNum() Error. Session not found. " << std::endl;
-    exit(-1);
     return -1;
+    //std::cout << "OptimizationMachine::SessionToNum() Error. Session not found. " << std::endl;
+    //exit(-1);
+    //return -1;
 }
 
 void OptimizationMachine::SessionDates(std::vector<std::string>& dates){
     sessiondates = dates;
+}
+
+int BinarySearch(std::vector<std::vector<double> >& arr, int val){
+    if(arr.size()==0) return -1;
+    int s = 0;
+    int e = arr.size();
+    while(e-s>1){
+        int med = s + (e-s)/2;
+        if(((int) arr[med][3]) > val) e = med;
+        else if(((int) arr[med][3]) <val) s = med;
+        else return med;
+    }
+    if(((int) arr[s][3]) == val) return s;
+    return -1;
 }
 
 void * OptimizationMachine::Run() {
@@ -115,11 +143,45 @@ void * OptimizationMachine::Run() {
     GTS.SetIdentifier(originPOR->_date);
     GTS.RunBundleAdjustment();
     
-    //update.
-    //if this complains, then have this machine hold the data in temporary variables and copy them in the log.
-    //I believe the references point to a dedicated area of the data structure. Maybe there's something to check in that though.
-    (*posesTimeT2)[survey] = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
-    (*landmarks)[survey] = GTS.GetOptimizedLandmarks(true);
+    if(weight < 1.0) { //&& avgposchange != nullptr && avgorientchange != nullptr
+        double weight=2.0/3;
+        double spc=0;
+        double soc=0;
+        std::vector<std::vector<double> > posesUpdated = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
+        for(int i=0; i<posesUpdated.size(); i++)
+            for(int j=0; j<6; j++){
+                if(j>2) {
+                    soc += (posesUpdated[i][j] - posesTimeT1[survey][i][j]);
+                } else {
+                    spc += (posesUpdated[i][j] - posesTimeT1[survey][i][j]);
+                }
+                (*posesTimeT2)[survey][i][j] = weight*posesUpdated[i][j] + (1-weight) * posesTimeT1[survey][i][j];
+            }
+        (*avgorientchange) = soc/(posesUpdated.size()*3);
+        (*avgposchange) = spc/(posesUpdated.size()*3);
+    } else {
+        (*posesTimeT2)[survey] = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
+    }
+    /*
+    std::vector<std::vector<double> > landmarksUpdated = GTS.GetOptimizedLandmarks(true);
+    (*landmarks)[survey].clear();
+    for(int i=0; i<landmarksUpdated.size(); i++){
+        int idx = BinarySearch((*landmarks)[survey], landmarksUpdated[i][3]);
+        if(idx>=0){
+            for(int j=0; j<3; j++){
+                (*landmarks)[survey][idx][j] = weight * landmarksUpdated[i][j] + (1-weight) * (*landmarks)[survey][idx][j];
+            }
+        }
+//        else {
+//            for(int j=0; j<3; j++){
+//                (*landmarks)[survey][idx][j] = weight * landmarksUpdated[i][j] + (1-weight) * (*landmarks)[survey][idx][j];
+//            }
+//        }
+    }*/
+    
+//    (*posesTimeT2)[survey] = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
+    if(landmarks != nullptr)
+        (*landmarks)[survey] = GTS.GetOptimizedLandmarks(true);
     
     thread_state = state::FINISHED;
     return (void *) NULL;

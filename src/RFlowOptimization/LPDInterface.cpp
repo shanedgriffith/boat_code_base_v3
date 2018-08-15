@@ -47,8 +47,8 @@ LocalizedPoseData* LPDInterface::NearestLPD(int s1time){
     return NULL;
 }
 
-int LPDInterface::LoadLocalizations(std::string path){
-    localizations = LocalizedPoseData::LoadAll(path); //load existing data.
+int LPDInterface::LoadLocalizations(std::string path, std::vector<std::string> dates){
+    localizations = LocalizedPoseData::LoadAll(path, "", dates); //load existing data.
     if(localizations.size()>0) most_adv_lpd = localizations[localizations.size()-1];
     //given that they're sorted, starting the iteration from the end points the
     //hash table at the correct ones.

@@ -110,7 +110,7 @@ public:
     void Save(std::string toppath, std::string altpath = "");
     std::string GetPath(std::string toppath, std::string altpath="");
     static LocalizedPoseData Read(std::string path);
-    static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "");
+    static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "", std::vector<std::string> dates = {});
 };
 
 

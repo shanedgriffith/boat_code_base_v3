@@ -38,7 +38,7 @@ public:
     bool StoreLPD(std::string _map_dir, LocalizedPoseData lpd);
     LocalizedPoseData* NearestLPD(int s1time);
     int NearestLPDTime(int s1time);
-    int LoadLocalizations(std::string path);
+    int LoadLocalizations(std::string path, std::vector<std::string> dates = {});
     int GetStartingPoint();
     int GetStartingPoint(int lcuridx, FROM u, DIRECTION d);
     void SetMostAdvLPD(LocalizedPoseData lpd);

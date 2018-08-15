@@ -62,7 +62,7 @@ void MultiSessionOptimization::Initialize() {
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
         std::cout <<  dates[i] << ": ";
-        int nloaded = lint.LoadLocalizations(_map_dir + dates[i]);
+        int nloaded = lint.LoadLocalizations(_map_dir + dates[i], dates);
         lpdi.push_back(lint);
         permerr.push_back(vector<double>(lint.localizations.size(),0));
         
@@ -450,10 +450,10 @@ std::vector<double> MultiSessionOptimization::InlierOutlierStats(bool compact) {
     alldev = pow(alldev/(c-1), 0.5);
     alldevi = pow(alldevi/(ci-1), 0.5);
     
-    std::cout << " " << allo << "/"<<sizes<<" outliers. " << allmean << "("<<alldev<<") rerror (avg). " << allmeani << "("<<alldevi<<") rerror (inliers)."<< std::endl;
+    std::cout << " " << allo << "/"<<sizes<<" outliers. All: " << allmean << " ("<<alldev<<") rerror (avg). " << allmeani << "("<<alldevi<<") rerror (inliers)."<< std::endl;
     if(compact) return {allmean, allmeani};
     for(int i=0; i<dates.size(); i++)
-        std::cout << "  " << dates[i] << ": " << numo[i] << " outliers (" << mean[i] << ", " << dev[i] << "), inliers: (" <<meani[i] << ", " << devi[i] <<")" << std::endl;
+        std::cout << "  " << dates[i] << ": " << numo[i] << " outliers. All: (" << mean[i] << ", " << dev[i] << ")," << lpd_rerror[i].size()-numo[i] << " inliers: (" <<meani[i] << ", " << devi[i] <<")" << std::endl;
     return {allmean, allmeani};
 }
 

@@ -412,9 +412,19 @@ std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<Landm
     
     int refkey = ckey;
     int end = BinarySearchLandmarkRange(landmarks, ckey+1, false);
+    
     vector<int> indices;
     int not_found = 0;
     while(1){
+        if(end > landmarks.size()-1 || end < 0){
+            std::cout << "ParseFeatureTrackFile::ApproximateLandmarkSet() error. bad binary search result: " << end << " vs. " <<landmarks.size()-1 << std::endl;
+            break;
+        }
+        if(landmarks[end].camera_keys.size() == 0){
+            std::cout << "ParseFeatureTrackFile::ApproximateLandmarkSet() error. 0 size landmark set. Landmark: " << landmarks[end].GetKey() << " of " << std::endl;
+            break;
+        }
+        
         int s = landmarks[end].camera_keys[0].index();
         int e = s + landmarks[end].camera_keys.size();
         if(s <= ckey && e > refkey) {

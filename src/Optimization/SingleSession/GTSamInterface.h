@@ -97,8 +97,8 @@ public:
     void SetPrintSymbols(){print_symbol_number = true; std::cout <<"set print symbols"<<std::endl;}
     
     
-    static std::vector<double> PoseToVector(gtsam::Pose3& cam);
-    static gtsam::Pose3 VectorToPose(std::vector<double>& p);
+    static std::vector<double> PoseToVector(const gtsam::Pose3& cam);
+    static gtsam::Pose3 VectorToPose(const std::vector<double>& p);
 };
 
 

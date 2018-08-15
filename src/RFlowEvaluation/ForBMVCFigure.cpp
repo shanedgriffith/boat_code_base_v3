@@ -5,6 +5,7 @@
  *      Author: shane
  */
 
+#include <FileParsing/FileParsing.hpp>
 #include <FileParsing/ParseSurvey.h>
 #include <ImageAlignment/DREAMFlow/SFlowDREAM.hpp>
 #include <FileParsing/ParseFeatureTrackFile.h>
@@ -17,7 +18,7 @@ using namespace std;
 
 void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset){
 	/*Used to align each survey to survey 1 */
-
+    
     std::vector<Map> maps;
     maps.push_back(Map(_map_base));
     maps.push_back(Map(_map_base));
@@ -51,7 +52,25 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     string _image0 = ParseSurvey::GetImagePath(_query_loc + date0, por0.cimage[num]);
     string _image1 = ParseSurvey::GetImagePath(_query_loc + date1, por1.cimage[poseloc]);
 
-	//run image alignment
+    string savedir = _savebase + date0 + to_string(num) + "/";
+    FileParsing::MakeDir(savedir);
+    FileParsing::MakeDir(savedir + "rf");
+    FileParsing::MakeDir(savedir + "sf");
+    FileParsing::MakeDir(savedir + "scene");
+    FileParsing::MakeDir(savedir + "mappoints");
+    
+    string _savename_rf =  savedir + "rf/" + date1+"_" +  to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
+    string _savename_sf = savedir + "sf/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
+    string _savename_im2 = savedir + "scene/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
+    string _savename_up = savedir + "mappoints/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
+    string _savename_refp = savedir + "mappoints/ref_" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
+    string _savename_ref = savedir + "ref_" + date0+"_" + to_string(num) + "_" +to_string(offset)+"_.jpg";
+    
+//    string _savename_sfepi = _savebase + to_string(num) + "_warped_sf_basicepi_" + date1+"_" +to_string(offset)+ "_.jpg";
+//    string _savename_sfcons = _savebase + to_string(num) + "_warped_sf_basiccons_" + date1+"_" +to_string(offset)+ "_.jpg";
+//    string _savename_sfbrf = _savebase + to_string(num) + "_warped_sf_basicrf_" + date1+"_" +to_string(offset)+ "_.jpg";
+
+    //run image alignment
     SFlowDREAM2RF sf(_cam);
     sf.SetReprojectionFlow(rf);
     sf.SetEpipolar();
@@ -59,16 +78,6 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     sf.ConstructImagePyramid(_image0, _image1);
     sf.AlignImages();
     
-    string _savename_rf = _savebase + to_string(num) + "_warped_rf_" + date1+"_" +to_string(offset)+ "_.jpg";
-    string _savename_up = _savebase + to_string(num) + "_up_" + date1+"_" +to_string(offset)+"_.jpg";
-    string _savename_ref = _savebase + to_string(num) + "_ref_" + date1+"_" +to_string(offset)+"_.jpg";
-    string _savename_refp = _savebase + to_string(num) + "_refp_" + date1+"_" +to_string(offset)+"_.jpg";
-    string _savename_im2 = _savebase + to_string(num) + "_im2_" + date1+"_" +to_string(offset)+"_.jpg";
-    string _savename_sf = _savebase + to_string(num) + "_warped_sf_basic_" + date1+"_" +to_string(offset)+ "_.jpg";
-    string _savename_sfepi = _savebase + to_string(num) + "_warped_sf_basicepi_" + date1+"_" +to_string(offset)+ "_.jpg";
-    string _savename_sfcons = _savebase + to_string(num) + "_warped_sf_basiccons_" + date1+"_" +to_string(offset)+ "_.jpg";
-    string _savename_sfbrf = _savebase + to_string(num) + "_warped_sf_basicrf_" + date1+"_" +to_string(offset)+ "_.jpg";
-
 	AlignmentResult ar = sf.GetAlignmentResult();
 	ar.SaveWarpedImage(_savename_rf);
 	ImageOperations::Save(ar.ref, _savename_ref);
@@ -81,12 +90,12 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
 //    std::cout << "not running the sift flow version" << std::endl;
 //    return;
 //    
-//    SFlowDREAM2RF sfbasic(_cam);
-//    sfbasic.ConstructImagePyramid(_image0, _image1);
-//    sfbasic.AlignImages();
-//    AlignmentResult arbasic = sfbasic.GetAlignmentResult();
-//    arbasic.SaveWarpedImage(_savename_sf);
-//    
+    SFlowDREAM2RF sfbasic(_cam);
+    sfbasic.ConstructImagePyramid(_image0, _image1);
+    sfbasic.AlignImages();
+    AlignmentResult arbasic = sfbasic.GetAlignmentResult();
+    arbasic.SaveWarpedImage(_savename_sf);
+//
 //    SFlowDREAM2RF sfbasicepi(_cam);
 //    sfbasicepi.SetEpipolar();
 //    sfbasicepi.ConstructImagePyramid(_image0, _image1);
@@ -94,13 +103,13 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
 //    AlignmentResult arbasice = sfbasicepi.GetAlignmentResult();
 //    arbasice.SaveWarpedImage(_savename_sfepi);
     
-    SFlowDREAM2RF sfbasiccons(_cam);
+//    SFlowDREAM2RF sfbasiccons(_cam);
 //    sfbasiccons.SetEpipolar();
-    sfbasiccons.SetTwoCycleConsistency();
-    sfbasiccons.ConstructImagePyramid(_image0, _image1);
-    sfbasiccons.AlignImages();
-    AlignmentResult arbasicc = sfbasiccons.GetAlignmentResult();
-    arbasicc.SaveWarpedImage(_savename_sfcons);
+//    sfbasiccons.SetTwoCycleConsistency();
+//    sfbasiccons.ConstructImagePyramid(_image0, _image1);
+//    sfbasiccons.AlignImages();
+//    AlignmentResult arbasicc = sfbasiccons.GetAlignmentResult();
+//    arbasicc.SaveWarpedImage(_savename_sfcons);
     
 //    SFlowDREAM2RF sfbasicrf(_cam);
 //    sf.SetReprojectionFlow(rf);

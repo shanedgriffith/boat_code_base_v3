@@ -31,6 +31,9 @@ private:
     std::vector<LandmarkTrack> * cached_landmarks;
     std::vector<std::vector<int> > * forwardLMap;
     std::vector<LPDInterface> * lpdi;
+    double * avgposchange;
+    double * avgorientchange;
+    double _weight;
     int survey;
     
     void ConstructFactorGraph();
@@ -58,6 +61,7 @@ public:
         GTS.SetParams(PI.LoadParams(GTSamInterface::Keys(), GTS.Params()));
         rfFG->SetParams(PI.LoadParams(FactorGraph::Keys(), rfFG->Params()));
         GTS.SetupIncrementalSLAM();
+        Reset();
     }
     ~OptimizationMachine(){
         delete(rfFG);
@@ -71,6 +75,8 @@ public:
                std::vector<LPDInterface> * lpdi_,
                int survey_);
     void SessionDates(std::vector<std::string>& dates);
+    void toLogPoseChange(double * apc, double * aoc);
+    void SetWeight(double weight);
     void Reset();
     void * Run();
     void LogResults();
