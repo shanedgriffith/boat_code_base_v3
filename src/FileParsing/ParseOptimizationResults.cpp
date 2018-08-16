@@ -282,6 +282,21 @@ int ParseOptimizationResults::GetImageIndexGivenPose(vector<double> ref_pose, do
     return nearest_idx;
 }
 
+int ParseOptimizationResults::GetNearestPoseToImage(int image){
+    int s=0;
+    int e=cimage.size();
+    int med;
+    while(e-s>1){
+        med = s + (e-s)/2;
+        if(cimage[med] < image) s = med;
+        else if(cimage[med] > image) e = med;
+        else return med;
+    }
+    if(cimage[med] == image) return med;
+    if(med > cimage.size()-2 || abs(image-cimage[med]) < abs(image-cimage[med+1])) return med;
+    return med+1;
+}
+
 void ParseOptimizationResults::UpdateLandmarks(std::vector<std::vector<double> >& landmarks){
     p.clear();
     for(int i=0; i<landmarks.size(); i++){

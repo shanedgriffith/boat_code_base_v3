@@ -73,12 +73,12 @@ void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark
     int ldist = 5; //this threshold specifies the distance between the camera and the landmark.
     int onoise = 10; //the threshold specifies at what point factors are discarded due to reprojection error.
     
-    /*
+    
     gtsam::SmartProjectionParams params;
     params.setLandmarkDistanceThreshold(ldist);
     params.setDynamicOutlierRejectionThreshold(onoise);
-    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);*/
-gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
+    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
+//gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
     
     //camera_keys[i]-posenum + poses.size();
     int tosub = 0;
@@ -89,8 +89,8 @@ gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sp
         int idx  = camera_keys[i].index();
         if(idx < posenum) continue;
         gtsam::Symbol s(camera_keys[i].chr(), idx-tosub);
-//        sppf.add(points[i], s); //GTSAM 4.0
-        sppf.add(points[i], s, pixelNoise, k); //GTSAM 3.2.1
+        sppf.add(points[i], s); //GTSAM 4.0
+//        sppf.add(points[i], s, pixelNoise, k); //GTSAM 3.2.1
     }
     
     landmark_factors.push_back(sppf);

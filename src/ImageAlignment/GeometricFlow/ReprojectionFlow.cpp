@@ -10,7 +10,7 @@
 #include "ReprojectionFlow.hpp"
 #include "ImageAlignment/DREAMFlow/FeatureMatchElimination.hpp"
 #include "Optimization/SingleSession/GTSamInterface.h"
-
+#include "Visualizations/SLAMDraw.h"
 
 using namespace std;
 using namespace cv;
@@ -465,6 +465,41 @@ vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
 }
 
 /******************************** DRAWING RELATED (for visualization and debugging) *******************************/
+void ReprojectionFlow::DrawViewset(std::vector<double> camA, std::vector<double> camB, std::string savename){
+    vector<bool> valid_indicesA(_map.map.size(), false);
+    ProjectPoints(camA, valid_indicesA);
+    
+    vector<bool> valid_indicesB(_map.map.size(), false);
+    ProjectPoints(camB, valid_indicesB);
+    
+    SLAMDraw draw;
+    if(drawscale.size()>0) draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);
+    else draw.SetScale(-300,300,-300,300);
+    draw.ResetCanvas();
+    
+    //draw the estimated landmark points
+    for(int i=0; i<_map.map[i].size(); i++) {
+        if(_map.map[i][0] == 0 && _map.map[i][1] == 0 && _map.map[i][2] == 0) continue;
+        if(valid_indicesA[i] && valid_indicesB[i]){
+            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 10000);
+        } else if(!valid_indicesA[i] && valid_indicesB[i]){
+            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 5000);
+        } else if(valid_indicesA[i] && !valid_indicesB[i]){
+            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 1000);
+        }else{
+            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 0);
+        }
+    }
+    
+    //draw the boat's field of view
+    draw.DrawSight(camA[0], camA[1], camA[5]);
+    draw.DrawSight(camB[0], camB[1], camB[5]);
+    
+    //save the visualization
+    draw.SaveDrawing(savename);
+}
+
+
 void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
     IMDraw art(image);
     art.SetPointSize(15);

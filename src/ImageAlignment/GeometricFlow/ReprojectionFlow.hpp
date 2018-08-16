@@ -95,6 +95,7 @@ public:
     void DrawMapPoints(cv::Mat& image, int active_set=0);
     void DrawFlowSurvey(cv::Mat& imageB, int survey);
     void DrawFlowSurvey(cv::Mat& imageB, int survey, ParseFeatureTrackFile& pft);
+    void DrawViewset(std::vector<double> camA, std::vector<double> camB, std::string savename);
 };
 
 

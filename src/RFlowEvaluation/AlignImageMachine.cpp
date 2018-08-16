@@ -17,9 +17,10 @@
 
 using namespace std;
 
-void AlignImageMachine::Setup(int ploc0, std::string saveloc) {
+void AlignImageMachine::Setup(int ploc0, std::string saveloc, int ploc1) {
     thread_state = state::LOCKED;
     poseloc0 = ploc0;
+    poseloc1 = ploc1;
     _saveloc = saveloc;
 }
 
@@ -32,6 +33,10 @@ void AlignImageMachine::SetDirs(std::string pftbase, std::string query_loc, std:
 void AlignImageMachine::Reset(){
     thread_state = state::OPEN;
     poseloc0 = -1;
+    poseloc1 = -1;
+    basic = false;
+    _image0 = "";
+    _image1 = "";
     por = {};
     dates = {};
     maps = {};
@@ -48,6 +53,24 @@ AlignmentResult AlignImageMachine::RunSFlowWithRF(vector<ReprojectionFlow*> rf, 
     return sf.GetAlignmentResult();
 }
 
+void AlignImageMachine::SetImages(std::string i0, std::string i1, std::string savename){
+    thread_state = state::LOCKED;
+    basic = true;
+    _image0 = i0;
+    _image1 = i1;
+    _saveloc = savename;
+}
+
+void AlignImageMachine::RunSFlow(){
+    SFlowDREAM2RF sf(_cam);
+    sf.SetEpipolar();
+    sf.SetTwoCycleConsistency();
+    sf.ConstructImagePyramid(_image0, _image1);
+    sf.AlignImages();
+    AlignmentResult ar = sf.GetAlignmentResult();
+    ar.SaveWarpedImage(_saveloc);
+}
+
 void AlignImageMachine::RunRFlow() {
     vector<ReprojectionFlow*> rf;
     ReprojectionFlow r1(_cam, *maps[0]);
@@ -55,9 +78,11 @@ void AlignImageMachine::RunRFlow() {
     rf.push_back(&r1);
     rf.push_back(&r2);
 
-    double gstatistic = 0;
-    int poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
-    if(poseloc1 == -1)  return;
+    if(poseloc1 == -1) {
+        double gstatistic = 0;
+        poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
+        if(poseloc1 == -1)  return;
+    }
 
     std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << _saveloc << std::endl;
     
@@ -73,13 +98,15 @@ void AlignImageMachine::RunRFlow() {
     string _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
     AlignmentResult ar = RunSFlowWithRF(rf, _image0, _image1);
     
-    ar.Save(_saveloc);
+//    ar.Save(_saveloc);
+    ar.SaveWarpedImage(_saveloc);
 }
 
 void * AlignImageMachine::Run() {
     thread_state = state::RUNNING;
 
-    RunRFlow();
+    if(basic) RunSFlow();
+    else RunRFlow();
 
     thread_state = state::FINISHED;
     return (void *) NULL;

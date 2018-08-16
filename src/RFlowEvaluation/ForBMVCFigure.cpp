@@ -16,6 +16,7 @@
 
 using namespace std;
 
+
 void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset){
 	/*Used to align each survey to survey 1 */
     
@@ -58,6 +59,7 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     FileParsing::MakeDir(savedir + "sf");
     FileParsing::MakeDir(savedir + "scene");
     FileParsing::MakeDir(savedir + "mappoints");
+    FileParsing::MakeDir(savedir + "viewpoint");
     
     string _savename_rf =  savedir + "rf/" + date1+"_" +  to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
     string _savename_sf = savedir + "sf/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
@@ -65,11 +67,14 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     string _savename_up = savedir + "mappoints/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
     string _savename_refp = savedir + "mappoints/ref_" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
     string _savename_ref = savedir + "ref_" + date0+"_" + to_string(num) + "_" +to_string(offset)+"_.jpg";
+    string _visualize_points = savedir + "viewpoint/" + date1+"_" + to_string(poseloc) + ".jpg";
     
 //    string _savename_sfepi = _savebase + to_string(num) + "_warped_sf_basicepi_" + date1+"_" +to_string(offset)+ "_.jpg";
 //    string _savename_sfcons = _savebase + to_string(num) + "_warped_sf_basiccons_" + date1+"_" +to_string(offset)+ "_.jpg";
 //    string _savename_sfbrf = _savebase + to_string(num) + "_warped_sf_basicrf_" + date1+"_" +to_string(offset)+ "_.jpg";
 
+    rf[0]->DrawViewset(por0.boat[num], por1.boat[poseloc], _visualize_points);
+    
     //run image alignment
     SFlowDREAM2RF sf(_cam);
     sf.SetReprojectionFlow(rf);

@@ -14,6 +14,7 @@
 
 #include <FileParsing/ParseOptimizationResults.h>
 #include <ImageAlignment/FlowFrameworks/AlignmentMachine.h>
+#include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 #include <DataTypes/AlignmentResult.h>
 
 class AlignImageMachine: public AlignmentMachine {
@@ -23,8 +24,10 @@ private:
     std::vector<Map*> maps;
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
-    int poseloc0;
+    int poseloc0, poseloc1;
     std::string _saveloc;
+    bool basic;
+    std::string _image0, _image1;
     
     Camera& _cam;
 public:
@@ -33,9 +36,11 @@ public:
     AlignImageMachine(Camera& cam):
         _cam(cam) {}
     void RunRFlow();
+    void RunSFlow();
     
     void SetDirs(std::string pftbase, std::string query_loc, std::string results_dir);
-    void Setup(int ploc0, std::string saveloc);
+    void Setup(int ploc0, std::string saveloc, int ploc1=-1);
+    void SetImages(std::string i0, std::string i1, std::string savename);
     void Reset();
     void * Run();
     void LogResults();

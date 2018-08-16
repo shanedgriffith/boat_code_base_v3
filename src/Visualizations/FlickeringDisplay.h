@@ -56,7 +56,6 @@ private:
 //    void MouseFunc(int event, int x, int y, int flags, void* userdata);
     bool ProcessLabel(char c);
     
-    cv::Mat CombinedImage(cv::Mat& im1, cv::Mat& im2);
     void FlickerImagePair(cv::Mat& im1, cv::Mat& im2, cv::Mat& im2_w, std::string text="");
     void DisplaySurveyComparisonDir(std::string dir, std::vector<int>& dnum, int start=0);
     
@@ -85,6 +84,8 @@ public:
     void DisplaySurveyComparisonCustom(bool save);
     void VideoOfSurveyComparison(std::string dir);
     void CompareFromDir(std::string dir);
+    
+    static cv::Mat CombinedImage(cv::Mat& im1, cv::Mat& im2);
     
 //    vector<int> FlickerDisplayMany(vector<ParseExperiment>& exps);
 };

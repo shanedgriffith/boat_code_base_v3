@@ -72,8 +72,8 @@ protected:
     void CopyLast(ParseFeatureTrackFile& PFT);
 
     gtsam::NonlinearFactorGraph graph;
-//    std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > landmark_factors; //GTSAM 4.0
-    std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > landmark_factors; //GTSAM 3.2.1
+    std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > landmark_factors; //GTSAM 4.0
+//    std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > landmark_factors; //GTSAM 3.2.1
     std::vector<int> landmark_keys;
     std::vector<gtsam::Pose3> poses;
     int posenum = 0;

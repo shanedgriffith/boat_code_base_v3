@@ -194,7 +194,7 @@ void MultiSessionOptimization::AddLocalizations(bool firstiter){
     cout << "   adding the localizations."<<endl;
     for(int i=0; i<lpdi.size(); i++) {
         for(int j=0; j<lpdi[i].localizations.size(); j++) {
-            if(lpd_rerror[i][j] < 0) continue;
+            if(!firstiter && lpd_rerror[i][j] < 0) continue;
             LocalizedPoseData& lpd = lpdi[i].localizations[j];
             if(DateToIndex(lpd.date0) < optstart) { //add localization factors for locked-in surveys
                 std::vector<gtsam::Point3> p3d0 = POR[DateToIndex(lpd.date0)].GetSubsetOf3DPoints(lpd.pids);

@@ -50,7 +50,7 @@ void OptimizationMachine::Reset(){
     cached_landmarks = nullptr;
     forwardLMap = nullptr;
     lpdi = nullptr;
-    weight = 2.0/3;
+    _weight = 0.9;//2.0/3;
     survey = -1;
     thread_state = state::OPEN;
 }
@@ -143,8 +143,7 @@ void * OptimizationMachine::Run() {
     GTS.SetIdentifier(originPOR->_date);
     GTS.RunBundleAdjustment();
     
-    if(weight < 1.0) { //&& avgposchange != nullptr && avgorientchange != nullptr
-        double weight=2.0/3;
+    if(_weight < 1.0) { //&& avgposchange != nullptr && avgorientchange != nullptr
         double spc=0;
         double soc=0;
         std::vector<std::vector<double> > posesUpdated = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
@@ -155,7 +154,7 @@ void * OptimizationMachine::Run() {
                 } else {
                     spc += (posesUpdated[i][j] - posesTimeT1[survey][i][j]);
                 }
-                (*posesTimeT2)[survey][i][j] = weight*posesUpdated[i][j] + (1-weight) * posesTimeT1[survey][i][j];
+                (*posesTimeT2)[survey][i][j] = _weight*posesUpdated[i][j] + (1-_weight) * posesTimeT1[survey][i][j];
             }
         (*avgorientchange) = soc/(posesUpdated.size()*3);
         (*avgposchange) = spc/(posesUpdated.size()*3);

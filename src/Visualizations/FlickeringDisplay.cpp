@@ -120,7 +120,7 @@ void FlickeringDisplay::FlickerImagePair(cv::Mat& im1, cv::Mat& im2, cv::Mat& im
         WriteText(im2, text);
     }
     
-    cv::Mat both_images = CombinedImage(im1, im2);
+    cv::Mat both_images = FlickeringDisplay::CombinedImage(im1, im2);
     if(debug) cout << "im_sizes ("<<im1.rows <<","<<im1.cols<<") ("<<im2.rows<<","<<im2.cols<<") ("<<im2_w.rows<<","<<im2_w.cols<<") ("<<both_images.rows<<","<<both_images.cols<<")"<<endl;
 
     int toggle = -1;

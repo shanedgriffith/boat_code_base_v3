@@ -43,7 +43,7 @@ protected:
     void SaveResults();
     
     void RunIteration(bool firstiter);
-    void ContinueUntilAligned();
+    void WeightedAlignment();
     
     MachineManager man;
     std::vector<OptimizationMachine*> ws;
@@ -62,7 +62,7 @@ public:
     void IterativeMerge();
     void CreateReferenceSet();
     
-    bool SetStaticMaps(bool set=true);
+    void SetStaticMaps(bool set=true);
 };
 
 

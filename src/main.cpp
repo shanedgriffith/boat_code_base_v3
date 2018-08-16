@@ -17,6 +17,7 @@
 #include <Optimization/MultiSession/MultiSessionIterativeSmoothingAndRefinement.hpp>
 #include <RFlowEvaluation/ForBMVCFigure.hpp>
 #include <RFlowEvaluation/AlignVisibilitySet.hpp>
+#include <RFlowEvaluation/AlignICPImagePairs.hpp>
 
 using namespace std;
 
@@ -121,8 +122,7 @@ int main(int argc, char *argv[]) {
         sc.CompareSessions();
         break;}
     case 11:{
-        //std::vector<std::string > dates = {"140106" "140117" "140122" "140129" "140205" "140314" "140409" "140416" "140424" "140502" "140515" "140528" "140606" "140613" "140625" "140707" "140711" "140718" "140723" "140730" "140812" "140821" "140828" "140904" "140911" "140919" "140926" "141003" "141010" "141024" "141029" "141107" "141114" "141121" "141128" "141215" "141222"};
-        std::vector<std::string > dates = {"140502" "140625" "140711" "140718" "140723" "140730" "140812" "140821" "140828" "141003" "141010" "141029" "141107" "141121" "141128" "141215"};
+        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140828", "140904", "140911", "140919", "140926", "141003", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222"};
         //std::vector<std::string > dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140416"};
         Camera axisptz = ParseBoatSurvey::GetCamera();
         ForBMVCFigure forfig(axisptz, dates, pftbase, query_loc, results_dir);
@@ -146,6 +146,14 @@ int main(int argc, char *argv[]) {
         Camera axisptz = ParseBoatSurvey::GetCamera();
         InitialISCAcquisition acq(axisptz, argv[1], argv[2], query_loc, pftbase, results_dir, results_dir + "origin/");
         acq.Run();
+        break;}
+    case 15:{
+        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222"};
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+//        AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates, stoi(argv[4]));
+//        icppairs.AlignImagesRFlow(results_dir + "image_pairs.csv", stoi(argv[1]), stoi(argv[2]));
+        AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates);
+        icppairs.GetResults();
         break;}
     }
     
