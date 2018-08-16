@@ -191,7 +191,7 @@ void SLAMDraw::DrawSight(double x, double y, double yaw, double field_of_view, i
     double SIGHT_LENGTH = 1000;
     
     //add pi/2 to get from pointing right to pointing up.
-    double angle = yaw;//+YAW_OFFSET;
+    double angle = yaw+YAW_OFFSET;
     double top = angle + field_of_view/2.0;
     double bottom = angle - field_of_view/2.0;
     

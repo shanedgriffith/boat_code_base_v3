@@ -35,11 +35,11 @@ public:
     _cam(cam), _dates(dates), _pftbase(pftbase), _query_loc(query_loc), _savebase(results_dir + "aligned_images/"),
     _map_base(results_dir + "maps/")
     {}
-
+    
 	void GetAlignmentAtSection(std::string ref_date, int num, bool viewpoint_variance = false);
     
-    void AlignSection(int num, std::string date1, std::string date2, int offset=0);
-
+    void AlignSection(int num, std::string date1, std::string date2, std::string savedir, int offset=0);
+    
 };
 
 

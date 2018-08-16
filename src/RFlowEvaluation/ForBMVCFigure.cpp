@@ -17,7 +17,7 @@
 using namespace std;
 
 
-void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset){
+void ForBMVCFigure::AlignSection(int num, string date0, string date1, std::string savedir, int offset){
 	/*Used to align each survey to survey 1 */
     
     std::vector<Map> maps;
@@ -53,13 +53,7 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
     string _image0 = ParseSurvey::GetImagePath(_query_loc + date0, por0.cimage[num]);
     string _image1 = ParseSurvey::GetImagePath(_query_loc + date1, por1.cimage[poseloc]);
 
-    string savedir = _savebase + date0 + to_string(num) + "/";
-    FileParsing::MakeDir(savedir);
-    FileParsing::MakeDir(savedir + "rf");
-    FileParsing::MakeDir(savedir + "sf");
-    FileParsing::MakeDir(savedir + "scene");
-    FileParsing::MakeDir(savedir + "mappoints");
-    FileParsing::MakeDir(savedir + "viewpoint");
+    
     
     string _savename_rf =  savedir + "rf/" + date1+"_" +  to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
     string _savename_sf = savedir + "sf/" + date1+"_" + to_string(poseloc) + "_" +to_string(offset)+ "_.jpg";
@@ -74,6 +68,7 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
 //    string _savename_sfbrf = _savebase + to_string(num) + "_warped_sf_basicrf_" + date1+"_" +to_string(offset)+ "_.jpg";
 
     rf[0]->DrawViewset(por0.boat[num], por1.boat[poseloc], _visualize_points);
+    return;
     
     //run image alignment
     SFlowDREAM2RF sf(_cam);
@@ -127,7 +122,17 @@ void ForBMVCFigure::AlignSection(int num, string date0, string date1, int offset
 
 void ForBMVCFigure::GetAlignmentAtSection(string ref_date, int num, bool viewpoint_variance){
 	vector<int> offset = {-15, -10, -5, 0, 5, 10, 15};
-
+    
+    string savedir = _savebase + ref_date + "_" + to_string(num) + "/";
+    FileParsing::MakeDir(savedir);
+    FileParsing::MakeDir(savedir + "rf");
+    FileParsing::MakeDir(savedir + "sf");
+    FileParsing::MakeDir(savedir + "scene");
+    FileParsing::MakeDir(savedir + "mappoints");
+    FileParsing::MakeDir(savedir + "viewpoint");
+    
+    
+    
 	for(int i=0; i<_dates.size(); i++){
         if(ref_date == _dates[i]) continue;
 		if(viewpoint_variance){
@@ -135,7 +140,7 @@ void ForBMVCFigure::GetAlignmentAtSection(string ref_date, int num, bool viewpoi
 				AlignSection(num+offset[j], ref_date, _dates[i], offset[j]);
 			}
 		}
-		else AlignSection(num, ref_date, _dates[i], 0);
+		else AlignSection(num, ref_date, _dates[i], savedir, 0);
 	}
 }
 

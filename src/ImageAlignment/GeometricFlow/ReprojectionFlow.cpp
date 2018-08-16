@@ -473,21 +473,20 @@ void ReprojectionFlow::DrawViewset(std::vector<double> camA, std::vector<double>
     ProjectPoints(camB, valid_indicesB);
     
     SLAMDraw draw;
-    if(drawscale.size()>0) draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);
-    else draw.SetScale(-300,300,-300,300);
+    draw.SetScale(-300,300,-300,300);
     draw.ResetCanvas();
     
     //draw the estimated landmark points
-    for(int i=0; i<_map.map[i].size(); i++) {
-        if(_map.map[i][0] == 0 && _map.map[i][1] == 0 && _map.map[i][2] == 0) continue;
+    for(int i=0; i<_map.map.size(); i++) {
+        if(_map.map[i].x() == 0 && _map.map[i].y() == 0 && _map.map[i].z() == 0) continue;
         if(valid_indicesA[i] && valid_indicesB[i]){
-            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 10000);
+            draw.AddPointLandmark(_map.map[i].x(), _map.map[i].y(), 10000);
         } else if(!valid_indicesA[i] && valid_indicesB[i]){
-            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 5000);
+            draw.AddPointLandmark(_map.map[i].x(), _map.map[i].y(), 5000);
         } else if(valid_indicesA[i] && !valid_indicesB[i]){
-            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 1000);
+            draw.AddPointLandmark(_map.map[i].x(), _map.map[i].y(), 1000);
         }else{
-            draw.AddPointLandmark(_map.map[i][0], _map.map[i][1], 0);
+            draw.AddPointLandmark(_map.map[i].x(), _map.map[i].y(), 0);
         }
     }
     

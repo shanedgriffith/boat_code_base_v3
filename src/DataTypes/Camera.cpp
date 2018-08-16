@@ -16,6 +16,7 @@ bool Camera::InsideImage(gtsam::Point2 p){
 }
 
 gtsam::Point2 Camera::ProjectToImage(gtsam::Point3 p){
+    if(p.z()<0) return gtsam::Point2(-1, -1);
 	return gtsam::Point2((_fx*p.x() + _cx*p.z())/p.z(), (_fy*p.y() + _cy*p.z())/p.z());
 }
 

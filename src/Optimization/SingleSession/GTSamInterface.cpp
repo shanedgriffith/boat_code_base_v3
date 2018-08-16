@@ -30,8 +30,8 @@ std::vector<double> GTSamInterface::PoseToVector(const gtsam::Pose3& cam){
 }
 
 gtsam::Pose3 GTSamInterface::VectorToPose(const std::vector<double>& p){
-//    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 4.0
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 3.2.1
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 4.0
+//    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 3.2.1
 }
 
 void GTSamInterface::SetupIncrementalSLAM() {
