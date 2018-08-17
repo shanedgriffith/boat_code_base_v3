@@ -99,9 +99,9 @@ void AlignImageMachine::RunRFlow() {
     _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
     AlignmentResult ar = AlignImages(_image0, _image1, rf);
     
-    if(_saveloc.find(".jpg")>0)
+    if(_saveloc.find(".jpg") != std::string::npos){
         ar.SaveWarpedImage(_saveloc);
-    else {
+    }else {
         string _savename_rf =  _saveloc + "rf/" + dates[1]+"_" +  to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
         string _savename_ref = _saveloc + "ref_" + dates[0]+"_" + to_string(poseloc0) + "_" +to_string(_offset)+"_.jpg";
         string _savename_im2 = _saveloc + "scene/" + dates[1]+"_" + to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";

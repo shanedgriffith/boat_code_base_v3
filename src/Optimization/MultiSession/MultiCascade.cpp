@@ -220,6 +220,8 @@ void MultiCascade::WeightedAlignment(){
             man.RunMachine(tidx);
         }
         man.WaitForMachine(true);
+        time (&optend);
+        
         apc = 0;
         aoc = 0;
         for(int i=0; i<ac.size(); i++) {
@@ -234,18 +236,18 @@ void MultiCascade::WeightedAlignment(){
         std::cout << "  Updating Error." << std::endl;
         UpdateErrorIterative();
         InlierOutlierStats();
-        
-        time (&optend);
-        if(filterbad) {
-            if(apc < 0.01) break;
-        }
-        if(apc < 0.01) filterbad = true;
-        
+        SaveResults();
         time (&end);
+        
         double optruntime = difftime (optend, optstart);
         double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
         printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
+        
+        if(filterbad) {
+            if(apc < 0.01) break;
+        }
+        if(apc < 0.01) filterbad = true;
     }
 }
 

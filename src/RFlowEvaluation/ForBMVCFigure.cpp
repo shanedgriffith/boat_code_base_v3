@@ -37,13 +37,13 @@ void ForBMVCFigure::MakeTimelapse(std::string ref_date, int num, bool viewpoint_
     }
     
     vector<int> offset = {-15, -10, -5, 0, 5, 10, 15};
-    for(int i=0; i<offset.size(); i++){
-        if(!viewpoint_variance && offset[i] != 0) continue;
+    for(int off=0; off<offset.size(); off++){
+        if(!viewpoint_variance && offset[off] != 0) continue;
         for(int i=0; i<_dates.size(); i++){
             if(ref_date == _dates[i]) continue;
             int tidx = man.GetOpenMachine();
             ws[tidx]->Setup(num, savedir);
-            ws[tidx]->SetOffset(offset[i]);
+            ws[tidx]->SetOffset(offset[off]);
             ws[tidx]->SetMaps({&maps[d1], &maps[i]});
             ws[tidx]->SetDates({ref_date, _dates[i]});
             ws[tidx]->SetPOR({&por[d1], &por[i]});

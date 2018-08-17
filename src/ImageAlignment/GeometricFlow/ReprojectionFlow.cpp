@@ -169,7 +169,7 @@ int ReprojectionFlow::IdentifyClosestPose(vector<vector<double> >& camA, vector<
 		if(debug){
 			cout << "    ["<<ct[0] << " | " << ct[1] << "]" << endl;
 			cout << "    [  "<<ct[2] << "  |  " << ct[3] << " ]" << endl;
-			cout << "  G: " << gstatistic << endl;
+			cout << "  G["<< i <<"]: " << gstatistic << endl;
 			cout << endl;
 		}
     }

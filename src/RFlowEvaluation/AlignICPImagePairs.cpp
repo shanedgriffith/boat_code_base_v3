@@ -93,6 +93,52 @@ void AlignICPImagePairs::AlignTimelapsesRFlow(std::string dirnum){
     std::cout << "Finished aligning images  " << std::endl;
 }
 
+void AlignICPImagePairs::AlignTimelapsesSFlow(std::string dirnum){
+    std::string base = "/home/shaneg/data/timelapses/" + dirnum + "/";
+    std::string csvfile = base + "image_all_pairs.csv";
+    
+    FILE * fp = fopen(csvfile.c_str(), "r");
+    if(!fp){
+        std::cout << "couldn't open " << csvfile << std::endl;
+        exit(1);
+    }
+    
+    char line[1000];
+    while(fgets(line, 999, fp)){
+        char * tmp = line;
+        std::vector<std::string> lp = ParseLineAdv(tmp, ",");
+        if(lp[0]=="#")continue;
+        int d1 = DateToIdx(stoi(lp[1]));
+        if(d1 < 0) continue;
+        std::cout << "Aligning images for " << lp[1] << "_" << lp[2] << std::endl;
+        
+        int refnum = stoi(lp[2]);
+        std::string savebase = base + lp[1] + "_" + PaddedInt(refnum) + "/warpsf/";
+        FileParsing::MakeDir(savebase);
+        
+        for(int i=3; i<39; i++){
+            int d2 = i-3;
+            if(d2 == d1) continue;
+            
+            int alignnum = stoi(lp[i]);
+            if(alignnum==-1) continue;
+            
+            int tidx = man.GetOpenMachine();
+
+            std::string _image0 = base + lp[1] + "_" + PaddedInt(refnum) + "/reference.jpg";
+            std::string _image1 = base + lp[1] + "_" + PaddedInt(refnum) + "/warp/warp_" + _dates[d2] + "_" + PaddedInt(alignnum) + ".jpg";
+            std::string savename = savebase + "warpsf_" + _dates[d2] + "_" + PaddedInt(alignnum) + ".jpg";
+            
+            ws[tidx]->SetImages(_image0, _image1, savename);
+            man.RunMachine(tidx);
+        }
+        man.WaitForMachine(true);
+    }
+    fclose(fp);
+    
+    std::cout << "Finished aligning images  " << std::endl;
+}
+
 void AlignICPImagePairs::AlignImagesRFlow(std::string file, int firstidx, int lastidx){
     std::vector<std::vector<int> > imgparams = ReadCSVFile(file, firstidx, lastidx);
     std::vector<ParseOptimizationResults> por;

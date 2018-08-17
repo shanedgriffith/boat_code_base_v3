@@ -154,7 +154,8 @@ int main(int argc, char *argv[]) {
 //        AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates, stoi(argv[4]));
 //        icppairs.AlignImagesRFlow(results_dir + "image_pairs.csv", stoi(argv[1]), stoi(argv[2]));
         AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates);
-        icppairs.GetResults();
+//        icppairs.GetResults();
+        icppairs.AlignTimelapsesSFlow(argv[1]);
         break;}
     }
     

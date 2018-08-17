@@ -60,6 +60,7 @@ public:
     void GetResults();
     
     void AlignTimelapsesRFlow(std::string dirnum);
+    void AlignTimelapsesSFlow(std::string dirnum);
 };
 
 
