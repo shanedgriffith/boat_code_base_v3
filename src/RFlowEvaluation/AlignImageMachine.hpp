@@ -19,13 +19,14 @@
 
 class AlignImageMachine: public AlignmentMachine {
 private:
-    AlignmentResult RunSFlowWithRF(std::vector<ReprojectionFlow*> rf, std::string image1, std::string image2);
+    AlignmentResult AlignImages(std::string image1, std::string image2, std::vector<ReprojectionFlow*> rf = {});
     
     std::vector<Map*> maps;
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
     int poseloc0, poseloc1;
     std::string _saveloc;
+    int _offset;
     bool basic;
     std::string _image0, _image1;
     
@@ -48,6 +49,7 @@ public:
     void SetPOR(std::vector<ParseOptimizationResults*> pores){por=pores;}
     void SetDates(std::vector<std::string> d){dates=d;}
     void SetMaps(std::vector<Map*> m){maps = m;}
+    void SetOffset(int offset);
 };
 
 #endif /* SRC_RFLOWEVALUATION_ALIGNIMAGEMACHINE_HPP_ */

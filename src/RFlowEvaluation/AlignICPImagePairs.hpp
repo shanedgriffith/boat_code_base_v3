@@ -26,6 +26,9 @@ private:
     int DateToIdx(int date);
     std::vector<std::vector<int> > ReadCSVFile(std::string file, int firstidx, int lastidx);
     
+    std::vector<std::string> ParseLineAdv(char * line, std::string separator);
+    std::string PaddedInt(int num);
+    
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
     
@@ -55,6 +58,8 @@ public:
     void AlignImagesSFlow(std::string file, int firstidx, int lastidx);
     void AlignImagesWarped();
     void GetResults();
+    
+    void AlignTimelapsesRFlow(std::string dirnum);
 };
 
 

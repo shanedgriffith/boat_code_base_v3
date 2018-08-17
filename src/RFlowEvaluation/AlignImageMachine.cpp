@@ -41,11 +41,12 @@ void AlignImageMachine::Reset(){
     dates = {};
     maps = {};
     _saveloc = "";
+    _offset = 0;
 }
 
-AlignmentResult AlignImageMachine::RunSFlowWithRF(vector<ReprojectionFlow*> rf, string image1, string image2){
+AlignmentResult AlignImageMachine::AlignImages(string image1, string image2, vector<ReprojectionFlow*> rf){
     SFlowDREAM2RF sf(_cam);
-    sf.SetReprojectionFlow(rf);
+    if(rf.size() > 0) sf.SetReprojectionFlow(rf);
     sf.SetEpipolar();
     sf.SetTwoCycleConsistency();
     sf.ConstructImagePyramid(image1, image2);
@@ -61,13 +62,12 @@ void AlignImageMachine::SetImages(std::string i0, std::string i1, std::string sa
     _saveloc = savename;
 }
 
+void AlignImageMachine::SetOffset(int offset){
+    _offset = offset;
+}
+
 void AlignImageMachine::RunSFlow(){
-    SFlowDREAM2RF sf(_cam);
-    sf.SetEpipolar();
-    sf.SetTwoCycleConsistency();
-    sf.ConstructImagePyramid(_image0, _image1);
-    sf.AlignImages();
-    AlignmentResult ar = sf.GetAlignmentResult();
+    AlignmentResult ar = AlignImages(_image0, _image1);
     ar.SaveWarpedImage(_saveloc);
 }
 
@@ -77,10 +77,11 @@ void AlignImageMachine::RunRFlow() {
     ReprojectionFlow r2(_cam, *maps[1]);
     rf.push_back(&r1);
     rf.push_back(&r2);
-
+    
     if(poseloc1 == -1) {
         double gstatistic = 0;
-        poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0], &gstatistic);
+        int poseloc0WithOffset = std::max(0, std::min(poseloc0+offset, por[0]->boat.size()-1));
+        poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0WithOffset], &gstatistic);
         if(poseloc1 == -1)  return;
     }
 
@@ -94,12 +95,32 @@ void AlignImageMachine::RunRFlow() {
     rf[0]->CreateRestrictedSet(stoi(dates[0]), pftf0);
     rf[1]->CreateRestrictedSet(stoi(dates[1]), pftf1);
     
-    string _image0 = ParseSurvey::GetImagePath(_query_loc + dates[0], por[0]->cimage[poseloc0]);
-    string _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
-    AlignmentResult ar = RunSFlowWithRF(rf, _image0, _image1);
+    _image0 = ParseSurvey::GetImagePath(_query_loc + dates[0], por[0]->cimage[poseloc0]);
+    _image1 = ParseSurvey::GetImagePath(_query_loc + dates[1], por[1]->cimage[poseloc1]);
+    AlignmentResult ar = AlignImages(_image0, _image1, rf);
     
-//    ar.Save(_saveloc);
-    ar.SaveWarpedImage(_saveloc);
+    if(_saveloc.find(".jpg")>0)
+        ar.SaveWarpedImage(_saveloc);
+    else {
+        string _savename_rf =  _saveloc + "rf/" + dates[1]+"_" +  to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
+        string _savename_ref = _saveloc + "ref_" + dates[0]+"_" + to_string(poseloc0) + "_" +to_string(_offset)+"_.jpg";
+        string _savename_im2 = _saveloc + "scene/" + dates[1]+"_" + to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
+        string _savename_up = _saveloc + "mappoints/" + dates[1]+"_" + to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
+        string _savename_refp = _saveloc + "mappoints/ref_" + dates[1]+"_" + to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
+        string _visualize_points = _saveloc + "viewpoint/" + dates[1]+"_" + to_string(poseloc1) + ".jpg";
+        
+        rf[0]->DrawViewset(por[0]->boat[poseloc0], por[1]->boat[poseloc1], _visualize_points);
+        ar.SaveWarpedImage(_savename_rf);
+        ImageOperations::Save(ar.ref, _savename_ref);
+        ImageOperations::Save(ar.im2, _savename_im2);
+        rf[0]->DrawFlowPoints(ar.im2);
+        ImageOperations::Save(ar.im2, _savename_up);
+        rf[0]->DrawMapPoints(ar.ref);
+        ImageOperations::Save(ar.ref, _savename_refp);
+        
+        _saveloc =  _saveloc + "sf/" + dates[1]+"_" +  to_string(poseloc1) + "_" +to_string(_offset)+ "_.jpg";
+        RunSFlow();
+    }
 }
 
 void * AlignImageMachine::Run() {

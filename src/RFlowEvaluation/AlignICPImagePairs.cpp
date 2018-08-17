@@ -12,6 +12,85 @@ int AlignICPImagePairs::DateToIdx(int date){
     for(int i=0; i<_dates.size(); i++){
         if(d == _dates[i]) return i;
     }
+    return -1;
+}
+
+
+std::vector<std::string> AlignICPImagePairs::ParseLineAdv(char * line, std::string separator) {
+    std::vector<std::string> parsedline;
+    int idx = 0;
+    const char* tok;
+    for (tok = strtok(line, separator.c_str());
+         tok && *tok;
+         tok = strtok(NULL, std::string(separator+"\n").c_str()))
+    {
+        parsedline.push_back(tok);
+        idx++;
+    }
+    return parsedline;
+}
+
+std::string AlignICPImagePairs::PaddedInt(int num){
+    char n[7];
+    sprintf(n, "%06d", num);
+    std::string res(n);
+    return res;
+}
+
+void AlignICPImagePairs::AlignTimelapsesRFlow(std::string dirnum){
+    std::vector<ParseOptimizationResults> por;
+    std::vector<Map> maps;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults(_maps_dir, _dates[i]));
+        maps.push_back(Map(_maps_dir));
+        maps[i].LoadMap(_dates[i]);
+    }
+    
+    std::string base = "/home/shaneg/data/timelapses/" + dirnum + "/";
+    std::string csvfile = base + "image_all_pairs.csv";
+    
+    FILE * fp = fopen(csvfile.c_str(), "r");
+    if(!fp){
+        std::cout << "couldn't open " << csvfile << std::endl;
+        exit(1);
+    }
+    
+    char line[1000];
+    while(fgets(line, 999, fp)){
+        char * tmp = line;
+        std::vector<std::string> lp = ParseLineAdv(tmp, ",");
+        if(lp[0]=="#")continue;
+        int d1 = DateToIdx(stoi(lp[1]));
+        if(d1 < 0) continue;
+        std::cout << "Aligning images for " << lp[1] << "_" << lp[2] << std::endl;
+        
+        int refnum = stoi(lp[2]);
+        std::string savebase = base + lp[1] + "_" + PaddedInt(refnum) + "/rf/";
+        FileParsing::MakeDir(savebase);
+        int pose1 = por[d1].GetNearestPoseToImage(refnum);
+        
+        for(int i=3; i<39; i++){
+            int d2 = i-3;
+            if(d2 == d1) continue;
+            
+            int alignnum = stoi(lp[i]);
+            if(alignnum==-1) continue;
+            
+            int tidx = man.GetOpenMachine();
+            int pose2 = por[d2].GetNearestPoseToImage(alignnum);
+            
+            std::string savename = savebase + _dates[d2] + "_" + PaddedInt(alignnum) + ".jpg";
+            ws[tidx]->Setup(pose1, savename, pose2);
+            ws[tidx]->SetMaps({&maps[d1], &maps[d2]});
+            ws[tidx]->SetDates({_dates[d1], _dates[d2]});
+            ws[tidx]->SetPOR({&por[d1], &por[d2]});
+            man.RunMachine(tidx);
+        }
+        man.WaitForMachine(true);
+    }
+    fclose(fp);
+    
+    std::cout << "Finished aligning images  " << std::endl;
 }
 
 void AlignICPImagePairs::AlignImagesRFlow(std::string file, int firstidx, int lastidx){
@@ -116,6 +195,7 @@ std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFile(std::string file,
         std::vector<int> toalign = {idx, date0, img0num, date1, img1num};
         imgparams.push_back(toalign);
     }
+    fclose(fp);
     return imgparams;
 }
 
