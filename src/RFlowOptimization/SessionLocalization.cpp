@@ -82,8 +82,8 @@ int SessionLocalization::FindRestart() {
 
 void SessionLocalization::Initialize(){
     debug = true;
-    if(!FileParsing::DirectoryExists(_map_dir) || !FileParsing::DirectoryExists(_store_dir)){
-        std::cout << "SessionLocalization::Initialize() Error: Setup " << _map_dir << " and " << _store_dir << std::endl;
+    if(!FileParsing::DirectoryExists(_map_dir) || !FileParsing::DirectoryExists(_store_dir + _date)){
+        std::cout << "SessionLocalization::Initialize() Error: Setup " << _map_dir << " and " << _store_dir + _date << std::endl;
         exit(-1);
     }
     
@@ -336,8 +336,8 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
         logdata[2] = res[bestidx].s0time;
         logdata[4] = perc_dc[bestidx];
         if(hasverified) {
-            back_two = lpdi.StoreLPD(_store_dir, *toverify);
-            lpdi.StoreLPD(_store_dir, res[bestidx]);
+            back_two = lpdi.StoreLPD(_store_dir + _date, *toverify);
+            lpdi.StoreLPD(_store_dir + _date, res[bestidx]);
             logdata[5] = 1.0;
         } //else res[bestidx].Save(_store_dir + _date, "/unverified/"); //rather than save unverified, save all the verified, and use a different naming convention.
         lpdi.SetMostAdvLPD(res[bestidx]);

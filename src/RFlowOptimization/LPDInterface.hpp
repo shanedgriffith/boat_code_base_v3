@@ -35,7 +35,7 @@ public:
     }
     
     int GetLPDIdx(int por1time);
-    bool StoreLPD(std::string _map_dir, LocalizedPoseData lpd);
+    bool StoreLPD(std::string path, LocalizedPoseData lpd);
     LocalizedPoseData* NearestLPD(int s1time);
     int NearestLPDTime(int s1time);
     int LoadLocalizations(std::string path, std::vector<std::string> dates = {});
