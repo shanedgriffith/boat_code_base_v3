@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        SessionLocalization acq(axisptz, argv[1], query_loc, pftbase, results_dir, "mapsinpar/");
+        SessionLocalization acq(axisptz, argv[1], query_loc, pftbase, results_dir);
         acq.Run(start);
         break;}
     case 13:{
@@ -154,8 +154,11 @@ int main(int argc, char *argv[]) {
 //        AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates, stoi(argv[4]));
 //        icppairs.AlignImagesRFlow(results_dir + "image_pairs.csv", stoi(argv[1]), stoi(argv[2]));
         AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates);
-//        icppairs.GetResults();
-        icppairs.AlignTimelapsesSFlow(argv[1]);
+        //        icppairs.GetResults();
+        std::string argnum(argv[1]);
+        std::string argdate(argv[2]);
+        icppairs.GetResultsTimelapse(argnum, argdate);
+//        icppairs.AlignTimelapsesSFlow(argv[1]);
         break;}
     }
     

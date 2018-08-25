@@ -313,6 +313,55 @@ void AlignICPImagePairs::GetResults(){
 }
 
 
+void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string argdate){
+    std::string rootdir = "/Users/shane/Documents/research/results/random timelapses/000" + argnum + "/" +argdate +"/";
+    std::string rfbase = rootdir + "rf/";
+    std::string sfbase = rootdir + "warpsf/";
+    std::string reference = rootdir + "reference.jpg";
+//    std::string wbase = "/Users/shane/Documents/research/experiments/pairs_unaligned/warp/";
+    //    std::string sfbase = "/Users/shane/Documents/research/experiments/sf_pairs/";
+//    std::string file = "/Users/shane/Documents/research/experiments/image_pairs.csv";
+    
+    
+    std::vector<std::string> rffiles = FileParsing::ListFilesInDir(rfbase, "jpg");
+    std::vector<std::string> warpsffiles = FileParsing::ListFilesInDir(sfbase, "jpg");
+    
+    cv::Mat ref = ImageOperations::Load(reference);
+    std::vector<int> counter(3,0);
+    
+    FlickeringDisplay fd;
+    for(int i=0; i<rffiles.size(); i++) {
+        int idxW = -1;
+        for(int j=0; j<warpsffiles.size(); j++){
+            if(warpsffiles[j].find(rffiles[i])!=std::string::npos) {idxW = j; break;}
+        }
+        if(idxW==-1) continue;
+        std::cout << "files: " << rfbase + rffiles[i] << "\n       " << sfbase + warpsffiles[idxW] << std::endl;
+        
+        cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
+        cv::Mat Imsf = ImageOperations::Load(sfbase + warpsffiles[idxW]);
+        
+        cv::Mat refx2 = FlickeringDisplay::CombinedImage(ref, ref);
+        cv::Mat rfsf = FlickeringDisplay::CombinedImage(Imsf, Imrf);
+        
+        char c = fd.FlickerImages(refx2, rfsf);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+        }
+        std::cout << ""<<c << std::endl;
+        std::cout << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
 
 
 

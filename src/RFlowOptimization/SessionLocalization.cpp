@@ -25,12 +25,15 @@ using namespace std;
 const string SessionLocalization::_logname = "/RFlowISC.log";
 
 //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
-SessionLocalization::SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir, std::string store):
-_cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/"), _store_dir(results_dir + "maps/") {
+SessionLocalization::SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir):
+_cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/"), _store_dir(results_dir) {
     
-    if(store.length()>0)
-        _store_dir = results_dir + store;
-    std::cout << "Adding IS constraints." << std::endl;
+    std::cout << "Acquiring IS constraints." << std::endl;
+    
+    if(_store_dir.compare(_map_dir) !=0 ){
+        std::cout << "SessionLocalization error. The session will be localized to the preexisting map and shouldn't be part of it." << std::endl;
+    }
+    
     Initialize();
 }
 
@@ -85,12 +88,6 @@ void SessionLocalization::Initialize(){
     }
     
     vector<string> dates = FileParsing::ListFilesInDir(_map_dir, "1");
-    if(dates.size() <= 1 || (dates[dates.size()-1].compare(_date) != 0 && _store_dir.compare(_map_dir) == 0)){
-        std::cout << "SessionLocalization::Initialize() Error: 'maps/' doesn't have " << _date << std::endl;
-        exit(-1);
-    } else if(dates[dates.size()-1].compare(_date)==0) {
-        dates.erase(dates.begin() + dates.size()-1);
-    }
     
     std::cout << "Loading maps."<<std::endl;
     bool hasdate = false;
@@ -109,22 +106,16 @@ void SessionLocalization::Initialize(){
         survey_est.push_back(sd);
     }
     
-    std::string store = _map_dir;
-    if(_store_dir.compare(_map_dir) !=0 ){
-        store = _store_dir;
-    }
     std::cout<<"  survey "<<_date<<std::endl;
     
-    //add the unoptimized survey. this is the last one in the set.
-    lpdi.LoadLocalizations(store + _date);
-    
-    _maps.push_back( new Map(store));
+    lpdi.LoadLocalizations(_store_dir + _date);
+    _maps.push_back( new Map(_store_dir));
     _maps[_maps.size()-1]->LoadMap(_date);
     
     for(int i=0; i<nthreads; i++)
         rf_latest.push_back(new ReprojectionFlow(_cam, *_maps[_maps.size()-1]));
     
-    ParseOptimizationResults por(store, _date);
+    ParseOptimizationResults por(_store_dir, _date);
     SurveyData sd = { _date, por, 0.0 };
     survey_est.push_back(sd);
     latestsurvey = survey_est.size()-1;

@@ -58,6 +58,7 @@ public:
     void AlignImagesSFlow(std::string file, int firstidx, int lastidx);
     void AlignImagesWarped();
     void GetResults();
+    void GetResultsTimelapse(std::string argnum, std::string argdate);
     
     void AlignTimelapsesRFlow(std::string dirnum);
     void AlignTimelapsesSFlow(std::string dirnum);

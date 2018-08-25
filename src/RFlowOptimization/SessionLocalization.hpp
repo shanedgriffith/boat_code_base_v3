@@ -79,7 +79,7 @@ public:
     bool debug = false;
     int nthreads = 8;
     
-    SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir, std::string store="");
+    SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir);
     
     void Run(int user_specified_start=-1);
 };
