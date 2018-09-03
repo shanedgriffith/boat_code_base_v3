@@ -37,7 +37,7 @@ std::string AlignICPImagePairs::PaddedInt(int num){
     return res;
 }
 
-void AlignICPImagePairs::AlignTimelapsesRFlow(std::string dirnum){
+void AlignICPImagePairs::AlignTimelapsesRFlow(std::string dirnum) {
     std::vector<ParseOptimizationResults> por;
     std::vector<Map> maps;
     for(int i=0; i<_dates.size(); i++){
@@ -317,15 +317,20 @@ void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string arg
     std::string rootdir = "/Users/shane/Documents/research/results/random timelapses/000" + argnum + "/" +argdate +"/";
     std::string rfbase = rootdir + "rf/";
     std::string sfbase = rootdir + "warpsf/";
-    std::string reference = rootdir + "reference.jpg";
-//    std::string wbase = "/Users/shane/Documents/research/experiments/pairs_unaligned/warp/";
-    //    std::string sfbase = "/Users/shane/Documents/research/experiments/sf_pairs/";
-//    std::string file = "/Users/shane/Documents/research/experiments/image_pairs.csv";
+    std::string sfref = rootdir + "reference.jpg";
     
+    std::string date = argdate.substr(0, 6);
+    int ref_num = stoi(argdate.substr(7, 13));
+    
+    ParseOptimizationResults POR(_maps_dir, date);
+    int pose1 = POR.GetNearestPoseToImage(ref_num);
+    int image_num = POR.cimage[pose1];
+    std::string reference = ParseSurvey::GetImagePath(_query_loc + date, image_num);
     
     std::vector<std::string> rffiles = FileParsing::ListFilesInDir(rfbase, "jpg");
     std::vector<std::string> warpsffiles = FileParsing::ListFilesInDir(sfbase, "jpg");
     
+    cv::Mat Imsfref = ImageOperations::Load(sfref);
     cv::Mat ref = ImageOperations::Load(reference);
     std::vector<int> counter(3,0);
     
@@ -338,10 +343,11 @@ void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string arg
         if(idxW==-1) continue;
         std::cout << "files: " << rfbase + rffiles[i] << "\n       " << sfbase + warpsffiles[idxW] << std::endl;
         
+        
         cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
         cv::Mat Imsf = ImageOperations::Load(sfbase + warpsffiles[idxW]);
         
-        cv::Mat refx2 = FlickeringDisplay::CombinedImage(ref, ref);
+        cv::Mat refx2 = FlickeringDisplay::CombinedImage(Imsfref, ref);
         cv::Mat rfsf = FlickeringDisplay::CombinedImage(Imsf, Imrf);
         
         char c = fd.FlickerImages(refx2, rfsf);

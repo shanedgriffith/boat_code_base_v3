@@ -130,7 +130,7 @@ vector<double> InitialISCAcquisition::EstimateNextPose(int survey, int time, int
 int InitialISCAcquisition::RFViewpointSelection(vector<double>& rfpose){
     //Step 2: run rf viewpoint selection to get the ~best pose for all the surveys within three months.
     //the three month check is performed within MultiSurveyViewpointSelection.
-    
+    std::cout << "InitialISCAcquisition::RFViewpointSelection()" << std::endl;
     double g=0;
     int por0time = rf[0]->IdentifyClosestPose(survey_est[0].por.boat, rfpose, &g, false);
     if(g==0) return -1;
@@ -226,7 +226,7 @@ bool InitialISCAcquisition::GetConstraints(int por1time, bool hasRF){
         string image1 = ParseSurvey::GetImagePath(_query_loc + latest.date, latest.por.cimage[por1time]);
         por0time = IdentifyClosestPose(pose1_est, image1);
     }
-    
+    std::cout << "InitialISCAcquisition::GetConstraints() find localization" << std::endl;
     clock_gettime(CLOCK_MONOTONIC, &runir);
     std::vector<double> logdata = FindLocalization(por0time, por1time, hasRF, pose1_est);
     clock_gettime(CLOCK_MONOTONIC, &end);

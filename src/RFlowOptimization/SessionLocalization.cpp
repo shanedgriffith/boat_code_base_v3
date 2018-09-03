@@ -65,7 +65,7 @@ int SessionLocalization::FindRestart() {
     fin.open(fname);
     if(fin.is_open()) {
         fin.seekg(-2, ios_base::end);//position -2 from the end (assumes \n is the last char)
-        while(fin.tellg() > 1) {
+        while(fin.tellg() > 0) {
             char ch=0;
             fin.get(ch); //pos +1 from cur
             if(ch == '\n') break;
@@ -73,8 +73,13 @@ int SessionLocalization::FindRestart() {
         }
 
         string lastLine;
-        getline(fin,lastLine,',');                      // Read the current line, up to comma
+        try {
+            getline(fin,lastLine,',');                      // Read the current line, up to comma
         if(lastLine.length() > 6) res = stoi(lastLine);
+        } catch(std::exception& e){
+            std::cout << "SessionLocalization::FindRestart() " << fname << " " << lastLine << "\n"<< e.what() << std::endl;
+            exit(-1);
+        }
         fin.close();
     }
     return res+1;
@@ -229,18 +234,22 @@ std::vector<std::vector<double> > SessionLocalization::IdentifyClosestPose(vecto
         //acquire the covisible set for refsurvidx.por0time
         std::vector<double> rfpose = survey_est[refsurvidx].por.boat[por0time];
         current_topk = RFViewpointSelection(rfpose);
+        if(current_topk.size() == 0) continue;
         
         //Check if image retrieval found a verified alignment.
         if(verval >= verification_threshold) {
             withinthree.erase(iterator);
             withinthree.push_front(refsurvidx);
             
+            int maxidx = std::min(nthreads, (int) current_topk.size());
+            
             //ensure the verified one made it into the top of the list.
-            for(int i=0; i<nthreads; i++)
+            for(int i=0; i<maxidx; i++)
                 if(current_topk[i][0] == refsurvidx)
                     return current_topk;
-            current_topk[nthreads-1][0] = refsurvidx;
-            current_topk[nthreads-1][1] = por0time;
+            
+            current_topk[maxidx-1][0] = refsurvidx;
+            current_topk[maxidx-1][1] = por0time;
             
             return current_topk;
         }
@@ -256,14 +265,16 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
     //topk: vector of {snum, portime, gstat};
     vector<double> logdata = {(double)por1time, -1.0, -1.0, (double) hasRF, -1.0, 0.0};
     if(topk.size()==0) return logdata;
-    
-    MachineManager man;
-    vector<ImageToLocalization*> ws;
     int loc_nthreads = min(nthreads, (int) topk.size());
-    for(int i=0; i<loc_nthreads; i++) {
-        ws.push_back(new ImageToLocalization(_cam, _map_dir, _query_loc, _pftbase));
-        ws[i]->SetDebug();
-        man.AddMachine(ws[i]);
+    
+    static MachineManager man;
+    static vector<ImageToLocalization*> ws;
+    if(ws.size() == 0) {
+        for(int i=0; i<loc_nthreads; i++) {
+            ws.push_back(new ImageToLocalization(_cam, _map_dir, _query_loc, _pftbase));
+            ws[i]->SetDebug();
+            man.AddMachine(ws[i]);
+        }
     }
     
     LocalizedPoseData * toverify = NULL;
@@ -271,13 +282,13 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
     else toverify = &lpdi.most_adv_lpd;
     gtsam::Pose3 p1_tm1;
     if(toverify->IsSet()) p1_tm1 = survey_est[survey_est.size()-1].por.CameraPose(toverify->s1time);
-
+    
     std::cout << " The most adv lpd is: " << lpdi.most_adv_lpd.s1time << ". The one used for LPD verification is: " << toverify->s1time << std::endl;
-
+    
     vector<LocalizedPoseData> res(loc_nthreads);
     vector<double> perc_dc(loc_nthreads, 0.0);
     vector<double> verified(loc_nthreads, 0.0);
-
+    
     //run alignment and localization in parallel among the topk
     for(int i=0; i<loc_nthreads; i++) {
         int tidx = man.GetOpenMachine();
@@ -343,7 +354,7 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
         lpdi.SetMostAdvLPD(res[bestidx]);
     }
 
-    for(int i=0; i<loc_nthreads; i++) delete(ws[i]);
+    //for(int i=0; i<loc_nthreads; i++) delete(ws[i]);
     return logdata;
 }
 
@@ -403,7 +414,7 @@ void SessionLocalization::Run(int user_specified_start){
     if(user_specified_start > 0) {
         por1time = user_specified_start;
     } else if(leftoffat > por1time) {
-        if(leftoffat - por1time <= MAX_NO_ALIGN) {
+        if(leftoffat - por1time <= MAX_NO_ALIGN && por1time != 0) {
             haveconstraints = true;
         }
         por1time = leftoffat;
