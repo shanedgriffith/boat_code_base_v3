@@ -18,12 +18,14 @@
 #include <RFlowEvaluation/ForBMVCFigure.hpp>
 #include <RFlowEvaluation/AlignVisibilitySet.hpp>
 #include <RFlowEvaluation/AlignICPImagePairs.hpp>
+#include <Optimization/MultiSession/LocalizeSessionToSet.hpp>
 
 using namespace std;
 
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
-vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
+//vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
+vector<string> home_paths = {"/Users/shanehome/Documents/Research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
 
 
 int main(int argc, char *argv[]) {

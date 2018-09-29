@@ -164,7 +164,7 @@ LocalizedPoseData LocalizedPoseData::Read(string filepath){
     return l;
 }
 
-std::vector<LocalizedPoseData> LocalizedPoseData::LoadAll(string toppath, string altpath, std::vector<std::string> dates){
+std::vector<LocalizedPoseData> LocalizedPoseData::LoadAll(std::string toppath, std::string altpath, std::vector<std::string> dates){
     string dirpath = toppath + lpath;
     if(altpath.length()>0) dirpath = toppath + altpath;
     std::vector<LocalizedPoseData> res;

@@ -35,21 +35,24 @@ protected:
     std::vector<double> lpd_eval;
     std::vector<double> lpd_sum;
     int outliers;
-    vector<double> inter_error;
+    std::vector<double> inter_error;
+    LPDInterface lpdi;
     
     std::vector<std::vector<double> > poses;
     std::vector<std::vector<double> > landmarks;
     ParseOptimizationResults originPOR;
     
-    void ConstructFactorGraph();
+    
+    void LoadFTF(ParseOptimizationResults& datePOR);
+    
     void ConstructFactorGraph();
     int SessionToNum(std::string session);
     void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise);
     void AddLocalizations();
     void Run();
-    std::vector<bool> LPDInlierTest(int l, double LPD_RERROR_THRESHOLD, vector<double>& error);
+    std::vector<bool> LPDInlierTest(int l, double LPD_RERROR_THRESHOLD, std::vector<double>& error);
     int EvaluateLPD(int j);
-    double UpdateErrorAdaptive();
+    double UpdateError();
     void Initialize();
     bool CheckSave();
     void SaveResults();
@@ -63,7 +66,7 @@ public:
     
     LocalizeSessionToSet(Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks = 100.0);
     
-    LocalizeSessionToSet(){
+    ~LocalizeSessionToSet(){
         delete(rfFG);
     }
     

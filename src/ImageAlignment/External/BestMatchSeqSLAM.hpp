@@ -78,8 +78,8 @@ private:
     
 	typedef struct{
 		double angle;
-		Point2f origin;
-		Point2f end;
+        cv::Point2f origin;
+		cv::Point2f end;
 	}match_vector;
 
 	typedef struct{
@@ -87,14 +87,14 @@ private:
 		std::vector<cv::Point2d> pnew;
 	}correspondences;
 
-	bool InsideImage(Point2f p, int width, int height);
+	bool InsideImage(cv::Point2f p, int width, int height);
 	match_vector GenerateRandomVector(int width, int height);
 	std::vector<std::vector<std::vector<double> > > GetDifferenceMatrices(match_vector mv, cv::Mat pn1, cv::Mat pn2);
 	cv::Point2d GetMatch(std::vector<std::vector<std::vector<double> > > difference_vectors);
 	void AddToCorrespondences(correspondences& cs, cv::Point2d p, match_vector mv, int height, int width);
 	cv::Mat FlowFieldFromHomography(cv::Mat homography, int height, int width);
-    std::vector<Point2d> GenerateMatchVector(int idx1, int idx2, Point2d p1, Point2d p2);
-    std::vector<Point2d> GetBestMatchVector(std::vector<std::vector<std::vector<double> > >& difference_vectors);
+    std::vector<cv::Point2d> GenerateMatchVector(int idx1, int idx2, Point2d p1, Point2d p2);
+    std::vector<cv::Point2d> GetBestMatchVector(std::vector<std::vector<std::vector<double> > >& difference_vectors);
     void AddSeqToCorrespondences(correspondences& cs, std::vector<cv::Point2d> ps, match_vector mv, int height, int width);
 
 public:

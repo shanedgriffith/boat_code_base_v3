@@ -65,7 +65,7 @@ double BestMatchSeqSLAM::SumOfAbsDifference(cv::Mat& image1, cv::Mat& image2){
 
 std::pair<double, double> BestMatchSeqSLAM::ComputeMeanAndStd(std::vector<double>& D, int s, int e){
 	boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::variance> > acc;
-	std::for_each(D.begin()+s, D.begin()+e, bind<void>(ref(acc), _1));
+    std::for_each(D.begin()+s, D.begin()+e, std::bind<void>(std::ref(acc), _1));
 	return std::pair<double, double>(boost::accumulators::mean(acc), std::sqrt((double)boost::accumulators::variance(acc)));
 }
 
@@ -80,7 +80,7 @@ std::vector<double> BestMatchSeqSLAM::LocalConstrastEnhancement(std::vector<doub
 			s += abs(s);
 		}
 		if(e>D.size()){
-			s = max(0, (int)D.size() - s); //s - (e - D.size())
+            s = std::max(0, (int)D.size() - s); //s - (e - D.size())
 			e = D.size(); //e - (e - D.size());
 		}
 		std::pair<double, double> ms = ComputeMeanAndStd(D, s, e);

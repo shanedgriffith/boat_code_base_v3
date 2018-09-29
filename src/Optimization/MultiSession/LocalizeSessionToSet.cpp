@@ -1,14 +1,16 @@
 #include <FileParsing/FileParsing.hpp>
+#include <RFlowOptimization/LocalizePose.hpp>
+#include <RFlowOptimization/HopcountLog.hpp>
 
+#include "LocalizeSessionToSet.hpp"
 
-//const std::string LocalizeSessionToSet::locmapdir = "../localized_maps/";
-
-LocalizeSessionToSet(Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks = 100.0):
+LocalizeSessionToSet::LocalizeSessionToSet(Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks):
 SurveyOptimizer(cam, rfFG, date, loc_map_dir, false),
-    _cam(cam), _ref_map_dir(ref_map_dir), _loc_map_dir(loc_map_dir), _date(date), _pftbase(pftbase)
+    _ref_map_dir(ref_map_dir), _loc_map_dir(loc_map_dir), _pftbase(pftbase)
 {
     rfFG = new RFlowFactorGraph();
     FG = rfFG;
+    SurveyOptimizer::percent_of_tracks = percent_of_tracks;
 }
 
 
@@ -17,10 +19,10 @@ void LocalizeSessionToSet::LoadFTF(ParseOptimizationResults& datePOR) {
     cached_landmarks.push_back(clset);
     
     for(int i=0; i<datePOR.boat.size(); ++i) {
-        ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + date, datePOR.ftfilenos[i]);
+        ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + _date, datePOR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3d = datePOR.GetSubsetOf3DPoints(pftf.ids);
         pftf.ModifyFTFData(p3d);
-        vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(0, i, active, percent_of_tracks);
+        std::vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(0, i, active, percent_of_tracks);
         CacheLandmarks(tracks);
     }
     
@@ -50,13 +52,13 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
     //    cout << "   adding the survey"<<endl;
     
     LocalizePose lp(_cam);
-    for(int i=0; i<originPOR->boat.size(); i++) {
-        gtsam::Pose3 traj = originPOR->CameraPose(i);
+    for(int i=0; i<originPOR.boat.size(); i++) {
+        gtsam::Pose3 traj = originPOR.CameraPose(i);
         rfFG->AddPose(0, i, traj);
         GTS.InitializePose(rfFG->GetSymbol(0, i), traj);
         
         if(i>0) {
-            gtsam::Pose3 last = originPOR->CameraPose(i-1);
+            gtsam::Pose3 last = originPOR.CameraPose(i-1);
             gtsam::Pose3 btwn = last.between(traj);
             //order matters; this has to be after the variables it depends on are initialized.
             rfFG->AddCustomBTWNFactor(0, i-1, 0, i, btwn, 0.01);
@@ -64,7 +66,7 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
     }
     
     for(int i=0; i<cached_landmarks.size(); i++)
-        rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[i]);
+            rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[cache_set][i]);
 }
 
 int LocalizeSessionToSet::SessionToNum(std::string session){
@@ -75,7 +77,7 @@ int LocalizeSessionToSet::SessionToNum(std::string session){
 }
 
 void LocalizeSessionToSet::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    gtsam::Pose3 base = GTSamInterface::VectorToPose(posesTimeT1[sISC][sTIME]);
+    gtsam::Pose3 base = GTSamInterface::VectorToPose(POR[sISC].boat[sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }
@@ -83,7 +85,7 @@ void LocalizeSessionToSet::AddLocalization(int sISC, int sTIME, int survey, int 
 void LocalizeSessionToSet::AddLocalizations(){
     double noise = 0.0001;
     for(int j=0; j<lpdi.localizations.size(); j++) {
-        if(lpd_rerror[j] < 0) return 0;
+        if(lpd_rerror[j] < 0) return;
         LocalizedPoseData& l = lpdi.localizations[j];
         AddLocalization(SessionToNum(l.date0), l.s0time, SessionToNum(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
     }
@@ -96,14 +98,14 @@ void LocalizeSessionToSet::Run() {
     
     AddLocalizations();
     
-    GTS.SetIdentifier(date);
+    GTS.SetIdentifier(_date);
     GTS.RunBundleAdjustment();
     
     poses = GTS.GetOptimizedTrajectory(0, originPOR.boat.size());
     landmarks = GTS.GetOptimizedLandmarks(true);
 }
 
-std::vector<bool> LocalizeSessionToSet::LPDInlierTest(int l, double LPD_RERROR_THRESHOLD, vector<double>& error){
+std::vector<bool> LocalizeSessionToSet::LPDInlierTest(int l, double LPD_RERROR_THRESHOLD, std::vector<double>& error){
     //double errS0, double errS1, double errISC0, double errISC1
     bool changed = false;
     bool inlier = true;
@@ -131,16 +133,16 @@ std::vector<bool> LocalizeSessionToSet::LPDInlierTest(int l, double LPD_RERROR_T
 int LocalizeSessionToSet::EvaluateLPD(int j){
     
     LocalizedPoseData& l = lpdi.localizations[j];
-    std::vector<double> p1 = poseresult[l.s1time];
+    std::vector<double> p1 = poses[l.s1time];
     
-    if(l.date0 == date) {
+    if(l.date0 == _date) {
         std::cout << "change the order" << std::endl;
         exit(-1);
     }
     
-    EvaluateRFlow erf(_cam, date, _loc_map_dir);
+    EvaluateRFlow erf(_cam, _date, _loc_map_dir);
     
-    vector<double> error(2, 0);
+    std::vector<double> error(2, 0);
     error[0] = erf.OnlineRError(cached_landmarks[0], l.s1time, p1, landmarks);
     error[1] = erf.MeasureReprojectionError(p1, l.p2d1, l.p3d0);
     std::vector<bool> result = LPDInlierTest(j, rerrs[l.s1time], error);
@@ -151,7 +153,7 @@ int LocalizeSessionToSet::EvaluateLPD(int j){
     return 0;
 }
 
-double LocalizeSessionToSet::UpdateErrorAdaptive() {
+double LocalizeSessionToSet::UpdateError() {
     outliers = 0;
     double totchanges = 0;
     for(int j=0; j<lpdi.localizations.size(); j++)
@@ -167,27 +169,25 @@ void LocalizeSessionToSet::Initialize() {
         POR.push_back(datePOR);
     }
     
-    originPOR = ParseOptimizationResults(loc_map_dir, date);
+    originPOR = ParseOptimizationResults(_loc_map_dir, _date);
     LoadFTF(originPOR);
     
-    LPDInterface lint;
-    std::cout <<  date << ": ";
-    int nloaded = lint.LoadLocalizations(_loc_map_dir, date);
-    lpdi.push_back(lint);
+    std::cout <<  _date << ": ";
+    int nloaded = lpdi.LoadLocalizations(_loc_map_dir + _date);
     
-    HopcountLog hlog(loc_map_dir);
-    lpd_rerror = hlog.LoadPriorRerror(date, nloaded);
-    lpd_eval = vector<double>(nloaded, 3.0);
-    lpd_sum = vector<double>(nloaded, 0.0);
-    permerr = vector<double>(nloaded, 0);
-    inter_error = vector<double>(nloaded, 0);
-    
-    EvaluateSLAM ESlam(_cam, date, loc_map_dir);
+    EvaluateSLAM ESlam(_cam, _date, _loc_map_dir);
     rerrs = ESlam.LoadRerrorFile();
     double avg = ESlam.GetAverageRerror(rerrs);
     
+    HopcountLog hlog(_loc_map_dir);
+    lpd_rerror = hlog.LoadPriorRerror(_date, nloaded);
+    lpd_eval = std::vector<double>(nloaded, 3.0);
+    lpd_sum = std::vector<double>(nloaded, 0.0);
+    permerr = std::vector<double>(nloaded, 0);
+    inter_error = std::vector<double>(nloaded, 0);
+    
     for(int j=0; j<originPOR.boat.size(); j++){
-        rerrs[j] = rerr[j]*update_mult_factor;
+        rerrs[j] = rerrs[j]*update_mult_factor;
         if(rerrs[j] < 0) {
             std::cout << "MC,L: MultiSessionOptimization::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
             exit(1);
@@ -200,7 +200,7 @@ void LocalizeSessionToSet::Initialize() {
 bool LocalizeSessionToSet::CheckSave() {
     double inlier_ratio = 1.0-(1.*outliers/lpdi.localizations.size());
     if(inlier_ratio < 0.6){
-        std::cout << "  Save disabled due to the inlier/outlier ratio for " << date << " with ratio " << inlier_ratio << std::endl;
+        std::cout << "  Save disabled due to the inlier/outlier ratio for " << _date << " with ratio " << inlier_ratio << std::endl;
         return false;
     }
     return true;
@@ -209,22 +209,22 @@ bool LocalizeSessionToSet::CheckSave() {
 void LocalizeSessionToSet::SaveResults() {
     if(!CheckSave()) return;
     
-    SaveOptimizationResults curSOR(_loc_map_dir + date);
-    vector<vector<double> > vs;
+    SaveOptimizationResults curSOR(_loc_map_dir + _date);
+    std::vector<std::vector<double> > vs;
     curSOR.SetSaveStatus();
     curSOR.SetDrawMap();
     curSOR.PlotAndSaveCurrentEstimate(landmarks, poses, vs, {});
     
-    EvaluateRFlow erfinter(_cam, date, _loc_map_dir);
+    EvaluateRFlow erfinter(_cam, _date, _loc_map_dir);
     erfinter.SaveEvaluation(inter_error, "/postlocalizationerror.csv");
     erfinter.VisualizeDivergenceFromLocalizations(lpdi.localizations, lpd_rerror);
     
     HopcountLog hlog(_loc_map_dir);
-    hlog.SaveLocalLog(date, lpd_rerror.size(), lpdi.localizations, lpd_rerror);
+    hlog.SaveLocalLog(_date, lpd_rerror.size(), lpdi.localizations, lpd_rerror);
 }
 
 void LocalizeSessionToSet::InlierOutlierStats() {
-    std::cout << "  " << date << ": " << outliers << " outliers. of " << lpdi.localizations.size() << std::endl;
+    std::cout << "  " << _date << ": " << outliers << " outliers. of " << lpdi.localizations.size() << std::endl;
 }
 
 void LocalizeSessionToSet::LocalizeSession() {
@@ -238,7 +238,7 @@ void LocalizeSessionToSet::LocalizeSession() {
         time (&optstart);
         Run();
         time (&optend);
-        UpdateErrorIterative();
+        UpdateError();
         InlierOutlierStats();
         time (&end);
         double optruntime = difftime (optend, optstart);
