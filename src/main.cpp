@@ -160,6 +160,11 @@ int main(int argc, char *argv[]) {
         icppairs.GetResultsTimelapse(argnum, argdate);
 //        icppairs.AlignTimelapsesSFlow(argv[1]);
         break;}
+    case 16:{
+        Camera axisptz = ParseBoatSurvey::GetCamera();
+        LocalizeSessionToSet lss(axisptz, results_dir + "maps/", results_dir + "localized_maps/", argv[1], pftbase, 10);
+        lss.LocalizeSession();
+        break;}
     }
     
 
