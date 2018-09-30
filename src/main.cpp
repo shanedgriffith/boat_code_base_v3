@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    string results_dir = "/Users/shanehome/Documents/Research/";//home_paths[0]; //maps_debug/ "/Users/shane/Documents/research/";//
+    string results_dir = home_paths[0]; //maps_debug/ ""/Users/shanehome/Documents/Research/";//
     string query_loc = home_paths[1];
     string pftbase = home_paths[2];
     string visibility_dir = "****USE COVISIBILITY****";
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
         break;}
     case 16:{
         Camera axisptz = ParseBoatSurvey::GetCamera();
-        LocalizeSessionToSet lss(axisptz, results_dir + "maps/", results_dir + "localized_maps/", argv[1], pftbase, 10);
+        LocalizeSessionToSet lss(axisptz, results_dir + "maps/", results_dir + "localized_maps/", argv[1], pftbase, 100);
         lss.LocalizeSession();
         break;}
     }

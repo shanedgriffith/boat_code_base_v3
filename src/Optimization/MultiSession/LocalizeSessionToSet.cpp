@@ -17,11 +17,12 @@ void LocalizeSessionToSet::LoadFTF(ParseOptimizationResults& datePOR) {
     std::vector<LandmarkTrack> clset;
     cached_landmarks.push_back(clset);
     
+    int survey = 0;
     for(int i=0; i<datePOR.boat.size(); ++i) {
         ParseFeatureTrackFile pftf = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + _date, datePOR.ftfilenos[i]);
         std::vector<gtsam::Point3> p3d = datePOR.GetSubsetOf3DPoints(pftf.ids);
         pftf.ModifyFTFData(p3d);
-        std::vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(0, i, active, percent_of_tracks);
+        std::vector<LandmarkTrack> tracks = pftf.ProcessNewPoints(survey, i, active, percent_of_tracks);
         CacheLandmarks(tracks);
     }
     
@@ -49,7 +50,7 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
     //changes:
     // variables connected to an isc are eliminated.
     //    cout << "   adding the survey"<<endl;
-    int survey = SessionToNum(_date);
+    int survey = 0;
     LocalizePose lp(_cam);
     for(int i=0; i<originPOR.boat.size(); i++) {
         gtsam::Pose3 traj = originPOR.CameraPose(i);
@@ -64,14 +65,16 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
         }
     }
     
-    for(int i=0; i<cached_landmarks.size(); i++)
-            rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[cache_set][i]);
+    for(int i=0; i<cached_landmarks[cache_set].size(); i++)
+        rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[cache_set][i]);
 }
 
 int LocalizeSessionToSet::SessionToNum(std::string session){
     for(int i=0; i<dates.size(); i++){
         if(session.compare(dates[i])==0) return i;
     }
+    std::cout << "session " << session << " not found" << std::endl;
+    exit(-1);
     return -1;
 }
 
@@ -86,7 +89,7 @@ void LocalizeSessionToSet::AddLocalizations(){
     for(int j=0; j<lpdi.localizations.size(); j++) {
         if(lpd_rerror[j] < 0) return;
         LocalizedPoseData& l = lpdi.localizations[j];
-        AddLocalization(SessionToNum(l.date0), l.s0time, SessionToNum(l.date1), l.s1time, l.GetTFP0ToP1F0(), noise);
+        AddLocalization(SessionToNum(l.date0), l.s0time, 0, l.s1time, l.GetTFP0ToP1F0(), noise);
     }
 }
 
@@ -96,9 +99,6 @@ void LocalizeSessionToSet::Run() {
     ConstructFactorGraph();
     
     AddLocalizations();
-    
-    std::cout << "num landmark factors: " << rfFG->landmark_factors[rfFG->GetActiveLandmarkSet()].size() << std::endl;
-    
     
     GTS.SetIdentifier(_date);
     GTS.RunBundleAdjustment();
@@ -177,7 +177,7 @@ void LocalizeSessionToSet::Initialize() {
     LoadFTF(originPOR);
     
     std::cout << "Loading localizations..." << std::endl;
-    int nloaded = lpdi.LoadLocalizations(_loc_map_dir + _date, {"140106"});
+    int nloaded = lpdi.LoadLocalizations(_loc_map_dir + _date);
     
     EvaluateSLAM ESlam(_cam, _date, _loc_map_dir);
     rerrs = ESlam.LoadRerrorFile();

@@ -191,6 +191,10 @@ void RFlowFactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTr
             sppf.add(landmark.points[i], mappedS, pixelNoise, k); //GTSAM 3.2.1
 #endif
             count_on++;
+        } else {
+            std::cout << "RFlowFactorGraph::AddLandmarkTrack() error: tried adding a landmark to a camera that doesn't exist. " <<
+                (int) landmark.camera_keys[i].chr() << "." << landmark.camera_keys[i].index() << std::endl;
+            exit(-1);
         }
     }
     

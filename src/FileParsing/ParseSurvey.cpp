@@ -63,11 +63,12 @@ double ParseSurvey::AngleDistance(double a, double b){
 }
 
 bool ParseSurvey::CheckGap(int last_auxidx, int next_auxidx){
-    if(timings.size() < next_auxidx) {
+    if(timings.size() <= next_auxidx) {
         return false;
     }
     int im1 = GetImageNumber(last_auxidx);
     int im2 = GetImageNumber(next_auxidx);
+
     if(im2-im1 > 15) return true;
     return false;
 }
@@ -92,22 +93,50 @@ bool ParseSurvey::CheckCameraTransition(int cidx, int lcidx){
     return false;
 }
 
+int ParseSurvey::IdentifyFirstPFTFileAtOrAfter(int index) {
+    std::vector<string> dirs = ListDirsInDir(_pftbase + _date + "/sift");
+    if(dirs.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
+    int dir = index / 1000;
+    if(dir >= dirs.size()){std::cout << "No pft tracking files at or after " << index << std::endl; exit(-1);}
+    std::vector<string> files = ListFilesInDir(_pftbase + _date + "/sift/" + dirs[dir], ".csv");
+    if(files.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
+    int file = index % 1000;
+    for(int i=0; i<files.size(); i++) {
+        if(file <= stoi(files[i].substr(0,files[i].length()-4)))
+            return stoi(dirs[dir])*1000 + stoi(files[i].substr(0,files[i].length()-4));
+    }
+    return -1;
+}
+
+int ParseSurvey::IdentifyLastPFTFile() {
+    std::vector<string> dirs = ListDirsInDir(_pftbase + _date + "/sift");
+    if(dirs.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
+    int curdir = dirs.size()-1;
+    while(curdir > 0) {
+        std::vector<string> files = ListFilesInDir(_pftbase + _date + "/sift/" + dirs[curdir], ".csv");
+        if(files.size() == 0) curdir--;
+        return stoi(dirs[curdir])*1000 + stoi(files[files.size()-1].substr(0,files[files.size()-1].length()-4));
+    }
+    std::cout << "No pft tracking files" << std::endl;
+    exit(-1);
+    return -1;
+}
+
 ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& index, bool gap){
     /*Proceed when the visual feature track file is good.*/
     static bool found = false;
+    static int end = -1;
     if(!found){
-        std::vector<string> dirs = ListDirsInDir(_pftbase + _date + "/sift");
-        if(dirs.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
-        std::vector<string> files = ListFilesInDir(_pftbase + _date + "/sift/" + dirs[0], ".csv");
-        if(files.size() == 0){std::cout << "No pft tracking files" << std::endl; exit(-1);}
-        int start = stoi(dirs[0])*1000 + stoi(files[0].substr(0,files[0].length()-4));
+        int start = IdentifyFirstPFTFileAtOrAfter(index);
         if(start > index) index = start;
         std::cout << "First PFT file at " << index << std::endl;
+        end = IdentifyLastPFTFile();
+        std::cout << "Last PFT file at " << end << std::endl;
     }
     
     ParseFeatureTrackFile PFT(_cam, _pftbase + _date, index);
-    int nonexist=0;
-    while(PFT.time<=0) {
+    int nonexist = 0;
+    while(PFT.time <= 0) {
         if(!gap && !PFT.Exists(PFT.siftfile)) {
             nonexist++;
             if((nonexist>10 && found) || nonexist>50000) {
@@ -118,6 +147,10 @@ ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& in
         }
         if(!gap)
             cout << "Empty PFT file at " << index  << ". loading next." << endl;
+        if(index > end) {
+//            std::cout << "ParseSurvey::LoadVisualFeatureTracks() Error. Went beyond the last PFT file." << std::endl;
+            return PFT;
+        }
         PFT.Next(++index);
     }
     cout.precision(5);

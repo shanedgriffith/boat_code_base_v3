@@ -188,6 +188,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
         bool gap = PS.CheckGap(lcidx, lcidx + vals[Param::CAM_SKIP]);
+        
         ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i, gap);
         cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
         if(cidx==-1) break;
@@ -211,7 +212,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
         int imageno = PS.GetImageNumber(cidx);
         SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS.timings[cidx]);
         if(debug)
-            cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<PS.timings[cidx]<<endl;
+            cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<(int) (PS.timings[cidx]/100000) << ((int)PS.timings[cidx])%100000 <<endl;
         
         lcidx = cidx;
     }

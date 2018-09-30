@@ -30,7 +30,8 @@ protected:
     
     bool constant_velocity;
     
-    
+    int IdentifyFirstPFTFileAtOrAfter(int index);
+    int IdentifyLastPFTFile();
     double AngleDistance(double a, double b);
     
     std::vector<std::vector<double> > poses;
