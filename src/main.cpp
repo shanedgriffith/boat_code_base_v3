@@ -25,7 +25,7 @@ using namespace std;
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
 //vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
-vector<string> home_paths = {"/Users/shanehome/Documents/Research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
+vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Users/shanehome/Documents/Research/Lakeshore_KLT/", ""};
 
 
 int main(int argc, char *argv[]) {
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "starting program" << std::endl;
     
-    string results_dir = home_paths[0]; //maps_debug/ "/Users/shane/Documents/research/";//
+    string results_dir = "/Users/shanehome/Documents/Research/";//home_paths[0]; //maps_debug/ "/Users/shane/Documents/research/";//
     string query_loc = home_paths[1];
     string pftbase = home_paths[2];
     string visibility_dir = "****USE COVISIBILITY****";

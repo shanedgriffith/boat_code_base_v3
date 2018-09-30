@@ -147,7 +147,7 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
         printf("  >landmarks need to be observed at least twice.\n");
         std::cout << "Process for: " << _identifier << std::endl;
 
-        std::cout << ex.what()<<std::endl;
+        std::cout << ex.what() << std::endl;
         if(debug) {
             printf("\n The factor graph.\n");
             _fg->PrintFactorGraph();

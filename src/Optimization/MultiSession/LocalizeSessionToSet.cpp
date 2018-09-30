@@ -13,7 +13,6 @@ SurveyOptimizer(cam, rfFG, date, loc_map_dir, false),
     SurveyOptimizer::percent_of_tracks = percent_of_tracks;
 }
 
-
 void LocalizeSessionToSet::LoadFTF(ParseOptimizationResults& datePOR) {
     std::vector<LandmarkTrack> clset;
     cached_landmarks.push_back(clset);
@@ -50,18 +49,18 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
     //changes:
     // variables connected to an isc are eliminated.
     //    cout << "   adding the survey"<<endl;
-    
+    int survey = SessionToNum(_date);
     LocalizePose lp(_cam);
     for(int i=0; i<originPOR.boat.size(); i++) {
         gtsam::Pose3 traj = originPOR.CameraPose(i);
-        rfFG->AddPose(0, i, traj);
-        GTS.InitializePose(rfFG->GetSymbol(0, i), traj);
+        rfFG->AddPose(survey, i, traj);
+        GTS.InitializePose(rfFG->GetSymbol(survey, i), traj);
         
         if(i>0) {
             gtsam::Pose3 last = originPOR.CameraPose(i-1);
             gtsam::Pose3 btwn = last.between(traj);
             //order matters; this has to be after the variables it depends on are initialized.
-            rfFG->AddCustomBTWNFactor(0, i-1, 0, i, btwn, 0.01);
+            rfFG->AddCustomBTWNFactor(survey, i-1, survey, i, btwn, 0.01);
         }
     }
     
@@ -97,6 +96,9 @@ void LocalizeSessionToSet::Run() {
     ConstructFactorGraph();
     
     AddLocalizations();
+    
+    std::cout << "num landmark factors: " << rfFG->landmark_factors[rfFG->GetActiveLandmarkSet()].size() << std::endl;
+    
     
     GTS.SetIdentifier(_date);
     GTS.RunBundleAdjustment();
@@ -162,6 +164,8 @@ double LocalizeSessionToSet::UpdateError() {
 }
 
 void LocalizeSessionToSet::Initialize() {
+    SurveyOptimizer::Initialize();
+    rfFG->SetLandmarkDeviation(3.0); //must be *after* initialize();
     
     dates = FileParsing::ListDirsInDir(_ref_map_dir);
     for(int i=0; i<dates.size(); i++){
@@ -172,8 +176,8 @@ void LocalizeSessionToSet::Initialize() {
     originPOR = ParseOptimizationResults(_loc_map_dir, _date);
     LoadFTF(originPOR);
     
-    std::cout <<  _date << ": ";
-    int nloaded = lpdi.LoadLocalizations(_loc_map_dir + _date);
+    std::cout << "Loading localizations..." << std::endl;
+    int nloaded = lpdi.LoadLocalizations(_loc_map_dir + _date, {"140106"});
     
     EvaluateSLAM ESlam(_cam, _date, _loc_map_dir);
     rerrs = ESlam.LoadRerrorFile();
@@ -189,7 +193,7 @@ void LocalizeSessionToSet::Initialize() {
     for(int j=0; j<originPOR.boat.size(); j++){
         rerrs[j] = rerrs[j]*update_mult_factor;
         if(rerrs[j] < 0) {
-            std::cout << "MC,L: MultiSessionOptimization::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
+            std::cout << "MC,L: MultiSessionOptimization::Initialize() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
             exit(1);
         } else if (rerrs[j] < 6) { //this occurs at places in the rerr vector that are zero.
             rerrs[j] = avg*update_mult_factor;
@@ -224,27 +228,49 @@ void LocalizeSessionToSet::SaveResults() {
 }
 
 void LocalizeSessionToSet::InlierOutlierStats() {
+    double mean=0, meani=0, dev=0, devi=0, numo=0;
+    int count = 0;
+    for(int j=0; j<lpd_sum.size(); j++){
+        mean += lpd_sum[j];
+        if(lpd_rerror[j] >= 0){
+            meani += lpd_sum[j];
+            count++;
+        } else numo++;
+    }
+    
+    for(int j=0; j<lpd_sum.size(); j++) {
+        dev += pow(lpd_sum[j] - mean, 2);
+        if(lpd_rerror[j] >= 0) {
+            devi += pow(lpd_sum[j] - meani, 2);
+        }
+    }
+    dev = pow(dev/(lpd_sum.size()-1), 0.5);
+    devi = pow(devi/(count-1), 0.5);
+    
     std::cout << "  " << _date << ": " << outliers << " outliers. of " << lpdi.localizations.size() << std::endl;
+    std::cout << "  " << _date << ": " << numo << " outliers. All: (" << mean << ", " << dev << ")," << lpd_rerror.size()-numo << " inliers: (" <<meani << ", " << devi <<")" << std::endl;
 }
 
 void LocalizeSessionToSet::LocalizeSession() {
-    std::cout << "LOCALIZING A SESSION " << std::endl;
+    std::cout << "-----Session Localization-----" << std::endl;
     time_t beginning,optstart,optend,end;
     time (&beginning);
     
     Initialize();
     
-    for(int i=0; i<5; i++) {
+    for(int i=0; i<1; i++) {
         time (&optstart);
         Run();
         time (&optend);
-        UpdateError();
+        double changes = UpdateError();
+        std::cout << "changes: " << changes << std::endl;
         InlierOutlierStats();
         time (&end);
         double optruntime = difftime (optend, optstart);
         double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
         printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
+        return;
     }
     
     //SaveResults();

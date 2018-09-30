@@ -175,6 +175,8 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     //TODO: implement pose decimation, rather than the 1 by 10 (CAM_SKIP) rule currently used.
 	if(!initialized){cout << "SurveyOptimizer::Optimize() check initialization"<<endl; exit(1);}
     
+    std::cout << "Constructing the factor graph." << std::endl;
+    
     EvaluateSLAM es(_cam, _date, _results_dir);
     es.debug=true;
     
@@ -217,6 +219,8 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS){
     //Add the remaining landmarks
     AddLandmarkTracks(active);
     active.clear();
+    
+    std::cout << "Optimizing..." << std::endl;
     
     //Final optimization
     SOR.TimeOptimization();
