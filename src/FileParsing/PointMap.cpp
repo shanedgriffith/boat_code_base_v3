@@ -38,8 +38,8 @@ void PointMap::ReadDelimitedFile(string file, int type)
 
 void PointMap::SetIDs(int first, int last, ParseOptimizationResults& por){
     for(int i=first; i<=last; i++){
-        ids.push_back(por.p[i].p_id);
-        landmark.push_back(por.p[i].p);
+        ids.push_back(por.landmarks[i][3]);
+        landmark.push_back(gtsam::Point3(por.landmarks[i][0], por.landmarks[i][1], por.landmarks[i][2]));
     }
 }
 

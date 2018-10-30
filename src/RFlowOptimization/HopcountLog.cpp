@@ -33,6 +33,9 @@ double HopcountLog::LoadHopDistance(string hopdate) {
 }
 
 std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count){
+    if(count <= 0){
+        return {};
+    }
     std::vector<double> rerror_set(count, 0.0);
     string fname = _path + hopdate + _locoptname;
     FILE * fp = OpenFile(fname.c_str(), "r", false);
@@ -48,6 +51,10 @@ std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count)
             int ret = sscanf(line, "%d, %d, %d, %lf", &a, &b, &rerr, &c);
             if(ret != 4){
                 std::cout << "HopcountLog::LoadPriorRerror() error. Line formatting. " << ret << " entries in "<< line << std::endl;
+                exit(-1);
+            }
+            if(idx == rerror_set.size()-1) {
+                std::cout << "HopcountLog::LoadPriorRerror() error. Check the file " << fname << ". got more lines than were expected" << std::endl;
                 exit(-1);
             }
             rerror_set[idx++] = (double) rerr;

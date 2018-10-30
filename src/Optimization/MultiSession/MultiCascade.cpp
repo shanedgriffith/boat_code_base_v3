@@ -28,7 +28,7 @@ MultiSessionOptimization(cam, results_dir + "maps/", pftbase, date, 10){
         ParseOptimizationResults oPOR(_origin_dir, dates[survey]);
         originPOR.push_back(oPOR);
         poses.push_back(POR[survey].boat);
-        std::vector<std::vector<double> > lset = POR[survey].GetLandmarkSet();
+        std::vector<std::vector<double> > lset = POR[survey].landmarks;
         landmarks.push_back(lset);
         isc_rerror.push_back(vector<double>(lpdi[survey].localizations.size(), 0));
         std::vector<LandmarkTrack> clset;

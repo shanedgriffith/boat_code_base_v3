@@ -69,7 +69,7 @@ void AlignICPImagePairs::AlignTimelapsesRFlow(std::string dirnum) {
         FileParsing::MakeDir(savebase);
         int pose1 = por[d1].GetNearestPoseToImage(refnum);
         
-        for(int i=3; i<39; i++){
+        for(int i=3; i<lp.size(); i++){ // 39
             int d2 = i-3;
             if(d2 == d1) continue;
             
@@ -173,15 +173,42 @@ void AlignICPImagePairs::AlignImagesRFlow(std::string file, int firstidx, int la
 }
 
 
+void AlignICPImagePairs::PercentLocalizedPoses(){
+//    std::string maps = "/home/shaneg/results/maps_/";
+    std::string maps = "/Users/shanehome/Documents/";
+    
+    for(int i=0; i<_dates.size(); i++)
+    {
+        std::string dir = maps + _dates[i] + "/localizations/";
+        if(not FileParsing::DirectoryExists(dir)) continue;
+        ParseOptimizationResults por(_maps_dir, _dates[i]);
+        std::vector<std::string> files = FileParsing::ListFilesInDir(dir, ".loc");
+        std::cout << files.size() << std::endl;
+        std::set<int> localized_poses;
+        for(int j=0; j<files.size(); j++)
+        {
+            int idx = files[j].find("_");
+            localized_poses.insert(stoi(files[j].substr(0,idx)));
+        }
+        
+        std::cout << _dates[i] << ", " << 1.0*localized_poses.size()/por.boat.size() << std::endl;
+    }
+}
+
+
 void AlignICPImagePairs::AlignImagesWarped(){
     
-    std::vector<std::string> images={"000004", "000033", "000046", "000047", "000062", "000092", "000101", "000125", "000138", "000172", "000175", "000196", "000215", "000227", "000235", "000251", "000256", "000271", "000287", "000309", "000310", "000313", "000349", "000373", "000375", "000412", "000413", "000423", "000430", "000459", "000460", "000467", "000476", "000482", "000488", "000529", "000546", "000567", "000575", "000610", "000617", "000639", "000654", "000669", "000673", "000685", "000689", "000704", "000716", "000753", "000793", "000825", "000831", "000852", "000859", "000864", "000865", "000872", "000878", "000888", "000892", "000899", "000924", "000935", "000987", "000994"};
+//    std::vector<std::string> images={"000004", "000033", "000046", "000047", "000062", "000092", "000101", "000125", "000138", "000172", "000175", "000196", "000215", "000227", "000235", "000251", "000256", "000271", "000287", "000309", "000310", "000313", "000349", "000373", "000375", "000412", "000413", "000423", "000430", "000459", "000460", "000467", "000476", "000482", "000488", "000529", "000546", "000567", "000575", "000610", "000617", "000639", "000654", "000669", "000673", "000685", "000689", "000704", "000716", "000753", "000793", "000825", "000831", "000852", "000859", "000864", "000865", "000872", "000878", "000888", "000892", "000899", "000924", "000935", "000987", "000994"};
     
-    for(int i=0; i<images.size(); i++){
+    for(int i=0; i<1000; i++){
+        char num[10];
+        sprintf(num, "%06d", i);
+        num[6] = '\0';
+        std::string n(num);
         int tidx = man.GetOpenMachine();
-        std::string _image0 = "/home/shaneg/data/icp_pairs_0000/warp/" + images[i] + "_warp_1.jpg";
-        std::string _image1 = "/home/shaneg/data/icp_pairs_0000/warp/" + images[i] + "_warp_2.jpg";
-        std::string savename = "/home/shaneg/results/aligned_icp/" + images[i] + "_warp_w.jpg";
+        std::string _image0 = "/home/shaneg/data/icp_pairs_0000/warp/" + n + "_warp_1.jpg";
+        std::string _image1 = "/home/shaneg/data/icp_pairs_0000/warp/" + n + "_warp_2.jpg";
+        std::string savename = "/home/shaneg/results/aligned_icp/" + n + "_warp_w.jpg";
 
         ws[tidx]->SetImages(_image0, _image1, savename);
         man.RunMachine(tidx);
@@ -235,8 +262,7 @@ std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFile(std::string file,
         if(idx < firstidx) continue;
         else if(idx > lastidx) break;
         
-        if(date0/10000 != 14 || date1/10000 != 14) continue;
-        
+//        if(date0/10000 != 14 || date1/10000 != 14) continue;
         
         std::vector<int> toalign = {idx, date0, img0num, date1, img1num};
         imgparams.push_back(toalign);
@@ -245,7 +271,7 @@ std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFile(std::string file,
     return imgparams;
 }
 
-void AlignICPImagePairs::GetResults(){
+void AlignICPImagePairs::GetResults() {
     std::string rfbase = "/Users/shane/Documents/research/experiments/rf_pairs/";
     std::string sfbase = "/Users/shane/Documents/research/experiments/aligned_icp/";
     std::string wbase = "/Users/shane/Documents/research/experiments/pairs_unaligned/warp/";
@@ -312,7 +338,6 @@ void AlignICPImagePairs::GetResults(){
     std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
 }
 
-
 void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string argdate){
     std::string rootdir = "/Users/shane/Documents/research/results/random timelapses/000" + argnum + "/" +argdate +"/";
     std::string rfbase = rootdir + "rf/";
@@ -343,7 +368,6 @@ void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string arg
         if(idxW==-1) continue;
         std::cout << "files: " << rfbase + rffiles[i] << "\n       " << sfbase + warpsffiles[idxW] << std::endl;
         
-        
         cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
         cv::Mat Imsf = ImageOperations::Load(sfbase + warpsffiles[idxW]);
         
@@ -369,18 +393,232 @@ void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string arg
     std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
 }
 
+void AlignICPImagePairs::LabelTimelapse(){
+    std::string rootdir = "/Users/shanehome/Documents/140502_571/";
+    std::string rfbase = rootdir + "rf/";
+    std::string sfbase = rootdir + "mappoints/";
+    std::string sfref = rootdir + "reference.jpg";
+    
+    std::vector<std::string> rffiles = FileParsing::ListFilesInDir(rfbase, "jpg");
+    std::vector<std::string> warpsffiles = FileParsing::ListFilesInDir(sfbase, "jpg");
+    
+    cv::Mat ref = ImageOperations::Load(sfref);
+    std::vector<int> counter(3,0);
+    
+    FlickeringDisplay fd;
+    for(int i=0; i<rffiles.size(); i++) {
+        cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
+        
+        cv::Mat refx2 = FlickeringDisplay::CombinedImage(ref, ref);
+        cv::Mat rfsf = FlickeringDisplay::CombinedImage(Imrf, Imrf);
+        
+        char c = fd.FlickerImages(refx2, rfsf);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+            case 'q':{
+                exit(1);
+                break;}
+        }
+        std::cout << rffiles[i] << ", "<<c << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
 
 
+void AlignICPImagePairs::GetResultsLabels() {
+    std::string rfbase = "/Users/shanehome/Documents/aligned_rf/";
+    std::string file = "/Users/shanehome/Documents/image_pairs.csv";
+    
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults("/Volumes/SAMSUNG/Data/origin/", _dates[i]));
+    }
+    
+    std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
+    std::vector<int> counter(3,0);
+    
+    FlickeringDisplay fd;
+    for(int i=0; i<1000; i++){//from20star.size()
+        int d1 = DateToIdx(from20star[i][1]);
+        int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
+        std::cout << "1:closest image to " <<from20star[i][2] << " is " << pose1 << " with " << por[d1].cimage[pose1] << std::endl;
+        
+        std::string imagename = PaddedInt(i);
+        std::string _image0_rf = ParseSurvey::GetImagePath(_query_loc + std::to_string(from20star[i][1]), por[d1].cimage[pose1]);
+        std::string _imagerf = rfbase + imagename + "_w.jpg";
+        
+        cv::Mat refrf = ImageOperations::Load(_image0_rf);
+        cv::Mat Imrf = ImageOperations::Load(_imagerf);
+        
+        char c = fd.FlickerImages(refrf, Imrf);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+            case 'q':{
+                exit(1);
+                break;}
+        }
+        std::cout << from20star[i][1] << "."<<from20star[i][2] << ", " << from20star[i][3] << "." << from20star[i][4]<< "," <<c << std::endl;
+        std::cout << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
 
 
+void AlignICPImagePairs::GetResultsLabelsICP() {
+    std::string icpbase = "/Users/shanehome/Documents/aligned_icp/";
+    std::string icporig = "/Users/shanehome/Documents/aligned_icp_orig/";
+    std::string file = "/Users/shanehome/Documents/image_pairs.csv";
+    
+    std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
+    
+    std::vector<int> counter(3,0);
+    
+    FlickeringDisplay fd;
+    for(int i=0; i<1000; i++){
+        std::string imagename = PaddedInt(i);
+        std::string refimg = icporig + imagename + "_warp_1.jpg";
+        std::string aligned = icpbase + imagename + "_warp_w.jpg";
+        
+        cv::Mat refrf = ImageOperations::Load(refimg);
+        cv::Mat Imrf = ImageOperations::Load(aligned);
+        
+        char c = fd.FlickerImages(refrf, Imrf);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+            case 'q':{
+                exit(1);
+                break;}
+        }
+        std::cout << from20star[i][1] << "."<<from20star[i][2] << ", " << from20star[i][3] << "." << from20star[i][4]<< ", " << c << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
+
+void AlignICPImagePairs::CompareRFWithICP() {
+    std::string icpbase = "/Users/shanehome/Documents/aligned_icp/";
+    std::string icporig = "/Users/shanehome/Documents/aligned_icp_orig/";
+    std::string file = "/Users/shanehome/Documents/image_pairs.csv";
+    std::string rfbase = "/Users/shanehome/Documents/aligned_rf/";
+    
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults("/Volumes/SAMSUNG/Data/origin/", _dates[i]));
+    }
+    
+    std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
+    std::vector<int> counter(3,0);
+    
+    FlickeringDisplay fd;
+    for(int i=565; i<1000; i++){
+        int d1 = DateToIdx(from20star[i][1]);
+        int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
+        std::cout << "1:closest image to " <<from20star[i][2] << " is " << pose1 << " with " << por[d1].cimage[pose1] << std::endl;
+        
+        std::string imagename = PaddedInt(i);
+        std::string _image0_rf = ParseSurvey::GetImagePath(_query_loc + std::to_string(from20star[i][1]), por[d1].cimage[pose1]);
+        std::string _imagerf = rfbase + imagename + "_w.jpg";
+        
+        cv::Mat refrf = ImageOperations::Load(_image0_rf);
+        cv::Mat Imrf = ImageOperations::Load(_imagerf);
+        
+        std::string refimg = icporig + imagename + "_warp_1.jpg";
+        std::string aligned = icpbase + imagename + "_warp_w.jpg";
+        
+        cv::Mat reficp = ImageOperations::Load(refimg);
+        cv::Mat Imicp = ImageOperations::Load(aligned);
+        
+        cv::Mat refx2 = FlickeringDisplay::CombinedImage(reficp, refrf);
+        cv::Mat rfaligned = FlickeringDisplay::CombinedImage(Imicp, Imrf);
+        
+        char c = fd.FlickerImages(refx2, rfaligned);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+            case 'q':{
+                exit(1);
+                break;}
+        }
+        std::cout << from20star[i][1] << "."<<from20star[i][2] << ", " << from20star[i][3] << "." << from20star[i][4]<< ", " << c << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
 
 
+void AlignICPImagePairs::PareComparisonFile()
+{
+    FILE * fp = fopen("/Users/shanehome/Documents/Results/comparison.rtf", "r");
+    FILE * fw = fopen("/Users/shanehome/Documents/Results/comparison_pared.txt", "w");
+    if(!fp or !fw) {
+        std::cout << "error reading file" << std::endl;
+        exit(-1);
+    }
+    
+    char line[1000];
+    while(!feof(fp)){
+        fgets(line, 1000, fp);
+        if(line[0] == '1' and line[1] == ':')
+            continue;
+        
+        fputs(line, fw);
+    }
+    fclose(fp);
+    fclose(fw);
+}
 
 
-
-
-
-
+void AlignICPImagePairs::AnalyzeAlignmentQualityTrend()
+{
+    FILE * fp = fopen("/Users/shanehome/Documents/Results/Data/rf_pared.txt", "r");
+    if(!fp) {
+        std::cout << "error reading file" << std::endl;
+        exit(-1);
+    }
+    
+    while(!feof(fp)){
+        int s0, s1, d0, d1;
+        char label;
+        fscanf(fp, "%d, %d, %d, %d, %c", &d0, &s0, &d1, &s1, &label);
+        
+        
+    }
+    fclose(fp);
+    
+}
 
 
 

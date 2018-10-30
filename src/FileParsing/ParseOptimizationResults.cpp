@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void ParseOptimizationResults::LoadOptimizationResult(bool sorted) {
+void ParseOptimizationResults::LoadOptimizationResult() {
     ReadDelimitedFile(_map_base + _date + boatfile, LINETYPE::pose);
     if(Exists(_map_base + _date  + velocityfile)) ReadDelimitedFile(_map_base + _date  + velocityfile, LINETYPE::vels);
     ReadDelimitedFile(_map_base + _date  + correspondencefile, LINETYPE::corres);
@@ -21,7 +21,8 @@ void ParseOptimizationResults::LoadOptimizationResult(bool sorted) {
     RemoveTransitionEntries();
     
     if(verbose) printf("ParseOptimizationResults::LoadOptimizationResult() Read %d points.\n", (int) p.size());
-    if(sorted) SortPoints();
+    
+    SortPoints();
 }
 
 void ParseOptimizationResults::ProcessPoseEntries(vector<string> lp, vector<vector<double> >& poses) {
@@ -104,6 +105,14 @@ void ParseOptimizationResults::SortPoints() {
         if(arg1.p_id > arg2.p_id) return 1;
         return 0;
     });
+    
+    landmarks = std::vector<std::vector<double> >(p.size(), std::vector<double>(4, 0.0));
+    for(int i=0; i<p.size(); i++){
+        landmarks[i][0] = p[i].p.x();
+        landmarks[i][1] = p[i].p.y();
+        landmarks[i][2] = p[i].p.z();
+        landmarks[i][3] = p[i].p_id;
+    }
 }
 
 vector<double> ParseOptimizationResults::LoadReprojectionErrorFile(string evalfile) {
@@ -295,28 +304,6 @@ int ParseOptimizationResults::GetNearestPoseToImage(int image){
     if(cimage[med] == image) return med;
     if(med > cimage.size()-2 || abs(image-cimage[med]) < abs(image-cimage[med+1])) return med;
     return med+1;
-}
-
-void ParseOptimizationResults::UpdateLandmarks(std::vector<std::vector<double> >& landmarks){
-    p.clear();
-    for(int i=0; i<landmarks.size(); i++){
-        gtsam::Point3 wp(landmarks[i][0], landmarks[i][1], landmarks[i][2]);
-        point_obj po;
-        po.p = wp;
-        po.p_id = (int)landmarks[i][3];
-        p.push_back(po);
-    }
-}
-
-std::vector<std::vector<double> > ParseOptimizationResults::GetLandmarkSet(){
-    std::vector<std::vector<double> > landmarks(p.size(), std::vector<double>(4, 0.0));
-    for(int i=0; i<p.size(); i++){
-        landmarks[i][0] = p[i].p.x();
-        landmarks[i][1] = p[i].p.y();
-        landmarks[i][2] = p[i].p.z();
-        landmarks[i][3] = p[i].p_id;
-    }
-    return landmarks;
 }
 
 

@@ -111,6 +111,8 @@ public:
     std::string GetPath(std::string toppath, std::string altpath="");
     static LocalizedPoseData Read(std::string path);
     static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "", std::vector<std::string> dates = {});
+    
+    void CheckLPD(Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc);
 };
 
 

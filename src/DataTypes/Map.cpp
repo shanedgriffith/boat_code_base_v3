@@ -42,13 +42,13 @@ void Map::LoadMap(string date){
     ParseOptimizationResults pm(_map_base, date);
     int survey_label = stoi(date);
     
-    for(int j=0; j<pm.p.size(); j++){
-        if(pm.p[j].p.x()==0 && pm.p[j].p.y()==0 && pm.p[j].p.z()==0) continue;
+    for(int j=0; j<pm.landmarks.size(); j++){
+        if(pm.landmarks[j][0]==0 && pm.landmarks[j][1]==0 && pm.landmarks[j][2]==0) continue;
 
-        map.push_back(pm.p[j].p);
+        map.push_back(gtsam::Point3(pm.landmarks[j][0], pm.landmarks[j][1], pm.landmarks[j][2]));
         variances.push_back(0);
         survey_labels.push_back(survey_label);
-        landmark_ids.push_back(pm.p[j].p_id);
+        landmark_ids.push_back(pm.landmarks[j][3]);
     }
 }
 

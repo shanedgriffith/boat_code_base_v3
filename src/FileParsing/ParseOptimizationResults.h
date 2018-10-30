@@ -33,20 +33,23 @@ private:
     std::vector<double> LoadReprojectionErrorFile(std::string evalfile);
     void SortPoints();
     int GetIndexOfFirstPoint(int id);
-    void LoadOptimizationResult(bool sorted);
+    void LoadOptimizationResult();
 
     void RemoveTransitionEntries();
     std::vector<int> to_remove;
     std::vector<double> rerror;//reprojection error for each entry in cimage.
-protected:
-    void ProcessLineEntries(int type, std::vector<std::string> lp);
-    void ReadDelimitedFile(std::string file, int type);
-public:
+    
     typedef struct{
         gtsam::Point3 p;
         int p_id;
     } point_obj;
-
+    std::vector<point_obj> p;
+    
+protected:
+    void ProcessLineEntries(int type, std::vector<std::string> lp);
+    void ReadDelimitedFile(std::string file, int type);
+public:
+    
     bool debug = false;
     std::string _map_base, _date;
     std::vector<std::vector<double> > boat;//optimized camera poses (misnomer)
@@ -55,21 +58,19 @@ public:
     std::vector<int> auxidx;//aux file index correspondences
     std::vector<int> ftfilenos;//feature track file correspondences (in the sift dir)
     std::vector<double> timings;
-    std::vector<point_obj> p;
+    std::vector<std::vector<double> > landmarks;
     
     ParseOptimizationResults(){};
     
-    ParseOptimizationResults(std::string map_base, std::string date, bool sorted = true):
+    ParseOptimizationResults(std::string map_base, std::string date): //, bool sorted = true
     _map_base(map_base), _date(date) {
-        LoadOptimizationResult(sorted);
+        LoadOptimizationResult();
     }
     
     int GetNumberOfPoses(){return (int) boat.size();}
     
     //meant to be called with the feature track ids
     std::vector<gtsam::Point3> GetSubsetOf3DPoints(std::vector<int>& ids_subset);
-    void UpdateLandmarks(std::vector<std::vector<double> >& landmarks);
-    std::vector<std::vector<double> > GetLandmarkSet();
     
     std::vector<double> ReprojectionError(){
         //this just loads the reprojection error file.

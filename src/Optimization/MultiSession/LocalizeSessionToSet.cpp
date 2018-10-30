@@ -65,11 +65,11 @@ void LocalizeSessionToSet::ConstructFactorGraph() {
         }
     }
     
-    for(int i=0; i<cached_landmarks[cache_set].size(); i++)
-        rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[cache_set][i]);
+    for(int i=0; i<cached_landmarks[0].size(); i++)
+        rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), cached_landmarks[0][i]);
 }
 
-int LocalizeSessionToSet::SessionToNum(std::string session){
+int LocalizeSessionToSet::SessionToNum(std::string session) {
     for(int i=0; i<dates.size(); i++){
         if(session.compare(dates[i])==0) return i;
     }
@@ -87,7 +87,7 @@ void LocalizeSessionToSet::AddLocalization(int sISC, int sTIME, int survey, int 
 void LocalizeSessionToSet::AddLocalizations(){
     double noise = 0.0001;
     for(int j=0; j<lpdi.localizations.size(); j++) {
-        if(lpd_rerror[j] < 0) return;
+        if(lpd_rerror[j] < 0) continue;
         LocalizedPoseData& l = lpdi.localizations[j];
         AddLocalization(SessionToNum(l.date0), l.s0time, 0, l.s1time, l.GetTFP0ToP1F0(), noise);
     }
@@ -143,10 +143,13 @@ int LocalizeSessionToSet::EvaluateLPD(int j){
     }
     
     EvaluateRFlow erf(_cam, _date, _loc_map_dir);
+    EvaluateRFlow erf2(_cam, _date, _loc_map_dir);
     
     std::vector<double> error(2, 0);
     error[0] = erf.OnlineRError(cached_landmarks[0], l.s1time, p1, landmarks);
-    error[1] = erf.MeasureReprojectionError(p1, l.p2d1, l.p3d0);
+    std::vector<std::vector<double> > landmarks = POR[SessionToNum(l.date0)].landmarks;
+    error[1] = erf2.InterSurveyErrorAtLocalization(p1, landmarks, l.p2d1, l.pids, l.rerrorp);
+    
     std::vector<bool> result = LPDInlierTest(j, rerrs[l.s1time], error);
     inter_error[j] = error[1];
 
@@ -237,6 +240,8 @@ void LocalizeSessionToSet::InlierOutlierStats() {
             count++;
         } else numo++;
     }
+    mean /= lpd_sum.size();
+    meani /= count;
     
     for(int j=0; j<lpd_sum.size(); j++) {
         dev += pow(lpd_sum[j] - mean, 2);
@@ -256,9 +261,10 @@ void LocalizeSessionToSet::LocalizeSession() {
     time_t beginning,optstart,optend,end;
     time (&beginning);
     
+    UpdateError();
     Initialize();
     
-    for(int i=0; i<1; i++) {
+    for(int i=0; i<5; i++) {
         time (&optstart);
         Run();
         time (&optend);
@@ -270,10 +276,9 @@ void LocalizeSessionToSet::LocalizeSession() {
         double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
         printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
-        return;
     }
     
-    //SaveResults();
+    SaveResults();
 }
 
 

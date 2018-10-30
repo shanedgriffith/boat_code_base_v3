@@ -56,6 +56,7 @@ private:
     double * _perc_dc;
     double ver_result = false;
     double * _verified;
+    AlignmentResult ar;
     
     Camera& _cam;
 public:
@@ -78,6 +79,7 @@ public:
     void Reset();
     void * Run();
     void LogResults();
+    void SaveAlignment(std::string loc);
 };
 
 

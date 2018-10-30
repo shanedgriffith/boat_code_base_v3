@@ -54,11 +54,19 @@ public:
         }
     }
     
-    void AlignImagesRFlow(std::string file, int firstidx, int lastidx);
-    void AlignImagesSFlow(std::string file, int firstidx, int lastidx);
+    void AlignImagesRFlow(std::string file, int firstidx=0, int lastidx=999);
+    void AlignImagesSFlow(std::string file, int firstidx=0, int lastidx=999);
     void AlignImagesWarped();
     void GetResults();
     void GetResultsTimelapse(std::string argnum, std::string argdate);
+    void LabelTimelapse();
+    void GetResultsLabels();
+    void GetResultsLabelsICP();
+    void PercentLocalizedPoses();
+    void CompareRFWithICP();
+
+    void PareComparisonFile();
+    void AnalyzeAlignmentQualityTrend();
     
     void AlignTimelapsesRFlow(std::string dirnum);
     void AlignTimelapsesSFlow(std::string dirnum);

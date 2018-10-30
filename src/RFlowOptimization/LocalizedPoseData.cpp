@@ -8,6 +8,13 @@
 #include "LocalizedPoseData.hpp"
 #include "Optimization/SingleSession/GTSamInterface.h"
 
+#include "RFlowEvaluation/AlignImageMachine.hpp"
+#include "ImageAlignment/GeometricFlow/ReprojectionFlow.hpp"
+#include "RFlowOptimization/SFlowDREAM2RF.hpp"
+#include "FileParsing/ParseOptimizationResults.h"
+
+#include "FileParsing/ParseSurvey.h"
+
 
 using namespace std;
 
@@ -363,3 +370,50 @@ gtsam::Pose3 LocalizedPoseData::GetP1frame0(){
 gtsam::Pose3 LocalizedPoseData::GetTFP0ToP1F0(){
     return GTSamInterface::VectorToPose(tf_p0_to_p1frame0);
 }
+
+void LocalizedPoseData::CheckLPD(Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc) {
+    //a debugging tool.
+    
+    std::vector<ParseOptimizationResults> por;
+    std::vector<Map> maps;
+    
+    maps.push_back(Map(_results_dir + "maps/"));
+    maps.push_back(Map(_results_dir + "localized_maps/"));
+    maps[0].LoadMap(date0);
+    maps[1].LoadMap(date1);
+    
+    por.push_back(ParseOptimizationResults(_results_dir + "maps/", date0));
+    por.push_back(ParseOptimizationResults(_results_dir + "localized_maps/", date1));
+    
+    ReprojectionFlow r0(_cam, maps[0]);
+    ReprojectionFlow r1(_cam, maps[1]);
+    std::vector<ReprojectionFlow*> rf = {&r0, &r1};
+    
+    ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + date0, por[0].ftfilenos[s0time]);
+    ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + date1, por[1].ftfilenos[s1time]);
+    
+    rf[0]->ComputeFlow(p1frame0, por[0].boat[s0time]); //map points of survey 0 onto pose1_est.
+    rf[1]->ComputeFlow(p0frame1, por[1].boat[s1time]); //map points of survey 1 onto pose0_est.
+    rf[0]->CreateRestrictedSet(stoi(date0), pftf0);
+    rf[1]->CreateRestrictedSet(stoi(date1), pftf1);
+    
+    string image0 = ParseSurvey::GetImagePath(_query_loc + date0, por[0].cimage[s0time]);
+    string image1 = ParseSurvey::GetImagePath(_query_loc + date1, por[1].cimage[s1time]);
+    
+    SFlowDREAM2RF sf(_cam);
+    sf.SetReprojectionFlow(rf);
+    sf.SetEpipolar();
+    sf.SetTwoCycleConsistency();
+    sf.ConstructImagePyramid(image0, image1);
+    sf.AlignImages();
+    AlignmentResult ar = sf.GetAlignmentResult();
+    //~/Documents/Research
+    std::string dir = "/Volumes/SAMSUNG/Data/Debug/" + date0 + "-" + to_string(s0time) + "_" + date1 + "-" + to_string(s1time) + "/";
+    ar.Save(dir);
+}
+
+
+
+
+
+
