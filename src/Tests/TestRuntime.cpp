@@ -32,20 +32,21 @@ int TestRuntime::FindRestart(std::string fname) {
     return res+1;
 }
 
-
-
 std::vector<TestRuntime::in_progress> TestRuntime::GetRunningProcesses(){
     std::string base = "/home/shaneg/results/";
     
     std::vector<std::string> dirs = FileParsing::ListDirsInDir(base);
     std::vector<TestRuntime::in_progress> allinp;
     for(auto& d: dirs) {
-        if(d.length() != 6 || d[0] != '1')
+        if(d.length() != 13 || d[0] != '1') // 6
             continue;
         
-        std::vector<std::string> imnum = FileParsing::ListFilesInDir(base + d + "/images", ".jpg");
+        std::string d1 = d.substr(0,6);
+        
+        std::vector<std::string> imnum = FileParsing::ListFilesInDir(_origin + d1 + "/images", ".jpg");
+//        std::vector<std::string> imnum = FileParsing::ListFilesInDir(base + d + "/images", ".jpg");
         if(imnum.size() != 1){
-            std::cout << "session format error." << d << ", " << imnum.size() << std::endl;
+            std::cout << "session format error." << d1 << ", " << imnum.size() << std::endl;
             exit(-1);
         }
         std::string imnumstr = imnum[0].substr(0, imnum[0].size()-4);
@@ -59,27 +60,28 @@ std::vector<TestRuntime::in_progress> TestRuntime::GetRunningProcesses(){
         }
     }
     return allinp;
-    
 }
 
 void TestRuntime::RunningProcesses(){
     std::vector<in_progress> last_set;
     
+    int count=0;
+    int countbad = 0;
     while(1) {
-        
-        
         std::vector<in_progress> proc = GetRunningProcesses();
         for(auto& p : proc) {
             for(int i=0; i<last_set.size(); i++){
                 if(p.date.compare(last_set[i].date) == 0){
                     if(p.idx == last_set[i].idx) {
                         std::cout << p.date << ": FROZEN." << std::endl;
+                        countbad++;
                     }
-                    
+                    count++;
                     break;
                 }
             }
         }
+        std::cout << "STATUS: " << countbad << " of " << count <<" are frozen" << std::endl;
         last_set = proc;
         sleep(5*60);
     }

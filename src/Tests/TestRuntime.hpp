@@ -27,7 +27,9 @@ private:
     
     
 public:
-    TestRuntime(){}
+    std::string _origin;
+    
+    TestRuntime(std::string origin): _origin(origin) {}
     
     void RunningProcesses();
     

@@ -20,6 +20,7 @@
 #include <RFlowEvaluation/AlignICPImagePairs.hpp>
 #include <Optimization/MultiSession/LocalizeSessionToSet.hpp>
 #include <RFlowOptimization/LocalizedPoseData.hpp>
+#include <Tests/TestRuntime.hpp>
 
 using namespace std;
 
@@ -50,6 +51,10 @@ int main(int argc, char *argv[]) {
     
     int prog = atoi(argv[3]);
     switch(prog){
+    case -1:{
+        TestRuntime tr(results_dir + "origin/");
+        tr.RunningProcesses();
+        break;}
     case 0:{
         int start = -1;
         if(argc == 5) start = atoi(argv[4]);

@@ -1,6 +1,6 @@
 CC        := g++ -std=c++11 -O3 -Wno-deprecated -Wno-unused-result
 LD        := g++
-PREFIX    := /Volumes/Untitled/installs
+PREFIX    := /Users/shane/installs
 #use -O0 -g in CC and -g in LD for debugging segfaults.
 #use -O3 in CC for fast code.
 
@@ -11,8 +11,9 @@ BUILD_DIR := $(addprefix build/,$(MODULES))
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
 ROOT_DIR  :=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+GTSAMVERSION := -DGTSAM4
 
-INCLUDES  := -I/usr/include -I/usr/local/include -I$(PREFIX)/include -I$(PREFIX)/include/opencv2 -I/opt/local/include/eigen3 -I/opt/local/include -I$(PREFIX)/include/gtsam -I$(ROOT_DIR)/src
+INCLUDES  := -I/usr/include -I/usr/local/include -I$(PREFIX)/include -I$(PREFIX)/include/opencv2 -I/opt/local/include/eigen3 -I/opt/local/include -I$(PREFIX)/include/gtsam -I$(ROOT_DIR)/src -I$(PREFIX)/include/gtsam/3rdparty/Eigen
 LDFLAGS = -L$(PREFIX)/lib -L/opt/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_videoio -lgtsam -lboost_system-mt -ltbb -ltbbmalloc -lpthread -lboost_serialization-mt -lboost_filesystem-mt -lboost_timer-mt -lboost_chrono-mt -lopencv_video -lboost_thread-mt -lboost_date_time-mt -lboost_regex-mt
 
 
@@ -20,7 +21,7 @@ vpath %.cpp $(SRC_DIR)
 
 define make-goal
 $1/%.o: %.cpp
-	$(CC) $(INCLUDES) -c $$< -o $$@
+	$(CC) $(GTSAMVERSION) $(INCLUDES) -c $$< -o $$@
 endef
 
 .PHONY: all checkdirs clean
