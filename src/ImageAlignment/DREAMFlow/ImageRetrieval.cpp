@@ -155,7 +155,7 @@ int ImageRetrieval::GetMin(std::vector<double>& res){
 int ImageRetrieval::GetMax(std::vector<double>& ver){
     if(ver.size() == 0) return -1;
     std::vector<double>::iterator result = std::max_element(ver.begin(), ver.end());
-    return  std::distance(ver.begin(), result);
+    return  static_cast<int>(std::distance(ver.begin(), result));
 }
 
 bool ImageRetrieval::ContinueInDirection(int off, int direction, std::vector<double>& res){
@@ -202,9 +202,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
     std::vector<double> res(neighbor_poses.size(), 0);
     std::vector<double> ver(neighbor_poses.size(), 0);
     std::vector<int> sign={1,-1};
-    int idx = res.size()/2;
-    bool verified = false;
-    int vidx = -1;
+    int idx = static_cast<int>(res.size()/2);
     for(int i=0; i<res.size(); i++){
         int dir = sign[i&0x1];
         idx += i*dir;
@@ -233,7 +231,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
 //            while(!verified && man.WaitForAnotherMachine()){
 //            verified = HaveVerified(ws.size(), ver);
             if(left) left = ContinueInDirection(0, -1, res); //looks wrong.
-            else if(right) right = ContinueInDirection(res.size()-1, 1, res);
+            else if(right) right = ContinueInDirection(static_cast<int>(res.size())-1, 1, res);
             else break;
         }
     }
@@ -265,7 +263,7 @@ std::vector<double> ImageRetrieval::MultiThreadedSearch(std::string base, std::v
     return min_vals;
 }
 
-std::vector<double> ImageRetrieval::ParallelIRWithKnownInput(std::vector<std::string> refimages, string image1){
+std::vector<double> ImageRetrieval::ParallelIRWithKnownInput(std::vector<std::string> refimages, string image1) {
     std::vector<double> res(refimages.size(), 0);
 
     for(int i=0; i<res.size(); i++){

@@ -230,7 +230,7 @@ public:
                 int locy = i + fy;
                 if(locx < 0 || locy < 0 || locx >= _width || locy >= _height)
                     continue;
-                int i_idx = (int) (locy*_width + locx)*2;
+                int i_idx = static_cast<int>(locy*_width + locx)*2;
                 if(i_idx >= _width*_height*2){
                     std::cout << "("<<locx<<","<<locy<<")"<<std::endl;
                     std::cout << "trying to place data at: " << i_idx <<" of "<< _width*_height << std::endl;
@@ -362,11 +362,11 @@ public:
     
     std::vector<double> ComputeStats() {
         if(!stats_computed){
-            double * en = (double *) energyimage.data;
+            double * en = reinterpret_cast<double*>(energyimage.data);
             _Min=en[0];
             _Max=en[0];
             _Total = 0;
-            int nElements = (int) energyimage.total();
+            int nElements = static_cast<int>(energyimage.total());
             int count = 0;
             
             //cost function for 2*weighted good region.

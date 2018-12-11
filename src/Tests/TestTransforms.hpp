@@ -39,6 +39,7 @@ public:
     static void CheckBtwn(Camera& _cam);
     static void TestLocalization(Camera& _cam);
     void TestConstraintProportions(Camera& _cam);
+    static void TestImageAlignment(Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase);
 };
 
 

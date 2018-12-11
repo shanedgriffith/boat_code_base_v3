@@ -60,7 +60,7 @@ public:
     static std::string GetImagePath(std::string base, int no, bool makedir=false);
     
     bool ConstantVelocity(){return constant_velocity;}
-    int NumPoses() {return poses.size();}
+    int NumPoses() {return static_cast<int>(poses.size());}
     std::vector<double> GetPose(int i);
     std::vector<std::vector<double> >& Poses(){return poses;}
     gtsam::Pose3 CameraPose(int idx);

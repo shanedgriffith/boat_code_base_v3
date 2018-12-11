@@ -97,7 +97,6 @@ void HopcountLog::SaveLocalLog(string hopdate, int numverified, std::vector<Loca
     string fname = _path + hopdate + _locoptname; //_results_dir + _date
     FILE * fp = OpenFile(fname.c_str(), "w");
     fprintf(fp, "%lf\n", avg_hop_distance);
-    int countout = 0;
     for(int i=0; i<localizations.size(); i++){
         int verified = (i < numverified)?1:0;
         fprintf(fp, "%d, %d, %d, %lf\n", localizations[i].s1time, verified, (int)lpd_rerror[i], 0.0);//1 + hopcounts[localizations[i].s0]

@@ -307,7 +307,6 @@ int SLAMDraw::LocationOfPointRelativeToLine(double m, double b, Point2d p){
 void SLAMDraw::AddArrow(double x, double y, double ax, double ay){
     Point p = Scale(Point2f(x, y));
     Point a = Scale(Point2f(ax, ay));
-    int line_thickness = 1;
     arrowedLine(canvas, p, a, CV_RGB(0,0,0));//, 1, 8, 0, 0.1);
 }
 

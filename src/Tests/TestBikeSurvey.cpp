@@ -354,7 +354,6 @@ void TestBikeSurvey::GenerateTrajectory(){
         PFT0 = PFT1;
         lastp = vp;
     }
-    
 }
 
 void TestBikeSurvey::TestVisualOdometry() {

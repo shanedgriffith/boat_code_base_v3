@@ -27,7 +27,7 @@ using namespace std;
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
 //vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
-vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Users/shanehome/Documents/Research/Lakeshore_KLT/", ""};
+vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Volumes/Untitled/data/Lakeshore_KLT/", ""};
 //"/Volumes/SAMSUNG/Data/Lakeshore_KLT/"
 
 int main(int argc, char *argv[]) {
@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
     }
     
     int prog = atoi(argv[3]);
+    std::cout << "running program " << prog << std::endl;
     switch(prog){
     case -1:{
         TestRuntime tr(results_dir + "origin/");
@@ -158,20 +159,24 @@ int main(int argc, char *argv[]) {
         acq.Run();
         break;}
     case 15:{
-        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222", "150111", "150216", "150226", "150305", "150312", "150320", "150327", "150401", "150408", "150414", "150421", "150429", "150505", "150522", "150608", "150620", "150625", "150701", "150708", "150723", "150730", "150806", "150813", "150820", "150827", "150902", "150910", "150918", "150929", "151008", "151019", "151027", "151105", "151111", "151118", "151127", "151209", "151214", "151221", "160201", "160211", "160216", "160305", "160314", "160321", "160401", "160407", "160411", "160418", "160426", "160502", "160524", "160601", "160606", "160616", "160620", "160715", "160719", "160725", "160801", "160808", "160816", "160821", "160829", "160906", "160912", "160923", "160927", "161003", "161010", "161018", "161114", "161123", "161127", "161216", "161223", "170217", "170223", "170303", "170307", "170313", "170320", "170327", "170403", "170411", "170419", "170424", "170515", "170626", "170725", "170904", "171004", "171030"};
+//        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222", "150111", "150216", "150226", "150305", "150312", "150320", "150327", "150401", "150408", "150414", "150421", "150429", "150505", "150522", "150608", "150620", "150625", "150701", "150708", "150723", "150730", "150806", "150813", "150820", "150827", "150902", "150910", "150918", "150929", "151008", "151019", "151027", "151105", "151111", "151118", "151127", "151209", "151214", "151221", "160201", "160211", "160216", "160305", "160314", "160321", "160401", "160407", "160411", "160418", "160426", "160502", "160524", "160601", "160606", "160616", "160620", "160715", "160719", "160725", "160801", "160808", "160816", "160821", "160829", "160906", "160912", "160923", "160927", "161003", "161010", "161018", "161114", "161123", "161127", "161216", "161223", "170217", "170223", "170303", "170307", "170313", "170320", "170327", "170403", "170411", "170419", "170424", "170515", "170626", "170725", "170904", "171004", "171030"};
+        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222"};
+//        std::vector<std::string> dates = {"150111", "150216", "150226", "150305", "150312", "150320", "150327", "150401", "150408", "150414", "150421", "150429", "150505", "150522", "150608", "150620", "150625", "150701", "150708", "150723", "150730", "150806", "150813", "150820", "150827", "150902", "150910", "150918", "150929", "151008", "151019", "151027", "151105", "151111", "151118", "151127", "151209", "151214", "151221"};
         Camera axisptz = ParseBoatSurvey::GetCamera();
 //        AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates, stoi(argv[4]));
 //        icppairs.AlignImagesRFlow(results_dir + "image_pairs.csv", stoi(argv[1]), stoi(argv[2]));
         AlignICPImagePairs icppairs(axisptz, query_loc, results_dir, pftbase, dates);
 //        icppairs.PercentLocalizedPoses(dates);
-//        icppairs.GetResultsLabelsICP();
+        icppairs.GetResultsLabelsICP();
 //        icppairs.GetResults();
 //        icppairs.GetResultsTimelapse("", "");
 //        icppairs.LabelTimelapse();
-//        icppairs.GetResultsLabels();
+//        icppairs.GetResultsLabels(true);
 //        icppairs.CompareRFWithICP();
+//        icppairs.CountPosesWithALocalization();
 //        icppairs.PareComparisonFile();
-        icppairs.AnalyzeAlignmentQualityTrend();
+//        icppairs.AnalyzeAlignmentQualityTrend();
+//        icppairs.AlignImagesWarped();
 //        std::string argnum(argv[1]);
 //        std::string argdate(argv[2]);
 //        icppairs.GetResultsTimelapse(argnum, argdate);

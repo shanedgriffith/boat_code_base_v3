@@ -6,6 +6,7 @@
  */
 
 
+#include "BoatSurvey/ParseBoatSurvey.hpp"
 #include "BestMatchSeqSLAM.hpp"
 
 
@@ -64,9 +65,11 @@ double BestMatchSeqSLAM::SumOfAbsDifference(cv::Mat& image1, cv::Mat& image2){
 }
 
 std::pair<double, double> BestMatchSeqSLAM::ComputeMeanAndStd(std::vector<double>& D, int s, int e){
+    /* //TODO check this.
 	boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::variance> > acc;
     std::for_each(D.begin()+s, D.begin()+e, std::bind<void>(std::ref(acc), _1));
-	return std::pair<double, double>(boost::accumulators::mean(acc), std::sqrt((double)boost::accumulators::variance(acc)));
+	return std::pair<double, double>(boost::accumulators::mean(acc), std::sqrt((double)boost::accumulators::variance(acc)));*/
+    return std::pair<double, double>();
 }
 
 std::vector<double> BestMatchSeqSLAM::LocalConstrastEnhancement(std::vector<double>& D){
@@ -90,19 +93,19 @@ std::vector<double> BestMatchSeqSLAM::LocalConstrastEnhancement(std::vector<doub
 }
 
 std::vector<std::vector<double> > BestMatchSeqSLAM::BuildDifferenceMatrix(ParseSurvey ps1, ParseSurvey ps2){
-	int max1 = ps1.imageno.size()/CAM_SKIP;
-	int max2 = ps2.imageno.size()/CAM_SKIP;
+	int max1 = ps1.NumPoses()/CAM_SKIP;
+	int max2 = ps2.NumPoses()/CAM_SKIP;
     
 	std::vector<std::vector<double> > difference_matrix(max1, std::vector<double>(max2, 0.0));
     
 	for(int i=0; i<max1; i=i+CAM_SKIP){
-        string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i]);
+        std::string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.GetImageNumber(i));
 		cv::Mat Im1 = ImageOperations::Load(fim1);
 		cv::Mat pn1 = PatchNormalizedImage(Im1);
 		std::vector<double> difference_vector(max2, 0.0);
         
 		for(int j=0; j<max2; j=j+CAM_SKIP){
-            string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[j]);
+            std::string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.GetImageNumber(j));
 			cv::Mat Im2 = ImageOperations::Load(fim2);
 			cv::Mat pn2 = PatchNormalizedImage(Im2);
 
@@ -182,8 +185,8 @@ std::vector<int> BestMatchSeqSLAM::FillInBestMatches(std::vector<bool>& usable, 
 std::vector<std::vector<std::string> > BestMatchSeqSLAM::GetMatchedImageList(ParseSurvey& ps1, ParseSurvey& ps2, std::vector<int>& best_matches){
 	std::vector<std::vector<std::string> > ret;
 	for(int i=0; i<best_matches.size(); i++){
-        string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.imageno[i*5]);
-        string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.imageno[best_matches[i]*5]);
+        std::string fim1 = ParseSurvey::GetImagePath(ps1._base, ps1.GetImageNumber(i*5));
+        std::string fim2 = ParseSurvey::GetImagePath(ps2._base, ps2.GetImageNumber(best_matches[i]*5));
 		ret.push_back({fim1, fim2});
 	}
 	return ret;
@@ -193,9 +196,9 @@ std::vector<std::vector<std::string> > BestMatchSeqSLAM::InterSurveyAlignment(){
 	//Note: the set of images to use may be different
 	//i.e., I may want to use only the set that's identified in the aux files as being part of the optimized set.
 	//e.g., run optimization on all those surveys.
-	ParseSurvey ps1(_query_loc, _query_loc, _date1); //pftbase is wrong here, but it's unused.
-	ParseSurvey ps2(_query_loc, _query_loc, _date2); //pftbase is wrong here, but it's unused.
-
+	ParseBoatSurvey ps1(_query_loc, _pftbase, _date1); //pftbase is wrong here, but it's unused.
+	ParseBoatSurvey ps2(_query_loc, _pftbase, _date2); //pftbase is wrong here, but it's unused.
+    
 	std::vector<std::vector<double> > dm = BuildDifferenceMatrix(ps1, ps2);
 	std::vector<int> topmatches = FindTopRankedMatches(dm);
 
@@ -216,13 +219,13 @@ std::vector<std::vector<std::string> > BestMatchSeqSLAM::InterSurveyAlignment(){
 	return GetMatchedImageList(ps1, ps2, best_matches);
 }
 
-bool BestMatchSeqSLAM::InsideImage(Point2f p, int width, int height){
+bool BestMatchSeqSLAM::InsideImage(cv::Point2f p, int width, int height){
 	return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height;
 }
 
 BestMatchSeqSLAM::match_vector BestMatchSeqSLAM::GenerateRandomVector(int width, int height){
-	match_vector mv = {0, Point2f(0,0), Point2f(-1,-1)};
-	int h = f*min(width, height)/2;
+    match_vector mv = {0, cv::Point2f(0,0), cv::Point2f(-1,-1)};
+    int h = f*std::min(width, height)/2;
 	mv.angle = 2 * M_PI * rand() / (1.0+RAND_MAX);
 	bool invalid = true;
 	while(invalid){
@@ -230,10 +233,10 @@ BestMatchSeqSLAM::match_vector BestMatchSeqSLAM::GenerateRandomVector(int width,
 		mv.origin.y = height * rand() / (1.0+RAND_MAX);
 		mv.end.x = mv.origin.x + z * cos(mv.angle);
 		mv.end.y = mv.origin.y + z * sin(mv.angle);
-		invalid = !InsideImage(Point2f(mv.origin.x - h, mv.origin.y - h), width, height);
-		invalid |= !InsideImage(Point2f(mv.origin.x + h, mv.origin.y + h), width, height);
-		invalid |= !InsideImage(Point2f(mv.end.x - h, mv.end.y - h), width, height);
-		invalid |= !InsideImage(Point2f(mv.end.x + h, mv.end.y + h), width, height);
+        invalid = !InsideImage(cv::Point2f(mv.origin.x - h, mv.origin.y - h), width, height);
+		invalid |= !InsideImage(cv::Point2f(mv.origin.x + h, mv.origin.y + h), width, height);
+		invalid |= !InsideImage(cv::Point2f(mv.end.x - h, mv.end.y - h), width, height);
+		invalid |= !InsideImage(cv::Point2f(mv.end.x + h, mv.end.y + h), width, height);
 	}
 	return mv;
 }
@@ -259,8 +262,8 @@ std::vector<std::vector<std::vector<double> > > BestMatchSeqSLAM::GetDifferenceM
 	return difference_vectors;
 }
 
-std::vector<Point2d> BestMatchSeqSLAM::GenerateMatchVector(int idx1, int idx2, Point2d p1, Point2d p2){
-    std::vector<Point2d> mvec(q, Point2d(0,0));
+std::vector<cv::Point2d> BestMatchSeqSLAM::GenerateMatchVector(int idx1, int idx2, cv::Point2d p1, cv::Point2d p2){
+    std::vector<cv::Point2d> mvec(q, cv::Point2d(0,0));
     mvec[idx1] = p1;
     mvec[idx2] = p2;
     double deltax = (p2.x-p1.x)/(idx2-idx1);
@@ -274,7 +277,7 @@ std::vector<Point2d> BestMatchSeqSLAM::GenerateMatchVector(int idx1, int idx2, P
     return mvec;
 }
 
-std::vector<Point2d> BestMatchSeqSLAM::GetBestMatchVector(std::vector<std::vector<std::vector<double> > >& difference_vectors){
+std::vector<cv::Point2d> BestMatchSeqSLAM::GetBestMatchVector(std::vector<std::vector<std::vector<double> > >& difference_vectors){
 	//select a random pair of best matches, find the score if the matching function was contiguous in delta,
 	//iterate and take the combination with the lowest score. (better. I should consider implementing this
 	//to see how it compares.)
@@ -285,7 +288,7 @@ std::vector<Point2d> BestMatchSeqSLAM::GetBestMatchVector(std::vector<std::vecto
 			for(int k=0; k<difference_vectors[0][0].size(); k++){
 				if(mind > difference_vectors[i][j][k]){
 					mind = difference_vectors[i][j][k];
-					best_matches[i] = Point2d(k,j);
+                    best_matches[i] = cv::Point2d(k,j);
 				}
 			}
 		}
@@ -294,14 +297,14 @@ std::vector<Point2d> BestMatchSeqSLAM::GetBestMatchVector(std::vector<std::vecto
     std::mt19937 rng;
     rng.seed(std::random_device()());
     std::uniform_int_distribution<std::mt19937::result_type> dist(0,q-1);
-    std::vector<Point2d> min_mvec;
+    std::vector<cv::Point2d> min_mvec;
     double minv=10000000000;
 	//generate NumGen lines across the best matches, get their score, and save the best line.
 	for(int i=0; i<NumGen; i++){
         int idx1 = dist(rng);
         int idx2 = idx1;
         while(idx1 == idx2) idx2 = dist(rng);
-        std::vector<Point2d> mvec = GenerateMatchVector(idx1, idx2, best_matches[idx1], best_matches[idx2]);
+        std::vector<cv::Point2d> mvec = GenerateMatchVector(idx1, idx2, best_matches[idx1], best_matches[idx2]);
         double sum = 0;
         for(int j=0; j<mvec.size(); j++){
             sum += difference_vectors[j][mvec[j].y][mvec[j].x];
@@ -327,13 +330,13 @@ cv::Point2d BestMatchSeqSLAM::GetMatch(std::vector<std::vector<std::vector<doubl
 		}
 	}
 
-	Point2d minp(0,0);
+    cv::Point2d minp(0,0);
 	double minval = 1000000000;
 	for(int j=0; j<difference_vectors[0].size(); j++){
 		for(int k=0; k<difference_vectors[0][0].size(); k++){
 			if(minval > cum_difference[j][k]){
 				minval = cum_difference[j][k];
-				minp = Point2d(k,j);
+				minp = cv::Point2d(k,j);
 			}
 		}
 	}
@@ -346,21 +349,21 @@ void BestMatchSeqSLAM::AddSeqToCorrespondences(correspondences& cs, std::vector<
     for(int i=0; i<ps.size(); i++){
         int cx = mv.origin.x + inc*i * cos(mv.angle);
         int cy = mv.origin.y + inc*i * sin(mv.angle);
-        cs.pref.push_back(Point2d(cx, cy));
-        cv::Point2d off = Point2d(ps[i].x-(hypspace-s)/2, ps[i].y-(hypspace-s)/2);
-        cs.pnew.push_back(Point2d(cx+off.x, cy+off.y));
+        cs.pref.push_back(cv::Point2d(cx, cy));
+        cv::Point2d off = cv::Point2d(ps[i].x-(hypspace-s)/2, ps[i].y-(hypspace-s)/2);
+        cs.pnew.push_back(cv::Point2d(cx+off.x, cy+off.y));
     }
 }
 
 void BestMatchSeqSLAM::AddToCorrespondences(correspondences& cs, cv::Point2d p, match_vector mv, int height, int width){
 	int hypspace = f*std::min(height, width);
-	cv::Point2d off = Point2d(p.x-(hypspace-s)/2, p.y-(hypspace-s)/2);
+	cv::Point2d off = cv::Point2d(p.x-(hypspace-s)/2, p.y-(hypspace-s)/2);
 	double inc = z/(q-1.0);
 	for(int i=0; i<q; i++){
 		int cx = mv.origin.x + inc*i * cos(mv.angle);
 		int cy = mv.origin.y + inc*i * sin(mv.angle);
-		cs.pref.push_back(Point2d(cx, cy));
-		cs.pnew.push_back(Point2d(cx+off.x, cy+off.y));
+		cs.pref.push_back(cv::Point2d(cx, cy));
+		cs.pnew.push_back(cv::Point2d(cx+off.x, cy+off.y));
 	}
 }
 

@@ -55,7 +55,7 @@ private:
 
 	//dataset specific parameters
 	int CAM_SKIP = 5;
-
+    
 	//SeqSlam params.
 	const int Rx = 48;
 	const int Ry = 32;
@@ -93,15 +93,15 @@ private:
 	cv::Point2d GetMatch(std::vector<std::vector<std::vector<double> > > difference_vectors);
 	void AddToCorrespondences(correspondences& cs, cv::Point2d p, match_vector mv, int height, int width);
 	cv::Mat FlowFieldFromHomography(cv::Mat homography, int height, int width);
-    std::vector<cv::Point2d> GenerateMatchVector(int idx1, int idx2, Point2d p1, Point2d p2);
+    std::vector<cv::Point2d> GenerateMatchVector(int idx1, int idx2, cv::Point2d p1, cv::Point2d p2);
     std::vector<cv::Point2d> GetBestMatchVector(std::vector<std::vector<std::vector<double> > >& difference_vectors);
     void AddSeqToCorrespondences(correspondences& cs, std::vector<cv::Point2d> ps, match_vector mv, int height, int width);
 
 public:
 	std::string _date1, _date2;
-    std::string _query_loc;
-    BestMatchSeqSLAM(std::string date1, std::string date2, std::string query_loc):
-		_date1(date1), _date2(date2), _query_loc(query_loc)
+    std::string _query_loc, _pftbase;
+    BestMatchSeqSLAM(std::string date1, std::string date2, std::string pftbase, std::string query_loc):
+		_date1(date1), _date2(date2), _query_loc(query_loc), _pftbase(pftbase)
 	{}
 
 	std::vector<std::vector<std::string> > InterSurveyAlignment();

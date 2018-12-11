@@ -23,62 +23,9 @@ void ParseFeatureTrackFile::ProcessLineEntries(int type, vector<string> lp){
     imagecoord.push_back(gtsam::Point2(x, y));
 }
 
-/*
-void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
-    char line[LINESIZE];
-    char l3[LINESIZE];
-    int entry;
-    int id;
-    double x, y;
-    double fill1, fill2;
-    
-    bool success = false;
-    while(!success) {
-        success = true;
-        FILE * fp = OpenFile(file,"r");
-        if(fp==NULL){
-            printf("ParseFeatureTrackFile: NULL file %s", file.c_str());
-            sleep(1);
-            success = false;
-            continue;
-        }
-        
-        fgets(line, LINESIZE-1, fp); //do nothing with the first line.
-        while (fgets(line, LINESIZE-1, fp)) {
-            int ret = sscanf(line,"%d,%lf,%[^,],[%d;%lf;%lf;%lf;%lf]",
-                             &entry, &time, (char *) l3, &id, &x, &y, &fill1, &fill2);
-            if (ret!=8) {
-                success = false;
-                cout << "Problematic file: " << file << ". Note: if using NFS, try unmounting and remounting." << endl;
-                printf("ParseFeatureTrackFile: Parsed %d of8 arguments of '%s' of file %s\nFull line:%s", ret, l3, file.c_str(), line);
-                sleep(1);
-                ids.clear();
-                imagecoord.clear();
-                break;
-            }
-            if(x < 0) x=0;
-            if(y < 0) y=0;
-            if(x >= _cam.w()) x = _cam.w()-1;
-            if(y >= _cam.h()) y = _cam.h()-1;
-            ids.push_back(id);
-            imagecoord.push_back(gtsam::Point2(x, y));
-            //cout << "line: "<<time << ", "<<id << ", "<<x<<", "<<y<<endl;
-        }
-        if(fp != NULL)
-            fclose(fp);
-    }
-    //cout <<"Finished reading file: "<<file.c_str() <<endl;
-}
- */
-
 //This version is less buggy, in some way due to lack of reliance on string, which uses dynamic memory.
 void ParseFeatureTrackFile::ReadDelimitedFile(string file, int type) {
     char line[LINESIZE];
-    char l3[LINESIZE];
-    int entry;
-    int id;
-    double x, y;
-    double fill1, fill2;
     
     bool success = false;
     while(!success){
@@ -386,24 +333,21 @@ ParseFeatureTrackFile& ParseFeatureTrackFile::operator=(ParseFeatureTrackFile ot
 int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end){
     //binary search with repeats.
     if(ckey<0) return 0;
-    if(ckey>=landmarks.size()) return landmarks.size()-1;
-    int top = landmarks.size();
+    if(ckey>=landmarks.size()) return static_cast<int>(landmarks.size()-1);
+    size_t top = landmarks.size();
     int bot = 0;
-    int med;
-    int ckeycomp;
+    int med = -1;
+    size_t ckeycomp;
     double comp = (end)? ckey+0.1:ckey-0.1;
-//    std::cout << "start binary search " << std::endl;
     while(top-bot>1) {
-        med = bot + (top - bot)/2;
+        med = static_cast<int>(bot + (top - bot)/2);
         ckeycomp = landmarks[med].camera_keys[0].index();
         if(end) ckeycomp = landmarks[med].camera_keys[landmarks[med].Length()-1].index();
-//        std::cout << "range (" << bot << ", " << top << ") " << med << ", " <<ckeycomp << " compared to " << comp << std::endl;
         if(ckeycomp < comp) bot = med;
         else if(ckeycomp > comp) top = med;
         else break;
     }
-//    std::cout << "finished binary search " << std::endl;
-    return med;
+    return static_cast<int>(med);
 }
 
 std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<LandmarkTrack>& landmarks, int ckey){
@@ -425,8 +369,8 @@ std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<Landm
             break;
         }
         
-        int s = landmarks[end].camera_keys[0].index();
-        int e = s + landmarks[end].camera_keys.size();
+        size_t s = landmarks[end].camera_keys[0].index();
+        size_t e = s + landmarks[end].camera_keys.size();
         if(s <= ckey && e > refkey) {
             indices.push_back(end);
             end--;
@@ -435,7 +379,7 @@ std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<Landm
             break;
         } else {
             //while(landmarks[end].camera_keys[0].index() < ckey)
-            ckey = s-1;
+            ckey = static_cast<int>(s-1);
             end = BinarySearchLandmarkRange(landmarks, ckey--, false);
             not_found++;
         }

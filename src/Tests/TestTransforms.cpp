@@ -16,6 +16,8 @@
 #include <gtsam/base/Vector.h>
 #include <math.h>
 #include <random>
+#include <DataTypes/Map.hpp>
+#include <RFlowEvaluation/AlignImageMachine.hpp>
 
 #include "Optimization/SingleSession/EvaluateSLAM.h"
 #include "Optimization/SingleSession/GTSamInterface.h"
@@ -183,8 +185,38 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
         double constraint = MapToConstraint(sum);
         
         std::cout << "rerror: " << rerrs[i] << " Likelihood["<<i<<"]: " << sum << ", constraint: " << constraint << std::endl;
-        
     }
-    
-    
 }
+
+void TestTransforms::TestImageAlignment(Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase) {
+    std::string d1 = "141010";
+    int im1 = 18791;
+    std::string d2 = "140129";
+    int im2 = 14029;
+    
+    AlignImageMachine aim(_cam);
+    aim.SetDirs(pftbase, query_loc, results_dir);
+    std::string maps_dir(results_dir + "maps/");
+    
+    ParseOptimizationResults por1(maps_dir, d1);
+    ParseOptimizationResults por2(maps_dir, d2);
+    Map m1(maps_dir);
+    m1.LoadMap(d1);
+    Map m2(maps_dir);
+    m2.LoadMap(d2);
+    
+    std::string savename = "/Users/shane/Desktop/";// + d1 + "." + to_string(im1) + "_" + d2 + "." + to_string(im2)
+    
+    int pose1 = por1.GetNearestPoseToImage(im1);
+    int pose2 = por2.GetNearestPoseToImage(im2);
+    
+    aim.Setup(pose1, savename, pose2);
+    aim.SetMaps({&m1, &m2});
+    aim.SetDates({d1, d2});
+    aim.SetPOR({&por1, &por2});
+    aim.Run();
+    aim.LogResults();
+}
+
+
+

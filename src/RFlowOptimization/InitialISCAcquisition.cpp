@@ -192,7 +192,7 @@ std::vector<double> InitialISCAcquisition::FindLocalization(int por0time, int po
     
     ITL.Run();
     ITL.LogResults();
-   std::cout << "values: " << perc_dc << ", " << verified << std::endl; 
+    std::cout << "values: " << perc_dc << ", " << verified << std::endl;
     //prepare to store/store the result.
     if(perc_dc > PERCENT_DENSE_CORRESPONDENCES){
         if(toverify->IsSet() && verified>=0){

@@ -12,7 +12,7 @@
 using namespace std;
 
 void Map::LoadISCMap(vector<string>& dates){
-    num_surveys = dates.size();
+    num_surveys = static_cast<int>(dates.size());
 
     cout << "Loading the globally consistent map." << endl;
     double sum = 0;
@@ -54,7 +54,7 @@ void Map::LoadMap(string date){
 
 /*This still have a way to utilize the reprojection error?*/
 void Map::LoadStandardMap(vector<string>& dates){
-	num_surveys = dates.size();
+	num_surveys = static_cast<int>(dates.size());
 
     cout << "Loading the map of regular optimization results." << endl;
     for(int i=0; i<dates.size(); i++){
@@ -83,7 +83,7 @@ bool Map::CheckSize(){
 }
 
 int Map::NumSurveys(){
-	return _dates.size();
+	return static_cast<int>(_dates.size());
 }
 
 

@@ -30,14 +30,14 @@ public:
     
     gtsam::Point2 GetCoord(int ckey){
         if(camera_keys.size() == 0) return gtsam::Point2(-1,-1);
-        int s = camera_keys[0].index();
-        int e = s + camera_keys.size();
+        int s = static_cast<int>(camera_keys[0].index());
+        int e = static_cast<int>(s + camera_keys.size());
         if(ckey < s || ckey > s+e) return gtsam::Point2(-1,-1);
         return points[ckey-s];
     }
     
     int GetKey(){return key;}
-    int Length() {return points.size();}
+    int Length() {return static_cast<int>(points.size());}
 };
 
 

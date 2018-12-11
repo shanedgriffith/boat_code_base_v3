@@ -119,75 +119,8 @@ void BPFlow::LoadImages(int _width, int _height, int _nchannels, vector<T_input*
 	}
 }
 
-/*
-void BPFlow::LoadImages(int _width, int _height, int _nchannels, const T_input *pImage1, const T_input *pImage2)
-{
-	Width=_width;
-	Height=_height;
-	Area=Width*Height;
-	nChannels=_nchannels;
-
-	_Release1DBuffer(pIm1);
-	_Release1DBuffer(pIm2);
-	pIm1=new T_input[Width*Height*nChannels];
-	pIm2=new T_input[Width*Height*nChannels];
-
-	memcpy(pIm1,pImage1,sizeof(T_input)*Width*Height*nChannels);
-	memcpy(pIm2,pImage2,sizeof(T_input)*Width*Height*nChannels);
-    masked2=false;
-    
-    Width2=Width;
-    Height2=Height;
-}
-
-
-void BPFlow::LoadImages(int _width, int _height, int _nchannels, const T_input *pImage1, const T_input *pImage2, const T_input * img2mask)
-{
-	Width=_width;
-	Height=_height;
-	Area=Width*Height;
-	nChannels=_nchannels;
-    
-	_Release1DBuffer(pIm1);
-	_Release1DBuffer(pIm2);
-	pIm1=new T_input[Width*Height*nChannels];
-	pIm2=new T_input[Width*Height*nChannels];
-    
-	memcpy(pIm1,pImage1,sizeof(T_input)*Width*Height*nChannels);
-	memcpy(pIm2,pImage2,sizeof(T_input)*Width*Height*nChannels);
-    
-    Width2=Width;
-    Height2=Height;
-    
-    masked2 = true;
-//	_Release1DBuffer(mask2);
-//    mask2 = img2mask;
-    mask2 = new T_input[Width*Height*1];
-	memcpy(mask2,img2mask,sizeof(T_input)*Width*Height);
-}
-
-
-void BPFlow::LoadImages(int _width, int _height, int _nchannels, const T_input *pImage1, int _width2,int _height2, const T_input *pImage2)
-{
-	Width=_width;
-	Height=_height;
-	Area=Width*Height;
-	nChannels=_nchannels;
-    Width2=_width2;
-    Height2=_height2;
-
-	_Release1DBuffer(pIm1);
-	_Release1DBuffer(pIm2);
-	pIm1=new T_input[Width*Height*nChannels];
-	pIm2=new T_input[Width2*Height2*nChannels];
-    masked2=false;
-
-	memcpy(pIm1,pImage1,sizeof(T_input)*Width*Height*nChannels);
-	memcpy(pIm2,pImage2,sizeof(T_input)*Width2*Height2*nChannels);
-}*/
-
 void BPFlow::setPixelWinsize(int x, int y, int winSizeX, int winSizeY){
-    int idx = y*Width + x;
+    int idx = static_cast<int>(y*Width + x);
     pWinSize[0][idx] = winSizeX;
     pWinSize[1][idx] = winSizeY;
 }
@@ -200,26 +133,18 @@ void BPFlow::setHomogeneousMRF(int winSize)
 {
 	for(int i=0;i<2;i++)
 	{
-//		_Release1DBuffer(pOffset[i]); // release the buffer of the offset
 		_Release1DBuffer(pWinSize[i]); // release the buffer of the size
-//		pOffset[i]=new T_state[Area];
-//		memset(pOffset[i],0,sizeof(T_state)*Area);
 
 		pWinSize[i]=new T_state[Area];
         for(size_t j=0;j<Area;j++){
             double h = IsAConstraint((int)j);
             if(h>0){
-                pWinSize[i][j]=winSize;//round(h);
+                pWinSize[i][j]=winSize;
             }
-            else pWinSize[i][j]=winSize;//+CStochastic::UniformSampling(3)-1;
+            else pWinSize[i][j]=winSize;
         }
 	}
-//	// add some disturbance
-//	for(int i=0;i<2;i++)
-//		for(int j=0;j<Area;j++)
-//			pOffset[i][j]=CStochastic::UniformSampling(5)-2;
 }
-
 
 void BPFlow::SetOffset(double* flowOffset)
 {
@@ -230,7 +155,7 @@ void BPFlow::SetOffset(double* flowOffset)
         for(size_t j=0; j<Area; j++)
         {
             if(flowOffset != NULL) pOffset[i][j]=(int) flowOffset[j*2+i];
-            else pOffset[i][j]=0;//CStochastic::UniformSampling(5)-2; //uniform sampling of [-2, -1, 0, 1, 2]; adds some disturbance
+            else pOffset[i][j]=0;
         }
     }
 }
@@ -251,9 +176,7 @@ bool BPFlow::InsideImage(T x,T y)
 template <class T>
 bool BPFlow::Masked(int masknum, T x,T y)
 {
-//	if(!InsideImage(x,y)) return false;
-
-	int idx = y*Width+x;
+	int idx = static_cast<int>(y*Width+x);
 	if(masknum==1){
 		if(masked1){
 			 unsigned char ismasked = mask1[idx];
@@ -289,12 +212,7 @@ void BPFlow::ComputeRangeTerm(double _gamma) {
 			int winsize=pWinSize[plane][offset];
 			for(ptrdiff_t j=-winsize;j<=winsize;j++) //every possible labeling.
             {
-//                double re = IsAConstraint(offset);
-//                if(re>0){
-//                    pRangeTerm[plane][offset].data()[j+winsize]=2*gamma*fabs((double)j);//+pOffset[plane][offset]);
-//                }
-//                else
-                    pRangeTerm[plane][offset].data()[j+winsize]=gamma*fabs((double)j+pOffset[plane][offset]);//);//
+                pRangeTerm[plane][offset].data()[j+winsize]=gamma*fabs((double)j+pOffset[plane][offset]);
             }
 		}
 	}
@@ -312,7 +230,7 @@ double BPFlow::GetMedian(int winsize, int i, int j){
 			ptrdiff_t x=j+winsize+l;
 			ptrdiff_t y=i+winsize+k;
 			if(!InsideImage(x,y)) continue;
-			int _ptr=(k+winsize)*winsize+l+winsize;
+			int _ptr=static_cast<int>((k+winsize)*winsize+l+winsize);
 			score.push_back(pDataTerm[index][_ptr]);
 		}
 
@@ -384,7 +302,7 @@ double BPFlow::ComputeDataTerm()
                     }
 //                    if (nChannels==32) foo = foo*30; //for BRIEF
 
-                    pDataTerm[index][(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index]]=foo;
+                    pDataTerm[index][static_cast<int>((k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index])]=foo;
                     
 					HistMin=__min(HistMin,foo);
 					HistMax=__max(HistMax,foo);
@@ -421,7 +339,7 @@ double BPFlow::ComputeDataTerm()
 					// if the point is outside the image boundary then continue
 					if(!InsideImage(x,y)) continue;
                     
-					int foo=__min(pDataTerm[index][(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index]]/HistInterval,nBins-1);
+					int foo=__min(pDataTerm[index][(static_cast<int>(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index])]/HistInterval,nBins-1);
                     
 					pHistogramBuffer[foo]++;
 				}
@@ -459,7 +377,7 @@ double BPFlow::ComputeDataTerm()
 				{
 					ptrdiff_t x=j+pOffset[0][index]+l;
 					ptrdiff_t y=i+pOffset[1][index]+k;
-					int _ptr=(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index];
+					int _ptr=static_cast<int>((k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index]);
 
 					//store the unaltered data term for computing the alignment energy
 					pDataTermStore[index][_ptr] = pDataTerm[index][_ptr];
@@ -478,7 +396,7 @@ double BPFlow::ComputeDataTerm()
 				for(ptrdiff_t k=-pWinSize[1][index];k<=pWinSize[1][index];k++)  // index over y
 					for(ptrdiff_t l=-pWinSize[0][index];l<=pWinSize[0][index];l++)  // index over x
 					{
-						int _ptr=(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index];
+						int _ptr=static_cast<int>((k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index]);
 						pDataTerm[index][_ptr]= __min(DefaultMatchingScore, med);
 					}
 			}
@@ -495,7 +413,7 @@ double BPFlow::ComputeDataTerm()
 					ptrdiff_t x=j+pOffset[0][index]+l;
 					ptrdiff_t y=i+pOffset[1][index]+k;
                     
-                    int _ptr=(k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index];
+                    int _ptr=static_cast<int>((k+pWinSize[1][index])*XWinLength+l+pWinSize[0][index]);
                     
                     if(!InsideImage(x,y)) pDataTerm[index][_ptr] = DefaultMatchingScore;
                     else if (IsDataTermTruncated) // truncate the data term
@@ -812,8 +730,8 @@ void BPFlow::BP_S(int count)
 					UpdateDualMessage(j,i,k);
 			}
 	else // backward upate
-		for(int i=Height-1;i>=0;i--)
-			for(int j=Width-1;j>=0;j--)
+		for(int i=static_cast<int>(Height)-1; i>=0; i--)
+			for(int j=static_cast<int>(Width)-1; j>=0; j--)
 			{
 				UpdateSpatialMessage(j,i,k,1);
 				UpdateSpatialMessage(j,i,k,3);
@@ -837,8 +755,8 @@ void BPFlow::TRW_S(int count)
 				}
 			}
 	else // backward upate
-		for(int i=(int)Height-1;i>=0;i--)
-			for(int j=(int)Width-1;j>=0;j--)
+		for(int i=static_cast<int>(Height)-1;i>=0;i--)
+			for(int j=static_cast<int>(Width)-1;j>=0;j--)
 			{
 				for(int l=0;l<2;l++)
 				{
@@ -871,10 +789,8 @@ void BPFlow::UpdateSpatialMessage(int x, int y, int plane, int direction)
 	if (direction==3 && y==0)
 		return;
 
-	int offset=(int)y*Width+x;
+	int offset=static_cast<int>(y*Width+x);
 	int nStates=pWinSize[plane][offset]*2+1;
-
-
 
 	T_message* message_org;
    	message_org=new T_message[nStates];
@@ -904,7 +820,7 @@ void BPFlow::UpdateSpatialMessage(int x, int y, int plane, int direction)
 	}
 	//s=m_s;
 	//d=m_d;
-	int offset1=(int) y1*Width+x1;
+	int offset1=static_cast<int>(y1*Width+x1);
 	int nStates1=pWinSize[plane][offset1]*2+1; // get the number of states for the destination node
 	int wsize=pWinSize[plane][offset];
 	int wsize1=pWinSize[plane][offset1];
@@ -1044,7 +960,7 @@ void BPFlow::Add2Message(T* message,const T* other,int nstates,double Coeff)
 //------------------------------------------------------------------------------------------------
 void BPFlow::UpdateDualMessage(int x, int y, int plane)
 {
-	int offset=(int) y*Width+x;
+	int offset=static_cast<int>(y*Width+x);
 	int offset1=offset;
 	int wsize=pWinSize[plane][offset];
 	int nStates=wsize*2+1;
@@ -1174,7 +1090,7 @@ double BPFlow::IsAConstraint(int offset){
 }
 
 double BPFlow::IsAConstraint(int x, int y){
-    int offset=y*Width+x;
+    int offset=static_cast<int>(y*Width+x);
     return IsAConstraint(offset);
 }
 
@@ -1472,14 +1388,14 @@ void BPFlow::DebugFlowResult(double * flow) {
     for (int i = 0; i < Height; i++)
         for (int j = 0; j < Width; j++)
         {
-            int rvarX = (i * Width + j) * 2 + 0;
-            int rvarY = (i * Width + j) * 2 + 1;
+            size_t rvarX = (i * Width + j) * 2 + 0;
+            size_t rvarY = (i * Width + j) * 2 + 1;
             
 //            int index = i * Width + j;
 //            int wsize = hypSet[index];
             
-            histx[(int) flow[rvarX]+wsize]++;
-            histy[(int) flow[rvarY]+wsize]++;
+            histx[static_cast<int>(flow[rvarX]+wsize)]++;
+            histy[static_cast<int>(flow[rvarY]+wsize)]++;
         }
     
     std::cout << "----flow histogram----" << std::endl;
@@ -1545,7 +1461,7 @@ void BPFlow::generateCoarserLevel(BPFlow &bp)
 	for(int i=0;i<bp.Height;i++)
 		for(int j=0;j<bp.Width;j++)
 		{
-			int offset=(int)i*bp.Width+j;
+			int offset=static_cast<int>(i*bp.Width+j);
 			for(int ii=0;ii<2;ii++)
 				for(int jj=0;jj<2;jj++)
 				{

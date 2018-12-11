@@ -25,9 +25,12 @@ private:
     
     int DateToIdx(int date);
     std::vector<std::vector<int> > ReadCSVFile(std::string file, int firstidx, int lastidx);
+    std::vector<std::vector<int> > ReadCSVFileLabels(std::string file, int firstidx, int lastidx);
     
     std::vector<std::string> ParseLineAdv(char * line, std::string separator);
     std::string PaddedInt(int num);
+    cv::Vec3b FindGrayBorderColor(const cv::Mat& a);
+    void FixImagesForComparison(cv::Mat& a, cv::Mat& b);
     
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
@@ -38,7 +41,7 @@ public:
     std::vector<std::string> _dates;
     
     AlignICPImagePairs(Camera& cam, std::string query_loc, std::string results_dir, std::string pftbase, std::vector<std::string> dates, int nthreads=12):
-    _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _maps_dir(results_dir + "maps/"), _savebase(results_dir + "aligned_icp_image_pairs/"), _dates(dates)
+    _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _maps_dir(results_dir + "maps_/"), _savebase(results_dir + "aligned_icp_image_pairs/"), _dates(dates)
     {
         for(int i=0; i<nthreads; i++){
             ws.push_back(new AlignImageMachine(cam));
@@ -60,11 +63,13 @@ public:
     void GetResults();
     void GetResultsTimelapse(std::string argnum, std::string argdate);
     void LabelTimelapse();
-    void GetResultsLabels();
+    void GetResultsLabels(bool sflow);
     void GetResultsLabelsICP();
     void PercentLocalizedPoses();
     void CompareRFWithICP();
-
+    
+    void CountPosesWithALocalization();
+    
     void PareComparisonFile();
     void AnalyzeAlignmentQualityTrend();
     

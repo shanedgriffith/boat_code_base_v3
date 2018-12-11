@@ -65,7 +65,7 @@ void MachineManager::TerminateMachines(){
 }
 
 int MachineManager::NumberOfMachines(){
-	return ams.size();
+	return static_cast<int>(ams.size());
 }
 
 int MachineManager::NumberOfMachinesAtState(AlignmentMachine::state s){

@@ -78,9 +78,7 @@ void EvaluateRFlow::VisualizeDivergenceFromLocalizations(std::vector<LocalizedPo
     SLAMDraw draw;
     draw.SetScale(-300,300,-300,300);
     draw.ResetCanvas();
-
-    int skip = 25;
-
+    
     //draw outliers.
     for(int i=0; i<localizations.size(); i++){
         LocalizedPoseData& lpd = localizations[i];
@@ -116,8 +114,6 @@ void EvaluateRFlow::VisualizeFrameChange(std::vector<std::vector<double> >& traj
     SLAMDraw draw;
     draw.SetScale(-300,300,-300,300);
     draw.ResetCanvas();
-
-    int skip = 25;
 
     //draw outliers.
     for(int i=0; i<localizations.size(); i++){

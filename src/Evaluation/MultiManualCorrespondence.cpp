@@ -10,9 +10,9 @@
 
 int MultiManualCorrespondence::GetImageNumberFromImagePath(std::string imagepath)
 {
-    int l = imagepath.rfind(".");
-    int s = imagepath.rfind("/");
-    int f = imagepath.rfind("/", s-1);
+    size_t l = imagepath.rfind(".");
+    size_t s = imagepath.rfind("/");
+    size_t f = imagepath.rfind("/", s-1);
     std::string imgno =imagepath.substr(s+1,l-s-1);
     std::string mil = imagepath.substr(f+1, s-f-1);
     return stod(mil)*1000+stod(imgno);
@@ -20,9 +20,9 @@ int MultiManualCorrespondence::GetImageNumberFromImagePath(std::string imagepath
 
 std::string MultiManualCorrespondence::GetDateFromImagePath(std::string imagepath)
 {
-    int e = imagepath.rfind("/");
+    size_t e = imagepath.rfind("/");
     e = imagepath.rfind("/", e-1);
-    int s = imagepath.rfind("/", e-1);
+    size_t s = imagepath.rfind("/", e-1);
     return imagepath.substr(s+1, e-1);
 }
 
@@ -61,7 +61,7 @@ void MultiManualCorrespondence::ReadDelimitedFile(std::string file, int type){
 }
 
 int MultiManualCorrespondence::GetNumberOfImagePairs(){
-	return correspondenceset.size();
+	return static_cast<int>(correspondenceset.size());
 }
 
 void MultiManualCorrespondence::PrintHist(){

@@ -10,9 +10,8 @@
 using namespace std;
 
 void SFlowDREAM2RF::SetHeterogeneousHypothesisSpace(BPFlow& bpflow, SIFTImageLayer& il, int imset){
-    int HYP_SPACE_PADDING = 2;
-    double * offset = (double *) offsets[imset].data;
-    
+//    int HYP_SPACE_PADDING = 2;
+//    
     std::vector<double> mcur = rflows[imset]->GetConstraintBounds(0);
     if(mcur.size()<6){
         std::cout << "SFlowDREAM2RF::SetHeterogeneousHypothesisSpace() Error. Not using hxhy."<<std::endl;

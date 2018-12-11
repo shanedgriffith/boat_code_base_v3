@@ -65,9 +65,9 @@ std::vector<TestRuntime::in_progress> TestRuntime::GetRunningProcesses(){
 void TestRuntime::RunningProcesses(){
     std::vector<in_progress> last_set;
     
-    int count=0;
-    int countbad = 0;
     while(1) {
+        int count=0;
+        int countbad = 0;
         std::vector<in_progress> proc = GetRunningProcesses();
         for(auto& p : proc) {
             for(int i=0; i<last_set.size(); i++){

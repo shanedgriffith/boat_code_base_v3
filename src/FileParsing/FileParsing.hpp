@@ -26,11 +26,6 @@ class FileParsing {
 private:
 protected:
 	const static int LINESIZE = 10000;
-
-    
-    static FILE * OpenFile(std::string filename, const char * op, bool required = true);
-    static std::vector<std::string> ParseLine(char * line);
-    static std::vector<std::string> ParseLineAdv(char * line, std::string separator);
     
     //TODO: how to implement this the way I intended.
     virtual void ReadDelimitedFile(std::string file, int type);
@@ -38,6 +33,10 @@ protected:
 public:
     bool debug = false;
     bool verbose = false;
+    
+    static FILE * OpenFile(std::string filename, const char * op, bool required = true);
+    static std::vector<std::string> ParseLine(char * line);
+    static std::vector<std::string> ParseLineAdv(char * line, std::string separator);
     
     static std::string formattime(double seconds);
     static bool DirectoryExists(std::string pzPath );
