@@ -41,7 +41,7 @@ private:
     std::vector<gtsam::Point2> ProjectPoints(std::vector<double>& boat, std::vector<bool>& valid_indices);
     void SparseFlow(std::vector<bool>& iA, std::vector<bool>& iB, std::vector<gtsam::Point2>& rpA, std::vector<gtsam::Point2>& rpB);
     void EliminateOutliers(int active_set);
-
+    
     cv::Point2f Scale(cv::Point2f p, bool up);
     
     typedef struct{
@@ -55,19 +55,19 @@ private:
     std::vector<std::vector<ReprojectionFlow::rfpoint> > restrictedset;
     std::vector<ReprojectionFlow::rfpoint> viewset;
 
-    Map& _map;
-    Camera& _cam;
+    const Map& _map;
+    const Camera& _cam;
 public:
     bool debug = false;
     int outw=0, outh=0;
     
     /*takes as input the desired width and height for the flow.*/
-    ReprojectionFlow(Camera& cam, Map& map):
+    ReprojectionFlow(const Camera& cam, const Map& map):
     	_cam(cam), _map(map){
     	_map.CheckSize();
     }
-
-    int MapSize(){return _map.map.size();}
+    
+    size_t MapSize(){return _map.map.size();}
     void Reset();
     double GStatisticForPose(std::vector<double>& camA, std::vector<double>& camB);
     void ComputeFlow(std::vector<double>& camA, std::vector<double>& camB);

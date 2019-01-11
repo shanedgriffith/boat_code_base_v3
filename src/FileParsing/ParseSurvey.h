@@ -67,7 +67,7 @@ public:
     
     bool CheckCameraTransition(int cidx, int lcidx);
     int FindSynchronizedAUXIndex(double querytime, int from_idx);
-    ParseFeatureTrackFile LoadVisualFeatureTracks(Camera& _cam, int& index, bool gap = false);
+    ParseFeatureTrackFile LoadVisualFeatureTracks(const Camera& _cam, int& index, bool gap = false);
     
 };
 

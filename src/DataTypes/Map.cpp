@@ -12,8 +12,6 @@
 using namespace std;
 
 void Map::LoadISCMap(vector<string>& dates){
-    num_surveys = static_cast<int>(dates.size());
-
     cout << "Loading the globally consistent map." << endl;
     double sum = 0;
     for(int i=0; i<dates.size(); i++){
@@ -40,11 +38,15 @@ void Map::LoadISCMap(vector<string>& dates){
 
 void Map::LoadMap(string date){
     ParseOptimizationResults pm(_map_base, date);
+    LoadMap(date, pm);
+}
+
+void Map::LoadMap(string date, const ParseOptimizationResults& pm) {
     int survey_label = stoi(date);
     
     for(int j=0; j<pm.landmarks.size(); j++){
         if(pm.landmarks[j][0]==0 && pm.landmarks[j][1]==0 && pm.landmarks[j][2]==0) continue;
-
+        
         map.push_back(gtsam::Point3(pm.landmarks[j][0], pm.landmarks[j][1], pm.landmarks[j][2]));
         variances.push_back(0);
         survey_labels.push_back(survey_label);
@@ -52,10 +54,9 @@ void Map::LoadMap(string date){
     }
 }
 
+
 /*This still have a way to utilize the reprojection error?*/
 void Map::LoadStandardMap(vector<string>& dates){
-	num_surveys = static_cast<int>(dates.size());
-
     cout << "Loading the map of regular optimization results." << endl;
     for(int i=0; i<dates.size(); i++){
         LoadMap(dates[i]);
@@ -74,7 +75,7 @@ void Map::LoadMap(vector<string>& dates, bool standard){
 		LoadISCMap(dates);
 }
 
-bool Map::CheckSize(){
+bool Map::CheckSize() const{
 	if(map.size() == 0){
 		cout << "Empty map. Something went wrong."<<endl;
 		exit(-1);
@@ -82,7 +83,7 @@ bool Map::CheckSize(){
 	return false;
 }
 
-int Map::NumSurveys(){
+int Map::NumSurveys() const{
 	return static_cast<int>(_dates.size());
 }
 

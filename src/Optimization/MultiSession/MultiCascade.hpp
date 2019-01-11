@@ -41,6 +41,7 @@ protected:
     double UpdateErrorIterative();
     
     void SaveResults();
+    void CountInlierLocalizations();
     
     void RunIteration(bool firstiter);
     void WeightedAlignment();
@@ -51,7 +52,7 @@ public:
     bool staticmaps;
     std::string _origin_dir;
     
-    MultiCascade(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "", int nthreads=8);
+    MultiCascade(const Camera& cam, std::string results_dir, std::string pftbase, std::string date = "", int nthreads=8);
     
     ~MultiCascade(){
         man.WaitForMachine(true);

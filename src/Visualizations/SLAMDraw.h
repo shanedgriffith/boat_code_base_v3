@@ -64,7 +64,7 @@ private:
 
     int LocationOfPointRelativeToLine(double m, double b, cv::Point2d p);
     
-    cv::Point2f Scale(cv::Point2f p);
+    
     
     void DrawBoat(double x, double y, double yaw);
     
@@ -85,7 +85,9 @@ public:
     char Display();
     
     void SaveDrawing(std::string filename);
+    cv::Mat GetDrawing();
     
+    cv::Point2f Scale(cv::Point2f p);
     void SetScale(double xmin, double xmax, double ymin, double ymax);
     
     void SetScale(std::vector<cv::Point3d> boatpos);

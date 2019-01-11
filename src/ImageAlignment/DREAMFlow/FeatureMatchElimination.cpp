@@ -52,7 +52,7 @@ bool FeatureMatchElimination::AreInliersMeaningful(int n){
     return n >= 8;
 }
 
-int FeatureMatchElimination::IdentifyInliersAndOutliers(Camera& _cam,
+int FeatureMatchElimination::IdentifyInliersAndOutliers(const Camera& _cam,
                                                          std::vector<cv::Point2f>& points1,
                                                          std::vector<cv::Point2f>& points2,
                                                          std::vector<unsigned char>& inliers) {

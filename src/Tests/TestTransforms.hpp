@@ -24,11 +24,11 @@
 class TestTransforms {
 private:
     double GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var);
-    double FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
+    double FeatureLikelihood(const Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
     double GetLikelihoodOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var);
     
     double GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var);
-    double FeatureF(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
+    double FeatureF(const Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var);
     double GetFOdom(gtsam::Pose3 p1, gtsam::Pose3 p2, gtsam::Pose3 c1, gtsam::Pose3 c2, std::vector<double> var);
     
     double SampleValue(double u, double v);
@@ -36,10 +36,10 @@ private:
     double MapToConstraint(double val);
 public:
     TestTransforms(){}
-    static void CheckBtwn(Camera& _cam);
-    static void TestLocalization(Camera& _cam);
-    void TestConstraintProportions(Camera& _cam);
-    static void TestImageAlignment(Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase);
+    static void CheckBtwn(const Camera& _cam);
+    static void TestLocalization(const Camera& _cam);
+    void TestConstraintProportions(const Camera& _cam);
+    static void TestImageAlignment(const Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase);
 };
 
 

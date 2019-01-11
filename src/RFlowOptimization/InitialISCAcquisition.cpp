@@ -25,7 +25,7 @@ using namespace std;
 const string InitialISCAcquisition::_logname = "RFlowISC.log";
 
 //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
-InitialISCAcquisition::InitialISCAcquisition(Camera& cam, std::string refdate, std::string priordate, std::string query_loc, std::string pftbase, std::string results_dir, std::string origin_dir):
+InitialISCAcquisition::InitialISCAcquisition(const Camera& cam, std::string refdate, std::string priordate, std::string query_loc, std::string pftbase, std::string results_dir, std::string origin_dir):
 _cam(cam), _refdate(refdate), _priordate(priordate), _query_loc(query_loc), _pftbase(pftbase), _save_dir(results_dir + refdate + "_" + priordate + "/"), _origin(origin_dir) {
     
     std::cout << "Adding IS constraints." << std::endl;

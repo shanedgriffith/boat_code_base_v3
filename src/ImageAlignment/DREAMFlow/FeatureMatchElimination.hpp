@@ -38,7 +38,7 @@ protected:
 
 public:
     bool debug = false;
-    int IdentifyInliersAndOutliers(Camera& _cam, std::vector<cv::Point2f>& points1,
+    int IdentifyInliersAndOutliers(const Camera& _cam, std::vector<cv::Point2f>& points1,
                                                   std::vector<cv::Point2f>& points2,
                                                 std::vector<unsigned char>& inliers);
     bool AreInliersMeaningful(int v);

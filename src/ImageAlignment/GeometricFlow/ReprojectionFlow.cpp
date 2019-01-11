@@ -87,10 +87,10 @@ void ReprojectionFlow::TestGstat(){
     cout << "results: "<< one << ", "<<two<<", "<<three<<endl;
 }
 
-double ReprojectionFlow::GStatisticForPose(vector<double>& camA, vector<double>& camB){
+double ReprojectionFlow::GStatisticForPose(vector<double>& camA, vector<double>& camB) {
 	double g=0;
 	vector<vector<double> > _camA = {camA};
-	IdentifyClosestPose(_camA, camB, &g);
+	IdentifyClosestPose(_camA, camB, &g, false);
 	return g;
 }
 
@@ -100,8 +100,8 @@ vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vect
         exit(-1);
     }
     gtsam::Pose3 tf = GTSamInterface::VectorToPose(boat);
-    vector<gtsam::Point2> validset(_map.map.size(), gtsam::Point2(-1, -1));
-    for(int j=0; j<_map.map.size(); j++) {
+    vector<gtsam::Point2> validset(MapSize(), gtsam::Point2(-1, -1));
+    for(int j=0; j<MapSize(); j++) {
         if(_map.map[j].x()==0.0 && _map.map[j].y()==0.0 && _map.map[j].z()==0.0) continue;
         gtsam::Point3 res = tf.transform_to(_map.map[j]);
 		validset[j] = _cam.ProjectToImage(res);
@@ -126,10 +126,10 @@ void ReprojectionFlow::SparseFlow(vector<bool>& iA, vector<bool>& iB, vector<gts
 }
 
 void ReprojectionFlow::ComputeFlow(vector<double>& camA, vector<double>& camB){
-    vector<bool> valid_indicesA(_map.map.size(), false);
+    vector<bool> valid_indicesA(MapSize(), false);
     vector<gtsam::Point2> rpA = ProjectPoints(camA, valid_indicesA);
     
-    vector<bool> valid_indicesB(_map.map.size(), false);
+    vector<bool> valid_indicesB(MapSize(), false);
     vector<gtsam::Point2> rpB = ProjectPoints(camB, valid_indicesB);
     
     SparseFlow(valid_indicesA, valid_indicesB, rpA, rpB);
@@ -137,20 +137,24 @@ void ReprojectionFlow::ComputeFlow(vector<double>& camA, vector<double>& camB){
 
 int ReprojectionFlow::IdentifyClosestPose(vector<vector<double> >& camA, vector<double>& camB, double * gresult, bool save){
     //Identify the closest pose using the G-statistic.
-
-    vector<bool> valid_indicesB(_map.map.size(), false);
+    if(camA.size()==0) {
+        std::cout << "ReprojectionFlow::IdentifyClosestPose. input vector is empty" << std::endl;
+        return -1;
+    }
+    
+    vector<bool> valid_indicesB(MapSize(), false);
     vector<gtsam::Point2> reprojected_pointsB = ProjectPoints(camB, valid_indicesB);
-
+    
     //NOTE: it may not be possible to save the data in the for loop using pointers.
-    vector<bool> valid_indicesA(_map.map.size(), false);
+    vector<bool> valid_indicesA(MapSize(), false);
     vector<gtsam::Point2> reprojected_pointsA;
-
+    
     int closest = -1;
     double maxg = -1;
-    for(int i=0; i<camA.size(); i++){
+    for(int i=0; i<camA.size(); i++) {
         if(!DistanceCriterion(camA[i], camB)) continue;
-
-        vector<bool> viA(_map.map.size(), false);
+        
+        vector<bool> viA(MapSize(), false);
         vector<gtsam::Point2> rpA = ProjectPoints(camA[i], viA);
 
 		vector<int> ct = ExtractContingencyTable(viA, valid_indicesB);
@@ -436,7 +440,7 @@ vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
 //    cout <<"Large deviations from points from one survey but not others may indicate a change"<<endl;
 //    cout <<"Large deviations in general may indicate a poor alignment."<<endl;
     
-    vector<double> res((_map.num_surveys+1)*2, 0);
+    vector<double> res((_map.NumSurveys()+1)*2, 0);
 
     int lastsurvey = -1;
     int sidx = -1;
@@ -454,22 +458,22 @@ vector<double> ReprojectionFlow::MeasureDeviationsPerSurvey(cv::Mat &flow){
         gtsam::Point2 imflow(data[index], data[index+1]);
         double dist = f.distance(imflow);
         
-        res[2*_map.num_surveys] += dist;
-        res[2*_map.num_surveys+1]++;
+        res[2*_map.NumSurveys()] += dist;
+        res[2*_map.NumSurveys()+1]++;
         res[2*sidx] += dist;
         res[2*sidx+1]++;
     }
     
-    if(debug) cout << "average re: " << res[2*_map.num_surveys]/res[2*_map.num_surveys+1] << endl;
+    if(debug) cout << "average re: " << res[2*_map.NumSurveys()]/res[2*_map.NumSurveys()+1] << endl;
     return res;
 }
 
 /******************************** DRAWING RELATED (for visualization and debugging) *******************************/
 void ReprojectionFlow::DrawViewset(std::vector<double> camA, std::vector<double> camB, std::string savename){
-    vector<bool> valid_indicesA(_map.map.size(), false);
+    vector<bool> valid_indicesA(MapSize(), false);
     ProjectPoints(camA, valid_indicesA);
     
-    vector<bool> valid_indicesB(_map.map.size(), false);
+    vector<bool> valid_indicesB(MapSize(), false);
     ProjectPoints(camB, valid_indicesB);
     
     SLAMDraw draw;
@@ -477,7 +481,7 @@ void ReprojectionFlow::DrawViewset(std::vector<double> camA, std::vector<double>
     draw.ResetCanvas();
     
     //draw the estimated landmark points
-    for(int i=0; i<_map.map.size(); i++) {
+    for(int i=0; i<MapSize(); i++) {
         if(_map.map[i].x() == 0 && _map.map[i].y() == 0 && _map.map[i].z() == 0) continue;
         if(valid_indicesA[i] && valid_indicesB[i]){
             draw.AddPointLandmark(_map.map[i].x(), _map.map[i].y(), 10000);
@@ -570,15 +574,3 @@ void ReprojectionFlow::DrawFlowSurvey(cv::Mat& imageB, int survey, ParseFeatureT
     }
     cout << "dist: " << dist / pft.ids.size() << endl;
 }
-
-/*
- * Desired usage:
- *  ReprojectionFlow rf(map);
- *  int poseloc = rf.IdentifyClosestPose(posesA, poseB);
- *  rf.CreateRestrictedSet(1, pftB);
- *  rf.CreateRestrictedSet(0, pftA[poseloc], false); //OR rf.CreateRestrictedSetMirrored(); (this can be left out)
- *  SFlowDREAM sf;
- *  if(!sf.SetReprojectionFlow(rf)) //checks for two sets, and mirrors one if needed.
- *      continue;
- * */
-

@@ -26,7 +26,7 @@ protected:
     double UpdateTots(std::vector<double>& stats);
     
     std::vector<double> tots;
-    Camera& _cam;
+    const Camera& _cam;
 public:
     bool debug;
     double badthreshold; //values are for display only.
@@ -34,7 +34,7 @@ public:
     std::string _date;
     std::string _results_dir;
     
-    EvaluateSLAM(Camera& cam, std::string date, std::string results_dir):
+    EvaluateSLAM(const Camera& cam, std::string date, std::string results_dir):
         debug(false), badthreshold(50), avgbadthreshold(15), tots(7, 0.0),
     _cam(cam), _date(date), _results_dir(results_dir){}
     

@@ -32,7 +32,7 @@ protected:
 	virtual void EpipolarConstraintsFromRF();
 	std::vector<ReprojectionFlow*> rflows;
 public:
-	SFlowDREAM2RF(Camera& cam):SFlowDREAM(cam){
+	SFlowDREAM2RF(const Camera& cam):SFlowDREAM(cam){
         HYP_SPACE_PADDING = 0;
     }
 	bool SetReprojectionFlow(std::vector<ReprojectionFlow*> rfs);

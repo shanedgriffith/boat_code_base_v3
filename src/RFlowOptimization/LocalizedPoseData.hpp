@@ -101,7 +101,7 @@ public:
     void SetPoses(std::vector<double> p0, std::vector<double> p1frame0_, std::vector<double> p0frame1_);
     void SetLocalizationQuality(double pdc, double rerror);
 
-    double VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1);
+    double VerifyWith(const Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1);
     
     bool IsSet();
 
@@ -112,7 +112,7 @@ public:
     static LocalizedPoseData Read(std::string path);
     static std::vector<LocalizedPoseData> LoadAll(std::string toppath, std::string altpath = "", std::vector<std::string> dates = {});
     
-    void CheckLPD(Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc);
+    void CheckLPD(const Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc);
 };
 
 

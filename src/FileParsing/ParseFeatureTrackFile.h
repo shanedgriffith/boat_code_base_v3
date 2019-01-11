@@ -43,7 +43,7 @@ private:
     void Load();
 //    static int BinarySearchLandmarkRange(std::vector<LandmarkTrack>& landmarks, int ckey, bool end);
     
-	Camera& _cam;
+	const Camera& _cam;
 protected:
     void ProcessLineEntries(int type, std::vector<std::string> lp);
     void ReadDelimitedFile(std::string file, int type);
@@ -57,9 +57,9 @@ public:
      around it using pointers, but that approach was questionable. There's probably a 
      better way to do this (smart pointers?).
      */
-    ParseFeatureTrackFile(Camera& cam): _cam(cam), time(-1) {}
+    ParseFeatureTrackFile(const Camera& cam): _cam(cam), time(-1) {}
     
-    ParseFeatureTrackFile(Camera& cam, std::string base, int no):
+    ParseFeatureTrackFile(const Camera& cam, std::string base, int no):
     	_cam(cam), _no(no), _base(base), time(-1)
     {
         siftfile = GetFeatureTrackFilePath(base, no);
@@ -67,7 +67,7 @@ public:
     }
     
     //this constructor is needed in case the file is downloaded and not in its usual location.
-    ParseFeatureTrackFile(Camera& cam, std::string file) :
+    ParseFeatureTrackFile(const Camera& cam, std::string file) :
     _cam(cam), time(-1), siftfile(file)
     {
         Load();
@@ -89,10 +89,10 @@ public:
     std::vector<LandmarkTrack> ProcessNewPoints(int survey, int ckey, std::vector<LandmarkTrack>& active, double percent_of_tracks=100.0);
     bool CheckImageDuplication(std::vector<LandmarkTrack>& active);
     
-    static ParseFeatureTrackFile LoadFTF(Camera& _cam, std::string base, int ftfileno);
+    static ParseFeatureTrackFile LoadFTF(const Camera& _cam, std::string base, int ftfileno);
     
     static std::vector<int> ApproximateLandmarkSet(std::vector<LandmarkTrack>& landmarks, int ckey);
-    static ParseFeatureTrackFile ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
+    static ParseFeatureTrackFile ReconstructFromCachedSet(const Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
 };
 
 

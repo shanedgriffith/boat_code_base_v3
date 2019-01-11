@@ -23,7 +23,7 @@
 
 using namespace std;
 
-MultiSessionOptimization::MultiSessionOptimization(Camera& cam, std::string map_dir, std::string pftbase, std::string date, double plt):
+MultiSessionOptimization::MultiSessionOptimization(const Camera& cam, std::string map_dir, std::string pftbase, std::string date, double plt):
 _map_dir(map_dir), _pftbase(pftbase),
 SurveyOptimizer(cam, rfFG, date, map_dir, false) {
     rfFG = new RFlowFactorGraph();
@@ -59,6 +59,7 @@ void MultiSessionOptimization::Initialize() {
      /*Load the lpd data for each one.*/
     cout << "   loading the localizations."<<endl;
     cache_landmarks = true;
+    double all_avg = 0;
     for(int i=optstart; i<dates.size(); i++){
         LPDInterface lint;
         std::cout <<  dates[i] << ": ";
@@ -80,6 +81,7 @@ void MultiSessionOptimization::Initialize() {
         rerrs.push_back(ESlam.LoadRerrorFile());
         double avg = ESlam.GetAverageRerror(rerrs[i-optstart]);
         AverageRerror.push_back(avg);
+        all_avg += avg;
         
         std::vector<LandmarkTrack> clset;
         cached_landmarks.push_back(clset);
@@ -96,16 +98,15 @@ void MultiSessionOptimization::Initialize() {
         outliers.push_back(0);
     }
     
+    all_avg /= (dates.size() - optstart);
     //an adaptive threshold for the update step.
     for(int survey=optstart; survey<dates.size(); survey++){
         for(int j=0; j<POR[survey].boat.size(); j++){
-            rerrs[survey-optstart][j] = rerrs[survey-optstart][j]*update_mult_factor;
             if(rerrs[survey-optstart][j] < 0) {
                 std::cout << "MultiSessionOptimization::UpdateError() Something went wrong with the Rerror file. Got negative rerror."<<std::endl;
                 exit(1);
-            } else if (rerrs[survey-optstart][j] < 6) { //this occurs at places in the rerr vector that are zero.
-                rerrs[survey-optstart][j] = AverageRerror[survey-optstart]*update_mult_factor;
             }
+            rerrs[survey-optstart][j] = std::max(all_avg, rerrs[survey-optstart][j]) * update_mult_factor; //AverageRerror[survey-optstart]
         }
     }
     

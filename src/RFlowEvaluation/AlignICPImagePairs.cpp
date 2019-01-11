@@ -5,6 +5,10 @@
 #include <Visualizations/FlickeringDisplay.h>
 #include <RFlowOptimization/LocalizedPoseData.hpp>
 #include <RFlowOptimization/LPDInterface.hpp>
+#include <FileParsing/ParseVisibilityFile.h>
+#include <Visualizations/SLAMDraw.h>
+#include <RFlowEvaluation/ForBMVCFigure.hpp>
+#include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
 
 #include "AlignICPImagePairs.hpp"
 
@@ -258,7 +262,7 @@ void AlignICPImagePairs::AlignImagesSFlow(std::string file, int firstidx, int la
     std::cout << "Finished aligning images  " << std::endl;
 }
 
-std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFileLabels(std::string file, int firstidx, int lastidx){
+std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFileLabels(std::string file){
     FILE * fp = FileParsing::OpenFile(file, "r");
     char line[1000];
     
@@ -426,44 +430,136 @@ void AlignICPImagePairs::GetResultsTimelapse(std::string argnum, std::string arg
     std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
 }
 
-void AlignICPImagePairs::LabelTimelapse(){
-    std::string rootdir = "/Users/shanehome/Documents/140502_571/";
-    std::string rfbase = rootdir + "rf/";
-    std::string sfbase = rootdir + "mappoints/";
-    std::string sfref = rootdir + "reference.jpg";
+void AlignICPImagePairs::AnalyzeTimeLapses() {
+    std::string basedir = "/Users/shane/Documents/research/results/2018_winter/example_alignments/set_of_100/";
+    std::vector<std::string> aligndirs = FileParsing::ListDirsInDir(basedir);
     
-    std::vector<std::string> rffiles = FileParsing::ListFilesInDir(rfbase, "jpg");
-    std::vector<std::string> warpsffiles = FileParsing::ListFilesInDir(sfbase, "jpg");
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++)
+        por.push_back(ParseOptimizationResults("/Volumes/Untitled/data/maps_only/maps_only_2014/", _dates[i]));
     
-    cv::Mat ref = ImageOperations::Load(sfref);
-    std::vector<int> counter(3,0);
+    SLAMDraw draw(1000,1000);
+    draw.SetScale(-300,300,-300,300);
+    draw.ResetCanvas();
     
-    FlickeringDisplay fd;
-    for(int i=0; i<rffiles.size(); i++) {
-        cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
+    cv::Mat img = draw.GetDrawing();
+    
+    std::vector<std::vector<int> > counting;
+    std::vector<double> perc;
+    std::vector<int> bins(10,0);
+    std::vector<int> nallimgs(10,0);
+    
+    for(int d=0; d<aligndirs.size(); ++d) {
+        std::string rootdir = basedir + aligndirs[d] + "/";
+        std::vector<std::string> numaligned = FileParsing::ListFilesInDir(rootdir + "rf/", "jpg");
+        std::vector<std::string> num = FileParsing::ListFilesInDir(rootdir + "scene/", "jpg");
+        std::vector<int> counts = {static_cast<int>(numaligned.size()-1), static_cast<int>(num.size())};
+        perc.push_back(1.0*counts[0]/counts[1]);
+        counting.push_back(counts);
+//        std::cout << d << " " <<aligndirs[d] << ": " << counting[d][0] << " of " << counting[d][1] << ": " << perc[d] << std::endl;
+        std::cout << perc[d] << ", " << counting[d][0]<< std::endl;
+        bins[static_cast<int>(perc[d]*10)]++;
+//        bins[counts[0]/5]++;
+        nallimgs[counts[1]/5]++;
         
-        cv::Mat refx2 = FlickeringDisplay::CombinedImage(ref, ref);
-        cv::Mat rfsf = FlickeringDisplay::CombinedImage(Imrf, Imrf);
+        std::string refdate = aligndirs[d].substr(0,aligndirs[d].find("_"));
+        std::string refpose = aligndirs[d].substr(aligndirs[d].find("_")+1, aligndirs[d].size());
+        int rd = DateToIdx(stoi(refdate));
+        int rp = stoi(refpose);
         
-        char c = fd.FlickerImages(refx2, rfsf);
-        switch(c){
-            case 'c':{
-                counter[0]++;
-                break;}
-            case 'g':{
-                counter[1]++;
-                break;}
-            case 'b':{
-                counter[2]++;
-                break;}
-            case 'q':{
-                exit(1);
-                break;}
-        }
-        std::cout << rffiles[i] << ", "<<c << std::endl;
+        circle(img, draw.Scale(cv::Point2f(por[rd].boat[rp][0], por[rd].boat[rp][1])), 7, CV_RGB(0,0,0), -1, 8, 0);
+        circle(img, draw.Scale(cv::Point2f(por[rd].boat[rp][0], por[rd].boat[rp][1])), 6, CV_RGB((1-perc[d])*255,0,perc[d]*255), -1, 8, 0);
     }
     
-    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+    std::sort(perc.begin(), perc.end());
+    for(int i=0; i<bins.size(); ++i) {
+        std::cout << i*10 << ": " << bins[i] << std::endl;
+//        std::cout << i*5 << ": " << nallimgs[i] << std::endl;
+    }
+    
+    cv::Mat flipped;
+    cv::flip(img, flipped, 0);
+    img = flipped;
+    
+    cv::namedWindow("disp");
+    cv::imshow("disp", img);
+    char c = cvWaitKey(0);
+    cv::destroyWindow("disp");
+    if(c=='s')
+    {
+        static std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+        
+        try {
+            cv::imwrite("/Users/shane/Desktop/place.png", img, compression_params);
+        } catch (std::exception& ex) {
+            fprintf(stderr, "PreprocessBikeRoute::ReadVideo Error. Exception converting image to JPG format: %s\n", ex.what());
+            exit(-1);
+        }
+    }
+    
+    return;
+}
+
+void AlignICPImagePairs::LabelTimelapse() {
+    std::string basedir = "/Users/shane/Documents/research/results/2018_winter/example_alignments/set_of_100/";
+    std::vector<std::string> aligndirs = FileParsing::ListDirsInDir(basedir);
+    
+//    std::string rootdir = "/Users/shane/Documents/research/results/2018_winter/example_alignments/140625_to_others_examples/140625_1141/";
+//    std::string rootdir = "/Users/shanehome/Documents/140502_571/";
+    std::vector<std::vector<int> > counting;
+    for(int d=0; d<aligndirs.size(); ++d)
+    {
+        std::string rootdir = basedir + aligndirs[d] + "/";
+        std::string rfbase = rootdir + "rf/";
+        std::string badimgs = rfbase + "bad/";
+        int nbad = 0;
+        std::string sfbase = rootdir + "mappoints/";
+        std::vector<std::string> forref = FileParsing::ListFilesInDir(rootdir, "jpg");
+        if(forref.size() == 0)
+            continue;
+        std::string sfref = rootdir + forref[0];
+        
+        std::vector<std::string> rffiles = FileParsing::ListFilesInDir(rfbase, "jpg");
+        std::vector<std::string> warpsffiles = FileParsing::ListFilesInDir(sfbase, "jpg");
+        
+        cv::Mat ref = ImageOperations::Load(sfref);
+        std::vector<int> counter(3,0);
+        
+        FlickeringDisplay fd;
+        for(int i=0; i<rffiles.size(); i++) {
+            cv::Mat Imrf = ImageOperations::Load(rfbase + rffiles[i]);
+            
+            char c = fd.FlickerImages(ref, Imrf);
+            switch(c){
+                case 'c':{
+                    counter[0]++;
+                    if(nbad++ == 0)
+                        FileParsing::MakeDir(badimgs);
+                    FileParsing::MoveFile(rfbase + rffiles[i], badimgs + rffiles[i]);
+                    break;}
+                case 'g':{
+                    counter[1]++;
+                    break;}
+                case 'b':{
+                    counter[2]++;
+                    break;}
+                case 'q':{
+                    exit(1);
+                    break;}
+            }
+            std::cout << rffiles[i] << ", "<<c << std::endl;
+        }
+        
+        std::cout << d << ":" << aligndirs[d] << " c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+        counting.push_back(counter);
+    }
+    
+    std::cout << "all results" << std::endl;
+    for(int d=0; d<aligndirs.size(); ++d) {
+        std::cout << d << ":" << aligndirs[d] << " " << counting[d][0] << ", " << counting[d][1] << ", " << counting[d][2] << std::endl;
+    }
 }
 
 void AlignICPImagePairs::GetResultsLabels(bool sflow) {
@@ -479,8 +575,17 @@ void AlignICPImagePairs::GetResultsLabels(bool sflow) {
     std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
     std::vector<int> counter(3,0);
     
+//    std::vector<int> idcs = {10, 18, 42, 66, 89, 91, 99,102,105,107,111,114,116,119,126,135,138,148,196,203,238,261,280,281,303,304,320,325,334,350,351,356,368,389,402,415,420,436,441,445,463,467,468,473,507,525,526,538,542,562,591,625,658,661,665,681,708,754,773,785,805,830,856,860,874,880,920,925,944,951,954,968,974,979,985,1000};
+    //std::vector<int> idcs = {2,5,10,17,46,88,102,112,115,146,226,255,256,333,374,387,482,485,493,572,623,626,636,708,733,754,780,799,850,851,873,879,913,926,997};
+//    std::vector<int> idcs = {2,8,10,15,30,39,49,56,61,102,107,135,138,176,200,210,211,213,217,222,238,244,250,253,254,264,303,304,320,325,333,341,345,350,366,374,393,402,420,425,451,454,464,467,472,481,507,513,538,539,541,542,546,562,567,571,591,602,609,611,615,623,625,628,637,655,659,661,681,683,690,691,701,708,716,725,747,754,760,772,785,789,796,805,808,815,824,830,853,856,858,870,874,880,925,927,928,930,932,940,942,943,944,954,965,967,974,976,985};
+//    int n=0;
+    
     FlickeringDisplay fd;
     for(int i=0; i<from20star.size(); i++){
+//        if(i!=(idcs[n]-1))continue;
+//        n++;
+//        std::cout << "iteration " << i << std::endl;
+        
         int d1 = DateToIdx(from20star[i][1]);
         int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
         std::string _image0_rf = ParseSurvey::GetImagePath(_query_loc + std::to_string(from20star[i][1]), por[d1].cimage[pose1]);
@@ -525,11 +630,14 @@ void AlignICPImagePairs::GetResultsLabelsICP() {
     }
     
     std::vector<int> counter(3,0);
+    //2,5,10,17,46,88,102,112,115,146,226,255,256,333,374,387,482,485,493,572,623,626,636,708,733,754,780,799,850,851,873,879,913,926,997
+    std::vector<int> idcs = {22,29,39,54,57,70,91,135,136,159,167,194,195,217,238,274,318,319,332,341,345,347,389,393,414,489,513,515,571,720,725,748,760,764,768,794,796,825,908,918,921,932,951};
+    int n=0;
     
     FlickeringDisplay fd;
     for(int i=0; i<1000; i++){
-        if(not(from20star[i][2]==29285))
-            continue;
+        if(i!=(idcs[n]-1))continue;
+        n++;
         std::string imagename = PaddedInt(i);
         std::string refimg = icporig + "warp/" + imagename + "_warp_1.jpg";
         std::string aligned = icpbase + imagename + "_warp_w.jpg";
@@ -539,6 +647,70 @@ void AlignICPImagePairs::GetResultsLabelsICP() {
         
         FixImagesForComparison(refrf, Imrf);
         char c = fd.FlickerImages(refrf, Imrf);
+        switch(c){
+            case 'c':{
+                counter[0]++;
+                break;}
+            case 'g':{
+                counter[1]++;
+                break;}
+            case 'b':{
+                counter[2]++;
+                break;}
+            case 'q':{
+                exit(1);
+                break;}
+        }
+        std::cout << from20star[i][1] << "."<<from20star[i][2] << ", " << from20star[i][3] << "." << from20star[i][4]<< ", " << c << std::endl;
+    }
+    
+    std::cout << "c,g,p: " << counter[0] << ", " << counter[1] << ", " << counter[2] << std::endl;
+}
+
+void AlignICPImagePairs::CheckRF() {
+    std::string icporig = "/Volumes/Untitled/data/aligned_icp_2014_orig/";
+    std::string file = icporig + "image_pairs.csv";
+    std::string rfbase1 = "/Volumes/Untitled/data/aligned_rf_2014/";
+    std::string rfbase0 = "/Volumes/Untitled/data/aligned_rf_2014_older_map/"; //aligned_rf_2014_no_constraints_new_map/";
+    
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults("/Volumes/SAMSUNG/Data/origin/", _dates[i]));
+    }
+    
+    std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
+    std::vector<int> counter(3,0);
+    
+    std::vector<int> compa = {16961, 25585, 24619, 29496, 44487, 37034, 47989, 18879, 35076, 15381, 35119, 33002, 12711, 9917};
+    std::vector<int> compb = {8153, 26480, 20045, 26927, 49914, 26947, 50498, 23027, 34340, 22136, 24600, 38077, 19048, 10895};
+    
+    int c=0;
+    FlickeringDisplay fd;
+    for(int i=0; i<1000; i++){
+        if(not (from20star[i][2] == compa[c] and from20star[i][4] == compb[c])){
+            continue;
+        }
+        c++;
+        
+        int d1 = DateToIdx(from20star[i][1]);
+        int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
+        std::cout << "1:closest image to " <<from20star[i][2] << " is " << pose1 << " with " << por[d1].cimage[pose1] << std::endl;
+        
+        std::string imagename = PaddedInt(i);
+        std::string _image0_rf = ParseSurvey::GetImagePath(_query_loc + std::to_string(from20star[i][1]), por[d1].cimage[pose1]);
+        std::string _imagerf0 = rfbase0 + imagename + "_w.jpg";
+        std::string _imagerf1 = rfbase1 + imagename + "_w.jpg";
+        
+        cv::Mat refrf = ImageOperations::Load(_image0_rf);
+        cv::Mat Imrf0 = ImageOperations::Load(_imagerf0);
+        cv::Mat Imrf1 = ImageOperations::Load(_imagerf1);
+        
+        FixImagesForComparison(refrf, Imrf1);
+        FixImagesForComparison(refrf, Imrf0);
+        cv::Mat refx2 = FlickeringDisplay::CombinedImage(refrf, refrf);
+        cv::Mat rfaligned = FlickeringDisplay::CombinedImage(Imrf1, Imrf0);
+        
+        char c = fd.FlickerImages(refx2, rfaligned);
         switch(c){
             case 'c':{
                 counter[0]++;
@@ -573,20 +745,20 @@ void AlignICPImagePairs::CompareRFWithICP() {
     std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
     std::vector<int> counter(3,0);
     
-    std::vector<int> compa = {24384, 55196, 58867, 33970, 41306, 27539, 20416, 7048};
-    std::vector<int> compb = {30954, 45413, 54714, 21015, 41946, 16250, 28226, 2797};
+//    std::vector<int> compa = {16441};
+//    std::vector<int> compb = {22349};
     
-    int c=0;
+//    int c=0;
     FlickeringDisplay fd;
     for(int i=0; i<1000; i++){
         int d1 = DateToIdx(from20star[i][1]);
         int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
-        std::cout << "1:closest image to " <<from20star[i][2] << " is " << pose1 << " with " << por[d1].cimage[pose1] << std::endl;
+        std::cout << i<<":closest image to " <<from20star[i][2] << " is " << pose1 << " with " << por[d1].cimage[pose1] << std::endl;
         
-        if(not (from20star[i][2] == compa[c] and from20star[i][4] == compb[c])){
-            continue;
-        }
-        c++;
+//        if(not (from20star[i][2] == compa[c] and from20star[i][4] == compb[c])){
+//            continue;
+//        }
+//        c++;
         
         std::string imagename = PaddedInt(i);
         std::string _image0_rf = ParseSurvey::GetImagePath(_query_loc + std::to_string(from20star[i][1]), por[d1].cimage[pose1]);
@@ -677,7 +849,7 @@ void AlignICPImagePairs::CountPosesWithALocalization()
     for(int i=0; i<_dates.size(); i++)
     {
         LPDInterface lint;
-        int nloaded = lint.LoadLocalizations(_maps_dir + _dates[i], _dates);
+        lint.LoadLocalizations(_maps_dir + _dates[i], _dates);
         
         int count = 0;
         for(int j=0; j<por[i].boat.size(); j++)
@@ -695,6 +867,8 @@ void AlignICPImagePairs::PercentLocalizedPoses(){
     //    std::string maps = "/home/shaneg/results/maps_/";
     std::string maps = "/Users/shanehome/Documents/";
     
+    std::vector<std::vector<int> > numlocsper(_dates.size(), std::vector<int>(_dates.size(), 0) );
+    
     for(int i=0; i<_dates.size(); i++)
     {
         std::string dir = maps + _dates[i] + "/localizations/";
@@ -707,19 +881,308 @@ void AlignICPImagePairs::PercentLocalizedPoses(){
         {
             int idx = static_cast<int>(files[j].find("_"));
             localized_poses.insert(stoi(files[j].substr(0,idx)));
+            int date = stoi(files[j].substr(idx+1, files[j].size()));
+            int didx = DateToIdx(date);
+            numlocsper[i][didx]++;
         }
         
         std::cout << _dates[i] << ", " << 1.0*localized_poses.size()/por.boat.size() << std::endl;
     }
+    
+    std::cout <<"ISC count table" << std::endl;
+    for(int i=0; i<_dates.size(); i++)
+    {
+        for(int j=0; j<_dates.size(); j++)
+        {
+            std::cout << numlocsper[i][j] << ", ";
+        } std::cout << std::endl;
+    }
+}
+
+int AlignICPImagePairs::DaysBetween(std::string date1, std::string date2) {
+    //https://stackoverflow.com/questions/14218894/number-of-days-between-two-dates-c
+    
+    int intdate1 = stoi(date1);
+    int ye1 = intdate1/10000;
+    int m1 = intdate1/100 - ye1*100;
+    int d1 = intdate1 - ( ye1*10000 + m1*100 );
+    struct std::tm a = {0,0,0,d1,m1-1,100+ye1};
+    
+    int intdate2 = stoi(date2);
+    int ye2 = intdate2/10000;
+    int m2 = intdate2/100 - ye2*100;
+    int d2 = intdate2 - ( ye2*10000 + m2*100 );
+    struct std::tm b = {0,0,0,d2,m2-1,100+ye2};
+    
+    std::time_t x = std::mktime(&a);
+    std::time_t y = std::mktime(&b);
+//    std::cout << "times for : " << date1 << ": {"<<d1<<","<<m1-1<<","<<100+ye1<<"}"<< std::ctime(&x) << ", " << date2 << ": " << std::ctime(&y) << std::endl;
+    if ( x != (std::time_t)(-1) && y != (std::time_t)(-1) )
+    {
+        double difference = std::difftime(y, x) / (60 * 60 * 24);
+        return difference;
+    }
+    return -1;
+}
+
+std::vector<double> AlignICPImagePairs::ConvertToWeighted(double c, std::vector<int>& counts, std::vector<int>& tots) {
+    std::vector<double> weighted(counts.size(), 0);
+    
+    for(int i=0; i<counts.size(); ++i) {
+        if(tots[i] == 0) continue;
+        double a = pow(c, counts[i]);
+        double b = pow(1-c, counts[i]);
+        weighted[i] = a /(a+b);
+    }
+    return weighted;
+}
+
+void AlignICPImagePairs::CheckSessions(){
+    std::vector<Map> maps;
+    std::vector<ParseOptimizationResults> por;
+    
+    for(int i=0; i<_dates.size(); i++){
+        maps.push_back(Map("/Volumes/Untitled/data/maps_only/maps_only_2014/"));
+        maps[i].LoadMap(_dates[i]);
+    }
+    
+    std::vector<ReprojectionFlow> rf;
+    for(int i=0; i<_dates.size(); i++) {
+        por.push_back(ParseOptimizationResults("/Volumes/Untitled/data/maps_only/maps_only_2014/", _dates[i]));
+        rf.push_back(ReprojectionFlow(_cam, maps[i]));
+        if(i>0) std::cout << "size "<< i-1 << ": " << rf[i-1].MapSize() << ", " << maps[i-1].map.size() << std::endl;
+    }
+
+    std::string basedir = "/Users/shane/Documents/research/results/2018_winter/example_alignments/set_of_100/";
+    std::vector<std::string> aligndirs = FileParsing::ListDirsInDir(basedir);
+    
+    std::vector<std::vector<std::vector<double> > *> poselists;
+    std::vector<ReprojectionFlow*> rfs;
+    for(int i=0; i<_dates.size(); i++) {
+        poselists.push_back(&(por[i].boat));
+        rfs.push_back(&rf[i]);
+    }
+    
+    MultiSurveyViewpointSelection msvs;
+    
+    for(int d=22; d<aligndirs.size(); ++d) {
+        std::string rootdir = basedir + aligndirs[d] + "/";
+        std::vector<std::string> num = FileParsing::ListFilesInDir(rootdir + "scene/", "jpg");
+        
+        std::string refdate = aligndirs[d].substr(0,aligndirs[d].find("_"));
+        std::string refpose = aligndirs[d].substr(aligndirs[d].find("_")+1, aligndirs[d].size());
+        int rd = DateToIdx(stoi(refdate));
+        int rp = stoi(refpose);
+        
+        std::vector<int> poses(_dates.size(), -1);
+        for(int i=0; i<num.size(); ++i) {
+            std::string cdate = num[i].substr(0,num[i].find("_"));
+            std::string cpose = num[i].substr(num[i].find("_")+1, num[i].size());
+            
+            for(int j=0; j<_dates.size(); ++j){
+                if(_dates[j]==cdate) {
+                    poses[j] = stoi(cpose);
+                }
+            }
+        }
+        
+        std::vector<int> allviewpoints = msvs.FindTheSameViewpoints(rfs, poselists, _dates, por[rd].boat[rp], rd);
+        
+        int c = 0;
+        for(int i=0; i<_dates.size(); ++i) {
+            if(poses[i] != allviewpoints[i]) {
+                std::cout << "Missed " << aligndirs[d] << " to " << _dates[i] << "_" << allviewpoints[i] <<", expected " << poses[i] << std::endl;
+                c++;
+            }
+        }
+        
+        std::cout << "total missed at " << d << ", " << aligndirs[d] << " : " << c << std::endl;
+    }
 }
 
 
+void AlignICPImagePairs::AlignmentQualityByPlace() {
+    //TWO PARAMETERS:
+    // 1) the number of days between sessions that are counted. controls for time between sessoins.
+    // 2) the displayed locations along the shore.
+    int PARAM1 = 365;
+    int PARAM2 = 4;
+    
+    std::string icporig = "/Volumes/Untitled/data/aligned_icp_2014_orig/";
+    std::string file = icporig + "image_pairs.csv";
+    std::string rfbase = "/Volumes/Untitled/data/aligned_rf_2014/";
+    std::string _visibility_dir = "/Volumes/SAMSUNG/Data/visibility_poses/all/";
+    std::string labels_file = "/Users/shane/Documents/research/results/2018_winter/year-wise-labeling/rf_2014_with_constraints.txt";
+    
+    std::vector<std::vector<int> > from20star = ReadCSVFile(file, 0, 999);
+    std::vector<std::vector<int> > flabels = ReadCSVFileLabels(labels_file);
+    ParseVisibilityFile vis(_visibility_dir, "140625", "140613");
+    int d0 = DateToIdx(atoi(vis.date1.c_str()));
+    
+    std::vector<Map> maps;
+    std::vector<ParseOptimizationResults> por;
+    
+    for(int i=0; i<_dates.size(); i++){
+        maps.push_back(Map("/Volumes/Untitled/data/maps_only/maps_only_2014/"));
+        maps[i].LoadMap(_dates[i]);
+    }
+    
+    std::vector<ReprojectionFlow> rf;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults("/Volumes/Untitled/data/maps_only/maps_only_2014/", _dates[i]));
+        rf.push_back(ReprojectionFlow(_cam, maps[i]));
+        if(i>0) std::cout << "size "<< i-1 << ": " << rf[i-1].MapSize() << ", " << maps[i-1].map.size() << std::endl;
+    }
+    
+    std::vector<std::vector<double> >subset;
+    for(int i=0; i<vis.boat1.size(); i++)
+        subset.push_back(por[d0].boat[vis.boat1[i]]);
+    
+    double conf=0.65;
+    std::vector<int> ss(vis.boat1.size(), 0);
+    std::vector<int> counter(vis.boat1.size(), 0);
+    std::vector<int> tots(vis.boat1.size(), 0);
+    int none=0, all=0;
+    std::cout << _dates[d0] << " with d0: " << d0 << " of " << rf.size() << ", with map size: " << rf[d0].MapSize() << ", map: " << maps[d0].map.size() << std::endl;
+    
+    for(int i=0; i<1000; i++) {
+        int d1 = DateToIdx(from20star[i][1]);
+        int pose1 = por[d1].GetNearestPoseToImage(from20star[i][2]);
+        int d2 = DateToIdx(from20star[i][3]);
+        
+        if(std::abs(DaysBetween(_dates[d1], _dates[d2])) > PARAM1)
+            continue;
+        
+//        double gstat;
+//        int midx = rf[d0].IdentifyClosestPose(subset, por[d1].boat[pose1], &gstat, false);
+        int midx=0;
+        double ming=100000000000;
+        for(int j=0; j<subset.size(); ++j){
+            double dist = pow( pow(subset[j][0]-por[d1].boat[pose1][0], 2.0) + pow(subset[j][1]-por[d1].boat[pose1][1], 2.0), 0.5);
+            if(dist < ming)
+            {
+                ming = dist;
+                midx = j;
+            }
+        }
+        
+        if(midx < 0) {std::cout <<"none found to " << _dates[d1] << ":" << por[d1].cimage[pose1] << std::endl; none++; continue;}
+        else if(midx > vis.boat1.size()) {std::cout << "oob " << std::endl; exit(-1);}
+        if(flabels[i][4]==1) { counter[midx]++;
+            ss[midx]++;
+        } else ss[midx]--;
+        tots[midx]++;
+        all++;
+    }
+    
+    SLAMDraw draw(1000,1000);
+    draw.SetScale(-300,300,-300,300);
+    draw.ResetCanvas();
+    
+//    //draw the estimated landmark points
+//    for(int i=0; i<por[d0].landmarks.size(); i++) {
+//        if(por[d0].landmarks[i][0] == 0 && por[d0].landmarks[i][1] == 0 && por[d0].landmarks[i][2] == 0) continue;
+//        draw.AddPointLandmark(por[d0].landmarks[i][0], por[d0].landmarks[i][1], por[d0].landmarks[i][3]);
+//    }
+    
+    std::vector<double> weighted = ConvertToWeighted(conf, ss, tots);
+    
+    int listpoint = 0;
+    std::vector<int> printlist = {10622, 14742, 17442, 19392, 25082, 38872, 40412, 40502, 41702};
+    
+    cv::Mat img = draw.GetDrawing();
+    int disp = 0;
+    for(int i=0; i<counter.size(); i++) {
+        if(tots[i] < PARAM2) continue;
+        std::cout << counter[i] << "/" << tots[i] << ", " << weighted[i] << ", " << por[d0].cimage[vis.boat1[i]] << std::endl;
+        disp++;
+        
+        double w = (1.0 * counter[i] / tots[i]);
+        circle(img, draw.Scale(cv::Point2f(por[d0].boat[vis.boat1[i]][0], por[d0].boat[vis.boat1[i]][1])), 7, CV_RGB(0,0,0), -1, 8, 0);
+//        circle(img, draw.Scale(cv::Point2f(por[d0].boat[vis.boat1[i]][0], por[d0].boat[vis.boat1[i]][1])), 6, CV_RGB((1-weighted[i])*255,0,weighted[i]*255), -1, 8, 0);
+        circle(img, draw.Scale(cv::Point2f(por[d0].boat[vis.boat1[i]][0], por[d0].boat[vis.boat1[i]][1])), 6, CV_RGB((1-w)*255,0,w*255), -1, 8, 0);
+//        circle(img, draw.Scale(cv::Point2f(por[d0].boat[vis.boat1[i]][0], por[d0].boat[vis.boat1[i]][1])), 5, CV_RGB(w*255,w*255,w*255), -1, 8, 0);
+        
+        if(listpoint < printlist.size() && por[d0].cimage[vis.boat1[i]] == printlist[listpoint]) {
+            std::cout << por[d0].cimage[vis.boat1[i]] << ": pose #: " << vis.boat1[i] << std::endl;
+            listpoint++;
+        }
+    }
+    std::cout << std::endl;
+    std::cout << "found: " << all << ", not found: " << none << ", displayed: " << disp << std::endl;
+    
+    cv::Mat flipped;
+    cv::flip(img, flipped, 0);
+    img = flipped;
+    
+    cv::namedWindow("disp");
+    cv::imshow("disp", img);
+    char c = cvWaitKey(0);
+    cv::destroyWindow("disp");
+    if(c=='s')
+    {
+        static std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+        
+        try {
+            cv::imwrite("/Users/shane/Desktop/place.png", img, compression_params);
+        } catch (std::exception& ex) {
+            fprintf(stderr, "PreprocessBikeRoute::ReadVideo Error. Exception converting image to JPG format: %s\n", ex.what());
+            exit(-1);
+        }
+    }
+}
 
+void AlignICPImagePairs::AlignmentQualityByPlace_SPECTRUM() {
+    cv::Mat spec(cv::Size(300, 300), CV_8UC3, cv::Scalar::all(255));
+    
+    for(int i=0; i<255; i++){
+        cv::line(spec, cv::Point2f(139, i+20), cv::Point2f(181, i+20), CV_RGB(0,0,0));
+        cv::line(spec, cv::Point2f(140, i+20), cv::Point2f(180, i+20), CV_RGB(i,0,255-i));
+    }
+    
+    cv::namedWindow("disp");
+    cv::imshow("disp", spec);
+    char c = cvWaitKey(0);
+    cv::destroyWindow("disp");
+    if(c=='s')
+    {
+        static std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+        
+        try {
+            cv::imwrite("/Users/shane/Desktop/spectrum.png", spec, compression_params);
+        } catch (std::exception& ex) {
+            fprintf(stderr, "PreprocessBikeRoute::ReadVideo Error. Exception converting image to JPG format: %s\n", ex.what());
+            exit(-1);
+        }
+    }
+}
 
-
-
-
-
+void AlignICPImagePairs::CreateTimeLapsesForEvaluation() {
+    std::vector<ParseOptimizationResults> por;
+    std::vector<Map> maps;
+    for(int i=0; i<_dates.size(); i++){
+        por.push_back(ParseOptimizationResults(_maps_dir, _dates[i]));
+        maps.push_back(Map(_maps_dir));
+        maps[i].LoadMap(_dates[i], por[i]);
+    }
+    
+    ForBMVCFigure forfig(_cam, _dates, _pftbase, _query_loc, _maps_dir + "../", _nthreads);
+    
+    srand(892340);
+    for(int i=0; i<110; ++i) //a few more than 100 to have enough for the evaluation of 100 time-lapses.
+    {
+        int d = rand()%_dates.size();
+        int p = rand()%por[d].boat.size();
+        if(i < 100) continue;
+        std::cout << "aligning images to " << _dates[d] << ":" << p << std::endl;
+        continue;
+        forfig.MakeTimelapse(d, p, false, por, maps);
+    }
+}
 
 
 

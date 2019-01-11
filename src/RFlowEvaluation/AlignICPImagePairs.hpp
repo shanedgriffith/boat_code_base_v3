@@ -24,24 +24,28 @@ class AlignICPImagePairs{
 private:
     
     int DateToIdx(int date);
+    std::vector<int> ReadLabelsFile(std::string filename);
     std::vector<std::vector<int> > ReadCSVFile(std::string file, int firstidx, int lastidx);
-    std::vector<std::vector<int> > ReadCSVFileLabels(std::string file, int firstidx, int lastidx);
+    std::vector<std::vector<int> > ReadCSVFileLabels(std::string file);
     
     std::vector<std::string> ParseLineAdv(char * line, std::string separator);
     std::string PaddedInt(int num);
     cv::Vec3b FindGrayBorderColor(const cv::Mat& a);
     void FixImagesForComparison(cv::Mat& a, cv::Mat& b);
+    int DaysBetween(std::string date1, std::string date2);
+    std::vector<double> ConvertToWeighted(double c, std::vector<int>& counts, std::vector<int>& tots);
     
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
     
-    Camera& _cam;
+    int _nthreads;
+    const Camera& _cam;
 public:
     std::string _query_loc, _savebase, _maps_dir, _pftbase;
     std::vector<std::string> _dates;
     
-    AlignICPImagePairs(Camera& cam, std::string query_loc, std::string results_dir, std::string pftbase, std::vector<std::string> dates, int nthreads=12):
-    _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _maps_dir(results_dir + "maps_/"), _savebase(results_dir + "aligned_icp_image_pairs/"), _dates(dates)
+    AlignICPImagePairs(const Camera& cam, std::string query_loc, std::string results_dir, std::string pftbase, std::vector<std::string> dates, int nthreads=12):
+    _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _maps_dir(results_dir + "maps/"), _savebase(results_dir + "aligned_icp_image_pairs/"), _dates(dates), _nthreads(nthreads)
     {
         for(int i=0; i<nthreads; i++){
             ws.push_back(new AlignImageMachine(cam));
@@ -67,6 +71,12 @@ public:
     void GetResultsLabelsICP();
     void PercentLocalizedPoses();
     void CompareRFWithICP();
+    void CheckRF();
+    void AlignmentQualityByPlace();
+    void AlignmentQualityByPlace_SPECTRUM();
+    void CreateTimeLapsesForEvaluation();
+    void AnalyzeTimeLapses();
+    void CheckSessions();
     
     void CountPosesWithALocalization();
     

@@ -333,7 +333,7 @@ Mat ImageOperations::Load(string path)
     return img;
 }
 
-void ImageOperations::Undistort(Camera& _cam, Mat& img){
+void ImageOperations::Undistort(const Camera& _cam, Mat& img){
     Mat temp = img.clone();
     undistort(temp, img, _cam.IntrinsicMatrix(), _cam.Distortion());
 }

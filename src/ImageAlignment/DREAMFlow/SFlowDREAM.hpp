@@ -75,12 +75,12 @@ protected:
     virtual void AdaptiveOffsetConstraint(int height, int width);
 	virtual void EpipolarConstraintsFromRF();
 
-	Camera& _cam;
+	const Camera& _cam;
 public:
 	int term_layer = 5;
 	int cycle_iter = 0; //used for logging the number of iterations of two cycle consistency.
 
-	SFlowDREAM(Camera& cam): _cam(cam){}
+	SFlowDREAM(const Camera& cam): _cam(cam){}
 
 	void Reset();
 

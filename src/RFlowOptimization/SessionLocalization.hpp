@@ -71,7 +71,7 @@ private:
     std::vector<ReprojectionFlow*> rf;
     std::vector<ReprojectionFlow*> rf_latest;
     std::vector<Map*> _maps;
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _date;
     std::string _query_loc, _pftbase;
@@ -79,7 +79,7 @@ public:
     bool debug = false;
     int nthreads = 8;
     
-    SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir);
+    SessionLocalization(const Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir);
     
     void Run(int user_specified_start=-1);
 };

@@ -66,7 +66,7 @@ private:
     std::vector<SurveyData> survey_est;
     std::vector<ReprojectionFlow*> rf;
     std::vector<Map*> _maps;
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _refdate, _priordate;
     std::string _query_loc, _pftbase, _origin;
@@ -74,7 +74,7 @@ public:
     bool debug = false;
     int nthreads = 8;
     
-    InitialISCAcquisition(Camera& cam, std::string refdate, std::string priordate, std::string query_loc, std::string pftbase, std::string results_dir, std::string origin_dir);
+    InitialISCAcquisition(const Camera& cam, std::string refdate, std::string priordate, std::string query_loc, std::string pftbase, std::string results_dir, std::string origin_dir);
     
     void Run(int user_specified_start=-1);
 };

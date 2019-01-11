@@ -16,6 +16,7 @@
 
 #include <gtsam/base/types.h>
 #include <gtsam/geometry/Point3.h>
+#include <FileParsing/ParseOptimizationResults.h>
 
 class Map{
 private:
@@ -31,18 +32,19 @@ public:
 
 	std::string _map_base;
 
-	Map(){}
+    Map(): num_surveys(0) {}
 
-	Map(std::string map_base){
+    Map(std::string map_base): num_surveys(0) {
 		_map_base = map_base;
 	}
 
 	void LoadMap(std::vector<std::string>& dates, bool standard);
     void LoadMap(std::string date);
+    void LoadMap(std::string date, const ParseOptimizationResults& pm);
 
-	bool CheckSize();
+	bool CheckSize() const ;
 
-	int NumSurveys();
+	int NumSurveys() const ;
 };
 
 

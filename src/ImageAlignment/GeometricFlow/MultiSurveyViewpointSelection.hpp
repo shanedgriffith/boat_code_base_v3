@@ -38,6 +38,8 @@ public:
         }
     }
     
+    std::vector<int> FindTheSameViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists, std::vector<std::string>& dates, std::vector<double>& pref, int survey);
+    
     std::vector<std::vector<double> > TopViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
                                                        std::vector<std::string>& dates, std::vector<double>& pref);
 

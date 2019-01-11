@@ -316,7 +316,7 @@ public:
         return ret;
     }
     
-    bool IsPointConsistent(Camera& _cam, gtsam::Point2 p, int imset){
+    bool IsPointConsistent(const Camera& _cam, gtsam::Point2 p, int imset){
     	if(consistent_set.rows==0) return true;
 
     	int width = consistent_set.cols;

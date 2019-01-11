@@ -294,7 +294,7 @@ void PrintVec(std::vector<double> p){
     std::cout << std::endl;
 }
 
-double LocalizedPoseData::VerifyWith(Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1){
+double LocalizedPoseData::VerifyWith(const Camera& _cam, LocalizedPoseData& lpd, gtsam::Pose3 p1_t, gtsam::Pose3 p1_tm1){
     //given the last flow, verify the next one.
     //use the estimate of the next pose (i.e., the odom.) to predict where the points should project.
     //and then verify that they actually do project to those locations.
@@ -371,7 +371,7 @@ gtsam::Pose3 LocalizedPoseData::GetTFP0ToP1F0(){
     return GTSamInterface::VectorToPose(tf_p0_to_p1frame0);
 }
 
-void LocalizedPoseData::CheckLPD(Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc) {
+void LocalizedPoseData::CheckLPD(const Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc) {
     //a debugging tool.
     
     std::vector<ParseOptimizationResults> por;

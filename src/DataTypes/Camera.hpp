@@ -29,22 +29,22 @@ public:
         distCoeffs(5, 1, CV_64F, cv::Scalar::all(0))
     {}
     
-    ~Camera(){
+    ~Camera() {
 //        delete(k); //check. this right for deleting the shared_ptr object?
     }
-
-    void SetDistortion(double k1, double k2, double p1, double p2, double k3);
-    cv::Mat Distortion();
-	bool InsideImage(int x, int y);
-	bool InsideImage(gtsam::Point2 p);
-    cv::Point2f NormalizedToPixel(cv::Point2f p);
-    cv::Point2f PixelToNormalized(cv::Point2f p);
-	gtsam::Point2 ProjectToImage(gtsam::Point3);
-	cv::Mat CameraMatrix();
-    cv::Mat IntrinsicMatrix();
-	int w();
-	int h();
-    gtsam::Cal3_S2::shared_ptr GetGTSAMCam();
+    
+    void SetDistortion(double k1, double k2, double p1, double p2, double k3) const;
+    cv::Mat Distortion() const;
+	bool InsideImage(int x, int y) const;
+	bool InsideImage(gtsam::Point2 p) const;
+    cv::Point2f NormalizedToPixel(cv::Point2f p) const;
+    cv::Point2f PixelToNormalized(cv::Point2f p) const;
+	gtsam::Point2 ProjectToImage(gtsam::Point3) const;
+	cv::Mat CameraMatrix() const;
+    cv::Mat IntrinsicMatrix() const;
+	int w() const;
+	int h() const;
+    gtsam::Cal3_S2::shared_ptr GetGTSAMCam() const;
 };
 
 #endif /* SRC_DATATYPES_CAMERA_HPP_ */

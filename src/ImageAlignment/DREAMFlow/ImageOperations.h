@@ -51,7 +51,7 @@ public:
     static cv::Mat CreateWarpedImage(cv::Mat& image, cv::Mat& v);
     
     static cv::Mat Load(std::string path);
-    static void Undistort(Camera& _cam, cv::Mat& img);
+    static void Undistort(const Camera& _cam, cv::Mat& img);
     static cv::Mat readUncompressedImage(std::string filename);
 //    static Mat LoadFlow(string path);
     

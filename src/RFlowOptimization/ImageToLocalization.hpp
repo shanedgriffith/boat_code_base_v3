@@ -58,13 +58,13 @@ private:
     double * _verified;
     AlignmentResult ar;
     
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _results_dir;
     std::string _query_loc;
     std::string _pftbase;
     
-    ImageToLocalization(Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
+    ImageToLocalization(const Camera& cam, std::string results_dir, std::string query_loc, std::string pftbase):
     _cam(cam), _query_loc(query_loc), _pftbase(pftbase), _results_dir(results_dir) {Reset();}
     void SetLastLPD(LocalizedPoseData * last){toverify = last;}
     void SetPoses(std::vector<std::vector<double> > p){poses = p;}

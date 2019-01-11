@@ -24,7 +24,7 @@
 
 using namespace std;
 
-void TestTransforms::CheckBtwn(Camera& _cam){
+void TestTransforms::CheckBtwn(const Camera& _cam){
     vector<double> p = {5, 4, 0, 0.2, 0.1, 1.5};
     vector<double> t = {3, 4, 1, 0.3, 0.4, 1.3};
     gtsam::Pose3 gp = GTSamInterface::VectorToPose(p);
@@ -34,7 +34,7 @@ void TestTransforms::CheckBtwn(Camera& _cam){
     std::cout << "(p btwn t)^-1: " << gp.between(gt).inverse() << std::endl;
 }
 
-void TestTransforms::TestLocalization(Camera& _cam){
+void TestTransforms::TestLocalization(const Camera& _cam){
     std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/289.loc";
     LocalizedPoseData lpd = LocalizedPoseData::Read(lpdfile);
     ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/", "140106");
@@ -65,7 +65,7 @@ double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, st
     return res;
 }
 
-double TestTransforms::FeatureLikelihood(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var) {
+double TestTransforms::FeatureLikelihood(const Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var) {
     double dist = 0;
     for(int i=0; i<p3.size(); i++){
         if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
@@ -90,7 +90,7 @@ double TestTransforms::GetF(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector
     return res;
 }
 
-double TestTransforms::FeatureF(Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var){
+double TestTransforms::FeatureF(const Camera& _cam, gtsam::Pose3 pose, std::vector<gtsam::Point3>& p3, std::vector<gtsam::Point2>& imagecoord, double var){
     double res = 1;
     for(int i=0; i<p3.size(); i++){
         if(p3[i].x()==0 && p3[i].y()==0 && p3[i].z()==0) continue;
@@ -125,7 +125,7 @@ double TestTransforms::MapToConstraint(double val){
     return val;
 }
 
-void TestTransforms::TestConstraintProportions(Camera& _cam){
+void TestTransforms::TestConstraintProportions(const Camera& _cam){
     int nsamples = 100;
     ParseOptimizationResults POR("/cs-share/dream/results_consecutive/maps/", "140106");
     ParseBoatSurvey PS("/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "140106");
@@ -188,7 +188,7 @@ void TestTransforms::TestConstraintProportions(Camera& _cam){
     }
 }
 
-void TestTransforms::TestImageAlignment(Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase) {
+void TestTransforms::TestImageAlignment(const Camera& _cam, std::string query_loc, std::string results_dir, std::string pftbase) {
     std::string d1 = "141010";
     int im1 = 18791;
     std::string d2 = "140129";

@@ -69,10 +69,10 @@ protected:
     
     gtsam::NonlinearFactorGraph graph;
     gtsam::Values initEst;
-    Camera& _cam;
+    const Camera& _cam;
 public:
     bool debug = false;
-    LocalizePose(Camera& cam):_cam(cam){}
+    LocalizePose(const Camera& cam):_cam(cam){}
 
     double MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers);
 

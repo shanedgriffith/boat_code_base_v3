@@ -1,5 +1,5 @@
 //
-//  ViewpointMachine.hpp
+//  OptimizationMachine.hpp
 //  boat_code_base
 //
 //  Created by Shane Griffith on 1/23/17.
@@ -35,6 +35,7 @@ private:
     double * avgorientchange;
     double _weight;
     int survey;
+    double percent_landmark_tracks;
     
     void ConstructFactorGraph();
     void AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise);
@@ -50,9 +51,10 @@ private:
     std::vector<std::string> sessiondates;
     RFlowFactorGraph* rfFG;
     GTSamInterface GTS;
-    Camera& _cam;
+    const Camera& _cam;
 public:
-    OptimizationMachine(Camera& cam, std::string _results_dir): _cam(cam){
+    OptimizationMachine(const Camera& cam, std::string _results_dir): _cam(cam){
+        percent_landmark_tracks = 100;
         rfFG = new RFlowFactorGraph();
         GTS = GTSamInterface(rfFG);
         
@@ -81,6 +83,7 @@ public:
     void * Run();
     void LogResults();
     void FilterBad(bool filter=true);
+    void SetPercentOfLandmarks(double p);
 };
 
 

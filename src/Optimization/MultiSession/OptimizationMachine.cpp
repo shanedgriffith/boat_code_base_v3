@@ -55,6 +55,10 @@ void OptimizationMachine::Reset(){
     thread_state = state::OPEN;
 }
 
+void OptimizationMachine::SetPercentOfLandmarks(double p) {
+    percent_landmark_tracks = p;
+}
+
 void OptimizationMachine::ConstructFactorGraph() {
     //changes:
     // variables connected to an isc are eliminated.
@@ -74,8 +78,12 @@ void OptimizationMachine::ConstructFactorGraph() {
         }
     }
     
-    for(int i=0; i<cached_landmarks->size(); i++)
+    srand(std::time(0));
+    for(int i=0; i<cached_landmarks->size(); i++) {
+        if(rand()%100 > percent_landmark_tracks)
+            continue;
         rfFG->AddLandmarkTrack(_cam.GetGTSAMCam(), (*cached_landmarks)[i]);
+    }
 }
 
 void OptimizationMachine::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
@@ -143,24 +151,26 @@ void * OptimizationMachine::Run() {
     GTS.SetIdentifier(originPOR->_date);
     GTS.RunBundleAdjustment();
     
-    if(_weight < 1.0) { //&& avgposchange != nullptr && avgorientchange != nullptr
-        double spc=0;
-        double soc=0;
-        std::vector<std::vector<double> > posesUpdated = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
-        for(int i=0; i<posesUpdated.size(); i++)
-            for(int j=0; j<6; j++){
-                if(j>2) {
-                    soc += (posesUpdated[i][j] - posesTimeT1[survey][i][j]);
-                } else {
-                    spc += (posesUpdated[i][j] - posesTimeT1[survey][i][j]);
-                }
+    std::vector<std::vector<double> > posesUpdated = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
+    std::vector<double> posdif((*posesTimeT2)[survey].size(), 0);
+    for(int i=0; i<posesUpdated.size(); i++)
+    {
+        posdif[i] = pow(pow(posesUpdated[i][0] - posesTimeT1[survey][i][0], 2) +
+                          pow(posesUpdated[i][1] - posesTimeT1[survey][i][1], 2) +
+                          pow(posesUpdated[i][2] - posesTimeT1[survey][i][2], 2), 0.5);
+        //TODO: correct this so the updated orientations wrap around pi correctly.  
+        for(int j=0; j<6; ++j)
+        {
+            if(_weight < 1.0)
                 (*posesTimeT2)[survey][i][j] = _weight*posesUpdated[i][j] + (1-_weight) * posesTimeT1[survey][i][j];
-            }
-        (*avgorientchange) = soc/(posesUpdated.size()*3);
-        (*avgposchange) = spc/(posesUpdated.size()*3);
-    } else {
-        (*posesTimeT2)[survey] = GTS.GetOptimizedTrajectory(survey, (*posesTimeT2)[survey].size());
+            else
+                (*posesTimeT2)[survey][i][j] = posesUpdated[i][j];
+        }
     }
+    (*avgorientchange) = -1;
+    std::sort(posdif.begin(), posdif.end());
+    (*avgposchange) = posdif[posdif.size()/2];
+
     /*
     std::vector<std::vector<double> > landmarksUpdated = GTS.GetOptimizedLandmarks(true);
     (*landmarks)[survey].clear();

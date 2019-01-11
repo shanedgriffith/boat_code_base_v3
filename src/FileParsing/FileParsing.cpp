@@ -84,6 +84,11 @@ void FileParsing::MakeDir(std::string dir) {
     mkdir(dir.c_str(), (mode_t) (S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 }
 
+void FileParsing::MoveFile(std::string cur_path, std::string new_path) {
+    //from https://stackoverflow.com/questions/22201663/find-and-move-files-in-c
+    std::rename(cur_path.c_str(), new_path.c_str());
+}
+
 std::vector<std::string> FileParsing::ParseLine(char * line) {
     return ParseLineAdv(line, ",");
 }

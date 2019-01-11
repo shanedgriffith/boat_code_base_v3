@@ -4,7 +4,7 @@
 
 #include "LocalizeSessionToSet.hpp"
 
-LocalizeSessionToSet::LocalizeSessionToSet(Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks):
+LocalizeSessionToSet::LocalizeSessionToSet(const Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks):
 SurveyOptimizer(cam, rfFG, date, loc_map_dir, false),
     _ref_map_dir(ref_map_dir), _loc_map_dir(loc_map_dir), _pftbase(pftbase)
 {

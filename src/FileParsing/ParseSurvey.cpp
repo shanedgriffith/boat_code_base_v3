@@ -122,7 +122,7 @@ int ParseSurvey::IdentifyLastPFTFile() {
     return -1;
 }
 
-ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(Camera& _cam, int& index, bool gap){
+ParseFeatureTrackFile ParseSurvey::LoadVisualFeatureTracks(const Camera& _cam, int& index, bool gap){
     /*Proceed when the visual feature track file is good.*/
     static bool found = false;
     static int end = -1;

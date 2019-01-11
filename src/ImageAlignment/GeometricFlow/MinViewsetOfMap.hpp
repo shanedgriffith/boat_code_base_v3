@@ -41,16 +41,15 @@ private:
     int BinarySearch(std::vector<LandmarkTrack>& tracks, int l);
     std::vector<int> MapPointToPose(std::vector<int>& mappoint_vcounter, std::vector<LandmarkTrack>& tracks);
     
-    
     std::vector<std::vector<double> >& _poses;
-    Camera& _cam;
+    const Camera& _cam;
     Map& _map;
 public:
     std::string _map_dir;
     std::string _pftbase;
     std::string _date;
     
-    MinViewsetOfMap(Camera& cam, Map& map, std::vector<std::vector<double> >& poses, std::string date, std::string map_dir, std::string pftbase):
+    MinViewsetOfMap(const Camera& cam, Map& map, std::vector<std::vector<double> >& poses, std::string date, std::string map_dir, std::string pftbase):
     _cam(cam), _map(map), _poses(poses),
     _date(date), _map_dir(map_dir), _pftbase(pftbase)
     {}

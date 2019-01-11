@@ -30,12 +30,12 @@ private:
     bool basic;
     std::string _image0, _image1;
     
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _pftbase, _query_loc, _results_dir;
     
-    AlignImageMachine(Camera& cam):
-        _cam(cam) {}
+    AlignImageMachine(const Camera& cam):
+        _cam(cam), basic(false) {}
     void RunRFlow();
     void RunSFlow();
     

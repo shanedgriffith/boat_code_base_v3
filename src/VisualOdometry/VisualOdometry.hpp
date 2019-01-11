@@ -88,11 +88,11 @@ protected:
     gtsam::Pose3 last_odom;
     gtsam::Values result;
     bool clean_up = false;
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _date;
     
-    VisualOdometry(Camera& cam):
+    VisualOdometry(const Camera& cam):
     _cam(cam), lastPFT(cam){
         double deviation = 3.0;
         double dimensions = 2.0;

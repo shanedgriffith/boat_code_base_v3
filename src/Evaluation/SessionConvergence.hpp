@@ -32,11 +32,11 @@ private:
     
     double MeasureREDifference(std::vector<double>& bref, std::vector<double>& bcur, std::vector<gtsam::Point3>& p3dref, std::vector<gtsam::Point3>& p3dcur);
     
-    Camera& _cam;
+    const Camera& _cam;
 public:
     std::string _pftbase;
     
-    SessionConvergence(Camera& cam, std::string pftbase):
+    SessionConvergence(const Camera& cam, std::string pftbase):
     _cam(cam), _pftbase(pftbase) {}
     
     void CompareSessions();

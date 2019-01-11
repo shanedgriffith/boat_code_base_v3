@@ -68,7 +68,7 @@ protected:
 public:
     std::string _origin_dir;
     
-    MultiSessionIterativeSmoothingAndRefinement(Camera& cam, std::string results_dir, std::string pftbase, std::string date = "");
+    MultiSessionIterativeSmoothingAndRefinement(const Camera& cam, std::string results_dir, std::string pftbase, std::string date = "");
     
     void IterativeMerge();
 };

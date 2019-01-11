@@ -222,7 +222,7 @@ void ParseFeatureTrackFile::Reset(){
     time = -1;
 }
 
-ParseFeatureTrackFile ParseFeatureTrackFile::LoadFTF(Camera& _cam, string base, int ftfileno) {
+ParseFeatureTrackFile ParseFeatureTrackFile::LoadFTF(const Camera& _cam, string base, int ftfileno) {
     ParseFeatureTrackFile pftf = ParseFeatureTrackFile(_cam, base, ftfileno);
     if(pftf.time == -1) {
         cout << "ParseFeatureTrackFile::LoadFTF() Error. Couldn't open: " << pftf.siftfile << endl;
@@ -388,7 +388,7 @@ std::vector<int> ParseFeatureTrackFile::ApproximateLandmarkSet(std::vector<Landm
     return indices;
 }
 
-ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
+ParseFeatureTrackFile ParseFeatureTrackFile::ReconstructFromCachedSet(const Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey){
     vector<int> approxset = ParseFeatureTrackFile::ApproximateLandmarkSet(landmarks, ckey);
 
     if(approxset.size() > 300){

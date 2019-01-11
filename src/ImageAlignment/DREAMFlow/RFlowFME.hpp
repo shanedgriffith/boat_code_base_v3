@@ -38,9 +38,9 @@ private:
     bool ComputeHypothesisSpaceFirst(std::vector<std::vector<double> >& hypspace, std::vector<cv::Point2f>& orig_sparse, std::vector<cv::Point2f>& mapped_sparse, cv::Mat& flow, std::vector<unsigned char>& labels);
     bool ComputeHypothesisSpace(std::vector<std::vector<double> >& hypspace, std::vector<cv::Point2f>& mapped, std::vector<unsigned char>& labels);
     void TransformFlow(cv::Mat& flow, std::vector<cv::Point2f>& orig, std::vector<cv::Point2f>& mapped);
-    Camera& _cam;
+    const Camera& _cam;
 public:
-    RFlowFME(Camera& cam, int width, int height):
+    RFlowFME(const Camera& cam, int width, int height):
     _cam(cam), _width(width), _height(height), FeatureMatchElimination(){}
 
     bool IdentifyHypothesisSpace(std::vector<std::vector<double> >& hypspace, cv::Mat& flow, int h);

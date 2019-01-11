@@ -42,6 +42,24 @@ bool MultiSurveyViewpointSelection::IsSameScene(double gstatistic){
     return ret;
 }
 
+std::vector<int> MultiSurveyViewpointSelection::FindTheSameViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists, std::vector<string>& dates, std::vector<double>& pref, int survey){
+    
+    int nsurveys = rf.size();
+    std::vector<double> gstat(nsurveys, -1);
+    std::vector<int> pidx(nsurveys, -1);
+    
+    for(int i=0; i<nsurveys; i++){
+        if(i==survey) continue;
+        int tidx = man.GetOpenMachine();
+        ws[tidx]->Setup(rf[survey], poselists[i], pref, &gstat[i], &pidx[i]);
+        if(nsurveys==1) ws[tidx]->Run();
+        else man.RunMachine(tidx);
+    }
+    man.WaitForMachine(true);
+    
+    return pidx;
+}
+
 std::vector<std::vector<double> > MultiSurveyViewpointSelection::TopViewpoints(std::vector<ReprojectionFlow*>& rf, std::vector<std::vector<std::vector<double> > *>& poselists,
                                                                   std::vector<string>& dates, std::vector<double>& pref){
     //Assumes the reference survey is the last one in the list. Thus the loop only goes to rf.size()-1.

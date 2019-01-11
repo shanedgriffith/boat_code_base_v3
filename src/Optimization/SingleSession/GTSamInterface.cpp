@@ -120,6 +120,8 @@ void GTSamInterface::Update() {
 void GTSamInterface::RunBundleAdjustment(int choix) {
     results.clear();
     //printf("Running the optimizer.\n=============================================================================\n");
+    
+//    std::cout << "fg size: " << _fg->graph.size() << std::endl;
     try {
         switch(choix) {
             case LEVENBERG_MARQUARDT:

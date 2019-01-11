@@ -6,7 +6,7 @@
 
 using namespace std;
 
-MultiCascade::MultiCascade(Camera& cam, std::string results_dir, std::string pftbase, std::string date, int nthreads):
+MultiCascade::MultiCascade(const Camera& cam, std::string results_dir, std::string pftbase, std::string date, int nthreads):
 _origin_dir(results_dir + "origin/"), staticmaps(false),
 MultiSessionOptimization(cam, results_dir + "maps/", pftbase, date, 10){
     
@@ -34,7 +34,7 @@ MultiSessionOptimization(cam, results_dir + "maps/", pftbase, date, 10){
         std::vector<LandmarkTrack> clset;
         cached_landmarks.push_back(clset);
     }
-    rfFG->SetLandmarkDeviation(3.0);
+    rfFG->SetLandmarkDeviation(1.0);
     BuildLandmarkSet();
     
     if(nthreads > 1) {
@@ -109,10 +109,10 @@ int MultiCascade::EvaluateLPD(vector<vector<vector<double> > >& poseresult, std:
     std::vector<double> p1 = poseresult[DateToIndex(l.date1)][l.s1time];
     
     vector<double> error(4, 0);
-    error[0] = GetError(*perf[0], p0, landmarks[DateToIndex(l.date0)], cached_landmarks[DateToIndex(l.date0)], l.s0time, errorcache[DateToIndex(l.date0)]);
-    error[1] = GetError(*perf[1], p1, landmarks[DateToIndex(l.date1)], cached_landmarks[DateToIndex(l.date1)], l.s1time, errorcache[DateToIndex(l.date1)]);
-    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp);
-    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[DateToIndex(l.date1)], l.b2d0, l.bids, l.rerrorb);
+    error[0] = GetError(*perf[0], p0, landmarks[DateToIndex(l.date0)], cached_landmarks[DateToIndex(l.date0)], l.s0time, errorcache[DateToIndex(l.date0)]); //session 0 rerror
+    error[1] = GetError(*perf[1], p1, landmarks[DateToIndex(l.date1)], cached_landmarks[DateToIndex(l.date1)], l.s1time, errorcache[DateToIndex(l.date1)]); //session 1 rerror
+    error[2] = perf[2]->InterSurveyErrorAtLocalization(p1, landmarks[DateToIndex(l.date0)], l.p2d1, l.pids, l.rerrorp); //ISC rerror forward
+    if(bothinter) error[3] = perf[2]->InterSurveyErrorAtLocalization(p0, landmarks[DateToIndex(l.date1)], l.b2d0, l.bids, l.rerrorb); //ISC rerror backward
     
     std::vector<bool> result = LPDInlierTest(s, j, rerrs[DateToIndex(l.date1)][l.s1time], error);
     
@@ -132,6 +132,7 @@ double MultiCascade::UpdateErrorIterative() {
             EvaluateRFlow(_cam, dates[survey], _map_dir)};
         vector<EvaluateRFlow*> perf = {&erf[0], &erf[1], &erf[2]};
         
+        outliers[survey] = 0;
         for(int j=0; j<lpdi[survey].localizations.size(); j++)
             nchanges[survey] += (int) EvaluateLPD(poses, landmarks, survey, j, perf, errorcache);
         
@@ -144,7 +145,7 @@ double MultiCascade::UpdateErrorIterative() {
 }
 
 void MultiCascade::SaveResults() {
-    if(!CheckSave()) return;
+//    if(!CheckSave()) return;
     for(int survey=0; survey<dates.size(); survey++){
         SaveOptimizationResults curSOR(_map_dir + dates[survey]);
         vector<vector<double>> vs;
@@ -167,7 +168,7 @@ void MultiCascade::SaveResults() {
     }
 }
 
-void MultiCascade::RunIteration(bool firstiter){
+void MultiCascade::RunIteration(bool firstiter) {
     vector<int> snum(dates.size(), -1);
     vector<int> surveys(dates.size(), -1);
     for(int i=0; i<surveys.size(); i++)
@@ -196,8 +197,35 @@ void MultiCascade::RunIteration(bool firstiter){
     man.WaitForMachine(true);
 }
 
+void MultiCascade::CountInlierLocalizations()
+{
+    std::vector<std::vector<int> > numlocsper(dates.size(), std::vector<int>(dates.size(), 0) );
+    
+    for(int i=0; i<dates.size(); i++)
+    {
+        for(int j=0; j<lpdi[i].localizations.size(); j++)
+        {
+            if(lpd_rerror[i][j] < 0)
+                continue;
+            
+            const LocalizedPoseData& l = lpdi[i].localizations[j];
+            int d0 = DateToIndex(l.date0);
+            int d1 = DateToIndex(l.date1);
+            numlocsper[i][d1]++;
+        }
+    }
+    
+    std::cout <<"ISC count table" << std::endl;
+    for(int i=0; i<dates.size(); i++)
+    {
+        for(int j=0; j<dates.size(); j++)
+        {
+            std::cout << numlocsper[i][j] << ", ";
+        } std::cout << std::endl;
+    }
+}
 
-void MultiCascade::WeightedAlignment(){
+void MultiCascade::WeightedAlignment() {
     std::cout << "WEIGHTED SESSION ALIGNMENT. NO ISC FILTERING. " << std::endl;
     time_t beginning,optstart,optend,end;
     time (&beginning);
@@ -206,55 +234,67 @@ void MultiCascade::WeightedAlignment(){
     int iteration = 0;
     std::vector<std::pair<double, double>> ac(dates.size(), std::pair<double, double>(1.0, 1.0));
     double apc=1, aoc=1;
+    double percent_of_landmarks = 100;
+    double DELTA_THRESHOLD = 0.01;
+    double last = 100000000000;
     
     while(1) {
         time (&optstart);
+        std::cout <<"ITERATION " << iteration++ << ", filtering? " << filterbad << std::endl;
         for(int i=0; i<dates.size(); i++){
-            std::cout << "    weighted optimization of " << dates[i] << " at " << i << std::endl;
             int tidx = man.GetOpenMachine();
             ws[tidx]->Setup(&poses, &landmarks, &lpd_rerror, &(originPOR[i]), &(cached_landmarks[i]), &(forwardLMap[i]), &lpdi, i);
             ws[tidx]->toLogPoseChange(&ac[i].first, &ac[i].second);
             ws[tidx]->SetWeight(0.9);
             ws[tidx]->SessionDates(dates);
             ws[tidx]->FilterBad(filterbad);
+            ws[tidx]->SetPercentOfLandmarks(percent_of_landmarks);
             man.RunMachine(tidx);
         }
         man.WaitForMachine(true);
         time (&optend);
         
         apc = 0;
-        aoc = 0;
         for(int i=0; i<ac.size(); i++) {
-            std::cout << "average changes: (" << ac[i].first << ", " << ac[i].second << ")" << std::endl;
-            apc += abs(ac[i].first);
-            aoc += abs(ac[i].second);
+            //std::cout << "median change: (" << ac[i].first << ")" << std::endl;
+            apc += ac[i].first;
         }
         apc /= ac.size();
-        aoc /= ac.size();
-        std::cout << "average changes: (" << apc << ", " << aoc << ")" << std::endl;
+        std::cout << "__average median change: (" << apc << ")__" << std::endl;
         
-        std::cout << "  Updating Error." << std::endl;
-        UpdateErrorIterative();
-        InlierOutlierStats();
-        SaveResults();
+        if(fabs(last-apc) < DELTA_THRESHOLD) {
+            if(filterbad)
+                break;
+            filterbad = true;
+        }
+        last = apc;
+        
+        if(filterbad)
+        {
+            //when the maps have converged, only then can the ISCs be filtered since the landmarks and the poses are unaligned.
+            //at least for the way this is written.
+            std::cout << "  Updating Error." << std::endl;
+            UpdateErrorIterative();
+            InlierOutlierStats();
+            CountInlierLocalizations();
+            SaveResults();
+        }
         time (&end);
         
         double optruntime = difftime (optend, optstart);
         double updateruntime = difftime (end, optend);
         double totruntime = difftime (end, beginning);
         printf("  %s total runtime. %s optimization, %s update\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str(), FileParsing::formattime(updateruntime).c_str());
-        
-        if(filterbad) {
-            if(apc < 0.01) break;
-        }
-        if(apc < 0.01) filterbad = true;
+        std::cout << "----------------------------" << std::endl;
     }
+    double optruntime = difftime (optend, optstart);
+    double totruntime = difftime (end, beginning);
+    printf("  %s total runtime. %s optimization\n", FileParsing::formattime(totruntime).c_str(), FileParsing::formattime(optruntime).c_str());
 }
 
 void MultiCascade::SetStaticMaps(bool set){
     staticmaps = set;
 }
-
 
 void MultiCascade::CreateReferenceSet() {
     vector<vector<double>> rerror;

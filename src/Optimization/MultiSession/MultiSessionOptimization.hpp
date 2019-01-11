@@ -78,7 +78,7 @@ public:
     std::string _map_dir;
     std::string _pftbase;
     
-    MultiSessionOptimization(Camera& cam, std::string map_dir, std::string pftbase, std::string date = "", double percent_of_tracks = 100.0);
+    MultiSessionOptimization(const Camera& cam, std::string map_dir, std::string pftbase, std::string date = "", double percent_of_tracks = 100.0);
 
     ~MultiSessionOptimization(){
         delete(rfFG);

@@ -64,7 +64,7 @@ public:
     std::string _loc_map_dir;
     std::string _pftbase;
     
-    LocalizeSessionToSet(Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks = 100.0);
+    LocalizeSessionToSet(const Camera& cam, std::string ref_map_dir, std::string loc_map_dir, std::string date, std::string pftbase, double percent_of_tracks = 100.0);
     
     ~LocalizeSessionToSet(){
         delete(rfFG);

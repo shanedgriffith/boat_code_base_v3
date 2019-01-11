@@ -25,7 +25,7 @@ using namespace std;
 const string SessionLocalization::_logname = "/RFlowISC.log";
 
 //i.e., the nonincremental approach. This approach is useful because progress between poses is otherwise unknown (unless we can measure odometry).
-SessionLocalization::SessionLocalization(Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir):
+SessionLocalization::SessionLocalization(const Camera& cam, std::string date, std::string query_loc, std::string pftbase, std::string results_dir):
 _cam(cam), _date(date), _query_loc(query_loc), _pftbase(pftbase), _map_dir(results_dir + "maps/"), _store_dir(results_dir) {
     
     std::cout << "Acquiring IS constraints." << std::endl;

@@ -79,10 +79,10 @@ protected:
     std::vector<KLT::feature_positions> UpdateCurrentPointSet();
     void PrintPointSet();
 
-    Camera& _cam;
+    const Camera& _cam;
 public:
     
-    KLT(Camera& cam):_cam(cam) {
+    KLT(const Camera& cam):_cam(cam) {
         m_points = std::vector<std::vector<cv::Point2f> >(2);
         print_feature = -1;
         m_next_points_id = 0;

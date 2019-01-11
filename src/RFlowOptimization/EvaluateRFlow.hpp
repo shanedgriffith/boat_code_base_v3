@@ -30,7 +30,7 @@ protected:
     int GetIndexOfFirstPoint(const std::vector<std::vector<double> >& landmarks, int id);
     
 public:
-    EvaluateRFlow(Camera& cam, std::string date, std::string results_dir):
+    EvaluateRFlow(const Camera& cam, std::string date, std::string results_dir):
     EvaluateSLAM(cam, date, results_dir) {}
     
     double InterSurveyErrorAtLocalization(const std::vector<double>& boat, const std::vector<std::vector<double> >& landmarks, const std::vector<gtsam::Point2>& p2d1, const std::vector<int> pids, const std::vector<double> rerrorp);

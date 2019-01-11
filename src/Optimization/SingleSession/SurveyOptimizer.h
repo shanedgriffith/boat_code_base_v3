@@ -59,7 +59,7 @@ protected:
     int num_cameras_in_traj=0;
     std::vector<LandmarkTrack> active;
     GTSamInterface GTS;
-    Camera& _cam;
+    const Camera& _cam;
     FactorGraph * FG;
     bool clean_up = false;
 public:
@@ -67,9 +67,9 @@ public:
     std::string _date;
     std::string _results_dir;
     
-    SurveyOptimizer(Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments=false);
+    SurveyOptimizer(const Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments=false);
     
-    SurveyOptimizer(Camera& cam, std::string date, std::string results_dir, bool print_data_increments=false);
+    SurveyOptimizer(const Camera& cam, std::string date, std::string results_dir, bool print_data_increments=false);
     
     ~SurveyOptimizer() {
     	if(clean_up) delete(FG);

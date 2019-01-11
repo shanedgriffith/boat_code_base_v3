@@ -53,9 +53,9 @@ private:
     
     MachineManager man;
     std::vector<IRMachine*> ws;
-    Camera& _cam;
+    const Camera& _cam;
 public:
-    ImageRetrieval(Camera& cam, int nthreads=1): _cam(cam) {
+    ImageRetrieval(const Camera& cam, int nthreads=1): _cam(cam) {
         InitializeMachine(nthreads);
     }
 

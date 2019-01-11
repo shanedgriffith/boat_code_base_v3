@@ -6,9 +6,9 @@
 
 using namespace std;
 
-MultiSessionIterativeSmoothingAndRefinement::MultiSessionIterativeSmoothingAndRefinement(Camera& cam, std::string results_dir, std::string pftbase, std::string date):
+MultiSessionIterativeSmoothingAndRefinement::MultiSessionIterativeSmoothingAndRefinement(const Camera& cam, std::string results_dir, std::string pftbase, std::string date):
 _origin_dir(results_dir + "origin/"),
-MultiSessionOptimization(cam, results_dir, pftbase, date, 10){
+MultiSessionOptimization(cam, results_dir + "maps/", pftbase, date, 10){
 
     std::cout << "Multi-Session Iterative Smoothing And Refinement" << std::endl;
     

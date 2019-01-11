@@ -42,6 +42,10 @@ void SLAMDraw::SaveDrawing(string filename){
     SaveImage((char *) filename.c_str(), canvas, true);
 }
 
+cv::Mat SLAMDraw::GetDrawing() {
+    return canvas;
+}
+
 void SLAMDraw::SaveImage(char * filename, Mat img, bool flipped) {
     if(flipped) {
         Mat flipped;

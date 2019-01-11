@@ -53,7 +53,7 @@ std::vector<double> HopcountLog::LoadPriorRerror(std::string hopdate, int count)
                 std::cout << "HopcountLog::LoadPriorRerror() error. Line formatting. " << ret << " entries in "<< line << std::endl;
                 exit(-1);
             }
-            if(idx == rerror_set.size()-1) {
+            if(idx == rerror_set.size()) {
                 std::cout << "HopcountLog::LoadPriorRerror() error. Check the file " << fname << ". got more lines than were expected" << std::endl;
                 exit(-1);
             }

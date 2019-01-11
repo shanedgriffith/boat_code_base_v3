@@ -42,6 +42,7 @@ public:
     static bool DirectoryExists(std::string pzPath );
     static bool Exists(std::string file);
     static void MakeDir(std::string dir);
+    static void MoveFile(std::string cur_path, std::string new_path);
     static std::vector<std::string> ListFilesInDir(std::string dir, std::string type);
     static std::vector<std::string> ListDirsInDir(std::string dir_name);
     static void AppendToFile(std::string file, std::string data);
