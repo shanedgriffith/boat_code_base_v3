@@ -10,6 +10,7 @@
 using namespace cv;
 
 CvScalar IMDraw::GetLandmarkColor(int id){
+    static CvScalar default_color = CV_RGB(255,0,0);
     if(id==-1) return default_color;
     int red = (71*(id%10) + id%255)%255;
     int green = (111*(id%10) + (2*id)%255)%255;

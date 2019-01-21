@@ -74,6 +74,8 @@ public:
     bool debug = false;
     LocalizePose(const Camera& cam):_cam(cam){}
 
+    void SetErrorThreshold(double e) {ACCEPTABLE_TRI_RERROR = e;}
+    
     double MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers);
 
     std::vector<std::vector<double> > UseBAIterative(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);

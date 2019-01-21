@@ -85,8 +85,8 @@ void AlignImageMachine::RunRFlow() {
         if(poseloc1 == -1)  return;
     }
     
-    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << _saveloc << std::endl;
-    return;
+//    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << _saveloc << std::endl;
+//    return;
     
     ParseFeatureTrackFile pftf0 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[0], por[0]->ftfilenos[poseloc0]);
     ParseFeatureTrackFile pftf1 = ParseFeatureTrackFile::LoadFTF(_cam, _pftbase + dates[1], por[1]->ftfilenos[poseloc1]);

@@ -120,7 +120,7 @@ public:
         this->body_P_sensor_->print("  sensor pose in body frame: ");
       Base::print("", keyFormatter);
     }
-
+    
     /// equals
     virtual bool equals(const gtsam::NonlinearFactor& p, double tol = 1e-9) const {
       const This *e = dynamic_cast<const This*>(&p);
@@ -131,7 +131,7 @@ public:
           && this->K_->equals(*e->K_, tol)
           && ((!body_P_sensor_ && !e->body_P_sensor_) || (body_P_sensor_ && e->body_P_sensor_ && body_P_sensor_->equals(*e->body_P_sensor_)));
     }
-
+    
     /// Evaluate error h(x)-z and optionally derivatives
     //virtual Vector evaluateError(const X& x, boost::optional<Matrix&> H = boost::none) const = 0;
     gtsam::Vector evaluateError(const gtsam::Pose3& pose, boost::optional<gtsam::Matrix&> H1 = boost::none) const {

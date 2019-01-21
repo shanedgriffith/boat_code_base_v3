@@ -208,12 +208,13 @@ std::vector<std::vector<double> > LocalizePose::UseBAIterative(std::vector<doubl
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
     std::vector<double> posevalsransac = RANSAC_BA(estp, p3d, p2d, inliers);
     if(posevalsransac[1]<0.000001) return {};
-
+    
     //measure rerror with the previous set of inliers, if it's good, update the set of inliers.
     int iters = 0;
     int nchanges=1;
     double err = ACCEPTABLE_TRI_RERROR;
-    while(err>6.0 ||(nchanges > 0 && iters < MAX_ITERS)){
+    //while(err>6.0 ||(nchanges > 0 && iters < MAX_ITERS)){
+    for(int i=0; nchanges > 0 || i < MAX_ITERS; i++) {
         UseBA(estp, p3d, p2d, inliers);
         if(EmptyPose(estp)) break;
         std::vector<double> posevals = Maximization(estp, p3d, p2d, inliers, err);
@@ -226,9 +227,9 @@ std::vector<std::vector<double> > LocalizePose::UseBAIterative(std::vector<doubl
         }
         iters++;
         nchanges = posevals[0];
-
+        
         if(debug) {
-            printf("iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
+            printf("bai iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                     (int)iters, (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)p3d.size());
         }
     }
@@ -306,7 +307,6 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     double err = ACCEPTABLE_TRI_RERROR;
     
     for(; iters<MAX_RANSAC_ITERS; iters++){
-        
         GenerateRandomSet(p3d.size(), rset);
         for(int j=0; j<rset.size(); j++){
             subp3d[j] = p3d[rset[j]];
@@ -328,7 +328,7 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     }
 
     if(debug) {
-        printf("iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
+        printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
     }
 

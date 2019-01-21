@@ -22,6 +22,8 @@
 #include <RFlowOptimization/LocalizedPoseData.hpp>
 #include <Tests/TestRuntime.hpp>
 #include <Optimization/SingleSession/EvaluateSLAM.h>
+#include <Visualizations/ManualImageCorrespondence.hpp>
+#include <Visualizations/ManualKeypointCorrespondence.hpp>
 
 using namespace std;
 
@@ -182,7 +184,10 @@ int main(int argc, char *argv[]) {
 //        icppairs.LabelTimelapse();
 //        icppairs.CreateTimeLapsesForEvaluation();
 //        icppairs.AnalyzeTimeLapses();
-        icppairs.CheckSessions();
+//        icppairs.CheckSessions();
+//        icppairs.ShowMaps();
+//        icppairs.LocalizePoseUsingManualLabels("/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
+        icppairs.AnalyzeManualLabels("/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
 //        icppairs.CountPosesWithALocalization();
 //        icppairs.PareComparisonFile();
 //        icppairs.AnalyzeAlignmentQualityTrend();
@@ -204,14 +209,29 @@ int main(int argc, char *argv[]) {
         break;}
     case 18:{
             Camera axisptz = ParseBoatSurvey::GetCamera();
-        std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222"};
-        for(int i=0; i<dates.size(); ++i)
-        {
-            EvaluateSLAM es(axisptz, dates[i], results_dir + "maps/");
-            es.ErrorForSurvey(pftbase, false);
-            es.PrintTots();
-        }
+            std::vector<std::string> dates = {"140106", "140117", "140122", "140129", "140205", "140314", "140409", "140416", "140424", "140502", "140515", "140528", "140606", "140613", "140625", "140707", "140711", "140718", "140723", "140730", "140812", "140821", "140828", "140904", "140911", "140919", "140926", "141003", "141010", "141024", "141029", "141107", "141114", "141121", "141128", "141215", "141222"};
+            for(int i=0; i<dates.size(); ++i)
+            {
+                EvaluateSLAM es(axisptz, dates[i], results_dir + "maps/");
+                es.ErrorForSurvey(pftbase, false);
+                es.PrintTots();
+            }
         break;}
+    case 19:{
+            Camera axisptz = ParseBoatSurvey::GetCamera();
+//              ManualImageCorrespondence mic(query_loc,
+            ManualKeypointCorrespondence mic(axisptz,
+                                             query_loc,
+                                             pftbase,
+                                              "/Volumes/Untitled/data/maps_only/maps_only_2014/",
+                                              "/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
+//            mic.GetLocalizationList();
+//        mic.RunManualCorrespondence("140821", 222, "140416", 131); //couldn't
+//        mic.RunManualCorrespondence("140926", 613, "140424", 107);
+//        mic.RunManualCorrespondence("141003", 1066, "140926", 1115);
+//        mic.RunManualCorrespondence("140424", 1331, "140106", 1555);
+        mic.RunManualCorrespondence("140314", 1920, "140911", 2275);
+        }
     }
     
     
@@ -221,6 +241,6 @@ int main(int argc, char *argv[]) {
       string dir = results_dir + argv[1] + "_to_" + argv[2];
       fd.DisplaySurveyComparisonDir(dir);
 */
-
+    
     return 0;
 }

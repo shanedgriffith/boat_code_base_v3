@@ -143,10 +143,28 @@ bool FileParsing::Exists(string file) {
     return filestatus;
 }
 
-
-void FileParsing::AppendToFile(string file, std::string data) {
-    FILE * fp = OpenFile(file, "a");//_logfile
+void FileParsing::AppendToFile(string file, std::string data, bool append) {
+    FILE * fp;
+    if(append)
+        fp = OpenFile(file, "a");//_logfile
+    else
+        fp = OpenFile(file, "w");//_logfile
     if(!fp) {std::cout <<"FileParsing. couldn't append to the file." << std::endl; exit(1);}
     fprintf(fp, "%s", data.c_str());
     fclose(fp);
+}
+
+std::vector<std::vector<std::string> >
+FileParsing::ReadCSVFile(std::string file) {
+    FILE * fp = FileParsing::OpenFile(file, "r");
+    char line[1000];
+    
+    std::vector<std::vector<std::string> > lines;
+    while (fgets(line, 1000-1, fp)) {
+        char * tmp = line;
+        std::vector<std::string> lp = FileParsing::ParseLine(tmp);
+        lines.push_back(lp);
+    }
+    fclose(fp);
+    return lines;
 }

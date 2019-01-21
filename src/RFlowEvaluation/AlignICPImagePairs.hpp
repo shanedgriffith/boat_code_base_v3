@@ -34,6 +34,9 @@ private:
     void FixImagesForComparison(cv::Mat& a, cv::Mat& b);
     int DaysBetween(std::string date1, std::string date2);
     std::vector<double> ConvertToWeighted(double c, std::vector<int>& counts, std::vector<int>& tots);
+    double AngleBetweenTwoVectors(gtsam::Vector3 a, gtsam::Vector3 b);
+    
+    void ProjectToImage(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p);
     
     MachineManager man;
     std::vector<AlignImageMachine*> ws;
@@ -77,6 +80,8 @@ public:
     void CreateTimeLapsesForEvaluation();
     void AnalyzeTimeLapses();
     void CheckSessions();
+    void ShowMaps();
+    void AnalyzeManualLabels(std::string dir);
     
     void CountPosesWithALocalization();
     

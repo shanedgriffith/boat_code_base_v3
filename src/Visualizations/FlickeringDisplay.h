@@ -47,7 +47,6 @@ private:
     };
     
     FILE * OpenFile(std::string filename, const char * op);
-    void MakeDir(std::string dir);
     bool copyFile(std::string s, std::string d);
     void WriteLabels(std::string savedir);
     void LabelStats();

@@ -9,6 +9,9 @@
 #include <Visualizations/SLAMDraw.h>
 #include <RFlowEvaluation/ForBMVCFigure.hpp>
 #include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
+#include <RFlowOptimization/LocalizePose.hpp>
+#include <Optimization/SingleSession/EvaluateSLAM.h>
+#include <Optimization/SingleSession/GTSamInterface.h>
 
 #include "AlignICPImagePairs.hpp"
 
@@ -262,7 +265,7 @@ void AlignICPImagePairs::AlignImagesSFlow(std::string file, int firstidx, int la
     std::cout << "Finished aligning images  " << std::endl;
 }
 
-std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFileLabels(std::string file){
+std::vector<std::vector<int> > AlignICPImagePairs::ReadCSVFileLabels(std::string file) {
     FILE * fp = FileParsing::OpenFile(file, "r");
     char line[1000];
     
@@ -1184,10 +1187,130 @@ void AlignICPImagePairs::CreateTimeLapsesForEvaluation() {
     }
 }
 
+void AlignICPImagePairs::ShowMaps() {
+    SLAMDraw draw(4000,4000);
+    draw.SetScale(-300,300,-300,300);
+    draw.ResetCanvas();
+    cv::Mat img = draw.GetDrawing();
+    
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++){
+        ParseOptimizationResults por(_maps_dir, _dates[i]); //  + "../origin/"
+        
+        CvScalar color = IMDraw::GetLandmarkColor(stoi(_dates[i]));
+        
+        for(int j=1; j<por.boat.size(); ++j) {
+            double dist = pow(pow(por.boat[j][0] - por.boat[j-1][0],2) + pow(por.boat[j][1] - por.boat[j-1][1],2),0.5);
+            
+            cv::Point2f p0 = draw.Scale(cv::Point2f(por.boat[j-1][0], por.boat[j-1][1]));
+            cv::Point2f p1 = draw.Scale(cv::Point2f(por.boat[j][0], por.boat[j][1]));
+            
+            if(dist > 2.5) {
+                continue;
+            }
+            
+            cv::line(img, p0, p1, color);
+        }
+        
+        for(int j=1; j<por.landmarks.size(); j++) {
+            CvScalar col = IMDraw::GetLandmarkColor((int) (j*_dates.size() + i));
+            cv::circle(img, draw.Scale(cv::Point2f(por.landmarks[j][0], por.landmarks[j][1])), 7, col, -1, 8, 0);
+        }
+    }
+    
+    cv::Mat flipped;
+    cv::flip(img, flipped, 0);
+    img = flipped;
+    
+    cv::namedWindow("disp");
+    cv::imshow("disp", img);
+    char c = cvWaitKey(0);
+    cv::destroyWindow("disp");
+    if(c=='s')
+    {
+        static std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+        
+        try {
+            cv::imwrite("/Users/shane/Desktop/place.png", img, compression_params);
+        } catch (std::exception& ex) {
+            fprintf(stderr, "PreprocessBikeRoute::ReadVideo Error. Exception converting image to JPG format: %s\n", ex.what());
+            exit(-1);
+        }
+    }
+}
 
+void AlignICPImagePairs::ProjectToImage(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p) {
+    gtsam::Pose3 tf = GTSamInterface::VectorToPose(boat);
+    
+    double total_error = 0;
+    double count = 0;
+    double num_bad=0;
+    std::string string_data = "";
+    double sum=0;
+    for(int j=0; j<orig_imagecoords.size(); j++) {
+        if(p[j].x()==0.0 && p[j].y()==0.0 && p[j].z()==0.0) {std::cout << "point is zeros " << std::endl; continue; }
+        
+        gtsam::Point3 res = tf.transform_to(p[j]);
+        gtsam::Point2 twodim = _cam.ProjectToImage(res);
+        if(!_cam.InsideImage(twodim)) {
+            std::cout << "point " << p[j] << " projected outside of the image to " << twodim << std::endl;
+        }
+        gtsam::Point2 orig = orig_imagecoords[j];
+        
+        double error = pow(pow(twodim.x() - orig.x(), 2)+pow(twodim.y() - orig.y(), 2),0.5);
+        sum += error;
+        count++;
+        std::cout << "reprojection error: " << error << std::endl;
+    }
+    
+    std::cout << "average reprojection error: " << sum/count << std::endl;
+}
 
+double AlignICPImagePairs::AngleBetweenTwoVectors(gtsam::Vector3 a, gtsam::Vector3 b) {
+    return acos(a.dot(b) / (a.norm()*b.norm()));
+}
 
-
+void AlignICPImagePairs::AnalyzeManualLabels(std::string dir) {
+    std::string loadf = dir + "localization_result.csv";
+    std::vector<std::vector<std::string> > fs = FileParsing::ReadCSVFile(loadf);
+    
+    std::vector<ParseOptimizationResults> por;
+    for(int i=0; i<_dates.size(); i++) {
+        ParseOptimizationResults p(_maps_dir, _dates[i]);
+        por.push_back(p);
+    }
+    
+    for(int i=0; i<fs.size(); ++i) {
+        int d1 = DateToIdx(stoi(fs[i][3]));
+        int p1 = stoi(fs[i][4]);
+        
+        std::vector<double> p1f0(6, 0.0);
+        for(int j=0; j<6; ++j)
+            p1f0[j] = stod(fs[i][j+5]);
+        
+        double posd = pow(pow(p1f0[0] - por[d1].boat[p1][0], 2) + pow(p1f0[1] - por[d1].boat[p1][1], 2) + pow(p1f0[2] - por[d1].boat[p1][2], 2), 0.5);
+        
+        gtsam::Pose3 a = GTSamInterface::VectorToPose(por[d1].boat[p1]);
+        gtsam::Pose3 b = GTSamInterface::VectorToPose(p1f0);
+        b = gtsam::Pose3(b.rotation(), a.translation());
+        
+        gtsam::Cal3_S2::shared_ptr cal = _cam.GetGTSAMCam();
+        gtsam::Point2 mid = gtsam::Point2(_cam.w()/2, _cam.h()/2);
+        gtsam::PinholePose<gtsam::Cal3_S2> pca(a, cal);
+        gtsam::Unit3 au3 = pca.backprojectPointAtInfinity(mid);
+        gtsam::PinholePose<gtsam::Cal3_S2> pcb(b, cal);
+        gtsam::Unit3 bu3 = pcb.backprojectPointAtInfinity(mid);
+        
+        double ang = acos(au3.dot(bu3)) * (180/M_PI); //AngleBetweenTwoVectors(au3, bu3);
+        
+        std::cout << posd << ", " << ang << std::endl;
+        
+        
+//        std::cout << p1f0[0] - por[d1].boat[p1][0] << ", " << p1f0[1] - por[d1].boat[p1][1] << ", " << p1f0[2] - por[d1].boat[p1][2] << ", " << fabs(remainder(p1f0[3]-por[d1].boat[p1][3],2*M_PI))* (180/M_PI) << ", "  << fabs(remainder(p1f0[4]-por[d1].boat[p1][4],2*M_PI))* (180/M_PI) << ", " << fabs(remainder(p1f0[5]-por[d1].boat[p1][5],2*M_PI))* (180/M_PI) << std::endl;
+    }
+}
 
 
 

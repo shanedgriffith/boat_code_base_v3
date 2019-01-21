@@ -502,8 +502,7 @@ void ReprojectionFlow::DrawViewset(std::vector<double> camA, std::vector<double>
     draw.SaveDrawing(savename);
 }
 
-
-void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
+void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set) {
     IMDraw art(image);
     art.SetPointSize(15);
     for(int i=0; i<restrictedset[active_set].size(); i++)
@@ -512,7 +511,7 @@ void ReprojectionFlow::DrawFlowPoints(cv::Mat& image, int active_set){
                 restrictedset[active_set][i].map_idx);
 }
 
-void ReprojectionFlow::DrawMapPoints(cv::Mat& image, int active_set){
+void ReprojectionFlow::DrawMapPoints(cv::Mat& image, int active_set) {
     IMDraw art(image);
     art.SetPointSize(15);
     for(int i=0; i<restrictedset[active_set].size(); i++)
@@ -521,20 +520,20 @@ void ReprojectionFlow::DrawMapPoints(cv::Mat& image, int active_set){
                         restrictedset[active_set][i].map_idx);
 }
 
-void ReprojectionFlow::DrawFlowSurvey(cv::Mat& imageB, int survey){
+void ReprojectionFlow::DrawFlowSurvey(cv::Mat& imageB, int survey) {
     if(viewset.size()==0){
         cout << "ReprojectionFlow::DrawFlowSurvey() Error: Get the flow first." << endl;
         exit(-1);
     }
 
-    CvScalar col = CV_RGB((1.0*rand()/RAND_MAX)*255,(1.0*rand()/RAND_MAX)*255,(1.0*rand()/RAND_MAX)*255);
+//    CvScalar col = CV_RGB((1.0*rand()/RAND_MAX)*255,(1.0*rand()/RAND_MAX)*255,(1.0*rand()/RAND_MAX)*255);
     IMDraw art(imageB);
 
     for(int i=0; i<viewset.size(); i++){
         int surveyno = _map.survey_labels[viewset[i].map_idx];
         if(survey != surveyno) continue;
         cout << "survey: " << surveyno << ", key: " << _map.landmark_ids[viewset[i].map_idx];
-        art.SetColor(col);
+//        art.SetColor(col);
         art.DrawArrow(viewset[i].pim1.x(), viewset[i].pim1.y(), viewset[i].pim2.x(), viewset[i].pim2.y());
         art.DrawPoint(viewset[i].pim1.x(), viewset[i].pim1.y());
     }

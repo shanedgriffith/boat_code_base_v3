@@ -25,10 +25,6 @@ FILE * FlickeringDisplay::OpenFile(string filename, const char * op) {
     return fs;
 }
 
-void FlickeringDisplay::MakeDir(string dir) {
-    mkdir(dir.c_str(), (mode_t) (S_IRWXU | S_IRWXG | S_IRWXO));
-}
-
 bool FlickeringDisplay::copyFile(string s, string d) {
     const char *SRC = s.c_str();
     const char* DEST = d.c_str();
@@ -305,7 +301,6 @@ FlickeringDisplay::FlickeringDisplay() {
 //    ParsePixelAlignmentLog log(_expbase);
 //    ParseVisibilityFile vis(poses_loc, _date1, _date2);
 //
-//    MakeDir(dir);
 //
 //    int count = 0;
 //    for(int i=0; i<log.Size(); i++) {
