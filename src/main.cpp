@@ -30,7 +30,7 @@ using namespace std;
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
 vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/cedricp/VBags/", "/mnt/tale/shaneg/Lakeshore_KLT/", "/mnt/tale/shaneg/bike_datasets/"};
 //vector<string> home_paths = {"/Users/shane/Documents/research/", "/Volumes/SAMSUNG/VBags/", "/Users/shane/Documents/research/data/Lakeshore_KLT/", ""};
-vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Volumes/Untitled/data/Lakeshore_KLT/", ""};
+vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Volumes/Untitled/data/Lakeshore_KLT/", "/Volumes/Untitled/bikedata/"};
 //"/Volumes/SAMSUNG/Data/Lakeshore_KLT/"
 
 int main(int argc, char *argv[]) {
@@ -51,6 +51,10 @@ int main(int argc, char *argv[]) {
         pftbase = cluster_paths[2];
         bike_datasets = cluster_paths[3];
     }
+    
+    PreprocessBikeRoute pbr(bike_datasets, argv[1]);
+    pbr.VOForCameraTrajectory();
+    exit(1);
     
     int prog = atoi(argv[3]);
     std::cout << "running program " << prog << std::endl;
@@ -187,7 +191,8 @@ int main(int argc, char *argv[]) {
 //        icppairs.CheckSessions();
 //        icppairs.ShowMaps();
 //        icppairs.LocalizePoseUsingManualLabels("/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
-        icppairs.AnalyzeManualLabels("/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
+//        icppairs.AnalyzeManualLabels("/Users/shane/Documents/research/results/2018_winter/manual_labeling/");
+        icppairs.ConvertToGIFs("/Users/shane/Documents/research/results/2018_winter/example_alignments/set_of_100/");
 //        icppairs.CountPosesWithALocalization();
 //        icppairs.PareComparisonFile();
 //        icppairs.AnalyzeAlignmentQualityTrend();

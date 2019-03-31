@@ -38,6 +38,8 @@ protected:
 
 	ImagePyramid ip;
 
+    int VERIFICATION_OFFSET_X = 3;
+    int VERIFICATION_OFFSET_Y = 3;
 	double verification_threshold = 0.4;
 	double verifyalignment = false;
 	double ranverification = false;

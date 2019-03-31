@@ -20,17 +20,6 @@ gtsam::Point2 Camera::ProjectToImage(gtsam::Point3 p) const{
 	return gtsam::Point2((_fx*p.x() + _cx*p.z())/p.z(), (_fy*p.y() + _cy*p.z())/p.z());
 }
 
-cv::Mat Camera::CameraMatrix() const{
-	cv::Mat cam(3, 4, CV_64F, cv::Scalar(0));
-	double * data = (double*)cam.data;
-    data[0] = _fx;
-    data[2] = _cx;
-    data[5] = _fy;
-    data[6] = _cy;
-    data[10] = 1.0;
-	return cam;
-}
-
 cv::Mat Camera::IntrinsicMatrix() const{
     cv::Mat K(3, 3, CV_64F, cv::Scalar(0));
     double * data = (double*)K.data;

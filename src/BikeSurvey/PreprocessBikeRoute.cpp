@@ -5,6 +5,7 @@
  *      Author: shane
  */
 
+#include <VisualOdometry/VisualOdometry.hpp>
 #include <VisualOdometry/KLT.hpp>
 #include <Visualizations/IMDraw.hpp>
 #include <Visualizations/SLAMDraw.h>
@@ -467,8 +468,6 @@ std::vector<double> PreprocessBikeRoute::InterpolatePoses(int idx, int a, int b,
     return p;
 }
 
-#include <VisualOdometry/VisualOdometry.hpp>
-
 template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
@@ -489,9 +488,6 @@ void PreprocessBikeRoute::ModifyPoses(){
      >>this might rely too much on ..hmm
      */
     Camera nexus = ParseBikeRoute::GetCamera();
-    gtsam::Cal3_S2::shared_ptr gtcam = nexus.GetGTSAMCam();
-    gtsam::Matrix gtmat = gtcam->matrix();
-    
     VisualOdometry vo(nexus);
     vector<double> lastp;
     vector<vector<double>> filtered;
@@ -502,16 +498,16 @@ void PreprocessBikeRoute::ModifyPoses(){
     vector<double> curpose;
     for(int i=2; i<timings.size(); i=i+2){
         ParseFeatureTrackFile PFT1(nexus, _bdbase + _name, i);
-        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = GTSamInterface::PoseToVector(vop);
+        std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = GTSamInterface::PoseToVector(vop.first);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
                 std::cout << "skipped " << i << std::endl;
                 PFT1.Next(++i);
                 if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
-                gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = GTSamInterface::PoseToVector(vop);
+                std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
+                vp = GTSamInterface::PoseToVector(vop.first);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
@@ -541,8 +537,6 @@ void PreprocessBikeRoute::ModifyPoses(){
         printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,poses[i][0],poses[i][1],poses[i][2],poses[i][3],poses[i][4],poses[i][5]);
     }
     
-    
-    
     poses = newposes;
     if(poses.size() != arrs[0].size()){
         std::cout << "size incompatibility" << std::endl;
@@ -550,6 +544,84 @@ void PreprocessBikeRoute::ModifyPoses(){
 }
 
 
+
+void PreprocessBikeRoute::VOForCameraTrajectory(){
+    std::cout << "should have " << timings.size() << " images " << std::endl;
+    
+    double min_thresh = 50;
+    ParseBikeRoute pbr(_bdbase, _name);
+    gtsam::Pose3 p0 = pbr.CameraPose(0);
+    p0 = gtsam::Pose3(gtsam::Rot3(), p0.translation()); //zero the rotation.
+    Camera nexus = ParseBikeRoute::GetCamera();
+    VisualOdometry vo(nexus);
+    
+    std::vector<double> c;
+    std::vector<int> indices;
+    std::shared_ptr<ParseFeatureTrackFile> last;
+    int lasti = 0;
+    int curi = 0;
+    double dist_threshold = min_thresh;
+    int start = 1822;
+    for(int i=start; i<pbr.NumPoses(); i++) {
+        std::shared_ptr<ParseFeatureTrackFile> cur = std::make_shared<ParseFeatureTrackFile>(nexus, _bdbase + _name, i);
+        curi = i;
+        if(i>start)
+        {
+            if(cur->time <= 0) {
+                break;
+            }
+            std::pair<double, int> dist = vo.KeypointChange(*last, *cur);
+            
+            if(dist.second < 10) {
+                std::cout << "too few tracks" << std::endl;
+                last = cur;
+                lasti = curi;
+                continue;
+            }
+            
+            std::pair<gtsam::Pose3, int> res = vo.PoseFromEssential(*last, *cur);
+            gtsam::Pose3 delta_pose = res.first;
+            c = GTSamInterface::PoseToVector(delta_pose);
+//            std::cout << lasti <<"->"<<curi<< ": Avg. disparity: " << dist.first << ", vo inliers: " << res.second << ", keypoint tracks: " << dist.second << ", pose: ";// << std::endl;
+//            std::cout << "(" << c[0] <<", " << c[1] <<", " << c[2] <<") [" << c[3] <<", " << c[4] <<", " << c[5] <<"]" << std::endl;
+            
+            //ideally, if VO works:
+//            if(res.second < 10) {
+//                last = cur;
+//                lasti = curi;
+//                continue;
+//            }
+            
+            
+            continue;
+            
+            
+            if(dist.first < dist_threshold) continue;
+            //{    std::cout << "dist between: " << dist.first << " with " << dist.second << " points. skipped." << std::endl; continue; }
+            if(dist.second > 350) {dist_threshold += 10;  continue;} //std::cout << "dist between: " << dist.first << " with " << dist.second << " points. skipped." << std::endl;
+            if(dist.second < 20) std::cout << dist.second << " points for computing the pose.." << std::endl;
+            //std::cout << "dist between: " << dist.first << " with " << dist.second << " points. used." << std::endl;
+            
+//            std::pair<gtsam::Pose3, int> res = vo.PoseFromEssential(*last, *cur);
+//            gtsam::Pose3 delta_pose = res.first;
+            if(res.second < dist.second * 0.25) {
+                std::cout << "vo failed " << std::endl;
+            }
+            indices.push_back(i);
+//            p0 = p0.compose(delta_pose);
+            p0 = delta_pose;
+            dist_threshold = min_thresh;
+        }
+        last = cur;
+        lasti = curi;
+        c = GTSamInterface::PoseToVector(p0);
+        std::cout << i << ", " << c[0] <<", " << c[1] <<", " << c[2] <<", "
+                               << c[3] <<", " << c[4] <<", " << c[5] <<", " << std::endl;
+    }
+    
+    
+    
+}
 
 
 

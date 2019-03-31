@@ -101,16 +101,16 @@ void ParseBikeRoute::ModifyPoses(){
     vector<double> curpose;
     for(int i=2; i<poses.size(); i=i+2){
         ParseFeatureTrackFile PFT1(nexus, _base + _date, i);
-        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = GTSamInterface::PoseToVector(vop);
+        std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = GTSamInterface::PoseToVector(vop.first);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
                 std::cout << "skipped " << i << std::endl;
                 PFT1.Next(++i);
                 if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
-                gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = GTSamInterface::PoseToVector(vop);
+                vop = vo.PoseFromEssential(PFT0, PFT1);
+                vp = GTSamInterface::PoseToVector(vop.first);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }

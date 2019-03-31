@@ -82,6 +82,7 @@ public:
     void CheckSessions();
     void ShowMaps();
     void AnalyzeManualLabels(std::string dir);
+    void ConvertToGIFs(std::string dir);
     
     void CountPosesWithALocalization();
     

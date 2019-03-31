@@ -72,7 +72,7 @@ void SFlowDREAM::VerifiedBP(SIFTImageLayer& sil, double gamma, int h, int nHiera
     RunBP(sil, gamma, h, nHierarchy, scale, imset, two_cycle_hypspace);
     if(reprojection_flow || ranverification || !verifyalignment) return;
 
-    int x=3, y=3;
+    int x=VERIFICATION_OFFSET_X, y=VERIFICATION_OFFSET_Y;
     SIFTImageLayer woff(sil.im);
     woff.im[1] = AddOffset(woff.im[1], x, y); //put the offset on im2
     RunBP(woff, gamma, h, nHierarchy, scale, imset, two_cycle_hypspace);
@@ -233,7 +233,6 @@ double SFlowDREAM::MeasureConsistency(vector<SIFTImageLayer>& vec, int ref){
 	if(debug) cout << "MeasureConsistency() percent big: " << 1.0*numbig/count << ", percent zeros:  " << 1.0*numzeros/count << ", dist: " << sum/count << ", avg: ("<<sumx/(height*width)<<","<<sumy/(height*width)<<")" <<endl;
 	return 1.0*numzeros/count;
 }
-
 
 /*Computes epipolar constraints from the set of consistent pixels.
  * */

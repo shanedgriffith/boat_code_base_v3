@@ -127,42 +127,147 @@ void VisualOdometry::Reset() {
     initEst.clear();
 }
 
-gtsam::Pose3 VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest){
-    //using the method to recover the pose from the essential matrix. (for the initial poses)
-    std::vector<cv::Point2f> p2d0;
-    std::vector<cv::Point2f> p2d1;
+cv::Mat
+VisualOdometry::triangulatePointSet(std::vector<cv::Point2f>& p0, std::vector<cv::Point2f>& p1, cv::Mat P1) {
+    cv::Mat P0 = cv::Mat::eye(3, 4, P1.type());
+    cv::Mat Q;
+    triangulatePoints(P0, P1, p0, p1, Q);
+    Q.row(0) /= Q.row(3);
+    Q.row(1) /= Q.row(3);
+    Q.row(2) /= Q.row(3);
+    Q.row(3) /= Q.row(3);
+    cv::Mat W = Q(cv::Range(0, 3), cv::Range::all());
+    if( W.checkVector(3) < 0)
+        cv::transpose(W,W);
+    return W;
+}
+
+std::pair<double, int> VisualOdometry::getReprojectionError(cv::Mat , std::vector<cv::Point2f>& p2d1, cv::Mat P1) {
+    double INLIER_THRESHOLD = 6;
     
-    int ci = 0;
-    for(int i=0; i<last.ids.size(); i++){
-        while(latest.ids[ci]<last.ids[i]) ci++;
-        if(latest.ids[ci] != last.ids[i]) continue;
-        p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
-        p2d1.push_back(cv::Point2f(latest.imagecoord[ci].x(), latest.imagecoord[ci].y()));
+    cv::Mat P0 = cv::Mat::eye(3, 4, P1.type());
+    cv::Mat Q;
+    triangulatePoints(P0, P1, p0, p1, Q);
+    Q.row(0) /= Q.row(3);
+    Q.row(1) /= Q.row(3);
+    Q.row(2) /= Q.row(3);
+    Q.row(3) /= Q.row(3);
+    cv::Mat W = Q(cv::Range(0, 3), cv::Range::all());
+    if( W.checkVector(3) < 0)
+        cv::transpose(W,W);
+    cv::Mat R(3,3, P1.type());
+    cv::Mat t(3,1, P1.type());
+    R = P1(cv::Range::all(), cv::Range(0, 3));
+    t = P1.col(3);
+    std::vector<cv::Point2f> projected(W.checkVector(3));
+    cv::projectPoints(W, R, t, _cam.IntrinsicMatrix(), _cam.Distortion(), cv::Mat(projected));
+    
+    int cin = 0;
+    double sum = 0;
+    int nnan = 0;
+    for(int i=0; i<p2d1.size(); i++) {
+        if(isnan(projected[i].x)) {
+            nnan++;
+            continue;
+        }
+        double d = pow(pow(projected[i].x - p2d1[i].x, 2.0) + pow(projected[i].y - p2d1[i].y, 2.0), 0.5);
+        sum += d;
+        if(d < INLIER_THRESHOLD)
+            cin++;
     }
     
-    if(p2d0.size() < 15)
-        return gtsam::Pose3::identity();
+    if(nnan == p2d1.size()) {
+        return std::make_pair(100000000000000, 0);
+    }
     
-    double focal = 1.0;
-    cv::Point2d pp(0, 0);
+    return std::make_pair(sum/p2d1.size(), cin);
+}
+
+std::pair<std::vector<cv::Point2f>, std::vector<int>>
+VisualOdometry::findOverlappingPointSet(std::vector<gtsam::Point2>& ic1, std::vector<int>& id1, std::vector<int>& ids) {
+    std::vector<cv::Point2f> subpoints;
+    std::vector<int> subids;
     
-    cv::Mat E, R, t, mask;
+    int ci = 0;
+    for(int i=0; i<ids.size(); i++){
+        while(id1[ci]<ids[i]) ci++;
+        if(id1[ci] != ids[i]) continue;
+        subpoints.push_back(cv::Point2f(ic1[ci].x(), ic1[ci].y()));
+        ci++;
+    }
+    return std::make_pair(subpoints, subids);
+}
+
+std::pair<gtsam::Pose3, int> VisualOdometry::PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest) {
+    double MIN_REQ_CORRESPONDENCES = 5; // for the five point algorithm
+    //using the method to recover the pose from the essential matrix. (for the initial poses)
+//    std::vector<cv::Point2f> p2d0;
+//    std::vector<cv::Point2f> p2d1;
+//    
+//    int ci = 0;
+//    for(int i=0; i<last.ids.size(); i++){
+//        while(latest.ids[ci]<last.ids[i]) ci++;
+//        if(latest.ids[ci] != last.ids[i]) continue;
+//        p2d0.push_back(cv::Point2f(last.imagecoord[i].x(), last.imagecoord[i].y()));
+//        p2d1.push_back(cv::Point2f(latest.imagecoord[ci].x(), latest.imagecoord[ci].y()));
+//        ci++;
+//    }
+    
+    std::pair<std::vector<cv::Point2f>, std::vector<int>> res1 = findOverlappingPointSet(last.imagecoord, last.ids, latest.ids);
+    std::pair<std::vector<cv::Point2f>, std::vector<int>> res2 = findOverlappingPointSet(latest.imagecoord, latest.ids, res1.second);
+    std::vector<cv::Point2f> p2d0 = res1.first;
+    std::vector<cv::Point2f> p2d1 = res2.first;
+    
+    if(p2d0.size() < MIN_REQ_CORRESPONDENCES)
+        return std::make_pair(gtsam::Pose3::identity(), 0);
+    
     std::vector<cv::Point2f> p0(p2d0.size());
     std::vector<cv::Point2f> p1(p2d1.size());
     cv::undistortPoints(p2d0, p0, _cam.IntrinsicMatrix(), _cam.Distortion());
     cv::undistortPoints(p2d1, p1, _cam.IntrinsicMatrix(), _cam.Distortion());
-    E = findEssentialMat(cv::Mat(p1), cv::Mat(p0), focal, pp, cv::RANSAC, 0.999, 0.0001,  mask);
-    cv::recoverPose(E, cv::Mat(p1), cv::Mat(p0), R, t, focal, pp, mask);
-    //note: at this point, t is the unit translation. The relative translation has to be recovered using the triangulated 3D points and their distances.
-    //alternatively, using the IMU, the absolute translation can be recovered.
-    //the camera height is useful if the points are triangulated, but that's a lot of error. it's useful if the ground plane is estimated, but that is also prone to error.
-    //TBD.
+    
+    double focal = 1.0;
+    cv::Point2d pp(0, 0);
+    std::vector<unsigned char> inliers(p2d0.size(), 0);
+    cv::Mat E, R, t, mask;
+    E = findEssentialMat(cv::Mat(p0), cv::Mat(p1), focal, pp, cv::RANSAC, 0.999, 0.0001,  cv::Mat(inliers));
+    cv::recoverPose(E, cv::Mat(p2d1), cv::Mat(p2d0), _cam.IntrinsicMatrix(), R, t, cv::Mat(inliers));
+    
+    cv::Mat P(3, 4, R.type());
+    P(cv::Range::all(), cv::Range(0, 3)) = R * 1.0;
+    P.col(3) = t * 1.0;
+    std::pair<double, int> reprojected = getReprojectionError(p0, p1, p2d1, P);
+    std::cout << "reprojection error: " << reprojected.first << ", inliers: " << reprojected.second << std::endl;
     
     gtsam::Rot3 rot(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2),
             R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2),
             R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2));
     gtsam::Point3 trans(t.at<double>(0,0), t.at<double>(0,1), t.at<double>(0,2));
-    return gtsam::Pose3(rot, trans);
+    
+    return std::make_pair(gtsam::Pose3(rot, trans), reprojected.second);
+}
+
+int VisualOdometry::testAndVerifyVO(std::vector<ParseFeatureTrackFile&> t) {
+    std::vector<std::vector<cv::Point2f>> p2d(t.size());
+    std::vector<int> ids;
+    std::vector<cv::Mat> P;
+    
+    findOverlappingPointSet();
+    
+    std::pair<std::vector<cv::Point2f>, std::vector<int>> res1 = findOverlappingPointSet(t[0].imagecoord, t[0].ids, t[1].ids);
+    std::pair<std::vector<cv::Point2f>, std::vector<int>> res2 = findOverlappingPointSet(t[1].imagecoord, t[1].ids, res1.second);
+    std::pair<std::vector<cv::Point2f>, std::vector<int>> res3 = findOverlappingPointSet(t[2].imagecoord, t[2].ids, res1.second);
+    std::vector<cv::Point2f> p2d0 = res1.first;
+    std::vector<cv::Point2f> p2d1 = res2.first;
+    
+    P[2] = PoseFromEssential(t[1], t[2]);
+    P[1] = PoseFromEssential(t[0], t[1]);
+    P[0] =  = cv::Mat::eye(3, 4, P[1].type());
+    
+    
+    
+    
+    
 }
 
 gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseFeatureTrackFile& latest) {
@@ -189,7 +294,8 @@ gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, ParseF
     if(p3d.size() - nnonzero == 0) {
         std::cout << "Points are zero. cannot run pnp." << std::endl;
         std::cout << "Estimating pose from the essential matrix instead." << std::endl;
-        return PoseFromEssential(lastPFT, latest);
+        std::pair<gtsam::Pose3, int> vop = PoseFromEssential(lastPFT, latest);
+        return vop.first;
     }
     if(p3d.size() < 8) return est; //too few points.
     
@@ -214,7 +320,7 @@ gtsam::Pose3 VisualOdometry::GetNextOdom(ParseFeatureTrackFile& PFT){
     if(posenum > 0) est = poses[poses.size()-1].compose(last_odom);
     else est = _prior;
     if(posenum > 1) {
-        estnewpose = PoseFromEssential(lastPFT, PFT);
+        std::pair<gtsam::Pose3, int> vop = PoseFromEssential(lastPFT, PFT);
         //Xiao: this method still has a scale ambiguity. How you want to solve it is still TBD.
         last_odom = poses[poses.size()-1].between(estnewpose);
     } else if(posenum > 1) {
@@ -231,6 +337,25 @@ gtsam::Pose3 VisualOdometry::GetNextOdom(ParseFeatureTrackFile& PFT){
 
     CopyLast(PFT);
     return last_odom;
+}
+
+std::pair<double, int> VisualOdometry::KeypointChange(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest) {
+    if(latest.ids.size()==0 or last.ids.size()==0){
+        return std::make_pair(-1, -1);
+    }
+    
+    double sumdist = 0;
+    int count = 0;
+    int ci = 0;
+    for(int i=0; i<last.ids.size(); i++){
+        while(latest.ids[ci]<last.ids[i]) ci++;
+        if(latest.ids[ci] != last.ids[i]) continue;
+        
+        double dist = last.imagecoord[i].dist(latest.imagecoord[ci]);
+        sumdist += dist;
+        count++;
+    }
+    return std::make_pair(sumdist/count, count);
 }
 
 void VisualOdometry::PrintVec(std::vector<double> p){

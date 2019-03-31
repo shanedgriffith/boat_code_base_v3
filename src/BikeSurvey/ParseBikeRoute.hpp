@@ -30,7 +30,7 @@ public:
         constant_velocity = false;
         default_start = gtsam::Point3(296456.933, 5443544.892, 0);
         
-        std::string aux = _base + _auxfile;
+        std::string aux = _base + name + "/image_auxiliary.csv";
         if(!FileParsing::Exists(aux)){
             std::cout << "ParseBikeRoute Error: The aux file " << aux << " doesn't exist." << std::endl;
             exit(-1);

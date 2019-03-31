@@ -4,8 +4,7 @@
 //  This version created by Shane Griffith on 3/20/17.
 //
 
-#ifndef SRC_VISUALODOMETRY_KLT_HPP_
-#define SRC_VISUALODOMETRY_KLT_HPP_
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,11 +113,6 @@ public:
     
     void DrawFeatures(cv::Mat& image);
 };
-
-
-#endif /* SRC_VISUALODOMETRY_KLT_HPP_ */
-
-
 
 
 

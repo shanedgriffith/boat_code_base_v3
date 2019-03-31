@@ -17,12 +17,11 @@
 #include <gtsam/geometry/Cal3_S2.h>
 
 class Camera{
-protected:
+public:
     cv::Mat distCoeffs;
 	double _fx, _fy, _cx, _cy;
 	int _w, _h;
     gtsam::Cal3_S2::shared_ptr k;
-public:
 	Camera(double fx, double fy, double cx, double cy, int w, int h):
 		_fx(fx), _fy(fy), _cx(cx), _cy(cy), _w(w), _h(h),
         k(new gtsam::Cal3_S2(_fx, _fy, 0.0, _cx, _cy)),
@@ -40,7 +39,6 @@ public:
     cv::Point2f NormalizedToPixel(cv::Point2f p) const;
     cv::Point2f PixelToNormalized(cv::Point2f p) const;
 	gtsam::Point2 ProjectToImage(gtsam::Point3) const;
-	cv::Mat CameraMatrix() const;
     cv::Mat IntrinsicMatrix() const;
 	int w() const;
 	int h() const;

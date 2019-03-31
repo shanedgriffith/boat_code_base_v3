@@ -6,8 +6,7 @@
 //  Copyright © 2017 shane. All rights reserved.
 //
 
-#ifndef SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_
-#define SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -63,6 +62,7 @@ protected:
 
     void AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess);
     void AddOdom(gtsam::Symbol symb0, gtsam::Pose3 pguess0, gtsam::Symbol symb1, gtsam::Pose3 pguess1);
+    std::pair<double, int> getReprojectionError(std::vector<cv::Point2f>& p0, std::vector<cv::Point2f>& p1, std::vector<cv::Point2f>& p2d1, cv::Mat P1);
     
     gtsam::Pose3 PnP(gtsam::Values& result, gtsam::Pose3 est, ParseFeatureTrackFile& latest);
     
@@ -106,8 +106,6 @@ public:
     //this method assumes the image_auxiliary file starts before the csv sift file.
     void SetPrior(gtsam::Pose3 p){_prior = p;}
     gtsam::Pose3 GetNextOdom(ParseFeatureTrackFile& PFT);
-    gtsam::Pose3 PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest);
+    std::pair<gtsam::Pose3, int> PoseFromEssential(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest);
+    std::pair<double, int> KeypointChange(ParseFeatureTrackFile& last, ParseFeatureTrackFile& latest);
 };
-
-
-#endif /* SRC_VISUALODOMETRY_VISUALODOMETRY_HPP_ */

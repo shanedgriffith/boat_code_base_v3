@@ -1312,6 +1312,26 @@ void AlignICPImagePairs::AnalyzeManualLabels(std::string dir) {
     }
 }
 
+void AlignICPImagePairs::ConvertToGIFs(std::string dir) {
+    std::vector<std::string> dirsindir = FileParsing::ListDirsInDir(dir);
+    std::string save_dir = dir + "../gifs/";
+    for(int i=0; i<dirsindir.size(); i++) {
+        std::string name = dir + dirsindir[i] + "/scene/";
+        std::string command = "ffmpeg -f image2 -framerate 3 -pattern_type glob -i '" + name + "*.jpg' -filter_complex \"[0:v] fps=3,scale=720:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse\" " + save_dir + dirsindir[i] + ".gif";
+        std::cout << command << std::endl;
+//        system(command.c_str());
+//        break;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 

@@ -16,16 +16,13 @@ void RFlowFME::setSTD(float std){
     stdp = std;
 }
 
-
 void RFlowFME::SetHypSpace(int hypspace){
     _h = hypspace;
 }
 
-
 double RFlowFME::EvaluateGaussian(int dline, double stdp){
     return 1.0/(stdp*pow(2*M_PI,0.5))*exp(-1*pow(dline, 2)/(2*pow(stdp,2)));
 }
-
 
 void RFlowFME::GetHypothesisSpaceOutlier(vector<double>& hypspace, cv::Point2f center, cv::Point2f offset, cv::Vec3f line){
     //here, center is what the pixel was mapped to. (to-be-warped image)
@@ -51,13 +48,11 @@ void RFlowFME::GetHypothesisSpaceOutlier(vector<double>& hypspace, cv::Point2f c
     }
 }
 
-
 double RFlowFME::EvaluateGaussian(int fx, int fy, double ux, double uy, double stdp){
     //this is valid if x and y are uncorrelated and have the same variance
     //it's equivalent to the Gaussian method above for the distance.
     return 1.0/(stdp*pow(2*M_PI,0.5))*exp(-1*(pow(fx-ux, 2) + pow(fy-uy,2))/(2*pow(stdp,2)));
 }
-
 
 void RFlowFME::GetHypothesisSpaceInlier(vector<double>& hypspace, double cx, double cy){
     //here, center is what the pixel was mapped to. (to-be-warped image)
@@ -71,7 +66,6 @@ void RFlowFME::GetHypothesisSpaceInlier(vector<double>& hypspace, double cx, dou
         }
     }
 }
-
 
 bool RFlowFME::ComputeHypothesisSpace(vector<vector<double> >& hypspace, vector<cv::Point2f>& mapped, vector<unsigned char>& labels){
     //Because the hypothesis space is centered around the mapped point, the epipolar constraints are defined in the hypothesis space around it.
@@ -88,7 +82,6 @@ bool RFlowFME::ComputeHypothesisSpace(vector<vector<double> >& hypspace, vector<
     if(debug) cout << "Ratio of inliers to outliers: "<<count<<"/"<<mapped.size()<<"="<<1.0*count/mapped.size() << endl;
     return true;
 }
-
 
 bool RFlowFME::ComputeHypothesisSpaceFirst(vector<vector<double> >& hypspace, vector<cv::Point2f>& orig_sparse, vector<cv::Point2f>& mapped_sparse, cv::Mat& flow, vector<unsigned char>& labels){
     /*
@@ -122,7 +115,6 @@ bool RFlowFME::ComputeHypothesisSpaceFirst(vector<vector<double> >& hypspace, ve
     return true;
 }
 
-
 void RFlowFME::TransformFlow(cv::Mat& flow, vector<cv::Point2f>& orig, vector<cv::Point2f>& mapped){
     double * f = (double *) flow.data;
     for(int i=0; i<flow.rows; i++){
@@ -133,7 +125,6 @@ void RFlowFME::TransformFlow(cv::Mat& flow, vector<cv::Point2f>& orig, vector<cv
         }
     }
 }
-
 
 bool RFlowFME::IdentifyHypothesisSpace(vector<vector<double> >& hypspace, cv::Mat& flow, int h){
 	/*Specify orig and mapped if the flow points are different from the constraint space, e.g., for the first iteration.*/
@@ -150,7 +141,6 @@ bool RFlowFME::IdentifyHypothesisSpace(vector<vector<double> >& hypspace, cv::Ma
 
     return ComputeHypothesisSpace(hypspace, mapped, inliers);
 }
-
 
 bool RFlowFME::IdentifyHypothesisSpace(vector<vector<double> >& hypspace, vector<cv::Point2f>& orig_sparse, vector<cv::Point2f>& mapped_sparse, cv::Mat& flow, int h){
 	/*Specify orig and mapped if the flow points are different from the constraint space, e.g., for the first iteration.*/

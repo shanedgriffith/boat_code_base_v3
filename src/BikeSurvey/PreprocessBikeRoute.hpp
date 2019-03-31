@@ -22,6 +22,10 @@
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/LandmarkTrack.h>
 
+
+/*
+ Processes the raw aux file of sensor data and outputs the image_auxiliary.csv file with the timestamps and the pose estimates.
+ */
 class PreprocessBikeRoute: public FileParsing{
 private:
     double move_avg_win = 20;
@@ -67,9 +71,10 @@ public:
         default_start = gtsam::Point3(296456.933, 5443544.892, 0); //location of survey start.
         end_pos = gtsam::Point3(294812.524-default_start.x(), 5444335.780-default_start.y(), 0);
         
-        std::string raw_aux = _bdbase + _name + "/" + _name + ".csv";
+//        std::string raw_aux = _bdbase + _name + "/image_auxiliary.csv";
+        std::string raw_aux = _bdbase + _name + "/"  + _name + ".csv";
         if(!FileParsing::Exists(raw_aux)){
-            std::cout << "ParseBikeRoute Survey doesn't exist. " << raw_aux << std::endl;
+            std::cout << "PreprocessBikeRoute Survey doesn't exist. " << raw_aux << std::endl;
             exit(1);
         }
     }
@@ -78,6 +83,7 @@ public:
     void Play();
     void FindKLTParams();
     std::string Base() {return _bdbase + _name + "/";}
+    void VOForCameraTrajectory();
 };
 
 
@@ -97,18 +103,5 @@ summary: http://stackoverflow.com/questions/35061294/how-to-calculate-heading-us
  vector<int> imageno;       (1-1 correspondence with the index)
  
  */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

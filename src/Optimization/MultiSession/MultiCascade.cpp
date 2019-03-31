@@ -234,7 +234,7 @@ void MultiCascade::WeightedAlignment() {
     int iteration = 0;
     std::vector<std::pair<double, double>> ac(dates.size(), std::pair<double, double>(1.0, 1.0));
     double apc=1, aoc=1;
-    double percent_of_landmarks = 100;
+    double percent_of_landmarks = 100; //percent of downsampled landmarks, so this is the standard 10%
     double DELTA_THRESHOLD = 0.01;
     double last = 100000000000;
     

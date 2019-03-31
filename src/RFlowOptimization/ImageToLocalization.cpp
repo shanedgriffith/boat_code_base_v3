@@ -169,7 +169,7 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     // An image can have high consistency %, yet few consistent points because the %
     //is calculated with a tolerance=1.0. Consistent points match with tolerance=0.
     if(debug) std::cout<<"Number of mapped points check: "<< p0.size() << ", count1: "<<count1 << ",  count2: " << count2 << std::endl;
-    if(count1+count2 > 7){
+    if(count1+count2 > 7){//TODO: should be 15
         std::vector<unsigned char> inliers(p0.size(), 1);
         if(ApplyEpipolarConstraints(p0, p1, inliers)){ //true){ //
             lpd.SetPoints(inliers, p1, subset3d, subsetids, 0, count1);
