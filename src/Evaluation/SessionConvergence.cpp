@@ -3,14 +3,14 @@
 
 
 #include "SessionConvergence.hpp"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 using namespace std;
 
 double SessionConvergence::MeasureREDifference(std::vector<double>& bref, std::vector<double>& bcur, std::vector<gtsam::Point3>& p3dref, std::vector<gtsam::Point3>& p3dcur){
     
-    gtsam::Pose3 tfref = GTSamInterface::VectorToPose(bref);
-    gtsam::Pose3 tfcur = GTSamInterface::VectorToPose(bcur);
+    gtsam::Pose3 tfref = GTSAMInterface::VectorToPose(bref);
+    gtsam::Pose3 tfcur = GTSAMInterface::VectorToPose(bcur);
     
     double total_error = 0;
     double count = 0;

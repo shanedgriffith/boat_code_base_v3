@@ -19,7 +19,7 @@
 #include <unordered_map>
 
 #include <Optimization/SingleSession/SurveyOptimizer.h>
-#include <Optimization/SingleSession/GTSamInterface.h>
+#include <Optimization/SingleSession/GTSAMInterface.h>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <DataTypes/Camera.hpp>
 

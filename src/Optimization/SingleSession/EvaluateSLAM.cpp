@@ -8,7 +8,7 @@
 
 #include "EvaluateSLAM.h"
 #include "FileParsing/ParseFeatureTrackFile.h"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 #include <stdio.h>
 
 #include <gtsam/geometry/Pose3.h>
@@ -88,7 +88,7 @@ void EvaluateSLAM::PrintTots(string name, bool compact){
 }
 
 double EvaluateSLAM::MeasureReprojectionError(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p, const vector<double>& rerror) {
-    gtsam::Pose3 tf = GTSamInterface::VectorToPose(boat);
+    gtsam::Pose3 tf = GTSAMInterface::VectorToPose(boat);
     
     double total_error = 0;
     double count = 0;

@@ -53,7 +53,8 @@ int main(int argc, char *argv[]) {
     }
     
     PreprocessBikeRoute pbr(bike_datasets, argv[1]);
-    pbr.VOForCameraTrajectory();
+    pbr.Preprocess2();
+//    pbr.VOForCameraTrajectory();
     exit(1);
     
     int prog = atoi(argv[3]);

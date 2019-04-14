@@ -9,7 +9,7 @@
 #include "math.h"
 #include "ReprojectionFlow.hpp"
 #include "ImageAlignment/DREAMFlow/FeatureMatchElimination.hpp"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 #include "Visualizations/SLAMDraw.h"
 
 using namespace std;
@@ -99,7 +99,7 @@ vector<gtsam::Point2> ReprojectionFlow::ProjectPoints(vector<double>& boat, vect
         std::cout << "ReprojectionFlow::ProjectPoints() expected a pose vector. Check the code." <<std::endl;
         exit(-1);
     }
-    gtsam::Pose3 tf = GTSamInterface::VectorToPose(boat);
+    gtsam::Pose3 tf = GTSAMInterface::VectorToPose(boat);
     vector<gtsam::Point2> validset(MapSize(), gtsam::Point2(-1, -1));
     for(int j=0; j<MapSize(); j++) {
         if(_map.map[j].x()==0.0 && _map.map[j].y()==0.0 && _map.map[j].z()==0.0) continue;

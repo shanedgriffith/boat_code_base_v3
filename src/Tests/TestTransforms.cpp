@@ -20,15 +20,15 @@
 #include <RFlowEvaluation/AlignImageMachine.hpp>
 
 #include "Optimization/SingleSession/EvaluateSLAM.h"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 using namespace std;
 
 void TestTransforms::CheckBtwn(const Camera& _cam){
     vector<double> p = {5, 4, 0, 0.2, 0.1, 1.5};
     vector<double> t = {3, 4, 1, 0.3, 0.4, 1.3};
-    gtsam::Pose3 gp = GTSamInterface::VectorToPose(p);
-    gtsam::Pose3 gt = GTSamInterface::VectorToPose(t);
+    gtsam::Pose3 gp = GTSAMInterface::VectorToPose(p);
+    gtsam::Pose3 gt = GTSAMInterface::VectorToPose(t);
     std::cout << "p btwn t: " << gp.between(gt) << std::endl;
     std::cout << "t btwn p: " << gt.between(gp) << std::endl;
     std::cout << "(p btwn t)^-1: " << gp.between(gt).inverse() << std::endl;
@@ -115,7 +115,7 @@ gtsam::Pose3 TestTransforms::SamplePose(vector<double> mean, vector<double> var)
     vector<double> p(mean.size(), 0);
     for(int i=0; i<mean.size(); i++)
         p[i] = SampleValue(mean[i], var[i]);
-    return GTSamInterface::VectorToPose(p);
+    return GTSAMInterface::VectorToPose(p);
 }
 
 double TestTransforms::MapToConstraint(double val){

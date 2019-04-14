@@ -26,7 +26,7 @@
 #include <FileParsing/SaveOptimizationResults.h>
 #include <FileParsing/ParseSurvey.h>
 
-#include "GTSamInterface.h"
+#include "GTSAMInterface.h"
 #include "FactorGraph.hpp"
 
 class SurveyOptimizer {
@@ -58,7 +58,7 @@ protected:
     
     int num_cameras_in_traj=0;
     std::vector<LandmarkTrack> active;
-    GTSamInterface GTS;
+    GTSAMInterface GTS;
     const Camera& _cam;
     FactorGraph * FG;
     bool clean_up = false;

@@ -71,7 +71,7 @@ public:
         gtsam::Rot3 r=hx.rotation();
         //only the x,y, and yaw are modified. The other values shouldn't change (for the boat, anyway)
          std::vector<double> pvec = {r.yaw()*weight, r.pitch(), r.roll(), hx.x()*weight, hx.y()*weight, hx.z()};
-        hx = GTSamInterface::VectorToPose(pvec);
+        hx = GTSAMInterface::VectorToPose(pvec);
          */
         Pose3 res = p3.between(hx, H3);
         

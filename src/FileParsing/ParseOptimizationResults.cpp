@@ -7,7 +7,7 @@
 //
 
 #include "ParseOptimizationResults.h"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 #include <cmath>
 
 
@@ -177,7 +177,7 @@ vector<gtsam::Point3> ParseOptimizationResults::GetSubsetOf3DPoints(vector<int>&
 }
 
 gtsam::Pose3 ParseOptimizationResults::CameraPose(int idx){
-    return GTSamInterface::VectorToPose(boat[idx]);
+    return GTSAMInterface::VectorToPose(boat[idx]);
 }
 
 double DistanceFunction(vector<double> pose1, vector<double> pose2) {

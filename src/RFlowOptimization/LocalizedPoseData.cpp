@@ -6,7 +6,7 @@
  */
 
 #include "LocalizedPoseData.hpp"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 #include "RFlowEvaluation/AlignImageMachine.hpp"
 #include "ImageAlignment/GeometricFlow/ReprojectionFlow.hpp"
@@ -274,10 +274,10 @@ void LocalizedPoseData::SetPoints(std::vector<unsigned char>& inliers, vector<gt
 }
 
 void LocalizedPoseData::SetPoses(std::vector<double> p0_, std::vector<double> p1frame0_, std::vector<double> p0frame1_){
-    gtsam::Pose3 p0 = GTSamInterface::VectorToPose(p0_);
-    gtsam::Pose3 p1f0 = GTSamInterface::VectorToPose(p1frame0_);
+    gtsam::Pose3 p0 = GTSAMInterface::VectorToPose(p0_);
+    gtsam::Pose3 p1f0 = GTSAMInterface::VectorToPose(p1frame0_);
     gtsam::Pose3 res = p0.between(p1f0);
-    tf_p0_to_p1frame0 = GTSamInterface::PoseToVector(res);
+    tf_p0_to_p1frame0 = GTSAMInterface::PoseToVector(res);
     swap(p1frame0, p1frame0_);
     swap(p0frame1, p0frame1_);
 }
@@ -303,8 +303,8 @@ double LocalizedPoseData::VerifyWith(const Camera& _cam, LocalizedPoseData& lpd,
     double sum_rerror=0;
     int count_inliers=0;
     
-    gtsam::Pose3 p1frame0_t = GTSamInterface::VectorToPose(lpd.p1frame0);
-    gtsam::Pose3 p1frame0_tm1 = GTSamInterface::VectorToPose(p1frame0);
+    gtsam::Pose3 p1frame0_t = GTSAMInterface::VectorToPose(lpd.p1frame0);
+    gtsam::Pose3 p1frame0_tm1 = GTSAMInterface::VectorToPose(p1frame0);
 //    gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1_tm1.between(p1_t)); //TODO: check this vs. the one below.
     gtsam::Pose3 p1frame0_t_est = p1frame0_tm1.compose(p1frame0_tm1.between(p1_tm1)*p1_tm1.between(p1_t)*p1_tm1.between(p1frame0_tm1));
     
@@ -360,15 +360,15 @@ void LocalizedPoseData::Print(string opt){
 }
 
 gtsam::Pose3 LocalizedPoseData::GetP0frame1(){
-    return GTSamInterface::VectorToPose(p0frame1);
+    return GTSAMInterface::VectorToPose(p0frame1);
 }
 
 gtsam::Pose3 LocalizedPoseData::GetP1frame0(){
-    return GTSamInterface::VectorToPose(p1frame0);
+    return GTSAMInterface::VectorToPose(p1frame0);
 }
 
 gtsam::Pose3 LocalizedPoseData::GetTFP0ToP1F0(){
-    return GTSamInterface::VectorToPose(tf_p0_to_p1frame0);
+    return GTSAMInterface::VectorToPose(tf_p0_to_p1frame0);
 }
 
 void LocalizedPoseData::CheckLPD(const Camera& _cam, std::string _pftbase, std::string _results_dir, std::string _query_loc) {

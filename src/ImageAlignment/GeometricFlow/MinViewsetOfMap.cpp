@@ -11,7 +11,7 @@
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <DataTypes/LandmarkTrack.h>
 #include <algorithm>
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 bool MinViewsetOfMap::DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2){
     double dist = pow(pow(pose1[0] - pose2[0], 2) + pow(pose1[1] - pose2[1],2), 0.5);
@@ -29,7 +29,7 @@ bool MinViewsetOfMap::DistanceCriterion(std::vector<double>& pose1, std::vector<
 }
 
 void MinViewsetOfMap::CountMapPointViews(std::vector<double>& pose, std::vector<int>& mappoint_vcounter, std::vector<int>& mptopose){
-    gtsam::Pose3 tf = GTSamInterface::VectorToPose(pose);
+    gtsam::Pose3 tf = GTSAMInterface::VectorToPose(pose);
     
     for(int j=0; j<_map.map.size(); j++) {
         if(_map.map[j].x()==0.0 && _map.map[j].y()==0.0 && _map.map[j].z()==0.0) {
@@ -74,7 +74,7 @@ int MinViewsetOfMap::FindBestPoseToAdd(std::vector<int>& remaining_poses, int le
     int maxviewed=0;
     int maxidx = -1;
     for(int i=0; i<remaining_poses.size(); i++){
-        gtsam::Pose3 tf = GTSamInterface::VectorToPose(_poses[remaining_poses[i]]);
+        gtsam::Pose3 tf = GTSAMInterface::VectorToPose(_poses[remaining_poses[i]]);
         gtsam::Point3 res = tf.transform_to(_map.map[leastviewedmp]);
         if(!DistanceCriterion(_poses[mptopose[leastviewedmp]], _poses[remaining_poses[i]])) continue;
         gtsam::Point2 coord = _cam.ProjectToImage(res);
@@ -91,7 +91,7 @@ int MinViewsetOfMap::FindBestPoseToAdd(std::vector<int>& remaining_poses, int le
 }
 
 void MinViewsetOfMap::SetToViewed(std::vector<double>& pose, std::vector<int>& mappoint_vcounter, std::vector<int>& mptopose){
-    gtsam::Pose3 tf = GTSamInterface::VectorToPose(pose);
+    gtsam::Pose3 tf = GTSAMInterface::VectorToPose(pose);
     
     for(int j=0; j<_map.map.size(); j++) {
         if(mappoint_vcounter[j] <= 0) continue; //already viewed
@@ -169,7 +169,7 @@ std::vector<int> MinViewsetOfMap::MapPointToPose(std::vector<int>& mappoint_vcou
         /*
         double ad =0;
         for(int j=tracks[trackidx].camera_keys[0]; j<(tracks[trackidx].camera_keys[0] + tracks[trackidx].camera_keys.size()); j++){
-            gtsam::Pose3 tf = GTSamInterface::VectorToPose(_poses[j]);
+            gtsam::Pose3 tf = GTSAMInterface::VectorToPose(_poses[j]);
             gtsam::Point3 res = tf.transform_to(_map.map[i]);
             double dist = tf.range(res);
             ad+=dist;
@@ -182,7 +182,7 @@ std::vector<int> MinViewsetOfMap::MapPointToPose(std::vector<int>& mappoint_vcou
         /*double mindist = 1000000;
         int minidx = -1;
         for(int j=tracks[trackidx].camera_keys[0]; j<(tracks[trackidx].camera_keys[0] + tracks[trackidx].camera_keys.size()); j++){
-            gtsam::Pose3 tf = GTSamInterface::VectorToPose(_poses[j]);
+            gtsam::Pose3 tf = GTSAMInterface::VectorToPose(_poses[j]);
             gtsam::Point3 res = tf.transform_to(_map.map[i]);
             double dist = tf.range(res);
             if(dist < mindist){

@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <ImageAlignment/FlowFrameworks/AlignmentMachine.h>
-#include <Optimization/SingleSession/GTSamInterface.h>
+#include <Optimization/SingleSession/GTSAMInterface.h>
 #include <Optimization/SingleSession/FactorGraph.hpp>
 #include <FileParsing/ParseOptimizationResults.h>
 #include <FileParsing/ParamsInterface.h>
@@ -50,17 +50,17 @@ private:
     
     std::vector<std::string> sessiondates;
     RFlowFactorGraph* rfFG;
-    GTSamInterface GTS;
+    GTSAMInterface GTS;
     const Camera& _cam;
 public:
     OptimizationMachine(const Camera& cam, std::string _results_dir): _cam(cam){
         percent_landmark_tracks = 100;
         rfFG = new RFlowFactorGraph();
-        GTS = GTSamInterface(rfFG);
+        GTS = GTSAMInterface(rfFG);
         
         ParamsInterface PI;
         PI.LoadParams(_results_dir);
-        GTS.SetParams(PI.LoadParams(GTSamInterface::Keys(), GTS.Params()));
+        GTS.SetParams(PI.LoadParams(GTSAMInterface::Keys(), GTS.Params()));
         rfFG->SetParams(PI.LoadParams(FactorGraph::Keys(), rfFG->Params()));
         GTS.SetupIncrementalSLAM();
         Reset();

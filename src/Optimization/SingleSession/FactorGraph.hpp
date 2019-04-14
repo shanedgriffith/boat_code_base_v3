@@ -65,11 +65,11 @@ public:
     
     gtsam::NonlinearFactorGraph graph;
 #ifdef GTSAM4
-    std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > > landmark_factors; //used by the GTSamInterface // GTSAM 4.0
+    std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > > landmark_factors; //used by the GTSAMInterface // GTSAM 4.0
 #else
     std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > > landmark_factors; // GTSAM 3.2.1
 #endif
-    std::vector<std::vector<int> > landmark_keys; //used by the GTSamInterface
+    std::vector<std::vector<int> > landmark_keys; //used by the GTSAMInterface
     
     
     FactorGraph(): active_landmark_set(0), next_camera_key(0), landmarks(0), landmark_constraints(0), variables(0), variable_constraints(0) {

@@ -1,12 +1,12 @@
 //
-//  GTSamInterface.cpp
+//  GTSAMInterface.cpp
 //  BundleAdjustOneDataset
 //
 //  Created by Shane Griffith on 5/29/14.
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#include "GTSamInterface.h"
+#include "GTSAMInterface.h"
 
 //#include <iostream>
 
@@ -20,16 +20,16 @@ using namespace gtsam;
 using namespace std;
 
 
-const vector<string> GTSamInterface::keys = {
+const vector<string> GTSAMInterface::keys = {
     "ANGLE_RELINEARIZE_THRESH", "YAW_RELINEARIZE_THRESH", "POS_RELINEARIZE_THRESH", "VP_RELINEARIZE_THRESH", "VA_RELINEARIZE_THRESH", "VYAW_RELINEARIZE_THRESH",
     "GTSAM_SKIP", "UPDATE_ITERATIONS"
 };
 
-std::vector<double> GTSamInterface::PoseToVector(const gtsam::Pose3& cam){
+std::vector<double> GTSAMInterface::PoseToVector(const gtsam::Pose3& cam){
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-gtsam::Pose3 GTSamInterface::VectorToPose(const std::vector<double>& p){
+gtsam::Pose3 GTSAMInterface::VectorToPose(const std::vector<double>& p){
 #ifdef GTSAM4
     return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 4.0
 #else
@@ -37,7 +37,7 @@ gtsam::Pose3 GTSamInterface::VectorToPose(const std::vector<double>& p){
 #endif
 }
 
-void GTSamInterface::SetupIncrementalSLAM() {
+void GTSAMInterface::SetupIncrementalSLAM() {
     /*Setup ISAM for the optimization.
      */
     /*
@@ -76,7 +76,7 @@ void GTSamInterface::SetupIncrementalSLAM() {
     initialEstimate.clear();
 }
 
-void GTSamInterface::Update() {
+void GTSAMInterface::Update() {
     /* Each call to iSAM2 update(*) performs one iteration of the iterative nonlinear solver.
      If accuracy is desired at the expense of time, update(*) can be called additional times
      to perform multiple optimizer iterations every step.
@@ -117,7 +117,7 @@ void GTSamInterface::Update() {
     }
 }
 
-void GTSamInterface::RunBundleAdjustment(int choix) {
+void GTSAMInterface::RunBundleAdjustment(int choix) {
     results.clear();
     //printf("Running the optimizer.\n=============================================================================\n");
     
@@ -141,7 +141,7 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
         }
         initialEstimate.clear();
     } catch(std::exception& ex) {
-        printf("GTSamInterface::RunBundleAdjustment() Exception.");
+        printf("GTSAMInterface::RunBundleAdjustment() Exception.");
         printf(" There was an exception while attempting to solve the factor graph.");
         printf(" Known causes of the exception:\n");
         printf("  >The camera pose used to create landmark observations was not initialized\n");
@@ -162,21 +162,21 @@ void GTSamInterface::RunBundleAdjustment(int choix) {
     }
 }
 
-void GTSamInterface::InitializePose(gtsam::Symbol s, gtsam::Pose3 p) {
+void GTSAMInterface::InitializePose(gtsam::Symbol s, gtsam::Pose3 p) {
     if(print_symbol_number) cout << "initializing " << s.key() << ": (" << (int) s.chr() << ", " << s.index() << ") " << endl;
     initialEstimate.insert(s, p);
 }
 
-void GTSamInterface::InitializePose(char c, int num, gtsam::Pose3 p) {
+void GTSAMInterface::InitializePose(char c, int num, gtsam::Pose3 p) {
     Symbol s(c, num);
     InitializePose(s, p);
 }
 
-//void GTSamInterface::ClearInitialEstimate(){
+//void GTSAMInterface::ClearInitialEstimate(){
 //    initialEstimate.clear();
 //}
 
-Point3 GTSamInterface::MAPLandmarkEstimate(int idx) {
+Point3 GTSAMInterface::MAPLandmarkEstimate(int idx) {
     /*In this function, the idx isn't the landmark_key*/
     Values* v;
     if(results.size()==0) v = &initialEstimate;
@@ -184,36 +184,36 @@ Point3 GTSamInterface::MAPLandmarkEstimate(int idx) {
     boost::optional<gtsam::Point3> worldpoint = _fg->landmark_factors[_fg->GetActiveLandmarkSet()][idx].point(*v);
     if(worldpoint) return worldpoint.get();
     else {
-        if(debug) std::cout << "GTSamInterface::MAPLandmarkEstimate() encountered degeneracy with landmark " << _fg->GetActiveLandmarkSet() << "." << idx << ". " << std::endl;
+        if(debug) std::cout << "GTSAMInterface::MAPLandmarkEstimate() encountered degeneracy with landmark " << _fg->GetActiveLandmarkSet() << "." << idx << ". " << std::endl;
         return gtsam::Point3(0,0,0);
     }
 }
 
-gtsam::Pose3 GTSamInterface::PoseResult(Symbol s) {
+gtsam::Pose3 GTSAMInterface::PoseResult(Symbol s) {
     if(results.exists<Pose3>(s))
         return results.at<Pose3>(s);
     else if(initialEstimate.exists<Pose3>(s))
         return initialEstimate.at<Pose3>(s);
     else {
-        cout<<"GTSamInterface Error: Key ("<< s.chr() << "."<<s.index() << ") is not in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
+        cout<<"GTSAMInterface Error: Key ("<< s.chr() << "."<<s.index() << ") is not in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
         exit(-1);
     }
 }
 
-bool GTSamInterface::HasResult(Symbol s) {
+bool GTSAMInterface::HasResult(Symbol s) {
     if(results.exists<Pose3>(s)) return true;
     if(initialEstimate.exists<Pose3>(s)) return true;
     return false;
 }
 
-vector<double> GTSamInterface::MAPPoseEstimate(Symbol s) {
+vector<double> GTSAMInterface::MAPPoseEstimate(Symbol s) {
     gtsam::Pose3 ev = PoseResult(s);
     gtsam::Rot3 r = ev.rotation();
     vector<double> pose = {ev.x(), ev.y(), ev.z(), r.roll(), r.pitch(), r.yaw()};//, (double) s.index()
     return pose;
 }
 
-vector<vector<double> > GTSamInterface::GetOptimizedLandmarks(bool sorted) {
+vector<vector<double> > GTSAMInterface::GetOptimizedLandmarks(bool sorted) {
     vector<vector<double> > landmarks;
     
     for(int i=0; i<_fg->landmark_keys[_fg->GetActiveLandmarkSet()].size(); i++) {
@@ -231,7 +231,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedLandmarks(bool sorted) {
     return landmarks;
 }
 
-vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N) {
+vector<vector<double> > GTSAMInterface::GetOptimizedTrajectory(int var_id, int N) {
     vector<vector<double> > vel(N, vector<double>(6, 0));
     
     for(int i=0; i<N; i++) {
@@ -241,7 +241,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N
     	    pose = MAPPoseEstimate(s);
     	} else {
             if(debug)
-                cout<<"GTSamInterface WARNING: Symbol ("<<(char)s.chr()<<", "<<s.index() << ") isn't in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
+                cout<<"GTSAMInterface WARNING: Symbol ("<<(char)s.chr()<<", "<<s.index() << ") isn't in the initial estimates or the graph. Can't get an estimate.\n"<<endl;
     		pose = {0,0,0,0,0,0};
     	}
         vel[i] = pose;
@@ -249,7 +249,7 @@ vector<vector<double> > GTSamInterface::GetOptimizedTrajectory(int var_id, int N
     return vel;
 }
 
-void GTSamInterface::PrintResults() {
+void GTSAMInterface::PrintResults() {
     /*Print the estimate from bundle adjustment*/
     if(results.size() == 0) {
         printf("run the optimizer first...\n");
@@ -259,7 +259,7 @@ void GTSamInterface::PrintResults() {
     }
 }
 
-void GTSamInterface::PrintInitialEstimate() {
+void GTSAMInterface::PrintInitialEstimate() {
     initialEstimate.print("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Initial Estimate:<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 }
 

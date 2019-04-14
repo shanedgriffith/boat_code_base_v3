@@ -3,7 +3,7 @@
 #include "RFlowOptimization/LocalizedPoseData.hpp"
 #include "RFlowOptimization/LocalizePose.hpp"
 
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 #include "OptimizationMachine.hpp"
 
 using namespace std;
@@ -87,7 +87,7 @@ void OptimizationMachine::ConstructFactorGraph() {
 }
 
 void OptimizationMachine::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    gtsam::Pose3 base = GTSamInterface::VectorToPose(posesTimeT1[sISC][sTIME]);
+    gtsam::Pose3 base = GTSAMInterface::VectorToPose(posesTimeT1[sISC][sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }

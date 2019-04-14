@@ -8,7 +8,7 @@
 
 #include "ParseSurvey.h"
 #include "ParseFeatureTrackFile.h"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 using namespace std;
 
@@ -24,7 +24,7 @@ int ParseSurvey::GetImageNumberFromImagePath(string imagepath) {
 }
 
 gtsam::Pose3 ParseSurvey::CameraPose(int idx){
-    return GTSamInterface::VectorToPose(poses[idx]);
+    return GTSAMInterface::VectorToPose(poses[idx]);
 }
 
 int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){

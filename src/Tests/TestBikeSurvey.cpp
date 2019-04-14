@@ -13,7 +13,7 @@
 
 #include <ImageAlignment/DREAMFlow/ImageOperations.h>
 #include <VisualOdometry/VisualOdometry.hpp>
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 
 
@@ -89,8 +89,8 @@ void TestBikeSurvey::TestTriangulation(){
     int two = 1277;
     vector<double> ub, vb;
     std::string imagepath;
-    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
-    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
+    std::shared_ptr<ParseFeatureTrackFile> PFT0 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, one);
+    std::shared_ptr<ParseFeatureTrackFile> PFT1 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, two);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
@@ -106,8 +106,8 @@ void TestBikeSurvey::TestTriangulation(){
             printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
             printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
             
-            PFT0.Next(one);
-            PFT1.Next(two);
+            PFT0->Next(one);
+            PFT1->Next(two);
             
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
             updateset = false;
@@ -116,31 +116,31 @@ void TestBikeSurvey::TestTriangulation(){
 //        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
 //        gtsam::Pose3 u = pbr.CameraPose(one);
 //        gtsam::Pose3 v = vop.compose(u);
-//        vector<double> ub = GTSamInterface::PoseToVector(u);
-//        vector<double> vb = GTSamInterface::PoseToVector(v);
+//        vector<double> ub = GTSAMInterface::PoseToVector(u);
+//        vector<double> vb = GTSAMInterface::PoseToVector(v);
 //        printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
 //        printf("pose v (%lf,%lf,%lf,%lf,%lf,%lf)\n",vb[0],vb[1],vb[2],vb[3],vb[4],vb[5]);
         
         printf("image: (%d). using transform: (%d,%d,%d)\n", one, m1, m2, m3);
         vector<double> up = TransformPose(ub, m1, m2, m3);
         vector<double> vp = TransformPose(vb, m1, m2, m3);
-        gtsam::Pose3 u = GTSamInterface::VectorToPose(up);
-        gtsam::Pose3 v = GTSamInterface::VectorToPose(vp);
+        gtsam::Pose3 u = GTSAMInterface::VectorToPose(up);
+        gtsam::Pose3 v = GTSAMInterface::VectorToPose(vp);
         printf("pose up (%lf,%lf,%lf,%lf,%lf,%lf)\n",up[0],up[1],up[2],up[3],up[4],up[5]);
         printf("pose vp (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         
         cv::Mat img = ImageOperations::Load(imagepath);
         int ci = 0;
-        for(int i=0; i<PFT0.ids.size(); i++){
-            while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
-            if(PFT1.ids[ci] != PFT0.ids[i]) continue;
+        for(int i=0; i<PFT0->ids.size(); i++){
+            while(PFT1->ids[ci]<PFT0->ids[i]) ci++;
+            if(PFT1->ids[ci] != PFT0->ids[i]) continue;
             
-            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], u, gtmat);
-            cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
+            gtsam::Point3 pw = ProjectImageToWorld(PFT1->imagecoord[ci], v, PFT0->imagecoord[i], u, gtmat);
+            cv::Point2f p = cv::Point2f(PFT0->imagecoord[i].x(), PFT0->imagecoord[i].y());
             double dist = u.range(pw);
             circle(img, p, 5, ColorByHeight(pw.z()), -1, 8, 0); //green for >0 red for <0
             //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
-            circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
+            circle(img, p, 3, GetLandmarkColor(PFT1->ids[ci]), -1,8,0);
             //printf("(%lf,%lf) ", dist, pw.z());
             //printf("%lf,%lf,%lf; dist: %lf\n",pws[i].x(), pws[i].y(), pws[i].z(), dist);
         }
@@ -198,14 +198,14 @@ void TestBikeSurvey::TestVO(){
     int one = 1275;
     int two = 1277;
     std::string imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
-    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
-    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
+    std::shared_ptr<ParseFeatureTrackFile> PFT0 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, one);
+    std::shared_ptr<ParseFeatureTrackFile> PFT1 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, two);
     
     vector<double> start = pbr.GetPose(one);
     start[0] = 0;
     start[1] = 0;
     start[2] = 0;
-    gtsam::Pose3 u = GTSamInterface::VectorToPose(start);
+    gtsam::Pose3 u = GTSAMInterface::VectorToPose(start);
     
     const char* window_name = "test poses using point triangulation";
     cvNamedWindow(window_name);
@@ -218,18 +218,18 @@ void TestBikeSurvey::TestVO(){
     while(1) {
         if(updateset){
             u = v;
-            PFT0.Next(one);
-            PFT1.Next(two);
+            PFT0->Next(one);
+            PFT1->Next(two);
             imagepath = ParseSurvey::GetImagePath(bdbase + name, one);
             updateset = false;
         }
         
-        vector<double> ub = GTSamInterface::PoseToVector(u);
-        std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> ub = GTSAMInterface::PoseToVector(u);
+        std::pair<gtsam::Pose3, std::pair<double, int> > vop = vo.PoseFromEssential(PFT0, PFT1);
         vector<double> up = TransformPose(ub, m1, m2, m3);
-        gtsam::Pose3 cur = GTSamInterface::VectorToPose(up);
+        gtsam::Pose3 cur = GTSAMInterface::VectorToPose(up);
         v = cur.compose(vop.first);
-        vector<double> vb = GTSamInterface::PoseToVector(v);
+        vector<double> vb = GTSAMInterface::PoseToVector(v);
         vector<double> a = pbr.GetPose(one);
         printf("pose actual (%lf,%lf,%lf,%lf,%lf,%lf)\n",a[0],a[1],a[2],a[3],a[4],a[5]);
         printf("pose u (%lf,%lf,%lf,%lf,%lf,%lf)\n",ub[0],ub[1],ub[2],ub[3],ub[4],ub[5]);
@@ -237,16 +237,16 @@ void TestBikeSurvey::TestVO(){
         
         cv::Mat img = ImageOperations::Load(imagepath);
         int ci = 0;
-        for(int i=0; i<PFT0.ids.size(); i++){
-            while(PFT1.ids[ci]<PFT0.ids[i]) ci++;
-            if(PFT1.ids[ci] != PFT0.ids[i]) continue;
+        for(int i=0; i<PFT0->ids.size(); i++){
+            while(PFT1->ids[ci]<PFT0->ids[i]) ci++;
+            if(PFT1->ids[ci] != PFT0->ids[i]) continue;
             
-            gtsam::Point3 pw = ProjectImageToWorld(PFT1.imagecoord[ci], v, PFT0.imagecoord[i], cur, gtmat);
-            cv::Point2f p = cv::Point2f(PFT0.imagecoord[i].x(), PFT0.imagecoord[i].y());
+            gtsam::Point3 pw = ProjectImageToWorld(PFT1->imagecoord[ci], v, PFT0->imagecoord[i], cur, gtmat);
+            cv::Point2f p = cv::Point2f(PFT0->imagecoord[i].x(), PFT0->imagecoord[i].y());
             double dist = cur.range(pw);
             circle(img, p, 5, ColorByHeight(pw.z()-vb[2]), -1, 8, 0); //green for >0 red for <0
             //circle(img, p, 3, ColorByDistance(dist), -1, 8, 0); //white for nearby, black for far away
-            circle(img, p, 3, GetLandmarkColor(PFT1.ids[ci]), -1,8,0);
+            circle(img, p, 3, GetLandmarkColor(PFT1->ids[ci]), -1,8,0);
         }
         
         imshow(window_name, img);
@@ -320,12 +320,13 @@ void TestBikeSurvey::GenerateTrajectory(){
     
     VisualOdometry vo(nexus);
     vector<double> lastp;
-    ParseFeatureTrackFile PFT0(nexus, bdbase + name, 0);
+    std::shared_ptr<ParseFeatureTrackFile> PFT0 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, 0);
+
     //to show the jumps
 //    for(int i=2; i<2000; i=i+2){
 //        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
 //        gtsam::Pose3 vop = vo.PoseFromEssential(PFT0, PFT1);
-//        vector<double> vp = GTSamInterface::PoseToVector(vop);
+//        vector<double> vp = GTSAMInterface::PoseToVector(vop);
 //        if(i>2){
 //            bool jump = DistanceCriterion(vp, lastp);
 //            printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf) jump? %d\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5],(int)!jump);
@@ -337,15 +338,15 @@ void TestBikeSurvey::GenerateTrajectory(){
     
     //to skip the jumps
     for(int i=2; i<2000; i=i+2){
-        ParseFeatureTrackFile PFT1(nexus, bdbase + name, i);
-        std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = GTSamInterface::PoseToVector(vop.first);
+        std::shared_ptr<ParseFeatureTrackFile> PFT1 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, i);
+        std::pair<gtsam::Pose3, std::pair<double, int> >  vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = GTSAMInterface::PoseToVector(vop.first);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
-                PFT1.Next(++i);
+                PFT1->Next(++i);
                 vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = GTSamInterface::PoseToVector(vop.first);
+                vp = GTSAMInterface::PoseToVector(vop.first);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
@@ -367,12 +368,12 @@ void TestBikeSurvey::TestVisualOdometry() {
     int one = 1275;
     int two = 1277;
     std::string imagepath;
-    ParseFeatureTrackFile PFT0(nexus, bdbase + name, one);
-    ParseFeatureTrackFile PFT1(nexus, bdbase + name, two);
+    std::shared_ptr<ParseFeatureTrackFile> PFT0 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, one);
+    std::shared_ptr<ParseFeatureTrackFile> PFT1 = std::make_shared<ParseFeatureTrackFile>(nexus, bdbase + name, two);
     
     VisualOdometry vo(nexus);
-    std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
-    vector<double> vp = GTSamInterface::PoseToVector(vop.first);
+    std::pair<gtsam::Pose3, std::pair<double, int> >  vop = vo.PoseFromEssential(PFT0, PFT1);
+    vector<double> vp = GTSAMInterface::PoseToVector(vop.first);
     printf("pose from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
     vector<double> ub = pbr.GetPose(one);
     vector<double> vb = pbr.GetPose(two);
@@ -381,7 +382,7 @@ void TestBikeSurvey::TestVisualOdometry() {
     
     gtsam::Pose3 u = pbr.CameraPose(one);
     gtsam::Pose3 vpu = u.compose(vop.first);
-    vector<double> vvpu = GTSamInterface::PoseToVector(vpu);
+    vector<double> vvpu = GTSAMInterface::PoseToVector(vpu);
     printf("pose u+odom (%lf,%lf,%lf,%lf,%lf,%lf)\n",vvpu[0],vvpu[1],vvpu[2],vvpu[3],vvpu[4],vvpu[5]);
 }
 

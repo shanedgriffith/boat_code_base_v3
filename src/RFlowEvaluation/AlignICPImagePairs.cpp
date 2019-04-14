@@ -11,7 +11,7 @@
 #include <ImageAlignment/GeometricFlow/MultiSurveyViewpointSelection.hpp>
 #include <RFlowOptimization/LocalizePose.hpp>
 #include <Optimization/SingleSession/EvaluateSLAM.h>
-#include <Optimization/SingleSession/GTSamInterface.h>
+#include <Optimization/SingleSession/GTSAMInterface.h>
 
 #include "AlignICPImagePairs.hpp"
 
@@ -1242,7 +1242,7 @@ void AlignICPImagePairs::ShowMaps() {
 }
 
 void AlignICPImagePairs::ProjectToImage(const std::vector<double>& boat, const std::vector<gtsam::Point2>& orig_imagecoords, const std::vector<gtsam::Point3>& p) {
-    gtsam::Pose3 tf = GTSamInterface::VectorToPose(boat);
+    gtsam::Pose3 tf = GTSAMInterface::VectorToPose(boat);
     
     double total_error = 0;
     double count = 0;
@@ -1292,8 +1292,8 @@ void AlignICPImagePairs::AnalyzeManualLabels(std::string dir) {
         
         double posd = pow(pow(p1f0[0] - por[d1].boat[p1][0], 2) + pow(p1f0[1] - por[d1].boat[p1][1], 2) + pow(p1f0[2] - por[d1].boat[p1][2], 2), 0.5);
         
-        gtsam::Pose3 a = GTSamInterface::VectorToPose(por[d1].boat[p1]);
-        gtsam::Pose3 b = GTSamInterface::VectorToPose(p1f0);
+        gtsam::Pose3 a = GTSAMInterface::VectorToPose(por[d1].boat[p1]);
+        gtsam::Pose3 b = GTSAMInterface::VectorToPose(p1f0);
         b = gtsam::Pose3(b.rotation(), a.translation());
         
         gtsam::Cal3_S2::shared_ptr cal = _cam.GetGTSAMCam();

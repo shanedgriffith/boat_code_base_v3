@@ -35,7 +35,7 @@ void SurveyOptimizer::Initialize(){
     initialized = true;
     
     num_cameras_in_traj = 0;
-    GTS = GTSamInterface(FG);
+    GTS = GTSAMInterface(FG);
     LoadParameters();
     
     GTS.SetupIncrementalSLAM();
@@ -74,7 +74,7 @@ void SurveyOptimizer::LoadParameters(){
     ParamsInterface PI;
     PI.LoadParams(_results_dir);
     SetParams(PI.LoadParams(SurveyOptimizer::Keys(), Params()));
-    GTS.SetParams(PI.LoadParams(GTSamInterface::Keys(), GTS.Params()));
+    GTS.SetParams(PI.LoadParams(GTSAMInterface::Keys(), GTS.Params()));
     FG->SetParams(PI.LoadParams(FactorGraph::Keys(), FG->Params()));
 }
 
@@ -82,7 +82,7 @@ void SurveyOptimizer::SaveParameters(){
     /*Save the params with the result.*/
     ParamsInterface PI;
     PI.AddParams(Keys(), Params());
-    PI.AddParams(GTSamInterface::Keys(), GTS.Params());
+    PI.AddParams(GTSAMInterface::Keys(), GTS.Params());
     PI.AddParams(FactorGraph::Keys(), FG->Params());
     PI.SaveParams(_results_dir + _date);
 }
@@ -161,7 +161,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
             double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
             double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
             std::vector<double> pvec = {av*delta_t, 0.0, 0.0, btwn_pos.x(), btwn_pos.y(), btwn_pos.z()};
-            gtsam::Pose3 vel_est = GTSamInterface::VectorToPose(pvec);
+            gtsam::Pose3 vel_est = GTSAMInterface::VectorToPose(pvec);
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, transition);
         } else {
             FG->AddOdomFactor(camera_key, btwn_pos);

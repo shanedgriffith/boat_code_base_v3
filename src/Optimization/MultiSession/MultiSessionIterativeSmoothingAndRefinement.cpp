@@ -2,7 +2,7 @@
 #include "RFlowOptimization/LocalizePose.hpp"
 #include "RFlowOptimization/EvaluateRFlow.hpp"
 #include "RFlowOptimization/HopcountLog.hpp"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 using namespace std;
 
@@ -167,7 +167,7 @@ vector<gtsam::Point3> MultiSessionIterativeSmoothingAndRefinement::GetSubsetOf3D
 }
 
 void MultiSessionIterativeSmoothingAndRefinement::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    gtsam::Pose3 base = GTSamInterface::VectorToPose(poses[sISC][sTIME]);
+    gtsam::Pose3 base = GTSAMInterface::VectorToPose(poses[sISC][sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }

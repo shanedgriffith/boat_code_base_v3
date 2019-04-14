@@ -79,7 +79,7 @@ int LocalizeSessionToSet::SessionToNum(std::string session) {
 }
 
 void LocalizeSessionToSet::AddLocalization(int sISC, int sTIME, int survey, int surveyTIME, gtsam::Pose3 offset, double noise){
-    gtsam::Pose3 base = GTSamInterface::VectorToPose(POR[sISC].boat[sTIME]);
+    gtsam::Pose3 base = GTSAMInterface::VectorToPose(POR[sISC].boat[sTIME]);
     gtsam::Pose3 ptraj = base.compose(offset);
     rfFG->AddPosePrior(rfFG->GetSymbol(survey, surveyTIME), ptraj, noise);
 }

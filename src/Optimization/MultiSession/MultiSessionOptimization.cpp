@@ -13,7 +13,7 @@
 #include <FileParsing/ParseFeatureTrackFile.h>
 #include <FileParsing/SaveOptimizationResults.h>
 #include <Optimization/SingleSession/EvaluateSLAM.h>
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 #include "RFlowOptimization/LocalizePose.hpp"
 #include "RFlowOptimization/EvaluateRFlow.hpp"
@@ -165,7 +165,7 @@ void MultiSessionOptimization::ConstructFactorGraph() {
             gtsam::Pose3 traj = POR[survey].CameraPose(i);
             int lpdcur = lpdi[sidx].GetLPDIdx(i);
             if(latestsurvey && lpdcur >= 0 && lpd_rerror[sidx][lpdcur] >= 0) {
-                traj = GTSamInterface::VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
+                traj = GTSAMInterface::VectorToPose(lpdi[sidx].localizations[lpdcur].p1frame0);
             }
             
             rfFG->AddPose(survey, i, traj);

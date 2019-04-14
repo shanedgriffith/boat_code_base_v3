@@ -18,7 +18,7 @@
 #include "HopcountLog.hpp"
 #include "LocalizePose.hpp"
 #include "ImageToLocalization.hpp"
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include "Optimization/SingleSession/GTSAMInterface.h"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ vector<double> InitialISCAcquisition::EstimateNextPose(int survey, int time, int
         lastpose = lpd->p0frame1;
     }
     
-    gtsam::Pose3 last = GTSamInterface::VectorToPose(lastpose);
+    gtsam::Pose3 last = GTSAMInterface::VectorToPose(lastpose);
     gtsam::Pose3 p_tm1 = survey_est[lastsurvey].por.CameraPose(lasttime);
     gtsam::Pose3 p_t = survey_est[survey].por.CameraPose(time);
     //    gtsam::Pose3 est = last.compose(p_tm1.between(p_t));
@@ -124,7 +124,7 @@ vector<double> InitialISCAcquisition::EstimateNextPose(int survey, int time, int
     //above should equal below.
     //    gtsam::Pose3 est = last.compose(last.between(p_tm1)*p_tm1.between(p_t)*last.between(p_tm1).inverse());
     
-    return GTSamInterface::PoseToVector(est);
+    return GTSAMInterface::PoseToVector(est);
 }
 
 int InitialISCAcquisition::RFViewpointSelection(vector<double>& rfpose){
