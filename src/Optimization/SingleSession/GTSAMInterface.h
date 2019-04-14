@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#ifndef SRC_OPTIMIZATION_GTSAMINTERFACE_H_
-#define SRC_OPTIMIZATION_GTSAMINTERFACE_H_
+#ifndef SRC_OPTIMIZATION_GTSAMInterface_H_
+#define SRC_OPTIMIZATION_GTSAMInterface_H_
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
@@ -31,7 +31,7 @@
 
 #include "FactorGraph.hpp"
 
-class GTSamInterface {
+class GTSAMInterface {
 private:
     bool debug = false;
     static const std::vector<std::string> keys;
@@ -62,8 +62,8 @@ public:
     std::string _identifier;
     FactorGraph * _fg;
     
-    GTSamInterface():_fg(NULL){}
-    GTSamInterface(FactorGraph * fg): _fg(fg){}
+    GTSAMInterface():_fg(NULL){}
+    GTSAMInterface(FactorGraph * fg): _fg(fg){}
     
     enum Constants {
         LEVENBERG_MARQUARDT = 0,
@@ -111,4 +111,4 @@ public:
 
 
 
-#endif /* SRC_OPTIMIZATION_GTSAMINTERFACE_H_ */
+#endif /* SRC_OPTIMIZATION_GTSAMInterface_H_ */

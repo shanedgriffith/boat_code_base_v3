@@ -10,10 +10,13 @@
 #include <Visualizations/IMDraw.hpp>
 #include <Visualizations/SLAMDraw.h>
 #include <FileParsing/ParseSurvey.h>
+#include "Optimization/SingleSession/GTSAMInterface.h"
 #include "ParseBikeRoute.hpp"
 #include "PreprocessBikeRoute.hpp"
 
-#include "Optimization/SingleSession/GTSamInterface.h"
+#include <limits>
+
+typedef std::numeric_limits< double > dbl;
 
 using namespace std;
 
@@ -36,6 +39,7 @@ void PreprocessBikeRoute::ReadDelimitedFile(string file, int type) {
 
     //skip the first line.
     fgets(line, LINESIZE-1, fp);
+    first_line = line;
     while (fgets(line, LINESIZE-1, fp)) {
         char * tmp = line;
         vector<string> lp = ParseLine(tmp);
@@ -44,13 +48,23 @@ void PreprocessBikeRoute::ReadDelimitedFile(string file, int type) {
     fclose(fp);
 }
 
-void PreprocessBikeRoute::LowPassFilter(std::vector<double>& arr, double std){
+void PreprocessBikeRoute::LowPassFilter(std::vector<double>& arr, double std, int interval){
     //cedric pointed out this more elegant moving average.
     double alpha = (move_avg_win - 1.)/move_avg_win;
     double yn = arr[0];
-    for(int i=0; i<arr.size(); i++){
+    for(int i=0; i<arr.size(); i+=interval){
         yn = alpha * yn + (1-alpha)*arr[i];
         arr[i] = (std::abs(arr[i]-yn)>2*std)?yn:arr[i];
+        for(int j=i; j<interval; j++)
+            arr[j] = arr[i];
+    }
+}
+
+void PreprocessBikeRoute::applyLowPassFilter() {
+    std::vector<int> intervals = {10, 10, 10, 2, 2, 2, 1, 2, 2, 2};
+    std::vector<double> stds = {0,0,0,0.1,0.1,0.1,5.,0,0,0};
+    for(int i=0; i<arrs.size(); i++){
+        if(stds[i]>0) LowPassFilter(arrs[i], stds[i], intervals[i]);
     }
 }
 
@@ -91,31 +105,43 @@ void PreprocessBikeRoute::AlignDataToImages() {
     std::vector<int> intervals = {10, 10, 10, 2, 2, 2, 1, 2, 2, 2};
     std::vector<int> lastidxs(n, 0.0);
     
-    double curtime = GetNearestTimeToPosition(0, 0);
+    double starttime = GetNearestTimeToPosition(0, 0);
     double endtime = GetNearestTimeToPosition(end_pos.x(), end_pos.y());
-    int nentries = 200;//(int) ceil((endtime-curtime)*video_fps);
+    std::cout.precision(dbl::max_digits10);
+    std::cout << "times: " << starttime << " to " << endtime << ", taken from " << timings[0] << ", " << timings[timings.size()-1] << std::endl;
+    int nentries = (int) floor((endtime-starttime)*video_fps);
+    double inc_time = 1./video_fps;
+    std::cout << "number of entries in the aux, and number of sift files: " << nentries << std::endl;
     std::vector<double> vtimes(nentries, 0.0);
     std::vector<std::vector<double> > fullset(n, std::vector<double>(nentries, 0.0));
     
     int idx=0;
     //use a buffer at the end due to possible synchronization issues.
-    while(curtime < endtime) { //timings[timings.size()-10]
+    //while(curtime < endtime) { //timings[timings.size()-10]
+    int last_idx=0;
+    for(double time = starttime; endtime - time > inc_time; time += inc_time) {
+        //double prior_weight = (post time - time) / (post time - prior time);
+        //set aux(time)[val] <= prior_weight * aux(prior time)[val] + (1 - prior_weight) * aux(post time)[val];
+        while(timings[last_idx] < time) last_idx++;
+        last_idx--;
         for(int j=0; j<n; j++) {
-            while(timings[lastidxs[j]+intervals[j]] <= curtime)
-                lastidxs[j] += intervals[j];
-            fullset[j][idx] = InterpolateValue(curtime, arrs[j][lastidxs[j]], arrs[j][lastidxs[j]+intervals[j]],
-                                                  timings[lastidxs[j]], timings[lastidxs[j]+intervals[j]]);
+            double prior_time = timings[last_idx];
+            double post_time = timings[last_idx+intervals[j]];
+            double prior_weight = (post_time - time) / (post_time - prior_time);
+            fullset[j][idx] = prior_weight * arrs[j][last_idx] + (1 - prior_weight) * arrs[j][last_idx+intervals[j]];
         }
-        curtime += 1./video_fps;
-        vtimes[idx] = curtime;
+
+        vtimes[idx] = time;
         idx++;
-        if(idx>=nentries) break;
     }
     std::swap(arrs, fullset);
     std::swap(timings, vtimes);
+    vopose.resize(timings.size(), gtsam::Pose3());
+    poses.resize(timings.size(), vector<double>());
 }
 
 void PreprocessBikeRoute::MakeAux(){
+    std::cout.precision(dbl::max_digits10);
     if(timings.size() == 0){
         std::cout << "PreprocessBikeRoute::MakeAux() no data."<<std::endl;
         exit(1);
@@ -199,7 +225,7 @@ void PreprocessBikeRoute::GetPoses() {
         exit(1);
     }
     double r=0,p=0,y=arrs[6][0];
-    double dt = 1./29;//5;
+    double dt = 1./video_fps;
     double mu = 0.1;
     double weight = 0.98;
     std::vector<double> res(3,0);
@@ -216,7 +242,7 @@ void PreprocessBikeRoute::GetPoses() {
         double cam_yaw_from_compass = -1 * arrs[6][i]-M_PI_2;
         res[2] = cam_yaw_from_compass;
         
-        if(i>0){
+        if(i>0) {
             double dx = arrs[0][i] - arrs[0][i-1];
             double dy = arrs[1][i] - arrs[1][i-1];
             double d = sqrt(pow(dx,2.)+pow(dy,2.));
@@ -238,9 +264,10 @@ void PreprocessBikeRoute::GetPoses() {
         //a height of 0 is inaccurate, but optimization may be able to compensate.
         vector<double> cam = YPRToRotationMatrix(res[2], res[1], res[0]);
         vector<double> align_with_world = YPRToRotationMatrix(-M_PI_2, 0, M_PI_2);
-        std::vector<double> R = ComposeRotationMatrices(cam, align_with_world);
+        vector<double> R = ComposeRotationMatrices(cam, align_with_world);
         vector<double> RPY = RotationMatrixToRPY(R);
-        poses.push_back({arrs[0][i], arrs[1][i], 0.0, RPY[0], RPY[1], RPY[2]}); //res[0], res[1], res[2]});//
+        std::vector<double> curpose = {arrs[0][i], arrs[1][i], 0.0, RPY[0], RPY[1], RPY[2]}; //todo: convert to matrix format.
+        poses[i] = curpose;
     }
 }
 
@@ -265,14 +292,51 @@ void PreprocessBikeRoute::PlayPoses(){
     }
 }
 
+void PreprocessBikeRoute::Preprocess2() {
+    ReadDelimitedFile(_bdbase + _name + "/" + _name + ".csv", 0);
+    std::cout << "RAW bike route. info: " << timings.size() << " readings. " << std::endl;
+    int num_video_frames = 20824; //countVideoFrames(); //TODO CHANGE BACK..
+    double elapsed_time = timings[timings.size()-1] - timings[0];
+    video_fps = num_video_frames / elapsed_time;
+    
+    AlignDataToImages();
+    
+    string saveto = _bdbase + _name + "/cropped_aux_file.csv";
+    FILE * fp = OpenFile(saveto, "w");
+    fprintf(fp, "%s", first_line.c_str());
+    for(int i=0; i<timings.size(); i++) {
+        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", timings[i],
+                arrs[0][i], arrs[1][i], arrs[2][i], arrs[3][i], arrs[4][i],
+                arrs[5][i], arrs[6][i], arrs[7][i], arrs[8][i], arrs[9][i]);
+    }
+    fclose(fp);
+    std::cout << "Aux file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
+    
+    GetPoses();
+    
+    VOForCameraTrajectory();
+    
+    correctPosesUsingVO();
+    
+    //write poses and vo
+    saveto = _bdbase + _name + "/poses_and_vo.csv";
+    fp = OpenFile(saveto, "w");
+    
+    for(int i=0; i<timings.size(); i++) {
+        std::vector<double> vodom = GTSAMInterface::PoseToVector(vopose[i]); //todo, save different format.
+        fprintf(fp, "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n", timings[i],
+                poses[i][0], poses[i][1], poses[i][2], poses[i][3], poses[i][4], poses[i][5],
+                vodom[0], vodom[1], vodom[2], vodom[3], vodom[4], vodom[5]);
+    }
+    fclose(fp);
+    std::cout << "Preprocess file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
+}
+
 void PreprocessBikeRoute::Preprocess(){
     ReadDelimitedFile(_bdbase + _name + "/" + _name + ".csv", 0);
     std::cout << "RAW bike route. info: " << timings.size() << " readings. " << std::endl;
     
-    std::vector<double> stds = {0,0,0,0.1,0.1,0.1,5.,0,0,0};
-    for(int i=0; i<arrs.size(); i++){
-        if(stds[i]>0) LowPassFilter(arrs[i], stds[i]);
-    }
+    applyLowPassFilter();
     
 //    ProcessRawVideo(); //run this before cropping.
     
@@ -285,6 +349,25 @@ void PreprocessBikeRoute::Preprocess(){
 //    exit(1);
     
     MakeAux();
+}
+
+int PreprocessBikeRoute::countVideoFrames() {
+    std::cout << "..counting video frames.." << std::endl;
+    string videofile = _bdbase + _name + "/" + _name + ".mp4";
+    cv::VideoCapture vid(videofile);
+    if(!vid.isOpened()){
+        std::cout << "ProcessRawVideo::ReadVideo Error. Couldn't open " << videofile << std::endl;
+        exit(-1);
+    }
+    
+    int count=0;
+    while(vid.grab()){
+        count++;
+    }
+    std::cout << "video has " << count << " frames" << std::endl;
+    double elapsed_time = timings[timings.size()-1] - timings[0];
+    std::cout << "frame rate: " << count / elapsed_time << std::endl;
+    return count;
 }
 
 void PreprocessBikeRoute::ProcessRawVideo(){
@@ -479,7 +562,7 @@ void PreprocessBikeRoute::SetZ(std::vector<double>& unkz, std::vector<double> nm
     unkz[5] = nmlzd[5];
 }
 
-void PreprocessBikeRoute::ModifyPoses(){
+void PreprocessBikeRoute::ModifyPoses() {
     
     /*
      another method:
@@ -493,31 +576,31 @@ void PreprocessBikeRoute::ModifyPoses(){
     vector<vector<double>> filtered;
     filtered.push_back(poses[0]);
     vector<int> indices = {0};
-    ParseFeatureTrackFile PFT0(nexus, _bdbase + _name, 0);
+    std::shared_ptr<ParseFeatureTrackFile> PFT0 = std::make_shared<ParseFeatureTrackFile>(nexus, _bdbase + _name, 0);
     
     vector<double> curpose;
     for(int i=2; i<timings.size(); i=i+2){
-        ParseFeatureTrackFile PFT1(nexus, _bdbase + _name, i);
-        std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
-        vector<double> vp = GTSamInterface::PoseToVector(vop.first);
+        std::shared_ptr<ParseFeatureTrackFile> PFT1 = std::make_shared<ParseFeatureTrackFile>(nexus, _bdbase + _name, i);
+        std::pair<gtsam::Pose3, std::pair<double, int> > vop = vo.PoseFromEssential(PFT0, PFT1);
+        vector<double> vp = GTSAMInterface::PoseToVector(vop.first);
         if(i>2){
             bool smooth = DistanceCriterion(vp, lastp);;
             while(!smooth){
                 std::cout << "skipped " << i << std::endl;
-                PFT1.Next(++i);
-                if(PFT1.time==-1) break; //this will add a bad pose to the end. problem?
-                std::pair<gtsam::Pose3, int> vop = vo.PoseFromEssential(PFT0, PFT1);
-                vp = GTSamInterface::PoseToVector(vop.first);
+                PFT1->Next(++i);
+                if(PFT1->time==-1) break; //this will add a bad pose to the end. problem?
+                std::pair<gtsam::Pose3, std::pair<double, int> > vop = vo.PoseFromEssential(PFT0, PFT1);
+                vp = GTSAMInterface::PoseToVector(vop.first);
                 smooth = DistanceCriterion(vp, lastp);
             }
         }
         //printf("pose %d from vo (%lf,%lf,%lf,%lf,%lf,%lf)\n",i,vp[0],vp[1],vp[2],vp[3],vp[4],vp[5]);
         if(i==2) curpose = vp;
         else {
-            gtsam::Pose3 lip = GTSamInterface::VectorToPose(lastp);
-            gtsam::Pose3 vip = GTSamInterface::VectorToPose(vp);
+            gtsam::Pose3 lip = GTSAMInterface::VectorToPose(lastp);
+            gtsam::Pose3 vip = GTSAMInterface::VectorToPose(vp);
             gtsam::Pose3 cip = lip.compose(vip);
-            curpose = GTSamInterface::PoseToVector(cip);
+            curpose = GTSAMInterface::PoseToVector(cip);
         }
         filtered.push_back(curpose);
         indices.push_back(i);
@@ -543,87 +626,186 @@ void PreprocessBikeRoute::ModifyPoses(){
     }
 }
 
+gtsam::Pose3 PreprocessBikeRoute::interpolatePose(double weight_a, gtsam::Pose3 a, gtsam::Pose3 b, bool unit_translation) {
+    if(weight_a < 0 or weight_a > 1) {
+        std::cout << "weight should be 0-1 " << std::endl;
+        exit(-1);
+    }
+    gtsam::Point3 interpt = a.translation() * weight_a + b.translation() * (1-weight_a);
+    if(unit_translation)
+        interpt /= interpt.norm();
+    gtsam::Rot3 interpr = b.rotation().slerp(weight_a, a.rotation());
+    return gtsam::Pose3(interpr, interpt);
+}
 
-
-void PreprocessBikeRoute::VOForCameraTrajectory(){
-    std::cout << "should have " << timings.size() << " images " << std::endl;
-    
-    double min_thresh = 50;
-    ParseBikeRoute pbr(_bdbase, _name);
-    gtsam::Pose3 p0 = pbr.CameraPose(0);
-    p0 = gtsam::Pose3(gtsam::Rot3(), p0.translation()); //zero the rotation.
+void PreprocessBikeRoute::VOForCameraTrajectory() {
+    double MIN_KEYPOINT_TRACKS = 10;
+    double MIN_INLIERS = 10;
+    double MIN_RATIO_INLIERS = 0.25;
     Camera nexus = ParseBikeRoute::GetCamera();
     VisualOdometry vo(nexus);
     
-    std::vector<double> c;
-    std::vector<int> indices;
-    std::shared_ptr<ParseFeatureTrackFile> last;
     int lasti = 0;
-    int curi = 0;
-    double dist_threshold = min_thresh;
-    int start = 1822;
-    for(int i=start; i<pbr.NumPoses(); i++) {
+    std::shared_ptr<ParseFeatureTrackFile> last;
+    gtsam::Pose3 identity();
+    
+    const double alpha = (move_avg_win - 1.)/move_avg_win;
+    const double std = 3;
+    
+    std::vector<bool> hasvo(vopose.size(), false);
+    hasvo[0] = true;
+    double move_avg_rerror = 5;
+    for(int i=0; i<timings.size(); i++) {
         std::shared_ptr<ParseFeatureTrackFile> cur = std::make_shared<ParseFeatureTrackFile>(nexus, _bdbase + _name, i);
-        curi = i;
-        if(i>start)
+        if(cur->time <= 0) {
+            std::cout << "CHECK. no tracking for pftf idx " << i <<". Yet, have " << timings.size() - i << " timings left. " << std::endl;
+            break;
+        }
+        if(fabs(cur->time - timings[i])>0.001) {
+            std::cout.precision(17);
+            std::cout << "timing is off. rewriting." << std::endl;
+            std::cout << i << " : pft file:  " << cur->time << ", " << timings[i] << std::endl;
+            cur->time = timings[i];
+            cur->WriteFeatureTrackFile();
+        }
+        if(last and last->time > 0)
         {
-            if(cur->time <= 0) {
-                break;
-            }
-            std::pair<double, int> dist = vo.KeypointChange(*last, *cur);
-            
-            if(dist.second < 10) {
+            std::pair<double, int> dist = vo.KeypointChange(last, cur);
+            if(dist.second < MIN_KEYPOINT_TRACKS) {
                 std::cout << "too few tracks" << std::endl;
                 last = cur;
-                lasti = curi;
+                lasti = i;
                 continue;
             }
-            
-            std::pair<gtsam::Pose3, int> res = vo.PoseFromEssential(*last, *cur);
-            gtsam::Pose3 delta_pose = res.first;
-            c = GTSamInterface::PoseToVector(delta_pose);
-//            std::cout << lasti <<"->"<<curi<< ": Avg. disparity: " << dist.first << ", vo inliers: " << res.second << ", keypoint tracks: " << dist.second << ", pose: ";// << std::endl;
-//            std::cout << "(" << c[0] <<", " << c[1] <<", " << c[2] <<") [" << c[3] <<", " << c[4] <<", " << c[5] <<"]" << std::endl;
-            
-            //ideally, if VO works:
-//            if(res.second < 10) {
-//                last = cur;
-//                lasti = curi;
-//                continue;
-//            }
-            
-            
-            continue;
-            
-            
-            if(dist.first < dist_threshold) continue;
-            //{    std::cout << "dist between: " << dist.first << " with " << dist.second << " points. skipped." << std::endl; continue; }
-            if(dist.second > 350) {dist_threshold += 10;  continue;} //std::cout << "dist between: " << dist.first << " with " << dist.second << " points. skipped." << std::endl;
-            if(dist.second < 20) std::cout << dist.second << " points for computing the pose.." << std::endl;
-            //std::cout << "dist between: " << dist.first << " with " << dist.second << " points. used." << std::endl;
-            
-//            std::pair<gtsam::Pose3, int> res = vo.PoseFromEssential(*last, *cur);
-//            gtsam::Pose3 delta_pose = res.first;
-            if(res.second < dist.second * 0.25) {
-                std::cout << "vo failed " << std::endl;
+            std::cout << "disparity: " << dist.first << std::endl;
+            if(dist.first < 50) //larger disparity appears to produce better rotation matrices.
+                continue;
+            std::pair<gtsam::Pose3, std::pair<double, int> > res;
+            if(i < 100) {
+                res = vo.PoseFromEssential(last, cur);
+                if(res.first.translation().norm() > 1.001 ) {
+                    std::cout <<"iteration " << i << std::endl;
+                    std::cout << "issue with vo. norm: " << res.first.translation().norm() <<  std::endl;
+                    std::cout << "translation() " << res.first.translation() << std::endl;
+                    exit(-1);
+                }
+            } else {
+                break;
+                /*
+                gtsam::Point3 unnorm(i, i, 0); //DUMMY VO VALS.
+                gtsam::Point3 norm = unnorm / unnorm.norm();
+                res.first = gtsam::Pose3(gtsam::Rot3(), norm);
+                res.second = std::make_pair(1.0, 500);*/
             }
-            indices.push_back(i);
-//            p0 = p0.compose(delta_pose);
-            p0 = delta_pose;
-            dist_threshold = min_thresh;
+            move_avg_rerror = alpha * move_avg_rerror + (1-alpha)*res.second.first;
+            bool passed_rerror_check = (std::abs(res.second.first-move_avg_rerror)>2.*std)?false:true;
+            if(not passed_rerror_check or res.second.second < MIN_INLIERS or res.second.second < dist.second * MIN_RATIO_INLIERS) {
+                std::cout << "vo failed on frame " << i << std::endl;
+                std::cout << "reprojection error: " << res.second.first << ", inliers: " << res.second.second << std::endl;
+                last = cur;
+                lasti = i;
+                continue;
+            }
+            gtsam::Pose3 delta_pose = res.first;
+            
+            //distribute the value over the range vo was calculated.
+            //TODO: check this. Is this method of distributing the value correct?
+            //interpolate between identity and this transformation.
+            double s = 1.0/(i-lasti);
+            for(int j=i; j>lasti; j--) {
+                vopose[j] = interpolatePose(s, delta_pose, gtsam::Pose3(), true);
+                hasvo[j] = true;
+//                std::cout << j << ": " << vopose[j] << std::endl;
+            }
         }
+        
         last = cur;
-        lasti = curi;
-        c = GTSamInterface::PoseToVector(p0);
-        std::cout << i << ", " << c[0] <<", " << c[1] <<", " << c[2] <<", "
-                               << c[3] <<", " << c[4] <<", " << c[5] <<", " << std::endl;
+        lasti = i;
     }
     
-    
-    
+    //interpolation to fill in any empty vo.
+    int li = -1;
+    int curi = 0;
+    while(curi < vopose.size()) {
+        if(not hasvo[curi]) {
+            int nexti = curi;
+            while(nexti < hasvo.size() and not hasvo[++nexti]);
+            for(int i=curi; i<nexti; i++) {
+                if(nexti > hasvo.size()) {
+                    vopose[curi] = interpolatePose(1, vopose[li], vopose[li], true); //may want to change to identity().
+                    hasvo[curi] = true;
+                } else if(li == -1) {
+                    vopose[curi] = interpolatePose(1, vopose[nexti], vopose[nexti], true);
+                    hasvo[curi] = true;
+                } else {
+                    double prior_weight = (1.0 * nexti - curi) / (nexti - li);
+                    vopose[curi] = interpolatePose(prior_weight, vopose[li], vopose[nexti], true);
+                    hasvo[curi] = true;
+                }
+                
+                //set the translation to the unit translation.
+                vopose[curi] = gtsam::Pose3(vopose[curi].rotation(), vopose[curi].translation() / vopose[curi].translation().norm());
+            }
+            
+            li = nexti;
+        }
+        else li = curi;
+        curi = li + 1;
+    }
 }
 
+//gtsam::Vector3 scaleTranslation(double s, gtsam::Vector3 trans) {
+//    
+//}
 
+void
+PreprocessBikeRoute::
+correctPosesUsingVO()
+{
+    //X) poses doesn't have z.
+    //X) vopose isn't scaled.
+    double lastz = 0.;
+    std::vector<double> z(poses.size(),0);
+    for(int i=0; i<poses.size()-1; i++) {
+        //poses[i+1] = poses[i].compose(vopose[i+1]);
+        // ::
+        // compose:  Pose3(R_ * T.R_, t_ + R_ * T.t_);
+        gtsam::Pose3 vo = vopose[i+1];
+        gtsam::Pose3 Pi = GTSAMInterface::VectorToPose(poses[i]);
+        gtsam::Pose3 Pj = GTSAMInterface::VectorToPose(poses[i+1]);
+        gtsam::Pose3 btwn = Pi.between(Pj);
+        gtsam::Vector3 votrans = Pi.rotation() * vo.translation();
+        
+        //get z
+        double W = pow(pow(btwn.translation().x(),2) + pow(btwn.translation().y(),2),0.5);
+        double c = pow(pow(votrans.x(),2) + pow(votrans.y(),2),0.5);
+        int sign = sgn(votrans.x())*sgn(votrans.y())*sgn(btwn.translation().x())*sgn(btwn.translation().y());
+        double delta_z = sign * pow(pow(W/c,2)-pow(W,2), 0.5);
+        if(c > 1.0) {
+            delta_z = 0;
+            
+            if(c > 1.01)
+            {
+                std::cout << "issue with pose from essential, norm(), or interpolation.. " << std::endl;
+                std::cout << "W: " << W << ", c: " << c << ", W/c: " << W/c << ", " << pow(W/c,2)-pow(W,2) << std::endl;
+                std::cout << "c is larger than norm. " << c << std::endl;
+                std::cout << "vo: " << vo << std::endl;
+                std::cout << "vo norm: " << vo.translation().norm() << std::endl;
+                exit(-1);
+            }
+        }
+        z[i+1] = z[i] + delta_z;
+        
+        //scale vopose
+        double s = pow(pow(btwn.translation().x(),2) + pow(btwn.translation().y(),2) + pow(delta_z,2), 0.5);
+        gtsam::Vector3 votscaled = vo.translation() * s;
+        vopose[i+1] = gtsam::Pose3(vopose[i+1].rotation(), votscaled);
+    }
+    
+    for(int i=0; i<poses.size(); i++) {
+        poses[i][2] = z[i];
+    }
+}
 
 
 

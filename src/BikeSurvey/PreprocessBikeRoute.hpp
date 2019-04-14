@@ -33,21 +33,26 @@ private:
     gtsam::Point3 default_start;
     gtsam::Point3 end_pos;
     std::vector<LandmarkTrack> active;
+    std::string first_line;
     
     void SetZ(std::vector<double>& unkz, std::vector<double> nmlzd);
     std::vector<double> InterpolatePoses(int idx, int a, int b, std::vector<double> pa, std::vector<double> pb);
     bool DistanceCriterion(std::vector<double>& pose1, std::vector<double>& pose2);
     void ModifyPoses();
+    void correctPosesUsingVO();
+    gtsam::Pose3 interpolatePose(double weight_a, gtsam::Pose3 a, gtsam::Pose3 b, bool unit_translation);
     
     std::vector<double> YPRToRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     double CombineAngles(double a1, double a2, double w);
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
     
+    int countVideoFrames();
     void WriteImage(cv::Mat image, std::string filepath);
     double GetNearestTimeToPosition(double x, double y);
     double InterpolateValue(double t, double vals, double vale, double s, double e);
-    void LowPassFilter(std::vector<double>& arr, double std);
+    void LowPassFilter(std::vector<double>& arr, double std, int interval);
+    void applyLowPassFilter();
     void AlignDataToImages();
     void PlayPoses();
     void GetPoses();
@@ -57,12 +62,16 @@ protected:
     void ReadDelimitedFile(std::string file, int type);
     void ProcessLineEntries(int type, std::vector<std::string>& lp);
 public:
+    
     std::string _bdbase;
     std::string _name;
     
     std::vector<double> timings;
     std::vector<std::vector<double> > arrs;
     std::vector<std::vector<double> > poses;
+    std::vector<gtsam::Pose3> vopose;
+//    std::vector<gtsam::Pose3> poses;  //TODO: need to make this change..
+//
     
     PreprocessBikeRoute(std::string bdbase, std::string name):
         _bdbase(bdbase), _name(name), video_fps(29)
@@ -79,11 +88,13 @@ public:
         }
     }
     
+    void Preprocess2();
     void Preprocess();
     void Play();
     void FindKLTParams();
     std::string Base() {return _bdbase + _name + "/";}
     void VOForCameraTrajectory();
+    
 };
 
 

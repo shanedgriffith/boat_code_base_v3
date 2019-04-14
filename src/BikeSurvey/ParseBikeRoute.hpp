@@ -39,6 +39,7 @@ public:
 //        ModifyPoses();
     }
     
+    bool CheckCameraTransition(int cidx, int lcidx) {return false;}
     static Camera GetCamera();
     int GetImageNumber(int auxidx);
     int GetIndexOfImage(int image){return image;}
