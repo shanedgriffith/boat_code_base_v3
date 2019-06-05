@@ -33,7 +33,7 @@ _cam(cam), _refdate(refdate), _priordate(priordate), _query_loc(query_loc), _pft
 }
 
 void InitialISCAcquisition::WriteLog(vector<double> data) {
-    // logfile: camera_key, poseloc, g-statistic, null_rejected?, ar.consistency, ar.alignment_energy_lowres, ar.alignment_energy
+    // logfile: camera_key, poseloc, g-statistic, null_rejected?, ar.consistency, ar.alignment_energy_lowres, ar.alignment_energy, topwize
     string fname = _save_dir + _logname;
     FILE * fp = fopen(fname.c_str(), "a");
     if(!fp){
@@ -155,7 +155,7 @@ int InitialISCAcquisition::IdentifyClosestPose(vector<double> pose1_est, string 
 
 std::vector<double> InitialISCAcquisition::FindLocalization(int por0time, int por1time, bool hasRF, vector<double> pose1_est) {
     //topk: vector of {snum, portime, gstat};
-    vector<double> logdata = {(double) por1time, -1.0, -1.0, (double) hasRF, -1.0, 0.0};
+    vector<double> logdata = {(double) por1time, -1.0, -1.0, (double) hasRF, -1.0, 0.0, -1.0};
     if(por0time<0) return logdata;
     
     LocalizedPoseData * toverify = NULL;
@@ -170,6 +170,7 @@ std::vector<double> InitialISCAcquisition::FindLocalization(int por0time, int po
     LocalizedPoseData res;
     double perc_dc = 0.0;
     double verified = 0.0;
+    double topwsize = 0.0;
     
     //run alignment and localization
     ImageToLocalization ITL(_cam, _origin, _query_loc, _pftbase);
@@ -188,7 +189,7 @@ std::vector<double> InitialISCAcquisition::FindLocalization(int por0time, int po
     ITL.SetSurveyIDs({0, 1});
     ITL.SetPORTimes({por0time, por1time});
     ITL.SetVPose(p1_tm1);
-    ITL.Setup(&res, &perc_dc, &verified);
+    ITL.Setup(&res, &perc_dc, &verified, &topwsize);
     
     ITL.Run();
     ITL.LogResults();
@@ -205,6 +206,7 @@ std::vector<double> InitialISCAcquisition::FindLocalization(int por0time, int po
         logdata[1] = 0;
         logdata[2] = res.s0time;
         logdata[4] = perc_dc;
+        logdata[6] = topwsize;
         lpdi.SetMostAdvLPD(res);
     }
     
@@ -234,7 +236,7 @@ bool InitialISCAcquisition::GetConstraints(int por1time, bool hasRF){
     
     if(debug && logdata[1]>=0) std::cout << "Attempted localization with "<<survey_est[(int)logdata[1]].date << "_"<<logdata[2]<<
         " (optimization hopcount " << survey_est[(int)logdata[1]].avg_hop_distance<< ") with quality: " <<
-        ((int)1000*logdata[4])/10.0 << "% inliers"<<std::endl;
+        ((int)1000*logdata[4])/10.0 << "% inliers, topwsize: "<< logdata[6] << std::endl;
     string irtime = to_string((runir.tv_sec - start.tv_sec) + (runir.tv_nsec - start.tv_nsec)/1000000000.0);
     string altime = to_string((end.tv_sec - runir.tv_sec) + (end.tv_nsec - runir.tv_nsec)/1000000000.0);
     string tottime = to_string((end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/1000000000.0);

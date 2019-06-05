@@ -92,6 +92,7 @@ public:
 
 	void SetDryRun(bool b=true);
 	void SetTopWsize(int t);
+    double GetTopWSize() { return topwsize; }
 
 	void SetVerifyAlignment(bool set=true);
 	void SetTwoCycleConsistency(bool set=true);

@@ -56,6 +56,8 @@ private:
     double * _perc_dc;
     double ver_result = false;
     double * _verified;
+    double topwsize = 0;
+    double * _topwsize;
     AlignmentResult ar;
     
     const Camera& _cam;

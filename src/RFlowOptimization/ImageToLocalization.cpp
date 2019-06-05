@@ -95,6 +95,7 @@ AlignmentResult ImageToLocalization::MatchToSet(std::string image1, std::string 
     sf.ConstructImagePyramid(image1, image2);
     sf.AlignImages();
     AlignmentResult ar = sf.GetAlignmentResult();
+    topwsize = sf.GetTopWSize();
 
     //this consistency check can be integrated into SFlowDREAM for streamlined code, but leave it for now.
     // && ar.consistency > ALIGN_CONSISTENCY_THRESHOLD && ar.verified_ratio > ALIGN_VERIFICATION_RATIO //these don't appear to be needed.
@@ -221,11 +222,12 @@ double ImageToLocalization::RobustAlignmentConstraints(AlignmentResult& ar, Pars
     return -1;
 }
 
-void ImageToLocalization::Setup(LocalizedPoseData * res, double * perc_dc, double * verified){
+void ImageToLocalization::Setup(LocalizedPoseData * res, double * perc_dc, double * verified, double * topwsize){
     thread_state = state::LOCKED;
     _res = res;
     _perc_dc = perc_dc;
     _verified = verified;
+    _topwsize = topwsize;
 }
 
 void ImageToLocalization::Reset(){
@@ -276,6 +278,7 @@ void ImageToLocalization::LogResults(){
     *_res = lpd;
     *_perc_dc = perc_dc;
     *_verified = ver_result;
+    *_topwsize = topwsize;
 }
 
 void ImageToLocalization::SaveAlignment(std::string loc){
