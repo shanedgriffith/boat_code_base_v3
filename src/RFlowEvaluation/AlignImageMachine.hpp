@@ -21,6 +21,8 @@ class AlignImageMachine: public AlignmentMachine {
 private:
     AlignmentResult AlignImages(std::string image1, std::string image2, std::vector<ReprojectionFlow*> rf = {});
     
+    bool dry_run_;
+    
     std::vector<Map*> maps;
     std::vector<ParseOptimizationResults*> por;
     std::vector<std::string> dates;
@@ -34,11 +36,14 @@ private:
 public:
     std::string _pftbase, _query_loc, _results_dir;
     
-    AlignImageMachine(const Camera& cam):
-        _cam(cam), basic(false) {}
+    AlignImageMachine(const Camera& cam)
+    : dry_run_(false)
+    , _cam(cam)
+    , basic(false) {}
     void RunRFlow();
     void RunSFlow();
     
+    void SetDryRun(){dry_run_ = true;}
     void SetDirs(std::string pftbase, std::string query_loc, std::string results_dir);
     void Setup(int ploc0, std::string saveloc, int ploc1=-1);
     void SetImages(std::string i0, std::string i1, std::string savename);

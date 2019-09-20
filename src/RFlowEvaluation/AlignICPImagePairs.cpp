@@ -1174,18 +1174,47 @@ void AlignICPImagePairs::CreateTimeLapsesForEvaluation() {
     }
     
     ForBMVCFigure forfig(_cam, _dates, _pftbase, _query_loc, _maps_dir + "../", _nthreads);
+    forfig.setDryRun();
     
-    srand(892340);
-    for(int i=0; i<110; ++i) //a few more than 100 to have enough for the evaluation of 100 time-lapses.
+    std::vector<std::string> dset = {"140606", "140606", "141215", "140122", "140122", "140502", "140502", "140106", "140205", "140314", "140409", "140625", "140707", "140730", "140821", "140911", "141003", "141114"};
+    std::vector<int> pset = {1290, 1099, 3382, 577, 2326, 549, 3196, 3516, 537, 1920, 943, 2187, 263, 1128, 222, 1375, 1066, 2989};
+    
+    for(int i=0; i<dset.size(); i++)
     {
-        int d = rand()%_dates.size();
-        int p = rand()%por[d].boat.size();
-        if(i < 100) continue;
-        std::cout << "aligning images to " << _dates[d] << ":" << p << std::endl;
-        continue;
-        forfig.MakeTimelapse(d, p, false, por, maps);
+        int d;
+        for(d=0; d<_dates.size(); d++)
+        {
+            if(dset[i] ==_dates[d])
+                break;
+        }
+        
+        double dist = 10000000;
+        int idx = 0;
+        for(int p=0; p<por[12].boat.size(); p++)
+        {
+            gtsam::Pose3 ref = GTSAMInterface::VectorToPose(por[12].boat[p]);
+            gtsam::Pose3 c = GTSAMInterface::VectorToPose(por[d].boat[pset[i]]);
+            if(ref.translation().dist(c.translation()) < dist)
+            {
+                dist = ref.translation().dist(c.translation()) ;
+                idx = p;
+            }
+        }
+        
+        std::cout << dset[i] << "." << pset[i] << ": " << idx << std::endl;
     }
+    
+//    srand(892340);
+//    for(int i=0; i<110; ++i) //a few more than 100 to have enough for the evaluation of 100 time-lapses.
+//    {
+//        int d = rand()%_dates.size();
+//        int p = rand()%por[d].boat.size();
+////        if(i < 100) continue;
+//        std::cout << "aligning images to " << _dates[d] << "." << p <<":"<< std::endl;
+//        forfig.MakeTimelapse(d, p, false, por, maps);
+//    }
 }
+
 
 void AlignICPImagePairs::ShowMaps() {
     SLAMDraw draw(4000,4000);

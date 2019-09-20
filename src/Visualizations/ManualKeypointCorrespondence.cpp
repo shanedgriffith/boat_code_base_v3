@@ -69,7 +69,7 @@ ManualKeypointCorrespondence::UpdateProjection(cv::Mat imgr, cv::Mat imgt) {
 
 void
 ManualKeypointCorrespondence::UpdateLocalizedPose() {
-    if(indices.size() <= 14) {
+    if(indices.size() <= 4) {
         std::cout << "Not enough points for localization. Have " << indices.size() << std::endl;
         _show_preview = false;
         return;

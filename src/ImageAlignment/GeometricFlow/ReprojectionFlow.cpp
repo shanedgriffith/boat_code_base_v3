@@ -78,7 +78,7 @@ void ReprojectionFlow::TestGstat(){
 //    vector<int> contingency_table2 = {36,11,0,55};
 //    vector<int> contingency_table3 = {20,27,26,29};
     vector<int> contingency_table1 = {3,46,0,56};
-    vector<int> contingency_table2 = {38,11,0,56};
+    vector<int> contingency_table2 = {38,11,1,55};
     vector<int> contingency_table3 = {21,28,26,30};
     
     double one = GStatistic(contingency_table1);

@@ -521,7 +521,7 @@ std::pair<double, int> VisualOdometry::KeypointChange(std::shared_ptr<ParseFeatu
         while(latest->ids[ci]<last->ids[i]) ci++;
         if(latest->ids[ci] != last->ids[i]) continue;
         
-        double dist = last->imagecoord[i].dist(latest->imagecoord[ci]);
+        double dist = last->imagecoord[i].distance(latest->imagecoord[ci]);
         sumdist += dist;
         count++;
     }

@@ -52,6 +52,7 @@ void ForBMVCFigure::MakeTimelapse(int d, int num, bool viewpoint_variance, std::
             ws[tidx]->SetMaps({&maps[d], &maps[i]});
             ws[tidx]->SetDates({_dates[d], _dates[i]});
             ws[tidx]->SetPOR({&por[d], &por[i]});
+            if(dry_run_) ws[tidx]->SetDryRun();
             man.RunMachine(tidx);
         }
     }

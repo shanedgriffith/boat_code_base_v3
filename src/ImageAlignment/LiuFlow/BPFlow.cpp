@@ -326,7 +326,6 @@ double BPFlow::ComputeDataTerm()
 	for(ptrdiff_t i=0;i<Height;i++)			// index over y
 		for(ptrdiff_t j=0;j<Width;j++)		// index over x
 		{
-            //CHECK: MASK HERE? May not be necessary due to step 3.
 			size_t index=i*Width+j;
 			int XWinLength=pWinSize[0][index]*2+1;
 			// loop over a local window

@@ -288,6 +288,7 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
     vector<LocalizedPoseData> res(loc_nthreads);
     vector<double> perc_dc(loc_nthreads, 0.0);
     vector<double> verified(loc_nthreads, 0.0);
+    vector<double> topwsize(loc_nthreads, -1);
     
     //run alignment and localization in parallel among the topk
     for(int i=0; i<loc_nthreads; i++) {
@@ -309,7 +310,7 @@ std::vector<double> SessionLocalization::FindLocalization(std::vector<std::vecto
         ws[tidx]->SetSurveyIDs({s0, latestsurvey});
         ws[tidx]->SetPORTimes({por0time, por1time});
         ws[tidx]->SetVPose(p1_tm1);
-        ws[tidx]->Setup(&res[i], &perc_dc[i], &verified[i]);
+        ws[tidx]->Setup(&res[i], &perc_dc[i], &verified[i], &topwsize[i]);
 
         if(loc_nthreads==1) ws[tidx]->Run();
         else man.RunMachine(tidx);

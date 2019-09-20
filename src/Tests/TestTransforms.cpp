@@ -35,10 +35,10 @@ void TestTransforms::CheckBtwn(const Camera& _cam){
 }
 
 void TestTransforms::TestLocalization(const Camera& _cam){
-    std::string lpdfile = "/cs-share/dream/results_consecutive/maps/140117/localizations/289.loc";
+    std::string lpdfile = "/Volumes/Untitled/data/maps_localizations/140117/localizations/293_140106.loc";
     LocalizedPoseData lpd = LocalizedPoseData::Read(lpdfile);
-    ParseOptimizationResults POR0("/cs-share/dream/results_consecutive/maps/", "140106");
-    ParseOptimizationResults POR1("/cs-share/dream/results_consecutive/maps/", "140117");
+    ParseOptimizationResults POR0("/Volumes/Untitled/data/maps/", "140106");
+    ParseOptimizationResults POR1("/Volumes/Untitled/data/maps/", "140117");
     
     LocalizePose lp(_cam);
     lp.debug = true;
@@ -50,9 +50,7 @@ void TestTransforms::TestLocalization(const Camera& _cam){
     std::cout<<"localization quality check: \n\tForward and Backward:  "
         <<((int)1000*perc_dc)/10.0 << "% inliers with "
         << candidates[2][3] << " avg reprojection error" << std::endl;
-    
 }
-
 
 double TestTransforms::GetLikelihood(gtsam::Pose3 val, gtsam::Pose3 expected, std::vector<double> var){
     gtsam::Pose3 nearzero = val.between(expected);

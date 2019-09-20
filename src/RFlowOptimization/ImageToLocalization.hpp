@@ -76,7 +76,7 @@ public:
     void SetSurveyIDs(std::vector<int> s){sids=s;}
     void SetPORTimes(std::vector<int> ps){portimes = ps;}
     void SetVPose(gtsam::Pose3 p){p1_tm1 = p;}
-    void Setup(LocalizedPoseData * res, double * perc_dc, double * verified);
+    void Setup(LocalizedPoseData * res, double * perc_dc, double * verified, double * topwsize);
     
     void Reset();
     void * Run();

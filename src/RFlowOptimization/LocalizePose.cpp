@@ -24,6 +24,7 @@
 #include "Optimization/MultiSession/LocalizationFactor.h"
 #include "Optimization/MultiSession/VirtualBetweenFactor.h"
 #include "LocalizePose.hpp"
+#include "P3P.hpp"
 
 void LocalizePose::PrintVec(std::vector<double> p){
     for(int i=0; i<p.size(); i++){
@@ -48,7 +49,7 @@ double LocalizePose::MeasureReprojectionError(std::vector<double>& pnppose, std:
         gtsam::Point3 tfp = gtp.transform_to(p3d[i]);
         gtsam::Point2 res = _cam.ProjectToImage(tfp);
         if(!_cam.InsideImage(res)) continue;
-        double dist = res.dist(p2d[i]);
+        double dist = res.distance(p2d[i]);
         sumall+=dist;
         count++;
         if(inliers[i]){
@@ -69,7 +70,7 @@ std::vector<double> LocalizePose::Maximization(gtsam::Pose3& gtp, std::vector<gt
     for(int i=0; i<p3d.size(); i++){
         gtsam::Point3 tfp = gtp.transform_to(p3d[i]);
         gtsam::Point2 res = _cam.ProjectToImage(tfp);
-        double dist = res.dist(p2d[i]);
+        double dist = res.distance(p2d[i]);
         if(dist > err || !_cam.InsideImage(res)){
             if(inliers[i]>=0.0) nchanges++;
             inliers[i] = -1;
@@ -206,7 +207,7 @@ std::vector<std::vector<double> > LocalizePose::UseBAIterative(std::vector<doubl
     gtsam::Pose3 estp = GTSAMInterface::VectorToPose(pguess);
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
-    std::vector<double> posevalsransac = RANSAC_BA(estp, p3d, p2d, inliers);
+    std::vector<double> posevalsransac = RANSAC_P3P(estp, p3d, p2d, inliers);
     if(posevalsransac[1]<0.000001) return {};
     
     //measure rerror with the previous set of inliers, if it's good, update the set of inliers.
@@ -340,6 +341,93 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     return best_posevals;
 }
 
+gtsam::Pose3 LocalizePose::disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d)
+{
+    int bestpidx = -1;
+    double bestdist = 100000000;
+    for(int i=0; i<poses.size(); ++i)
+    {
+        double sumd = 0;
+        for(int j=3; j<p3d.size(); ++j)
+        {
+            gtsam::Point3 tfp = poses[i].transform_to(p3d[i]);
+            gtsam::Point2 res = _cam.ProjectToImage(tfp);
+            sumd += res.distance(p2d[i]);
+        }
+        
+        if(sumd < bestdist)
+        {
+            bestdist = sumd;
+            bestpidx = i;
+        }
+    }
+    
+    if(bestpidx == -1)
+    {
+        std::cout << "LocalizePose::disambiguatePoses() failed. the reprojection error of the extra set of points is greater than 100000000 for the four pose candidates. " << std::endl;
+        return poses[0];
+    }
+    
+    return poses[bestpidx];
+}
+
+std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers){
+    //EM approach to finding the best pose.
+    //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
+    gtsam::Pose3 best_pose = p1guess;
+    int kdisambiguation = 1; // pick k random points to use for disambiguation, which are different from the set used to compute the localiation
+    std::vector<int> rset(3+kdisambiguation);
+    std::vector<gtsam::Point3> subp3d(rset.size());
+    std::vector<gtsam::Point2> subp2d1(rset.size());
+    std::vector<gtsam::Vector3> featureVectors(3);
+    std::vector<double> subinliers(rset.size(), ACCEPTABLE_TRI_RERROR);
+    std::vector<double> best_posevals(4, 0.0);
+    int iters=0;
+    int last_save_iter = 0;
+    double err = ACCEPTABLE_TRI_RERROR;
+    
+    for(; iters<MAX_RANSAC_ITERS; ++iters) {
+        GenerateRandomSet(rset.size(), rset);
+        for(int j=0; j<rset.size(); j++)
+        {
+            subp3d[j] = p3d[rset[j]];
+            subp2d1[j] = p2d1[rset[j]];
+            
+            cv::Point2f cvp(subp2d1[j].x(), subp2d1[j].y());
+            cv::Point2f normp = cam.PixelToNormalized(cvp);
+            featureVectors[j] = gtsam::Vector3(normp.x, normp.y, 1); //normalized coordinates from 0 to 1 or -1 to 1; which does it expect?
+        }
+        
+        std::vector<gtsam::Pose3> poses;
+        if(P3P::computePoses(featureVectors, subp3d, poses) < 0)
+            continue;
+        
+        gtsam::Pose3 estp = disambiguatePoses(poses, subp3d, subp2d);
+        
+        std::vector<double> posevals = Maximization(estp, p3d, p2d1, inliers, err);
+        if(posevals[1]>best_posevals[1]){
+            swap(best_posevals, posevals);
+            best_pose = estp;
+            last_save_iter = iters;
+        }
+        
+        //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
+        //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
+    }
+    
+    if(debug) {
+        printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
+               (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
+    }
+    
+    //have to reset the inliers.
+    std::vector<double> posevals = Maximization(best_pose, p3d, p2d1, inliers, err);
+    
+    p1guess = best_pose;
+    best_posevals[0] = iters;
+    return best_posevals;
+}
+
 std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double> p0, std::vector<double> p1,
                                                             std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
                                                             std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb){
@@ -355,7 +443,7 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     
     clock_gettime(CLOCK_MONOTONIC, &start);
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
-    std::vector<double> posevals1f0 = RANSAC_BA(p1frame0, p3d, p2d1, rerrorp);
+    std::vector<double> posevals1f0 = RANSAC_P3P(p1frame0, p3d, p2d1, rerrorp);
     
     if(posevals1f0[1]<0.000001){
         std::cout << "Localization failed due to RANSAC failure on set p"<<std::endl;
@@ -365,13 +453,13 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p0frame1.
     //gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0)); //this also looks wrong.
     gtsam::Pose3 p0frame1 = gp1.compose(gp1.between(p1frame0)*p1frame0.between(gp0)*p1frame0.between(gp1));
-    std::vector<double> posevals0f1 = RANSAC_BA(p0frame1, b3d, b2d0, rerrorb);
+    std::vector<double> posevals0f1 = RANSAC_P3P(p0frame1, b3d, b2d0, rerrorb);
     
     clock_gettime(CLOCK_MONOTONIC, &runir);
     if(posevals0f1[1]<0.000001) {
         std::cout << "Localization failed due to RANSAC failure on set b"<<std::endl;
         return {};
-   }
+    }
 
     //iterative localization (like EM), started with the good initial estimates found using RANSAC.
     std::vector<std::vector<double> > results = DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
@@ -381,7 +469,29 @@ std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double>
     std::string tottime = std::to_string((end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/1000000000.0);
     if(debug) std::cout << "runtimes (s) "<<irtime << " + " << altime << " ~= " << tottime << std::endl;
     
-    
     return results;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

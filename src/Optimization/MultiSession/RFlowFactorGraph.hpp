@@ -35,7 +35,7 @@ private:
     gtsam::noiseModel::Diagonal::shared_ptr poseNoiseP;
 
 	void InitializeNoiseModels();
-
+    
 	std::vector<int> lastcnums;
 	std::vector<std::unordered_map<int, int> > pnum_to_ckey;
 	std::unordered_map<int, int> surveycnum;
@@ -44,7 +44,7 @@ public:
 	    InitializeNoiseModels();
 	    sppf_prune = false; //keep all the landmark tracks.
 	}
-
+    
     void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
 	bool AddPose(gtsam::Symbol s, gtsam::Pose3 p);
     bool AddPose(int survey, int pnum, gtsam::Pose3 p, bool add_prior=true);
@@ -54,6 +54,7 @@ public:
 	void AddBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, bool tight=false);
     void AddCustomBTWNFactor(int survey0, int pnum0, int survey1, int pnum1, gtsam::Pose3 odom, double val);
     void BuildAndAddBetweenFactor(int survey0, int anum0, int survey1, int anum1, gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 btwn, double val);
+    void AddOneSessionAnchor(gtsam::Symbol sk_b, gtsam::Symbol skj, gtsam::Pose3 hat_pkj_b, std::vector<double> noise);
 
 	virtual gtsam::Symbol GetSymbol(int survey, int pnum);
 	bool VariableExists(int survey, int pnum);

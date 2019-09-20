@@ -95,6 +95,7 @@ void GTSAMInterface::Update() {
         }
         
         results = i2.calculateEstimate();
+        //isam2 holds its own copy of those values and the graph structure.
         _fg->Clear();
         initialEstimate.clear();
     } catch(const std::exception& ex) {

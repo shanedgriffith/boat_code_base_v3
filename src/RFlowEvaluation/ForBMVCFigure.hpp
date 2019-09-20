@@ -19,6 +19,7 @@
 
 class ForBMVCFigure{
 private:
+    bool dry_run_;
     std::vector<std::string>& _dates;
     
     MachineManager man;
@@ -30,6 +31,7 @@ public:
     
     ForBMVCFigure(const Camera& cam, std::vector<std::string>& dates, std::string pftbase,
                   std::string query_loc, std::string results_dir, int nthreads=12):
+    dry_run_(false), 
     _cam(cam), _dates(dates), _pftbase(pftbase), _query_loc(query_loc), _savebase(results_dir + "aligned_images/"),
     _maps_dir("/Volumes/Untitled/data/maps_only/maps_only_2014/") //results_dir + "maps/")
     {
@@ -47,6 +49,7 @@ public:
         }
     }
     
+    void setDryRun(){dry_run_ = true;}
     void MakeTimelapse(std::string ref_date, int num, bool viewpoint_variance = false);
     void MakeTimelapse(int d, int num, bool viewpoint_variance, std::vector<ParseOptimizationResults>& por, std::vector<Map>& maps);
     

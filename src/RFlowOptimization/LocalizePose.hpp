@@ -67,6 +67,8 @@ protected:
     void GenerateRandomSet(int n, std::vector<int>& rset);
     std::vector<double> RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
     
+    std::vector<double> RANSAC_P3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    
     gtsam::NonlinearFactorGraph graph;
     gtsam::Values initEst;
     const Camera& _cam;

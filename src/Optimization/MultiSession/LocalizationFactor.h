@@ -154,14 +154,14 @@ public:
           return reprojectionError.vector();
         }
       } catch( gtsam::CheiralityException& e) {
-        if (H1) *H1 = gtsam::zeros(2,6);
+          if (H1) *H1 = gtsam::Matrix::Zero(2,6); //gtsam::zeros<2,6>();
 //        if (verboseCheirality_)
 //          std::cout << e.what() << ": Landmark "<< DefaultKeyFormatter(this->key2()) <<
 //              " moved behind camera " << DefaultKeyFormatter(this->key1()) << std::endl;
         if (throwCheirality_)
           throw e;
       }
-      return gtsam::ones(2) * 2.0 * K_->fx();
+      return gtsam::Matrix::Ones(2,1) * 2.0 * K_->fx(); //gtsam::ones(2)
     }
 
     /** return the measurement */

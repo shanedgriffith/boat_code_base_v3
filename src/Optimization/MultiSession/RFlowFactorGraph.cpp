@@ -18,6 +18,7 @@
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include "RFlowFactorGraph.hpp"
+#include "OneSessionAnchor.h"
 
 #include "LocalizationFactor.h"
 #include "VirtualBetweenFactor.h"
@@ -91,6 +92,13 @@ void RFlowFactorGraph::AddPosePrior(gtsam::Symbol s, gtsam::Pose3 p, double val)
     v6.setConstant(val);
     gtsam::noiseModel::Diagonal::shared_ptr pnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
     graph.add(gtsam::PriorFactor<gtsam::Pose3>(s, p, pnoise));
+}
+
+void RFlowFactorGraph::AddOneSessionAnchor(gtsam::Symbol sk_b, gtsam::Symbol skj, gtsam::Pose3 hat_pkj_b, std::vector<double> noise) {
+    gtsam::Vector6 v6;// = (gtsam::Vector6 << noise[0], noise[1], noise[2], noise[3], noise[4], noise[5]).finished();
+    v6 << noise[0], noise[1], noise[2], noise[3], noise[4], noise[5];
+    gtsam::noiseModel::Diagonal::shared_ptr pnoise = gtsam::noiseModel::Diagonal::Sigmas(v6);
+    graph.add(OneSessionAnchor(sk_b, skj, hat_pkj_b, pnoise));
 }
 
 bool RFlowFactorGraph::AddPose(int survey, int pnum, gtsam::Pose3 p, bool add_prior) {

@@ -82,7 +82,20 @@ void AlignImageMachine::RunRFlow() {
         double gstatistic = 0;
         int poseloc0WithOffset = std::max(0, std::min(static_cast<int>(poseloc0+_offset), static_cast<int>(por[0]->boat.size()-1)));
         poseloc1 = rf[0]->IdentifyClosestPose(por[1]->boat, por[0]->boat[poseloc0WithOffset], &gstatistic);
-        if(poseloc1 == -1)  return;
+        if(poseloc1 == -1)
+        {
+            if(dry_run_)
+            {
+                std::cout << dates[0] <<"." << poseloc0 << "::" << dates[1] << ".-----" << std::endl;
+            }
+            return;
+        }
+    }
+    
+    if(dry_run_)
+    {
+        std::cout << dates[0] <<"." << poseloc0 << "::" << dates[1] << "." << poseloc1 << std::endl;
+        return;
     }
     
 //    std::cout << "aligning: ("<<dates[0] <<"." << poseloc0 << ") to ("<<dates[1] << "."<<poseloc1<<"). Saving to " << _saveloc << std::endl;

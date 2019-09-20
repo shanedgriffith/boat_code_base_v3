@@ -122,13 +122,27 @@ void PreprocessBikeRoute::AlignDataToImages() {
     for(double time = starttime; endtime - time > inc_time; time += inc_time) {
         //double prior_weight = (post time - time) / (post time - prior time);
         //set aux(time)[val] <= prior_weight * aux(prior time)[val] + (1 - prior_weight) * aux(post time)[val];
-        while(timings[last_idx] < time) last_idx++;
+        while(timings[++last_idx] < time);
         last_idx--;
         for(int j=0; j<n; j++) {
-            double prior_time = timings[last_idx];
-            double post_time = timings[last_idx+intervals[j]];
+            int offset = 0;
+            for(; offset<intervals[j]; offset++) {
+                if(fabs(arrs[j][last_idx-1-offset] - arrs[j][last_idx]) < 0.0001) continue;
+                break;
+            }
+            
+            double prior_time = timings[last_idx-offset];
+            double post_time = timings[last_idx+intervals[j]-offset];
             double prior_weight = (post_time - time) / (post_time - prior_time);
-            fullset[j][idx] = prior_weight * arrs[j][last_idx] + (1 - prior_weight) * arrs[j][last_idx+intervals[j]];
+//            if(j==0 and idx < 3) {
+//                std::cout << "time[ " << last_idx << "] = " << time << std::endl;
+//                std::cout << "pre time[" << last_idx+offset-intervals[j] << "]: " << prior_time << " has value " << arrs[j][last_idx+offset-intervals[j]] << std::endl;
+//                std::cout << "post time[" << last_idx+offset << "]: " << post_time << " has value " << arrs[j][last_idx+offset] << std::endl;
+//                std::cout << "offset: " << offset << std::endl;
+//                std::cout << "weighted combo: " << prior_weight << std::endl;
+//                std::cout << std::endl;
+//            }
+            fullset[j][idx] = prior_weight * arrs[j][last_idx-offset] + (1 - prior_weight) * arrs[j][last_idx+intervals[j]-offset];
         }
 
         vtimes[idx] = time;
@@ -311,6 +325,7 @@ void PreprocessBikeRoute::Preprocess2() {
     }
     fclose(fp);
     std::cout << "Aux file at: " << saveto << " with " << timings.size() << " lines"<< std::endl;
+//    exit(1);
     
     GetPoses();
     
@@ -677,11 +692,11 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
                 lasti = i;
                 continue;
             }
-            std::cout << "disparity: " << dist.first << std::endl;
+//            std::cout << "disparity: " << dist.first << std::endl;
             if(dist.first < 50) //larger disparity appears to produce better rotation matrices.
                 continue;
             std::pair<gtsam::Pose3, std::pair<double, int> > res;
-            if(i < 100) {
+            //if(i < 100) {
                 res = vo.PoseFromEssential(last, cur);
                 if(res.first.translation().norm() > 1.001 ) {
                     std::cout <<"iteration " << i << std::endl;
@@ -689,19 +704,14 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
                     std::cout << "translation() " << res.first.translation() << std::endl;
                     exit(-1);
                 }
-            } else {
-                break;
-                /*
-                gtsam::Point3 unnorm(i, i, 0); //DUMMY VO VALS.
-                gtsam::Point3 norm = unnorm / unnorm.norm();
-                res.first = gtsam::Pose3(gtsam::Rot3(), norm);
-                res.second = std::make_pair(1.0, 500);*/
-            }
+//            } else {
+//                break;
+//            }
             move_avg_rerror = alpha * move_avg_rerror + (1-alpha)*res.second.first;
             bool passed_rerror_check = (std::abs(res.second.first-move_avg_rerror)>2.*std)?false:true;
             if(not passed_rerror_check or res.second.second < MIN_INLIERS or res.second.second < dist.second * MIN_RATIO_INLIERS) {
                 std::cout << "vo failed on frame " << i << std::endl;
-                std::cout << "reprojection error: " << res.second.first << ", inliers: " << res.second.second << std::endl;
+                std::cout << "reprojection error: " << res.second.first << ", inliers: " << res.second.second << " of " << dist.second << std::endl;
                 last = cur;
                 lasti = i;
                 continue;
@@ -715,7 +725,6 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
             for(int j=i; j>lasti; j--) {
                 vopose[j] = interpolatePose(s, delta_pose, gtsam::Pose3(), true);
                 hasvo[j] = true;
-//                std::cout << j << ": " << vopose[j] << std::endl;
             }
         }
         
@@ -730,7 +739,7 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
         if(not hasvo[curi]) {
             int nexti = curi;
             while(nexti < hasvo.size() and not hasvo[++nexti]);
-            for(int i=curi; i<nexti; i++) {
+            for(; curi<nexti; curi++) {
                 if(nexti > hasvo.size()) {
                     vopose[curi] = interpolatePose(1, vopose[li], vopose[li], true); //may want to change to identity().
                     hasvo[curi] = true;
@@ -742,9 +751,7 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
                     vopose[curi] = interpolatePose(prior_weight, vopose[li], vopose[nexti], true);
                     hasvo[curi] = true;
                 }
-                
-                //set the translation to the unit translation.
-                vopose[curi] = gtsam::Pose3(vopose[curi].rotation(), vopose[curi].translation() / vopose[curi].translation().norm());
+//                std::cout << "pose " << curi <<" set to " << vopose[curi] << std::endl;
             }
             
             li = nexti;
@@ -753,10 +760,6 @@ void PreprocessBikeRoute::VOForCameraTrajectory() {
         curi = li + 1;
     }
 }
-
-//gtsam::Vector3 scaleTranslation(double s, gtsam::Vector3 trans) {
-//    
-//}
 
 void
 PreprocessBikeRoute::
