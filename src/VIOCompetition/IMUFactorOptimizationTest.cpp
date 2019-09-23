@@ -237,12 +237,12 @@ IMUFactorOptimizationTest::optimizeDroneRun()
 //        std::cout << "vec2: " << (_pdr.lin_acc[i] - _pdr.groundtruth[t].rotation().transpose() * _pdr.gravity).transpose() << std::endl;
 //        std::cout << "original: " << (_pdr.lin_acc[i]).transpose() << std::endl;
 //        std::cout << "gravity: " << (_pdr.gravity).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * ga).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gb).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gc).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gd).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * ge).transpose() << std::endl;
-        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gf).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * ga).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gb).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gc).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gd).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * ge).transpose() << std::endl;
+//        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * gf).transpose() << std::endl;
 //        std::cout << "rotated: " << (_pdr.groundtruth[t].rotation() * roffset * _pdr.lin_acc[i]).transpose() << std::endl;
 //        std::cout << "subtracted: " << ((_pdr.groundtruth[t].rotation() * roffset) * (_pdr.lin_acc[i] - g0)).transpose() << std::endl;
         gtsam::Pose3 test;

@@ -257,7 +257,7 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
         //add to the entry using the info from the new frame.
         while(active.size() > next_entry && active[next_entry].GetKey() < ids[i]) {
             if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
-            if(active[next_entry].Length()>1) inactive.push_back(active[next_entry]);
+            if(active[next_entry].Length() > 1) inactive.push_back(active[next_entry]);
             active.erase(active.begin() + next_entry, active.begin() + next_entry + 1);
         }
         

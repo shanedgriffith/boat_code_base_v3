@@ -166,7 +166,35 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     
     landmark_factors[active_landmark_set].push_back(sppf);
     landmark_keys[active_landmark_set].push_back(landmark.key);
-    if(landmark.used) {graph.add(sppf); landmarks++;}
+    
+    if(landmark.used)
+    {
+        landmark_to_graph_index[active_landmark_set].push_back(graph.size());
+        graph.add(sppf);
+        landmarks++;
+    }
+}
+
+void FactorGraph::AddToExistingLandmark(gtsam::Point2& point, int camera_key, int smart_factor_idx)
+{
+    gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2>& sppf = landmark_factors[active_landmark_set][smart_factor_idx];
+    sppf.add(point, camera_key);
+    landmark_to_graph_index[active_landmark_set][smart_factor_idx] = graph.size();
+    graph.add(sppf);
+}
+
+int FactorGraph::GraphHasLandmark(int landmark_key)
+{
+    int s = 0;
+    int e = landmark_keys.size();
+    while(e - s > 0)
+    {
+        int med = s + (e-s)/2;
+        if(landmark_keys[active_landmark_set][med] < landmark_key) s = med + 1;
+        else if(landmark_keys[active_landmark_set][med] > landmark_key) e = med;
+        else return med;
+    }
+    return -1;
 }
 
 void FactorGraph::Clear(){
@@ -174,6 +202,7 @@ void FactorGraph::Clear(){
     next_camera_key = 0;
     landmark_factors.clear();
     landmark_keys.clear();
+    landmark_to_graph_index.clear();
     ChangeLandmarkSet(0);
     landmarks = 0;
     landmark_constraints = 0;
@@ -189,6 +218,7 @@ void FactorGraph::ChangeLandmarkSet(int set){
     if(set == landmark_factors.size()){
         landmark_factors.push_back({});
         landmark_keys.push_back({});
+        landmark_to_graph_index.push_back({});
     }
     else if(set<0 || set > landmark_factors.size()){
         std::cout << "FactorGraph::ChangeLandmarkSet() Error. Specify an existing set or the next one. ("<<set<< ", size: " << landmark_factors.size()<< ")" << std::endl;

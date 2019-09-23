@@ -42,7 +42,7 @@ void ImageToLocalization::DrawFlowPoints(cv::Mat& imageA, cv::Mat& imageB, std::
         gtsam::Point2 projB = _cam.ProjectToImage(res);
         if(!_cam.InsideImage(projB)) continue;
         count++;
-        double dist = p2dB[i].dist(projB);
+        double dist = p2dB[i].distance(projB);
         sum+=dist;
 //        if(dist > 2*inliers[i]) {
 //            std::cout << "projected to " << projB.x() << ", " << projB.y() <<"; dist: " <<dist << std::endl;

@@ -9,6 +9,8 @@
 #ifndef SRC_OPTIMIZATION_GTSAMInterface_H_
 #define SRC_OPTIMIZATION_GTSAMInterface_H_
 
+//#include <optional>
+
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
@@ -33,6 +35,7 @@
 
 class GTSAMInterface {
 private:
+    static const int _batch_optimizer = 0;
     bool debug = false;
     static const std::vector<std::string> keys;
     
@@ -54,9 +57,16 @@ private:
     gtsam::Values initialEstimate;
     gtsam::Values results;
     gtsam::ISAM2 i2;
+    bool _incremental;
     
     bool IsMeasurementPossible(gtsam::Point2 measurement);
     
+    void BatchUpdate();
+    void IncrementalUpdate();
+    
+    int last_landmark_idx;
+    gtsam::FactorIndices factors_to_remove;
+    gtsam::FactorIndices last_factor_indices;
     
 public:
     std::string _identifier;
@@ -72,10 +82,8 @@ public:
         GAUSS_NEWTON = 3
     };
     
-    void RunBundleAdjustment(int choix=0);
-    void SetupIncrementalSLAM();
-    void Update();
-//    void ClearInitialEstimate();//doesn't this already clear upon update?
+    void SetupSLAM(bool incremental);
+    void Update(bool everything = true);
     bool HasResult(gtsam::Symbol s);
     
     void InitializePose(gtsam::Symbol s, gtsam::Pose3 p);
@@ -99,6 +107,10 @@ public:
     
     static std::vector<double> PoseToVector(const gtsam::Pose3& cam);
     static gtsam::Pose3 VectorToPose(const std::vector<double>& p);
+    
+    std::shared_ptr<gtsam::Values> getPoseValuesFrom(int var_id, int from_pose, int latest_pose);
+    boost::optional<gtsam::Point3> triangulatePointFromPoseValues(gtsam::Values& v, int landmark_idx);
+    void RemoveLandmarkFactor(int landmark_idx);
 };
 
 

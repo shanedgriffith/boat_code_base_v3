@@ -144,8 +144,8 @@ ParseDroneRun::getIMUNoiseModel()
     Matrix33 bias_omega_cov = Matrix33::Identity(3,3) * pow(gyro_bias_randomwwalk_sigma,2);
     Matrix66 bias_acc_omega_int = Matrix::Identity(6,6) * 1e-5; // error in the bias used for preintegration
     
-//    boost::shared_ptr<PreintegratedCombinedMeasurements::Params> p = boost::make_shared<PreintegratedCombinedMeasurements::Params>(Vector3(0, 0, 0));
-    boost::shared_ptr<PreintegratedCombinedMeasurements::Params> p = boost::make_shared<PreintegratedCombinedMeasurements::Params>(-9.81); //TODO (?)
+    boost::shared_ptr<PreintegratedCombinedMeasurements::Params> p = boost::make_shared<PreintegratedCombinedMeasurements::Params>(Vector3(0, 0, 0));
+//    boost::shared_ptr<PreintegratedCombinedMeasurements::Params> p = boost::make_shared<PreintegratedCombinedMeasurements::Params>(-9.81); //TODO (?)
 //    boost::shared_ptr<PreintegratedCombinedMeasurements::Params> p = PreintegratedCombinedMeasurements::Params::MakeSharedD(9.80655);
     // PreintegrationBase params:
     p->accelerometerCovariance = measured_acc_cov; // acc white noise in continuous

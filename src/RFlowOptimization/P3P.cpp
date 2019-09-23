@@ -58,33 +58,10 @@
 #include <math.h>
 #include <complex>
 
-///*
-// -could project every point for disambiguation.
-// -e.g., consider the inlier set for all four.
-// */
-//
-//int P3P::computePoses( const std::vector<gtsam::Point2>& imagePoints, const Camera& cam, const std::vector<gtsam::Point3>& worldPoints, gtsam::Pose3 solution)
-//{
-//    std::vector<gtsam::Vector3> featureVectors;
-//    for(int i=0; i<imagePoints.size(); ++i)
-//    {
-//        cv::Point2f cvp(imagePoints[i].x(), imagePoints[i].y());
-//        cv::Point2f normp = cam.PixelToNormalized(cvp);
-//        featureVectors.push_back(gtsam::Vector3(normp.x, normp.y, 1));  //normalized coordinates from 0 to 1 or -1 to 1; which does it expect?
-//    }
-//    
-//    std::vector<gtsam::Pose3> solutions;
-//    
-//    int ret = computePoses(featureVectors, worldPoints, solutions);
-//    if(solutions.size() > 0 )
-//    {
-//        
-//        
-//    }
-//}
-
-
-int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints, std::vector<gtsam::Pose3> solutions  )
+/*
+ Computes 4 solutions. A fourth point needs to be projected for disambiguation.
+ */
+int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints, std::vector<gtsam::Pose3>& solutions  )
 {
     // Extraction of world points
     if(featureVectors.size() < 3 )
@@ -96,10 +73,10 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
     
     // Verification that world points are not colinear
     
-    Eigen::Vector3d temp1 = (P2 - P1).normalized();
-    Eigen::Vector3d temp2 = (P3 - P1).normalized();
+    Eigen::Vector3d temp1 = (P2 - P1);
+    Eigen::Vector3d temp2 = (P3 - P1);
     
-    if( temp1.cross(temp2).norm() == 0 )
+    if( (temp1.cross(temp2)).norm() == 0 )
         return -1;
     
     // Extraction of feature vectors
@@ -111,14 +88,14 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
     // Creation of intermediate camera frame
     
     Eigen::Vector3d e1 = f1;
-    Eigen::Vector3d e3 = e1.cross(f2);
-    e3.normalize(); //may be unnecessary
+    Eigen::Vector3d e3 = f1.cross(f2);
+    e3.normalize();
     Eigen::Vector3d e2 = (e3.cross(e1)).normalized(); //normalization may be unnecessary
     
     Eigen::Matrix3d T;
     T << e1, e2, e3;
     
-    f3 = T*f3;
+    f3 = T.transpose()*f3;
     
     // Reinforce that f3[2] > 0 for having theta in [0;pi]
     
@@ -152,7 +129,7 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
     
     // Extraction of known parameters
     
-    P3 = N*(P3-P1);
+    P3 = N.transpose()*(P3-P1);
     
     double d_12 = (P2-P1).norm();
     double f_1 = f3[0]/f3[2];
@@ -244,17 +221,17 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
              cos_theta*d_12*sin_alpha*(sin_alpha*b+cos_alpha),
              sin_theta*d_12*sin_alpha*(sin_alpha*b+cos_alpha);
         
-        C = P1 + N.transpose()*C;
+        C = P1 + N*C;
         
         Eigen::Matrix3d R;
         R << -cos_alpha,		-sin_alpha*cos_theta,	-sin_alpha*sin_theta,
             sin_alpha,		-cos_alpha*cos_theta,	-cos_alpha*sin_theta,
             0,				-sin_theta,				cos_theta;
         
-        R = N.transpose()*R.transpose()*T;
+        R = N*R.transpose()*T.transpose();
         
         gtsam::Point3 t = C;
-        gtsam::Rot3 rot(R);     //should the rotation be transposed? CHECK.
+        gtsam::Rot3 rot(R);
         gtsam::Pose3 p(rot, t);
         solutions.push_back(p);
     }

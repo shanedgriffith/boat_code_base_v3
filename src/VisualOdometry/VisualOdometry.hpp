@@ -73,7 +73,8 @@ protected:
     int triangulateAndCountInFrontOfCamera(gtsam::Pose3 guess, std::vector<cv::Point2f>& p0, std::vector<cv::Point2f>& p1);
     gtsam::Pose3 recoverPose(cv::Mat E, std::vector<cv::Point2f> p0, std::vector<cv::Point2f> p1);
     
-    gtsam::Pose3 PnP(gtsam::Values& result, gtsam::Pose3 est, std::shared_ptr<ParseFeatureTrackFile> latest);
+    int binarySearch(const std::vector<int>& nums, int value, int s);
+    bool PoseFrom3Dto2DCorrespondences(gtsam::Values& result, std::shared_ptr<ParseFeatureTrackFile> latest, gtsam::Pose3& poseres);
     std::pair<std::vector<cv::Point2f>, std::vector<int>> findOverlappingPointSet(std::vector<gtsam::Point2>& ic1, std::vector<int>& id1, std::vector<int>& ids, bool keep_unmatched = false);
     
     int num_cameras_in_traj = 0;
@@ -95,7 +96,6 @@ protected:
     
     gtsam::Values initEst;
     gtsam::Pose3 _prior;
-    gtsam::Pose3 last_odom;
     gtsam::Values result;
     bool clean_up = false;
     const Camera& _cam;
@@ -115,8 +115,9 @@ public:
     //align the image tracking dataset with the interpolated data in the csv file.
     //this method assumes the image_auxiliary file starts before the csv sift file.
     void SetPrior(gtsam::Pose3 p){_prior = p;}
-    gtsam::Pose3 GetNextOdom(std::shared_ptr<ParseFeatureTrackFile> PFT);
     std::pair<gtsam::Pose3, std::pair<double, int> > PoseFromEssential(std::shared_ptr<ParseFeatureTrackFile> last, std::shared_ptr<ParseFeatureTrackFile> latest);
     std::pair<double, int> KeypointChange(std::shared_ptr<ParseFeatureTrackFile> last, std::shared_ptr<ParseFeatureTrackFile> latest);
     int testAndVerifyVO(std::vector<std::shared_ptr<ParseFeatureTrackFile> > t);
+    void test3Dto2DVO();
+    void test3Dto2DVOWithTriangulation();
 };

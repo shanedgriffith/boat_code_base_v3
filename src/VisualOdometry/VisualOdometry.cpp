@@ -287,7 +287,6 @@ VisualOdometry::checkRes(cv::Mat R, cv::Mat t, std::vector<cv::Point2f> p0, std:
     std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<"<<std::endl;
 }
 
-
 int
 VisualOdometry::triangulateAndCountInFrontOfCamera(gtsam::Pose3 guess, std::vector<cv::Point2f>& p0, std::vector<cv::Point2f>& p1) {
     gtsam::Pose3 gtp0 = gtsam::Pose3::identity();
@@ -326,12 +325,10 @@ gtsam::Pose3 VisualOdometry::recoverPose(cv::Mat E, std::vector<cv::Point2f> p0,
     return poses[maxi];
 }
 
-
-
 std::pair<gtsam::Pose3, std::pair<double, int> > VisualOdometry::PoseFromEssential(std::shared_ptr<ParseFeatureTrackFile> last, std::shared_ptr<ParseFeatureTrackFile> latest) {
-    double MIN_REQ_CORRESPONDENCES = 5; // for the five point algorithm
+    double MIN_REQ_CORRESPONDENCES = 5; // for Nister's five point algorithm
     //using the method to recover the pose from the essential matrix. (for the initial poses)
-
+    
     std::pair<std::vector<cv::Point2f>, std::vector<int>> res1 = findOverlappingPointSet(last->imagecoord, last->ids, latest->ids);
     std::pair<std::vector<cv::Point2f>, std::vector<int>> res2 = findOverlappingPointSet(latest->imagecoord, latest->ids, res1.second);
     std::vector<cv::Point2f> p2d0 = res1.first;
@@ -448,65 +445,60 @@ int VisualOdometry::testAndVerifyVO(std::vector<std::shared_ptr<ParseFeatureTrac
     return reprojected.second;
 }
 
-gtsam::Pose3 VisualOdometry::PnP(gtsam::Values& result, gtsam::Pose3 est, std::shared_ptr<ParseFeatureTrackFile> latest) {
+int
+VisualOdometry::binarySearch(const std::vector<int>& nums, int value, int s)
+{
+    int e = nums.size();
+    while(e-s > 1)
+    {
+        int med = s + (e-s)/2;
+        if(nums[med] > value) e = med;
+        else if(nums[med] < value) s = med+1;
+        else return med;
+    }
+    return s;
+}
+
+bool VisualOdometry::PoseFrom3Dto2DCorrespondences(gtsam::Values& result, std::shared_ptr<ParseFeatureTrackFile> latest, gtsam::Pose3& poseres) {
     /* Use the solution from optimization to determine the location of the next pose.
      */
-    if(latest->ids.size() < 8) return est; //too few points.
     
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point2> p2d1;
     int ci=0;
-    int nnonzero = 0;
-    int i=landmark_keys.size()-1;
-    while(landmark_keys[i]>latest->ids[0]) i--;
-    for(; i<landmark_keys.size(); i++) {
-        while(latest->ids[ci] < landmark_keys[i]) ci++;
+    int numfound = 0;
+    for(int ci=0, i=0; ci<latest->ids.size(); ++ci)
+    {
+        i = binarySearch(landmark_keys, latest->ids[ci], i);
         if(latest->ids[ci] != landmark_keys[i]) continue;
         
         gtsam::Point3 p = landmark_factors[i].point(result).get();
+        if(p.x() == 0 && p.y() == 0 && p.z() == 0) continue;
+        
         p3d.push_back(p);
         p2d1.push_back(latest->imagecoord[ci]);
-        if(p.x() == 0 && p.y() == 0 && p.z() == 0) nnonzero++;
     }
     
-    if(p3d.size() - nnonzero == 0) {
-        std::cout << "Points are zero. cannot run pnp." << std::endl;
-        std::cout << "Estimating pose from the essential matrix instead." << std::endl;
-        std::pair<gtsam::Pose3, std::pair<double, int> >  vop = PoseFromEssential(lastPFT, latest);
-        return vop.first;
+    if( p3d.size() >= 4 )
+    {
+        std::vector<double> inliers(p3d.size(), 1);
+        LocalizePose lp(_cam);
+        std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
+        std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+        if(res.size() > 0)
+        {
+            poseres = GTSAMInterface::VectorToPose(res[0]);
+            return true;
+        }
+        
+        std::cout << "3D to 2D VO failed." << std::endl;
     }
-    if(p3d.size() < 8) return est; //too few points.
+    else
+    {
+        std::cout << "Too few points for 3D to 2D VO." << std::endl;
+    }
     
-    std::vector<double> inliers(p3d.size(), 1);
-    LocalizePose lp(_cam);
-    std::vector<double> pguess = GTSAMInterface::PoseToVector(est);
-    std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
-    if(res.size()==0) return est; //no solution was found.
-    return GTSAMInterface::VectorToPose(res[0]);
-}
-
-gtsam::Pose3 VisualOdometry::GetNextOdom(std::shared_ptr<ParseFeatureTrackFile> PFT){
-    gtsam::Pose3 est, estnewpose = _prior;
-    if(posenum > 0) est = poses[poses.size()-1].compose(last_odom);
-    else est = _prior;
-    if(posenum > 1) {
-        std::pair<gtsam::Pose3, std::pair<double, int> >  vop = PoseFromEssential(lastPFT, PFT);
-        //Xiao: this method still has a scale ambiguity. How you want to solve it is still TBD.
-        last_odom = poses[poses.size()-1].between(estnewpose);
-    } else if(posenum > 1) {
-        //for PnP to work, the initial estimates have to be close.
-        estnewpose = PnP(result, est, PFT); //note, there's a chance PnP could fail.
-        last_odom = poses[poses.size()-1].between(estnewpose);
-    } else last_odom = gtsam::Pose3::identity();
-    
-    Reset();
-    ConstructGraph(estnewpose, PFT);
-    if(posenum > 0) result = RunBA();
-    
-    posenum++;
-
-    lastPFT = PFT;
-    return last_odom;
+    return false;
 }
 
 std::pair<double, int> VisualOdometry::KeypointChange(std::shared_ptr<ParseFeatureTrackFile> last, std::shared_ptr<ParseFeatureTrackFile> latest) {
@@ -535,9 +527,138 @@ void VisualOdometry::PrintVec(std::vector<double> p){
     std::cout << std::endl;
 }
 
+#include "FileParsing/ParseOptimizationResults.h"
 
+void VisualOdometry::test3Dto2DVO()
+{
+    std::string date = "140106";
+    std::string map_base = "/Volumes/Untitled/data/maps/";
+    std::string pftbase = "/Volumes/Untitled/data/Lakeshore_KLT/";
+    
+    ParseOptimizationResults por(map_base, date);
+    gtsam::Point3 zeropoint;
+    
+    for(int i=2; i<100; ++i)
+    {
+        ParseFeatureTrackFile pftf(_cam, pftbase + date, por.ftfilenos[i]);
+        std::vector<gtsam::Point3> subset3d = por.GetSubsetOf3DPoints(pftf.ids);
+        std::vector<gtsam::Point3> p3d;
+        std::vector<gtsam::Point2> p2d1;
+        for(int j=0; j<subset3d.size(); ++j)
+        {
+            if(subset3d[j].distance(zeropoint) == 0) continue;
+            p3d.push_back(subset3d[j]);
+            p2d1.push_back(pftf.imagecoord[j]);
+        }
+        
+        if(p3d.size() >= 4)
+        {
+            std::vector<double> inliers(p3d.size(), 1);
+            LocalizePose lp(_cam);
+            gtsam::Pose3 poseres;
+            std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
+            std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+            if(res.size() > 0)
+            {
+                poseres = GTSAMInterface::VectorToPose(res[0]);
+                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
+            }
+            else
+            {
+                std::cout << "VO failed at pose " << i << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Couldn't run VO" << std::endl;
+        }
+    }
+}
 
-
+void VisualOdometry::test3Dto2DVOWithTriangulation()
+{
+    std::string date = "140106";
+    std::string map_base = "/Volumes/Untitled/data/maps/";
+    std::string pftbase = "/Volumes/Untitled/data/Lakeshore_KLT/";
+    
+    ParseOptimizationResults por(map_base, date);
+    gtsam::Point3 zeropoint;
+    
+    gtsam::Cal3_S2::shared_ptr gtcam = _cam.GetGTSAMCam();
+    
+    
+    std::queue<std::shared_ptr<ParseFeatureTrackFile>> threepftf;
+    std::queue<gtsam::Pose3> threeposes;
+    for(int i=0; i<100; ++i)
+    {
+        std::shared_ptr<ParseFeatureTrackFile> pftf = std::make_shared<ParseFeatureTrackFile>(_cam, pftbase + date, por.ftfilenos[i]);
+        while(threepftf.size() > 2)
+        {
+            threepftf.pop();
+            threeposes.pop();
+        }
+        
+        if(threepftf.size() < 2)
+        {
+            threepftf.push(pftf);
+            threeposes.push(por.CameraPose(i));
+            continue;
+        }
+        
+        //find the three way overlap of the features, triangulate in the first two, then localize the third.
+        std::pair<std::vector<cv::Point2f>, std::vector<int>> subset = findOverlappingPointSet(pftf->imagecoord, pftf->ids, threepftf.front()->ids, false);
+        std::vector<int> subids = subset.second;
+        
+        std::vector<gtsam::Point3> p3d;
+        std::vector<gtsam::Point2> p2d1;
+        for(int j=0; j<subids.size(); ++j)
+        {
+            std::vector<gtsam::Pose3> poses;
+            std::vector<gtsam::Point2> coords;
+            int idx2 = threepftf.back()->GetIndexOfPoint(subids[j]);
+            coords.push_back(threepftf.back()->imagecoord[idx2]);
+            int idx3 = threepftf.front()->GetIndexOfPoint(subids[j]);
+            coords.push_back(threepftf.front()->imagecoord[idx3]);
+            
+            poses.push_back(threeposes.back());
+            poses.push_back(threeposes.front());
+            
+            try {
+                gtsam::Point3 triangulated = triangulatePoint3(poses, gtcam, coords);
+                p3d.push_back(triangulated);
+            }catch(std::exception e) {
+                continue;
+            }
+            
+            p2d1.push_back(gtsam::Point2(subset.first[j].x, subset.first[j].y));
+        }
+        
+        threepftf.push(pftf);
+        threeposes.push(por.CameraPose(i));
+        
+        if(p3d.size() >= 4)
+        {
+            std::vector<double> inliers(p3d.size(), 1);
+            LocalizePose lp(_cam);
+            gtsam::Pose3 poseres;
+            std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
+            std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+            if(res.size() > 0)
+            {
+                poseres = GTSAMInterface::VectorToPose(res[0]);
+                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
+            }
+            else
+            {
+                std::cout << "VO failed at pose " << i << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Couldn't run VO" << std::endl;
+        }
+    }
+}
 
 
 

@@ -37,18 +37,21 @@ protected:
     bool verbose = false;
     bool _print_data_increments = false;
     bool cache_landmarks = false;
+    bool _incremental = false;
     
     static const std::vector<std::string> keys;
     enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
     std::vector<double> vals = {  0, 100, 0, 5 }; //defaults
     
     void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive);
+    void AddActiveLandmarks(std::vector<LandmarkTrack>& landmarks);
     bool OptimizeThisIteration(int camera_key);
     void SaveResults(SaveOptimizationResults& SOR, int iteration = -1, double percent_completed = -1, std::vector<double> drawscale={});
-    void RunGTSAM();
+    void RunGTSAM(bool update_everything);
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition);
-    int AddCamera(gtsam::Pose3 cam);
+    boost::optional<gtsam::Pose3> LocalizeCurPose();
+    void AddCamera(int camera_key, gtsam::Pose3& cam, gtsam::Pose3& localized);
     int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
     std::vector<LandmarkTrack> DEBUGMOD(std::vector<LandmarkTrack>& inactive);
     

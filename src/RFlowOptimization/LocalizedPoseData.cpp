@@ -317,7 +317,7 @@ double LocalizedPoseData::VerifyWith(const Camera& _cam, LocalizedPoseData& lpd,
         gtsam::Point2 p2t = _cam.ProjectToImage(p3t);
 //        if(i<10) std::cout << "point coordinates: ("<<p2t.x() << "," << p2t.y() << ") vs. (" <<p2t_est.x() << ", " << p2t_est.y() << ")"<<std::endl;
         if(!_cam.InsideImage(p2t_est) || !_cam.InsideImage(p2t)) continue;
-        double dist = p2t_est.dist(p2t);
+        double dist = p2t_est.distance(p2t);
         sum_rerror += dist;
         count_in_both++;
         if(dist<=ACCEPTABLE_RERROR) count_inliers++;

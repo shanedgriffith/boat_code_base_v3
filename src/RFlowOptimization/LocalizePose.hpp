@@ -42,7 +42,7 @@ protected:
     int MAX_RANSAC_ITERS = 100;
     int RANSAC_IMPROV_ITERS = 100;
     double RANSAC_PERC_DC = 0.5;
-    int MIN_CORRESPONDENCES = 15;
+    int MIN_CORRESPONDENCES = 4;
 
     std::vector<double> Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, double err);
     void UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
@@ -67,7 +67,9 @@ protected:
     void GenerateRandomSet(int n, std::vector<int>& rset);
     std::vector<double> RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
     
-    std::vector<double> RANSAC_P3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    std::vector<double> RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    
+    gtsam::Pose3 disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d);
     
     gtsam::NonlinearFactorGraph graph;
     gtsam::Values initEst;
@@ -87,6 +89,12 @@ public:
     std::vector<std::vector<double> > RobustDualBA(std::vector<double> p0, std::vector<double> p1,
                                                                 std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
                                                                 std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb);
+    
+    gtsam::Pose3 RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
+    
+    void testP3P();
+    
+    void testP3PStatic();
 };
 
 

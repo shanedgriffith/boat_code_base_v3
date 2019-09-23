@@ -1194,9 +1194,9 @@ void AlignICPImagePairs::CreateTimeLapsesForEvaluation() {
         {
             gtsam::Pose3 ref = GTSAMInterface::VectorToPose(por[12].boat[p]);
             gtsam::Pose3 c = GTSAMInterface::VectorToPose(por[d].boat[pset[i]]);
-            if(ref.translation().dist(c.translation()) < dist)
+            if(ref.translation().distance(c.translation()) < dist)
             {
-                dist = ref.translation().dist(c.translation()) ;
+                dist = ref.translation().distance(c.translation()) ;
                 idx = p;
             }
         }

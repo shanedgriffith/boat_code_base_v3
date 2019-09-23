@@ -34,7 +34,7 @@ private:
     void SortPoints();
     int GetIndexOfFirstPoint(int id);
     void LoadOptimizationResult();
-
+    
     void RemoveTransitionEntries();
     std::vector<int> to_remove;
     std::vector<double> rerror;//reprojection error for each entry in cimage.

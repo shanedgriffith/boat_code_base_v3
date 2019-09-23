@@ -70,6 +70,7 @@ public:
     std::vector<std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > > landmark_factors; // GTSAM 3.2.1
 #endif
     std::vector<std::vector<int> > landmark_keys; //used by the GTSAMInterface
+    std::vector<std::vector<int> > landmark_to_graph_index;
     
     
     FactorGraph(): active_landmark_set(0), next_camera_key(0), landmarks(0), landmark_constraints(0), variables(0), variable_constraints(0) {
@@ -94,6 +95,8 @@ public:
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
     virtual void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
+    void AddToExistingLandmark(gtsam::Point2& point, int camera_key, int smart_factor_idx);
+    int GraphHasLandmark(int landmark_key);
     void SetLandmarkDeviation(double dev);
     
     void Clear();

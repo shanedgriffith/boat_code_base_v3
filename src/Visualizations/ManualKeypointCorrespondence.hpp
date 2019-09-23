@@ -66,6 +66,8 @@ public:
     
     void GetLocalizationList();
     
+    void testManualCorrespondence(std::string d0, int p0, std::string d1, int p1);
+    
 };
 
 

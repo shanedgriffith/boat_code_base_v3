@@ -18,6 +18,8 @@
 #include <gtsam/geometry/Point2.h>
 #include <ImageAlignment/GeometricFlow/ReprojectionFlow.hpp>
 
+#include "Optimization/SingleSession/GTSAMInterface.h"
+
 static void
 MouseFunc(int event, int x, int y, int flags, void* userdata) {
     ManualKeypointCorrespondence* mic = static_cast<ManualKeypointCorrespondence*>(userdata);
@@ -87,13 +89,16 @@ ManualKeypointCorrespondence::UpdateLocalizedPose() {
     LocalizePose lp(_cam);
     lp.debug = true;
     lp.SetErrorThreshold(25.0);
-    std::vector<std::vector<double> > newpose = lp.UseBAIterative(_por1.boat[_p1], p3d, p2d, inliers);
-    if(newpose.size()==0) {
-        std::cout << "No localization" << std::endl;
-        _show_preview = false;
-        return;
-    }
-    _lpose = newpose[0];
+//    std::vector<std::vector<double> > newpose = lp.UseBAIterative(_por1.boat[_p1], p3d, p2d, inliers);
+    gtsam::Pose3 estp = lp.P3P(p3d, p2d);
+    _lpose = GTSAMInterface::PoseToVector(estp);
+    
+//    if(newpose.size()==0) {
+//        std::cout << "No localization" << std::endl;
+//        _show_preview = false;
+//        return;
+//    }
+//    _lpose = newpose[0];
 }
 
 bool
@@ -287,7 +292,7 @@ ManualKeypointCorrespondence::GetLocalizationList() {
             std::cout << "not enough correspondences to accept it. Have " << indices.size() << " Check " << files[i] << std::endl;
             accepted = false;
         }
-            
+        
         std::string data = std::to_string(accepted) + ", " + d0 + ", " + std::to_string(p0) + ", " + d1 + ", " + std::to_string(p1);
         for(int j=0; j<_lpose.size(); ++j)
             data += ", " + std::to_string(_lpose[j]);
@@ -301,6 +306,20 @@ ManualKeypointCorrespondence::GetLocalizationList() {
     std::cout << "files: " << files.size() << std::endl;
 }
 
+void
+ManualKeypointCorrespondence::testManualCorrespondence(std::string d0, int p0, std::string d1, int p1)
+{
+    std::string loadf = _save_dir + GetFilename(_d0, _p0, _d1, _p1);
+    std::vector<std::vector<std::string> > fs = FileParsing::ReadCSVFile(loadf);
+    
+    for(int j=0; j<fs.size(); ++j) {
+        indices.push_back(stoi(fs[j][0]));
+        correspondences.push_back(cv::Point2i(stoi(fs[j][1]), stoi(fs[j][2])));
+    }
+    
+    _show_preview = true;
+    RunManualCorrespondence(d0, p0, d1, p1);
+}
 
 
 
