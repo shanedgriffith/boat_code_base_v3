@@ -306,7 +306,8 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     //EM approach to finding the best pose.
     //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
     gtsam::Pose3 best_pose = p1guess;
-    std::vector<int> rset(15); //15 because it's using BA to solve for the pose. MIN_CORRESPONDENCES);
+    const int SAMPLE_SIZE = 15;
+    std::vector<int> rset(SAMPLE_SIZE); //15 because it's using BA to solve for the pose. MIN_CORRESPONDENCES);
     std::vector<gtsam::Point3> subp3d(rset.size());
     std::vector<gtsam::Point2> subp2d1(rset.size());
     std::vector<double> subinliers(rset.size(), ACCEPTABLE_TRI_RERROR);
@@ -315,7 +316,9 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
     int last_save_iter = 0;
     double err = ACCEPTABLE_TRI_RERROR;
     
-    for(; iters<MAX_RANSAC_ITERS; iters++){
+    int n_iters = MAX_RANSAC_ITERS;
+    
+    for(; iters<n_iters; iters++){
         GenerateRandomSet(p3d.size(), rset);
         for(int j=0; j<rset.size(); j++){
             subp3d[j] = p3d[rset[j]];
@@ -331,6 +334,10 @@ std::vector<double> LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<g
             best_pose = estp;
             last_save_iter = iters;
         }
+        
+        int n_total_iters = ceil(NumRequiredRANSACIterations(posevals[1], p3d.size(), SAMPLE_SIZE, 0.99));
+        
+        n_iters = std::min(n_iters, n_total_iters);
         
         //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
@@ -355,12 +362,19 @@ gtsam::Pose3 LocalizePose::disambiguatePoses(const std::vector<gtsam::Pose3>& po
     double bestdist = 100000000;
     for(int i=0; i<poses.size(); ++i)
     {
+//        std::vector<double> pvec = GTSAMInterface::PoseToVector(poses[i]);
+//        std::cout << " pose["<<i<<"]:";
+//        for(int j=0; j<6; ++j) std::cout << pvec[j] << ", ";
+        
+        if(std::isnan(poses[i].translation().x()))
+           continue;
+        
         double sumd = 0;
         for(int j=3; j<p3d.size(); ++j)
         {
-            gtsam::Point3 tfp = poses[i].transform_to(p3d[i]);
+            gtsam::Point3 tfp = poses[i].transform_to(p3d[j]);
             gtsam::Point2 res = _cam.ProjectToImage(tfp);
-            sumd += res.distance(p2d[i]);
+            sumd += res.distance(p2d[j]);
         }
         
         if(sumd < bestdist)
@@ -368,6 +382,8 @@ gtsam::Pose3 LocalizePose::disambiguatePoses(const std::vector<gtsam::Pose3>& po
             bestdist = sumd;
             bestpidx = i;
         }
+        
+//        std::cout << "distance: " << sumd << std::endl;
     }
     
     if(bestpidx == -1)
@@ -397,7 +413,15 @@ gtsam::Pose3 LocalizePose::RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<g
     if(P3P::computePoses(featureVectors, p3d, poses) < 0)
         return gtsam::Pose3::identity();
     
-    return disambiguatePoses(poses, p3d, p2d1);
+    gtsam::Pose3 res = disambiguatePoses(poses, p3d, p2d1);
+    
+    return res;
+}
+
+double LocalizePose::NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers)
+{
+    double w = 1.0 * ninliers / setsize;
+    return log(1-probability_all_inliers) / log(1.0-pow(w, nsamples_per_iteration));
 }
 
 std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers){
@@ -413,8 +437,9 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
     int iters=0;
     int last_save_iter = 0;
     double err = ACCEPTABLE_TRI_RERROR;
+    int n_iters = MAX_RANSAC_ITERS;
     
-    for(; iters<MAX_RANSAC_ITERS; ++iters) {
+    for(; iters<n_iters; ++iters) {
         GenerateRandomSet(rset.size(), rset);
         for(int j=0; j<rset.size(); j++)
         {
@@ -431,6 +456,10 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
             last_save_iter = iters;
         }
         
+        int n_total_iters = ceil(NumRequiredRANSACIterations(posevals[1], p3d.size(), 3, 0.99));//the fourth sample needs to be an inlier as well..., but if it's slightly off, the the correct result can still be selected.
+        
+//        n_iters = std::min(n_iters, n_total_iters);
+        std::cout << "computed: " << n_total_iters << " iterations from " << posevals[1] << " inliers " << std::endl;
         //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
@@ -550,15 +579,35 @@ LocalizePose::testP3P()
 
 void LocalizePose::testP3PStatic()
 {
+//    std::vector<gtsam::Point3> p3d;
+//    p3d.push_back(gtsam::Point3(9.4018, -1.5499,   23.0600));
+//    p3d.push_back(gtsam::Point3(-2.5338,    3.2552,   21.2078));
+//    p3d.push_back(gtsam::Point3(7.8374,   -0.2290,   29.9017));
+//    
+//    std::vector<gtsam::Vector3> fv;
+//    fv.push_back(gtsam::Vector3(0.2242,   -0.1192,    0.9672));
+//    fv.push_back(gtsam::Vector3(-0.2503,    0.1390,    0.9581));
+//    fv.push_back(gtsam::Vector3(0.1025,   -0.0488,    0.9935));
+    
+//    std::vector<gtsam::Point3> p3d;
+//    p3d.push_back(gtsam::Point3(7.8374239625126618, -0.22899924803678293, 29.901690966140507));
+//    p3d.push_back(gtsam::Point3(9.4018271719739328, -1.5498887495034495, 23.059974538213531));
+//    p3d.push_back(gtsam::Point3(6.399907865448605, 3.7013520677203462, 15.88052298403249));
+//
+//    std::vector<gtsam::Vector3> fv;
+//    fv.push_back(gtsam::Vector3(0.10253084628648672, -0.04876381770836747, 0.99353385228802438));
+//    fv.push_back(gtsam::Vector3(0.22417194757265813, -0.11919172894844883, 0.96723330674236041));
+//    fv.push_back(gtsam::Vector3(0.24338070939382267, 0.14619270947184998, 0.95885010402681758));
+    
     std::vector<gtsam::Point3> p3d;
-    p3d.push_back(gtsam::Point3(9.4018, -1.5499,   23.0600));
-    p3d.push_back(gtsam::Point3(-2.5338,    3.2552,   21.2078));
-    p3d.push_back(gtsam::Point3(7.8374,   -0.2290,   29.9017));
+    p3d.push_back(gtsam::Point3(6.399907865448605, 3.7013520677203462, 15.88052298403249));
+    p3d.push_back(gtsam::Point3(7.8374239625126618, -0.22899924803678293, 29.901690966140507));
+    p3d.push_back(gtsam::Point3(-2.533779947900519, 3.2552056641485154, 21.207798563040122));
     
     std::vector<gtsam::Vector3> fv;
-    fv.push_back(gtsam::Vector3(0.2242,   -0.1192,    0.9672));
-    fv.push_back(gtsam::Vector3(-0.2503,    0.1390,    0.9581));
-    fv.push_back(gtsam::Vector3(0.1025,   -0.0488,    0.9935));
+    fv.push_back(gtsam::Vector3(0.24338070939382267, 0.14619270947184998, 0.95885010402681758));
+    fv.push_back(gtsam::Vector3(0.10253084628648672, -0.04876381770836747, 0.99353385228802438));
+    fv.push_back(gtsam::Vector3(-0.25028760971257907,0.13904407122646398, 0.9581350941705109));
     
     std::vector<gtsam::Pose3> poses;
     P3P::computePoses(fv, p3d, poses);

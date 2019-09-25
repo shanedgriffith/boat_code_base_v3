@@ -10,6 +10,7 @@
 
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 #include <gtsam/nonlinear/DoglegOptimizer.h>
+#include <gtsam/geometry/triangulation.h>
 
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
@@ -296,7 +297,8 @@ VisualOdometry::triangulateAndCountInFrontOfCamera(gtsam::Pose3 guess, std::vect
     
     int gtc = 0;
     for(int i=0; i<p0.size(); i++) {
-        std::vector<gtsam::Point2> measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
+//        std::vector<gtsam::Point2> measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
+        gtsam::Point2Vector measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
         try{
             gtsam::Point3 resp = triangulatePoint3(poses, default_cam, measurements);
         }catch(std::exception e) {
@@ -614,7 +616,7 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         for(int j=0; j<subids.size(); ++j)
         {
             std::vector<gtsam::Pose3> poses;
-            std::vector<gtsam::Point2> coords;
+            gtsam::Point2Vector coords;
             int idx2 = threepftf.back()->GetIndexOfPoint(subids[j]);
             coords.push_back(threepftf.back()->imagecoord[idx2]);
             int idx3 = threepftf.front()->GetIndexOfPoint(subids[j]);

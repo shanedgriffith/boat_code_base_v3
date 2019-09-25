@@ -64,7 +64,8 @@ gtsam::Cal3_S2::shared_ptr Camera::GetGTSAMCam() const{
     return k;
 }
 
-void Camera::SetDistortion(double k1, double k2, double p1, double p2, double k3) const{
+void Camera::SetDistortion(double k1, double k2, double p1, double p2, double k3)
+{
     double * d = (double *) distCoeffs.data;
     d[0] = k1;
     d[1] = k2;

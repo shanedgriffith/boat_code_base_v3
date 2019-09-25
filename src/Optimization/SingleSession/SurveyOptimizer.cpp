@@ -115,11 +115,11 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
     }
 }
 
-void SurveyOptimizer::AddCamera(int camera_key, gtsam::Pose3& measured, gtsam::Pose3& localized){
-    num_cameras_in_traj++;
-    GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, localized);
-    FG->AddCamera(camera_key, measured);
-}
+//void SurveyOptimizer::AddCamera(int camera_key, gtsam::Pose3& measured, gtsam::Pose3& localized){
+//    num_cameras_in_traj++;
+//    GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, localized);
+//    FG->AddCamera(camera_key, measured);
+//}
 
 void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
     for(int i=0; i<landmarks.size(); i++)
@@ -211,6 +211,8 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
     
     int camera_key = FG->GetNextCameraKey();
+    ++num_cameras_in_traj;
+    FG->AddCamera(camera_key, cam);
     
     //check for camera transitions
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
@@ -229,14 +231,14 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     else if(_incremental) AddActiveLandmarks(active);
     else AddLandmarkTracks(inactive);
     
-    //add the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
+    //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
     if(_incremental and cidx > 2)
     {
         curpose = LocalizeCurPose();
+        if(curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curpose.get());
     }
-    if(not curpose) curpose = cam;
-    AddCamera(camera_key, cam, curpose.get());
+    if(not curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, cam);
     
     
     //add the kinematic constraints.
@@ -258,7 +260,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     return camera_key;
 }
 
-void SurveyOptimizer::Optimize(ParseSurvey& PS){
+void SurveyOptimizer::Optimize(ParseSurvey& PS) {
     //TODO: implement pose decimation, rather than the 1 by 10 (CAM_SKIP) rule currently used.
 	if(!initialized){cout << "SurveyOptimizer::Optimize() check initialization"<<endl; exit(1);}
     

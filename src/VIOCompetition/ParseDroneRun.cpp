@@ -63,7 +63,7 @@ Camera ParseDroneRun::GetCamera()
 {
     //TODO: what's the camera's calibration? Or calibrate it separately.
     Camera davis(2*174.23979032083346, 2*174.11105443010973, 163.91078563399876, 140.9726709818771, 346, 260);
-    davis.SetDistortion(-0.03560363132286886, 0.001974723646350411, 0, 0, -0.0045671620060236855);
+    davis.SetDistortion(-0.03560363132286886, 0.001974723646350411, 0.0, 0.0, -0.0045671620060236855);
     return davis;
 }
 

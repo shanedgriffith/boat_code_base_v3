@@ -111,7 +111,7 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
         
         T << e1, e2, e3;
         
-        f3 = T*f3;
+        f3 = T.transpose()*f3;
         
         P1 = worldPoints[1];
         P2 = worldPoints[0];

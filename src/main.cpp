@@ -39,16 +39,17 @@ int main(int argc, char *argv[])
     string results_dir = home_paths[0];
     
     Camera axisptz = ParseBoatSurvey::GetCamera();
-//    LocalizePose loc(axisptz);
-//    loc.testP3P();
+    LocalizePose loc(axisptz);
+    loc.debug = true;
+    loc.testP3P();
 //    loc.testP3PStatic();
     
-    std::string date = "140106";
-    
-    ParseBoatSurvey PS(query_loc, pftbase, date);
-    SurveyOptimizer so(axisptz, date, results_dir, true);
-    so.Initialize();
-    so.Optimize(PS);
+//    std::string date = "140106";
+//    
+//    ParseBoatSurvey PS(query_loc, pftbase, date);
+//    SurveyOptimizer so(axisptz, date, results_dir, true);
+//    so.Initialize();
+//    so.Optimize(PS);
     
 //    VisualOdometry vo(axisptz);
 ////    vo.test3Dto2DVO();
