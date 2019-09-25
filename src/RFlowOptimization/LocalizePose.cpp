@@ -456,10 +456,10 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
             last_save_iter = iters;
         }
         
-        int n_total_iters = ceil(NumRequiredRANSACIterations(posevals[1], p3d.size(), 3, 0.99));//the fourth sample needs to be an inlier as well..., but if it's slightly off, the the correct result can still be selected.
+        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d.size(), 3, 0.99));//the fourth sample needs to be an inlier as well..., but if it's slightly off, the the correct result can still be selected.
         
-//        n_iters = std::min(n_iters, n_total_iters);
-        std::cout << "computed: " << n_total_iters << " iterations from " << posevals[1] << " inliers " << std::endl;
+        n_iters = std::min(n_iters, n_total_iters);
+//        std::cout << "computed: " << n_total_iters << " iterations from " << posevals[1] << " inliers " << std::endl;
         //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
