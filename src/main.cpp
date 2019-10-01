@@ -3,7 +3,7 @@
 #include "BoatSurvey/ParseBoatSurvey.hpp"
 #include "VIOCompetition/ParseDroneRun.hpp"
 #include "VIOCompetition/PreprocessDroneRun.hpp"
-#include "VIOCompetition/IMUFactorOptimizationTest.hpp"
+//#include "VIOCompetition/IMUFactorOptimizationTest.hpp"
 #include "VisualOdometry/VisualOdometry.hpp"
 
 #include "Optimization/SingleSession/SurveyOptimizer.h"
@@ -17,8 +17,6 @@ vector<string> lab_paths = {"/cs-share/dream/results_consecutive/", "/mnt/tale/c
 vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/Data/VBags/", "/Volumes/Untitled/data/Lakeshore_KLT/", "/Volumes/Untitled/bikedata/"};
 //vector<string> home_paths = {"/Volumes/SAMSUNG/Data/", "/Volumes/SAMSUNG/Data/VBags/", "/Volumes/Untitled/data/Lakeshore_KLT/", "/Volumes/Untitled/bikedata/"};
 //"/Volumes/SAMSUNG/Data/Lakeshore_KLT/"
-
-
 
 int main(int argc, char *argv[])
 {
@@ -34,22 +32,23 @@ int main(int argc, char *argv[])
 //    testIMU.optimizeDroneRun();
 //    exit(1);
     
-    string query_loc = home_paths[1];
+    string query_loc = "/Volumes/Untitled/data/VBags/";//home_paths[1];
     string pftbase = home_paths[2];
     string results_dir = home_paths[0];
     
     Camera axisptz = ParseBoatSurvey::GetCamera();
     LocalizePose loc(axisptz);
-    loc.debug = true;
-    loc.testP3P();
+//    loc.debug = true;
+//    loc.testP3P();
+//    loc.test();
 //    loc.testP3PStatic();
     
-//    std::string date = "140106";
-//    
-//    ParseBoatSurvey PS(query_loc, pftbase, date);
-//    SurveyOptimizer so(axisptz, date, results_dir, true);
-//    so.Initialize();
-//    so.Optimize(PS);
+    std::string date = "140106";
+
+    ParseBoatSurvey PS(query_loc, pftbase, date);
+    SurveyOptimizer so(axisptz, date, results_dir);
+    so.Initialize();
+    so.Optimize(PS);
     
 //    VisualOdometry vo(axisptz);
 ////    vo.test3Dto2DVO();

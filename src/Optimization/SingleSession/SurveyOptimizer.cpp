@@ -40,6 +40,7 @@ void SurveyOptimizer::Initialize(){
     LoadParameters();
     
     _incremental = ((int) vals[Param::OPT_SKIP]) == 1;
+    std::cout << "incremental? " << _incremental << std::endl;
     GTS.SetupSLAM(_incremental);
     if(debug)  GTS.SetPrintSymbols();
     
@@ -123,7 +124,9 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
 
 void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
     for(int i=0; i<landmarks.size(); i++)
+    {
         FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+    }
 }
 
 void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
@@ -140,12 +143,13 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
                 std::cout << "SurveyOptimizer::AddActiveLandmarks() error. the active landmark should have already been added to the factor graph, but it wasn't found." << std::endl;
                 exit(-1);
             }
-            
+#ifdef GTSAM4
             //remove the factor from isam2
             GTS.RemoveLandmarkFactor(smart_factor_idx);
+#endif
             
             //add the new measurement to the existing factor and add it back to the factor graph, which will be added to isam2
-            FG->AddToExistingLandmark(landmarks[i].points[len-1], landmarks[i].camera_keys[len-1], smart_factor_idx);
+            FG->AddToExistingLandmark(landmarks[i].points[len-1], (int) 'x', landmarks[i].camera_keys[len-1], smart_factor_idx);
         }
         else if(len > 1)
         {
@@ -185,7 +189,7 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
         int smart_factor_idx = FG->GraphHasLandmark(active[i].key);
         if(smart_factor_idx < 0)
             continue;
-        
+
         boost::optional<gtsam::Point3> triangulated = GTS.triangulatePointFromPoseValues(*v, smart_factor_idx);
         if(triangulated)
         {
@@ -194,13 +198,14 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
         }
     }
     
-    std::cout << "localizing the new pose using: " << p3d.size() << " points " << std::endl;
+    //std::cout << "localizing the new pose using: " << p3d.size() << " points " << std::endl;
     
     LocalizePose loc(_cam);
+//    loc.debug = true;
     std::vector<double> vec(6,0);
     std::vector<double> inliers(p3d.size(), 1.0);
     std::vector<std::vector<double>> res = loc.UseBAIterative(vec, p3d, p2d1, inliers);
-    if(res.size() > 0)
+    if(res.size() > 0 and res[1][1] > 0.5 * p3d.size())
         return GTSAMInterface::VectorToPose(res[0]);
     return {};
 }
@@ -208,11 +213,11 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
 int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
     gtsam::Pose3 cam = PS.CameraPose(cidx); //the camera pose estimated using sensors.
-    gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
+    static gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
+    gtsam::Pose3 curcam = cam;
     
     int camera_key = FG->GetNextCameraKey();
-    ++num_cameras_in_traj;
-    FG->AddCamera(camera_key, cam);
+    std::cout << "at iteration with camera x" << camera_key << std::endl;
     
     //check for camera transitions
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
@@ -225,25 +230,34 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     	active.clear();
     }
     
-    //process the landmark measurement and add it to the graph
+    //process the landmark measurement
     std::vector<LandmarkTrack> inactive = PFT.ProcessNewPoints((int) 'x', camera_key, active, percent_of_tracks);
+    
+    //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
+    boost::optional<gtsam::Pose3> curpose;
+    if(_incremental and camera_key > 1)
+    {
+        curpose = LocalizeCurPose();
+        if(curpose) {
+            GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curpose.get());
+            std::cout << "localization succeeded" << std::endl;
+            curcam = curpose.get();
+        }
+        else std::cout << "localization failed" << std::endl;
+    }
+    if(not curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, cam);
+    
+    //add the landmark measurement to the graph
     if(cache_landmarks) CacheLandmarks(inactive);
     else if(_incremental) AddActiveLandmarks(active);
     else AddLandmarkTracks(inactive);
     
-    //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
-    boost::optional<gtsam::Pose3> curpose;
-    if(_incremental and cidx > 2)
-    {
-        curpose = LocalizeCurPose();
-        if(curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curpose.get());
-    }
-    if(not curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, cam);
-    
+    ++num_cameras_in_traj;
+    FG->AddCamera(camera_key, curcam);
     
     //add the kinematic constraints.
     if(camera_key != 0) {
-        gtsam::Pose3 btwn_pos = last_cam.between(cam);
+        gtsam::Pose3 btwn_pos = last_cam.between(curcam);
         
         if(PS.ConstantVelocity()){
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
@@ -257,6 +271,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
         }
     }
     
+    last_cam = cam;
     return camera_key;
 }
 

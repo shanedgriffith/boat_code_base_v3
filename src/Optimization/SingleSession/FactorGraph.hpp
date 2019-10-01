@@ -95,7 +95,7 @@ public:
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
     virtual void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);
-    void AddToExistingLandmark(gtsam::Point2& point, int camera_key, int smart_factor_idx);
+    void AddToExistingLandmark(gtsam::Point2& point, int survey, int camera_key, int smart_factor_idx);
     int GraphHasLandmark(int landmark_key);
     void SetLandmarkDeviation(double dev);
     

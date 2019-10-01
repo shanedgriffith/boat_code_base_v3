@@ -44,22 +44,8 @@ void GTSAMInterface::SetupSLAM(bool incremental) {
         _incremental = true;
         FastMap<char, gtsam::Vector> thresholds;
         
-        Eigen::Matrix<double, 6, 1> params;
-        params << (vals[Param::POS_RELINEARIZE_THRESH],
-                       vals[Param::POS_RELINEARIZE_THRESH],
-                       vals[Param::POS_RELINEARIZE_THRESH],
-                       vals[Param::ANGLE_RELINEARIZE_THRESH],
-                       vals[Param::ANGLE_RELINEARIZE_THRESH],
-                       vals[Param::ANGLE_RELINEARIZE_THRESH]);
-        thresholds['x'] = params;
-        
-        params << (vals[Param::VP_RELINEARIZE_THRESH],
-                   vals[Param::VP_RELINEARIZE_THRESH],
-                   vals[Param::VP_RELINEARIZE_THRESH],
-                   vals[Param::VA_RELINEARIZE_THRESH],
-                   vals[Param::VA_RELINEARIZE_THRESH],
-                   vals[Param::VA_RELINEARIZE_THRESH]);
-        thresholds['v'] = params;
+        thresholds['x'] =  Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::POS_RELINEARIZE_THRESH]), 6, 1);
+        thresholds['v'] =  Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::VP_RELINEARIZE_THRESH]), 6, 1);
         
         ISAM2Params parameters;
         parameters.relinearizeThreshold = thresholds;
@@ -69,6 +55,7 @@ void GTSAMInterface::SetupSLAM(bool incremental) {
         //        parameters.evaluateNonlinearError = true;
         //        parameters.enablePartialRelinearizationCheck = false;
         parameters.findUnusedFactorSlots = true;
+        parameters.cacheLinearizedFactors = false;
         ISAM2 isam(parameters);
         i2 = isam;
     }
@@ -77,6 +64,7 @@ void GTSAMInterface::SetupSLAM(bool incremental) {
     initialEstimate.clear();
 }
 
+#ifdef GTSAM4
 void GTSAMInterface::RemoveLandmarkFactor(int landmark_idx)
 {
     if(landmark_idx > _fg->landmark_to_graph_index[_fg->GetActiveLandmarkSet()].size())
@@ -88,6 +76,27 @@ void GTSAMInterface::RemoveLandmarkFactor(int landmark_idx)
     int factor_idx = last_factor_indices[last_graph_idx];
     
     factors_to_remove.push_back(factor_idx);
+    
+//    const NonlinearFactorGraph& nfg = i2.getFactorsUnsafe(); //reordered?
+//    auto f = nfg[factor_idx];
+//    std::cout << "set to remove landmark: " << landmark_idx << ", with factor idx: " << factor_idx << ", and factor: ";
+//    f->printKeys();
+}
+#endif
+
+void GTSAMInterface::Printi2Graph(const std::string& name, const gtsam::NonlinearFactorGraph& nfg)
+{
+    std::cout << name << std::endl;
+    for(int i=0; i<nfg.size(); ++i)
+    {
+        auto f = nfg[i];
+        
+        std::cout << "factor: [" << i <<"]: ";
+        if(f != nullptr and f->size() > 0)
+            f->printKeys();
+        else
+            std::cout << " erased " << std::endl;
+    }
 }
 
 void GTSAMInterface::IncrementalUpdate() {
@@ -95,13 +104,25 @@ void GTSAMInterface::IncrementalUpdate() {
      If accuracy is desired at the expense of time, update(*) can be called additional times
      to perform multiple optimizer iterations every step.
      */
+    
+//    std::cout << "incremental update. removing " << factors_to_remove.size() << std::endl;
+//    initialEstimate.print();
+//    _fg->graph.print();
+    //    std::cout << "initial error. " << _fg->graph.error(initialEstimate) << std::endl;
+    Printi2Graph("Factor graph before update()", i2.getFactorsUnsafe());
+    Printi2Graph("Factors to add", _fg->graph);
+    
     try {
         int iterations = vals[Param::UPDATE_ITERATIONS];
         for(int i=0; i<iterations; i++) {
             if(i==0) {
+#ifdef GTSAM4
                 ISAM2Result res = i2.update(_fg->graph, initialEstimate, factors_to_remove);
                 factors_to_remove.clear();
                 last_factor_indices = res.newFactorsIndices;
+#else
+                ISAM2Result res = i2.update(_fg->graph, initialEstimate);
+#endif
             } else {
                 i2.update();
             }
@@ -109,14 +130,15 @@ void GTSAMInterface::IncrementalUpdate() {
         
         //results = i2.calculateEstimate(); //only calculate an estimate for a specific key, if the whole thing is needed, calculateBestEstimate()
         //isam2 holds its own copy of those values and the graph structure.
-        _fg->Clear();
+//        _fg->Clear();
+        _fg->graph.resize(0);
         initialEstimate.clear();
     } catch(const std::exception& ex) {
         printf("There was an exception while attempting to solve the factor graph.");
         printf("Known causes of the exception:\n");
         printf(" >The camera pose used to create landmark observations was not initialized\n");
         printf(" >A prior was not specified for the first camera pose.\n");
-        printf(" >landmarks need to be observed at least twice.");
+        printf(" >landmarks need to be observed at least twice.\n");
         std::cout << ex.what()<<std::endl;
         
         if(debug) {
@@ -128,12 +150,19 @@ void GTSAMInterface::IncrementalUpdate() {
             std::cout << ex.what()<<std::endl;
             exit(-1);
         }
+        exit(-1); //exit because the upkeep after update() wasn't done.
     }
+    Printi2Graph("Factor graph after update()", i2.getFactorsUnsafe());
 }
 
+
 void GTSAMInterface::BatchUpdate() {
+    
+    std::cout << "Batch update. Factor graph size: " << _fg->graph.size() << std::endl;
+    std::cout << "initial error. " << _fg->graph.error(initialEstimate) << std::endl;
+    
     try {
-        std::cout << "Batch update. Factor graph size: " << _fg->graph.size() << std::endl;
+        
         switch(_batch_optimizer) {
             case LEVENBERG_MARQUARDT:
                 results = LevenbergMarquardtOptimizer(_fg->graph, initialEstimate).optimize();
@@ -171,6 +200,8 @@ void GTSAMInterface::BatchUpdate() {
         }
         exit(-1);
     }
+    
+    std::cout << "final error. " << _fg->graph.error(results) << std::endl;
 }
 
 void GTSAMInterface::Update(bool everything)
@@ -227,17 +258,22 @@ std::shared_ptr<gtsam::Values> GTSAMInterface::getPoseValuesFrom(int var_id, int
     {
         gtsam::Symbol s(var_id, i);
         gtsam::Pose3 cur = i2.calculateEstimate<gtsam::Pose3>(s);
+#ifdef GTSAM4
         v->insert<gtsam::Pose3>(s, cur);
+#endif
     }
     return v;
 }
 
 gtsam::Pose3 GTSAMInterface::PoseResult(Symbol s) {
+#ifdef GTSAM4
     if(_incremental and not i2.valueExists(s))//exists() is O(1); uses a map.
     {
         return i2.calculateEstimate<gtsam::Pose3>(s);
     }
-    else if(results.exists<Pose3>(s))
+    else
+#endif
+    if(results.exists<Pose3>(s))
         return results.at<Pose3>(s);
     else if(initialEstimate.exists<Pose3>(s))
         return initialEstimate.at<Pose3>(s);

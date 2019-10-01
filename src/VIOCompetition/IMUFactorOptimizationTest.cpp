@@ -3,10 +3,15 @@
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/SmartProjectionPoseFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
+
+
+#ifdef GTSAM4
+
 #include "GravityFactor.h"
 
 using namespace std;
 using namespace gtsam;
+
 
 using symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 using symbol_shorthand::V; // Vel   (xdot,ydot,zdot)
@@ -134,7 +139,6 @@ IMUFactorOptimizationTest::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, Landma
     const int ldist = 100; //this threshold specifies the distance between the camera and the landmark.
     const int onoise = 10; //the threshold specifies at what point factors are discarded due to reprojection error.
     
-#ifdef GTSAM4
     //GTSAM 4.0
     //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
     //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
@@ -144,17 +148,10 @@ IMUFactorOptimizationTest::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, Landma
     params.setDynamicOutlierRejectionThreshold(onoise);
     
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
-#else
-    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
-#endif
     
     for(int i=0; i<landmark.points.size(); i++)
     {
-#ifdef GTSAM4
         sppf.add(landmark.points[i], landmark.camera_keys[i]); //GTSAM 4.0
-#else
-        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k); //GTSAM 3.2.1
-#endif
     }
     
     landmark_factors.push_back(sppf);
@@ -501,3 +498,5 @@ IMUFactorOptimizationTest::testIMUFactor(std::vector<gtsam::Vector3> lin_acc, st
         //        }
     }
 }
+
+#endif

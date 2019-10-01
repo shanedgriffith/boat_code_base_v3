@@ -31,44 +31,16 @@ const vector<string> FactorGraph::keys= {
 //"CAM_PARAM_FX", "CAM_PARAM_FY", "CAM_PARAM_S", "CAM_PARAM_U", "CAM_PARAM_V"
 
 void FactorGraph::InitializeNoiseModels(){
-    gtsam::Vector6 v6p;
-	v6p(0,0) = vals[Param::PRIOR_P_X];
-	v6p(1,0) = vals[Param::PRIOR_P_Y];
-	v6p(2,0) = vals[Param::PRIOR_P_Z];
-	v6p(3,0) = vals[Param::PRIOR_P_ROLL];
-	v6p(4,0) = vals[Param::PRIOR_P_PITCH];
-	v6p(5,0) = vals[Param::PRIOR_P_YAW];
-
+    gtsam::Vector6 v6p = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::PRIOR_P_X]), 6, 1);
     poseNoise = gtsam::noiseModel::Diagonal::Sigmas(v6p);
-
-    gtsam::Vector6 v6v;
-    v6v(0,0) = vals[Param::PRIOR_V_X];
-    v6v(1,0) = vals[Param::PRIOR_V_Y];
-    v6v(2,0) = vals[Param::PRIOR_V_Z];
-    v6v(3,0) = vals[Param::PRIOR_V_ROLL];
-    v6v(4,0) = vals[Param::PRIOR_V_PITCH];
-    v6v(5,0) = vals[Param::PRIOR_V_YAW];
-
+    
+    gtsam::Vector6 v6v = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::PRIOR_V_X]), 6, 1);
     velNoise = gtsam::noiseModel::Diagonal::Sigmas(v6v);
 
-    gtsam::Vector6 v6k;
-    v6k(0,0) = vals[Param::DELTA_P_X];
-    v6k(1,0) = vals[Param::DELTA_P_Y];
-    v6k(2,0) = vals[Param::DELTA_P_Z];
-    v6k(3,0) = vals[Param::DELTA_P_ROLL];
-    v6k(4,0) = vals[Param::DELTA_P_PITCH];
-    v6k(5,0) = vals[Param::DELTA_P_YAW];
-
+    gtsam::Vector6 v6k = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::DELTA_P_X]), 6, 1);
     kinNoise = gtsam::noiseModel::Diagonal::Sigmas(v6k);
-
-    gtsam::Vector6 v6d;
-    v6d(0,0) = vals[Param::DELTA_V_X];
-    v6d(1,0) = vals[Param::DELTA_V_Y];
-    v6d(2,0) = vals[Param::DELTA_V_Z];
-    v6d(3,0) = vals[Param::DELTA_V_ROLL];
-    v6d(4,0) = vals[Param::DELTA_V_PITCH];
-    v6d(5,0) = vals[Param::DELTA_V_YAW];
-
+    
+    gtsam::Vector6 v6d = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::DELTA_V_X]), 6, 1);
     dVNoise = gtsam::noiseModel::Diagonal::Sigmas(v6d);
     SetLandmarkDeviation(vals[Param::LANDMARK_DEVIATION]);
 }
@@ -136,8 +108,13 @@ gtsam::Symbol FactorGraph::GetSymbol(int survey, int pnum){
 }
 
 void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark){
-    /*Add the landmark track to the graph.*/    
- 
+    /*Add the landmark track to the graph.*/
+    
+    if(landmark.Length() < 2)
+    {
+        landmark.used = false;
+    }
+    
     int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
 
@@ -149,20 +126,26 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     gtsam::SmartProjectionParams params;
     params.setLandmarkDistanceThreshold(ldist);
     params.setDynamicOutlierRejectionThreshold(onoise);
+    params.setDegeneracyMode(gtsam::DegeneracyMode::ZERO_ON_DEGENERACY); //either this, or non-hessian linearization.
+    //params.setLinearizationMode(gtsam::LinearizationMode::JACOBIAN_Q); //either this, or zero_on_degeneracy.
     
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
 #else
     gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
 #endif
 
-    for(int i=0; i<landmark.points.size(); i++) {
-        landmark_constraints++;
+    if(landmark.used)
+    {
+        for(int i=0; i<landmark.points.size(); i++) {
+            landmark_constraints++;
 #ifdef GTSAM4
-        sppf.add(landmark.points[i], landmark.camera_keys[i]); //GTSAM 4.0
+            sppf.add(landmark.points[i], landmark.camera_keys[i]); //GTSAM 4.0
 #else
-        sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k); //GTSAM 3.2.1
+            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k); //GTSAM 3.2.1
 #endif
+        }
     }
+    
     
     landmark_factors[active_landmark_set].push_back(sppf);
     landmark_keys[active_landmark_set].push_back(landmark.key);
@@ -173,20 +156,25 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
         graph.add(sppf);
         landmarks++;
     }
+    
+//    std::cout << "FG size: " << landmark_keys[active_landmark_set].size() << std::endl;
 }
 
-void FactorGraph::AddToExistingLandmark(gtsam::Point2& point, int camera_key, int smart_factor_idx)
+void FactorGraph::AddToExistingLandmark(gtsam::Point2& point, int survey, int camera_key, int smart_factor_idx)
 {
+#ifdef GTSAM4
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2>& sppf = landmark_factors[active_landmark_set][smart_factor_idx];
-    sppf.add(point, camera_key);
+    gtsam::Symbol S((char) survey, camera_key);
+    sppf.add(point, S);
     landmark_to_graph_index[active_landmark_set][smart_factor_idx] = graph.size();
     graph.add(sppf);
+#endif
 }
 
 int FactorGraph::GraphHasLandmark(int landmark_key)
 {
     int s = 0;
-    int e = landmark_keys.size();
+    int e = landmark_keys[active_landmark_set].size();
     while(e - s > 0)
     {
         int med = s + (e-s)/2;

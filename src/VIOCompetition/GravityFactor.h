@@ -7,7 +7,10 @@
 #include <gtsam/base/Matrix.h>
 #include <gtsam/base/Vector.h>
 
+#ifdef GTSAM4
+
 #include <gtsam/base/numericalDerivative.h>
+
 
 /*
  gravity = acc_reading_t - (bias + acceleration_t)
@@ -73,7 +76,7 @@ public:
     }
 };
 
-
+#endif
 
 
 

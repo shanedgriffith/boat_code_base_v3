@@ -15,7 +15,7 @@ using namespace std;
 void SaveOptimizationResults::SaveVisualization(vector<vector<double> >& landmarks, vector<vector<double> >& traj, vector<double> drawscale) {
 	if(traj.size() == 0 || landmarks.size() == 0){
 		cout << "SaveOptimizationResults::SaveVisualization() Error. Vector sizes are zero, which means optimization didn't run."<<endl;
-		exit(-1);
+        return;
 	}
     SLAMDraw draw;
     if(drawscale.size()>0) draw.SetScale(drawscale[0], drawscale[1], drawscale[2], drawscale[3]);

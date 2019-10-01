@@ -32,6 +32,8 @@
 #include <gtsam/navigation/ImuFactor.h>
 #include <gtsam/navigation/CombinedImuFactor.h>
 
+#ifdef GTSAM4
+
 class IMUFactorOptimizationTest
 {
 private:
@@ -43,11 +45,8 @@ private:
     
     gtsam::ISAM2 i2;
     
-#ifdef GTSAM4
     std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> > landmark_factors; //used by the GTSAMInterface // GTSAM 4.0
-#else
-    std::vector<gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> > landmark_factors; // GTSAM 3.2.1
-#endif
+
     std::vector<int> landmark_keys; //used by the GTSAMInterface
     
     gtsam::NonlinearFactorGraph graph;
@@ -108,7 +107,7 @@ public:
     
 };
 
-
+#endif
 
 
 

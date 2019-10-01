@@ -57,16 +57,20 @@ private:
     gtsam::Values initialEstimate;
     gtsam::Values results;
     gtsam::ISAM2 i2;
-    bool _incremental;
+    bool _incremental = false;
     
     bool IsMeasurementPossible(gtsam::Point2 measurement);
+    void Printi2Graph(const std::string& name, const gtsam::NonlinearFactorGraph& nfg);
     
     void BatchUpdate();
     void IncrementalUpdate();
+    void checkbad();
     
+#ifdef GTSAM4
     int last_landmark_idx;
     gtsam::FactorIndices factors_to_remove;
     gtsam::FactorIndices last_factor_indices;
+#endif
     
 public:
     std::string _identifier;

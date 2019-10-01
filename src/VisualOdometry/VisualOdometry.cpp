@@ -291,21 +291,25 @@ VisualOdometry::checkRes(cv::Mat R, cv::Mat t, std::vector<cv::Point2f> p0, std:
 int
 VisualOdometry::triangulateAndCountInFrontOfCamera(gtsam::Pose3 guess, std::vector<cv::Point2f>& p0, std::vector<cv::Point2f>& p1) {
     gtsam::Pose3 gtp0 = gtsam::Pose3::identity();
-    std::vector<gtsam::Pose3> poses = {gtp0, guess};
 //    boost::shared_ptr<gtsam::Cal3_S2> default_cam = boost::make_shared<gtsam::Cal3_S2>(); //for normalized/calibrated coordinates.
     boost::shared_ptr<gtsam::Cal3_S2> default_cam = _cam.GetGTSAMCam(); //for image coordinates.
+
+    gtsam::SimpleCamera camera1(gtp0, *default_cam);
+    gtsam::SimpleCamera camera2(guess, *default_cam);
+    gtsam::CameraSet<gtsam::SimpleCamera> cameras;
+    cameras.push_back(camera1);
+    cameras.push_back(camera2);
+    const gtsam::TriangulationParameters params(1.0, false, 150);
     
-    int gtc = 0;
+    int valid = 0;
+#ifdef GTSAM4
     for(int i=0; i<p0.size(); i++) {
-//        std::vector<gtsam::Point2> measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
         gtsam::Point2Vector measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
-        try{
-            gtsam::Point3 resp = triangulatePoint3(poses, default_cam, measurements);
-        }catch(std::exception e) {
-            gtc++;
-        }
+        gtsam::TriangulationResult res = triangulateSafe(cameras, measurements, params);
+        if(res.valid()) valid++;
     }
-    return p0.size() - gtc;
+#endif
+    return valid;
 }
 
 gtsam::Pose3 VisualOdometry::recoverPose(cv::Mat E, std::vector<cv::Point2f> p0, std::vector<cv::Point2f> p1) {
@@ -613,6 +617,7 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         
         std::vector<gtsam::Point3> p3d;
         std::vector<gtsam::Point2> p2d1;
+#ifdef GTSAM4
         for(int j=0; j<subids.size(); ++j)
         {
             std::vector<gtsam::Pose3> poses;
@@ -634,6 +639,7 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
             
             p2d1.push_back(gtsam::Point2(subset.first[j].x, subset.first[j].y));
         }
+#endif
         
         threepftf.push(pftf);
         threeposes.push(por.CameraPose(i));

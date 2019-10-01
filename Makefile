@@ -1,4 +1,4 @@
-CC        := g++ -std=c++11 -O3 -Wno-deprecated -Wno-unused-result
+CC        := g++ -O3 -ftemplate-depth=1024 -march=native -Wno-unused-local-typedefs -std=c++11
 LD        := g++
 PREFIX    := /Volumes/Untitled/installs
 #use -O0 -g in CC and -g in LD for debugging segfaults.
@@ -14,8 +14,8 @@ ROOT_DIR  :=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 GTSAMVERSION := -DGTSAM4
 GTSAMPREFIX := $(PREFIX)/gtsam4
 
-INCLUDES  := -I/usr/include -I/usr/local/include -I$(PREFIX)/include -I$(PREFIX)/include/opencv2 -I/opt/local/include/eigen3 -I/opt/local/include -I$(GTSAMPREFIX)/include -I$(ROOT_DIR)/src -I$(GTSAMPREFIX)/include/gtsam/3rdparty/Eigen
-LDFLAGS = -L$(PREFIX)/lib -L$(GTSAMPREFIX)/lib -L/opt/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_videoio -lgtsam -lboost_system-mt -ltbb -ltbbmalloc -lpthread -lboost_serialization-mt -lboost_filesystem-mt -lboost_timer-mt -lboost_chrono-mt -lopencv_video -lboost_thread-mt -lboost_date_time-mt -lboost_regex-mt
+INCLUDES  := -I/usr/include -I/usr/local/include -I$(PREFIX)/include -I$(PREFIX)/include/opencv2 -I$(GTSAMPREFIX)/include/gtsam/3rdparty/Eigen -I/opt/local/include -I$(GTSAMPREFIX)/include -I$(ROOT_DIR)/src
+LDFLAGS = -L$(PREFIX)/lib -L$(GTSAMPREFIX)/lib -L/opt/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lgtsam -ltbb -ltbbmalloc -lpthread -lboost_serialization-mt -lopencv_video
 
 
 vpath %.cpp $(SRC_DIR)

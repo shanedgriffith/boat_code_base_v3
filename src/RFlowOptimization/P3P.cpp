@@ -67,9 +67,9 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
     if(featureVectors.size() < 3 )
         return -1;
     
-    Eigen::Vector3d P1 = worldPoints[0];
-    Eigen::Vector3d P2 = worldPoints[1];
-    Eigen::Vector3d P3 = worldPoints[2];
+    Eigen::Vector3d P1 = worldPoints[0].vector();
+    Eigen::Vector3d P2 = worldPoints[1].vector();
+    Eigen::Vector3d P3 = worldPoints[2].vector();
     
     // Verification that world points are not colinear
     
@@ -113,9 +113,9 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
         
         f3 = T.transpose()*f3;
         
-        P1 = worldPoints[1];
-        P2 = worldPoints[0];
-        P3 = worldPoints[2];
+        P1 = worldPoints[1].vector();
+        P2 = worldPoints[0].vector();
+        P3 = worldPoints[2].vector();
     }
     
     // Creation of intermediate world frame
@@ -230,7 +230,7 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
         
         R = N*R.transpose()*T.transpose();
         
-        gtsam::Point3 t = C;
+        gtsam::Point3 t(C.x(), C.y(), C.z());
         gtsam::Rot3 rot(R);
         gtsam::Pose3 p(rot, t);
         solutions.push_back(p);
