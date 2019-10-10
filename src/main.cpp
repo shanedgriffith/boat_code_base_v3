@@ -38,6 +38,8 @@ int main(int argc, char *argv[])
     
     Camera axisptz = ParseBoatSurvey::GetCamera();
     LocalizePose loc(axisptz);
+//    loc.testLocalizePoses();
+//    exit(1);
 //    loc.debug = true;
 //    loc.testP3P();
 //    loc.test();

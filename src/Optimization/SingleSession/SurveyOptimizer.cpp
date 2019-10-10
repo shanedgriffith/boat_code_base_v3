@@ -163,7 +163,7 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
+boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
 {
     if(active.size() <= 3)
     {
@@ -201,11 +201,12 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
     //std::cout << "localizing the new pose using: " << p3d.size() << " points " << std::endl;
     
     LocalizePose loc(_cam);
-//    loc.debug = true;
-    std::vector<double> vec(6,0);
+    loc.setRANSACModel(1);
+    loc.debug = true;
+    std::vector<double> vec = GTSAMInterface::PoseToVector(cam);
     std::vector<double> inliers(p3d.size(), 1.0);
-    std::vector<std::vector<double>> res = loc.UseBAIterative(vec, p3d, p2d1, inliers);
-    if(res.size() > 0 and res[1][1] > 0.5 * p3d.size())
+    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec, p3d, p2d1, inliers); //UseBAIterative
+    if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
         return GTSAMInterface::VectorToPose(res[0]);
     return {};
 }
@@ -237,13 +238,14 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     boost::optional<gtsam::Pose3> curpose;
     if(_incremental and camera_key > 1)
     {
-        curpose = LocalizeCurPose();
+        curpose = LocalizeCurPose(cam);
         if(curpose) {
             GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curpose.get());
             std::cout << "localization succeeded" << std::endl;
             curcam = curpose.get();
+            transition = true;
         }
-        else std::cout << "localization failed" << std::endl;
+        else { std::cout << "localization failed" << std::endl;} //transition = true;
     }
     if(not curpose) GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, cam);
     

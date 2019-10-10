@@ -43,6 +43,7 @@ protected:
     int RANSAC_IMPROV_ITERS = 100;
     double RANSAC_PERC_DC = 0.5;
     int MIN_CORRESPONDENCES = 4;
+    int RANSAC_MODEL = 0;
 
     std::vector<double> Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, double err);
     void UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
@@ -72,6 +73,8 @@ protected:
     
     gtsam::Pose3 disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d);
     
+    void removeZeroPoints(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
+    
     gtsam::NonlinearFactorGraph graph;
     gtsam::Values initEst;
     const Camera& _cam;
@@ -93,9 +96,14 @@ public:
     
     gtsam::Pose3 RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
     
+    std::vector<std::vector<double>> combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    
     void testP3P();
     
     void testP3PStatic();
+    void testLocalizePoses();
+    
+    void setRANSACModel(int model) {RANSAC_MODEL = model;}
     
 //    void test();
 };

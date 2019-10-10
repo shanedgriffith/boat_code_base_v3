@@ -55,7 +55,7 @@ void GTSAMInterface::SetupSLAM(bool incremental) {
         //        parameters.evaluateNonlinearError = true;
         //        parameters.enablePartialRelinearizationCheck = false;
         parameters.findUnusedFactorSlots = true;
-        parameters.cacheLinearizedFactors = false;
+//        parameters.cacheLinearizedFactors = false;
         ISAM2 isam(parameters);
         i2 = isam;
     }
@@ -109,10 +109,10 @@ void GTSAMInterface::IncrementalUpdate() {
 //    initialEstimate.print();
 //    _fg->graph.print();
     //    std::cout << "initial error. " << _fg->graph.error(initialEstimate) << std::endl;
-    Printi2Graph("Factor graph before update()", i2.getFactorsUnsafe());
-    Printi2Graph("Factors to add", _fg->graph);
+//    Printi2Graph("Factor graph before update()", i2.getFactorsUnsafe());
+//    Printi2Graph("Factors to add", _fg->graph);
     
-    try {
+//    try {
         int iterations = vals[Param::UPDATE_ITERATIONS];
         for(int i=0; i<iterations; i++) {
             if(i==0) {
@@ -133,26 +133,26 @@ void GTSAMInterface::IncrementalUpdate() {
 //        _fg->Clear();
         _fg->graph.resize(0);
         initialEstimate.clear();
-    } catch(const std::exception& ex) {
-        printf("There was an exception while attempting to solve the factor graph.");
-        printf("Known causes of the exception:\n");
-        printf(" >The camera pose used to create landmark observations was not initialized\n");
-        printf(" >A prior was not specified for the first camera pose.\n");
-        printf(" >landmarks need to be observed at least twice.\n");
-        std::cout << ex.what()<<std::endl;
-        
-        if(debug) {
-            printf("\nThe factor graph.\n");
-            _fg->PrintFactorGraph();
-            printf("\n\n\nThe initial estimates.\n");
-            initialEstimate.print();
-            printf("Terminated with an exception.");
-            std::cout << ex.what()<<std::endl;
-            exit(-1);
-        }
-        exit(-1); //exit because the upkeep after update() wasn't done.
-    }
-    Printi2Graph("Factor graph after update()", i2.getFactorsUnsafe());
+//    } catch(const std::exception& ex) {
+//        printf("There was an exception while attempting to solve the factor graph. ");
+//        printf("Known causes of the exception:\n");
+//        printf(" >The camera pose used to create landmark observations was not initialized\n");
+//        printf(" >A prior was not specified for the first camera pose.\n");
+//        printf(" >landmarks need to be observed at least twice.\n");
+//        std::cout << ex.what()<<std::endl;
+//        
+//        if(debug) {
+//            printf("\nThe factor graph.\n");
+//            _fg->PrintFactorGraph();
+//            printf("\n\n\nThe initial estimates.\n");
+//            initialEstimate.print();
+//            printf("Terminated with an exception.");
+//            std::cout << ex.what()<<std::endl;
+//            exit(-1);
+//        }
+//        exit(-1); //exit because the upkeep after update() wasn't done.
+//    }
+//    Printi2Graph("Factor graph after update()", i2.getFactorsUnsafe());
 }
 
 
