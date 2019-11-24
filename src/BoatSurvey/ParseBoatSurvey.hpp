@@ -41,7 +41,7 @@ public:
     
     ParseBoatSurvey(std::string base, std::string pftbase, std::string date):
     ParseSurvey(base, pftbase, date) {
-        constant_velocity = true;
+        constant_velocity = false; //trying without this assumption, which isn't true anyway.
         default_start = gtsam::Point3(296866.7554855264, 5442698.88922645, 0);
         
         ReadDelimitedFile(_base + date + _auxfile, 0);

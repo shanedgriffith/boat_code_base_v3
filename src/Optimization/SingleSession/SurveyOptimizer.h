@@ -40,8 +40,8 @@ protected:
     bool _incremental = false;
     
     static const std::vector<std::string> keys;
-    enum Param { OPT_OFFSET, OPT_SKIP, CAM_OFFSET, CAM_SKIP };
-    std::vector<double> vals = {  0, 100, 0, 5 }; //defaults
+    enum Param { OPT_OFFSET, OPT_SKIP, OPT_STOP, CAM_OFFSET, CAM_SKIP };
+    std::vector<double> vals = {  0, 100, 10000, 0, 5 }; //defaults
     
     void AddLandmarkTracks(std::vector<LandmarkTrack>& inactive);
     void AddActiveLandmarks(std::vector<LandmarkTrack>& landmarks);
@@ -53,7 +53,6 @@ protected:
     boost::optional<gtsam::Pose3> LocalizeCurPose(gtsam::Pose3& cam);
     void AddCamera(int camera_key, gtsam::Pose3& cam, gtsam::Pose3& localized);
     int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
-    std::vector<LandmarkTrack> DEBUGMOD(std::vector<LandmarkTrack>& inactive);
     
     int cache_set=0;
     std::vector<std::vector<LandmarkTrack> > cached_landmarks; //landmarks are cached to retroactively add inter-survey constraints.

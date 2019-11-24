@@ -735,28 +735,46 @@ void LocalizePose::removeZeroPoints(std::vector<gtsam::Point3>& p3d, std::vector
 
 std::vector<std::vector<double>> LocalizePose::combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
 {
+//    RANSAC_MODEL = 0;
+//    std::vector<std::vector<double>> posevals = UseBAIterative(pguess, p3d, p2d1, inliers);
+//    
+//    if(posevals.size() > 0)
+//    {
+////        if(posevals[1][1] > 0.5 * p3d.size())
+////        {
+////            return posevals;
+////        }
+////        
+////        if(posevals[1][1] < 0.1 * p3d.size())
+////        {
+////            posevals[0] = pguess;
+////        }
+//    
+//        RANSAC_MODEL = 1;
+//        posevals = UseBAIterative(posevals[0], p3d, p2d1, inliers);
+//    
+//        if(posevals.size() > 0 and (posevals[1][1] > 0.5 * p3d.size() or posevals[1][1] > 15))
+//        {
+//            return posevals;
+//        }
+//    }
+    
     RANSAC_MODEL = 0;
     std::vector<std::vector<double>> posevals = UseBAIterative(pguess, p3d, p2d1, inliers);
     
+    RANSAC_MODEL = 1;
     if(posevals.size() > 0)
     {
-        if(posevals[1][1] > 0.5 * p3d.size())
-        {
-            return posevals;
-        }
-        
-        if(posevals[1][1] < 0.1 * p3d.size())
-        {
-            posevals[0] = pguess;
-        }
-    
-        RANSAC_MODEL = 1;
         posevals = UseBAIterative(posevals[0], p3d, p2d1, inliers);
+    }
+    else
+    {
+        posevals = UseBAIterative(pguess, p3d, p2d1, inliers);
+    }
     
-        if(posevals.size() > 0 and (posevals[1][1] > 0.5 * p3d.size() or posevals[1][1] > 15))
-        {
-            return posevals;
-        }
+    if(posevals.size() > 0 and (posevals[1][1] > 0.5 * p3d.size() or posevals[1][1] > 15))
+    {
+        return posevals;
     }
     
     return {};

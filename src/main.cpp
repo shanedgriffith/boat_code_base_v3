@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
     string query_loc = "/Volumes/Untitled/data/VBags/";//home_paths[1];
     string pftbase = home_paths[2];
     string results_dir = home_paths[0];
-    
+
     Camera axisptz = ParseBoatSurvey::GetCamera();
-    LocalizePose loc(axisptz);
+//    LocalizePose loc(axisptz);
 //    loc.testLocalizePoses();
 //    exit(1);
 //    loc.debug = true;
