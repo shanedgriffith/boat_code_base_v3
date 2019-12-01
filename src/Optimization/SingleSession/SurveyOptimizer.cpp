@@ -163,7 +163,7 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
+std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
 {
     if(active.size() <= 3)
     {
@@ -174,6 +174,10 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam
     int latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
     
     std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first_pose_idx, latest_pose_idx);
+    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
+    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
+    
+    std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
     
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point2> p2d1;
@@ -201,14 +205,17 @@ boost::optional<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam
     std::vector<std::vector<double>> res = loc.UseBAIterative(vec, p3d, p2d1, inliers);
 //    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec, p3d, p2d1, inliers); //UseBAIterative
     if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
-        return GTSAMInterface::VectorToPose(res[0]);
-    return {};
+    {
+        poses.push_back(GTSAMInterface::VectorToPose(res[0]));
+    }
+    return poses;
 }
 
 int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
     gtsam::Pose3 cam = PS.CameraPose(cidx); //the camera pose estimated using sensors.
     static gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
+    gtsam::Pose3 btwn_pos;
     gtsam::Pose3 curcam = cam;
     static int suc_count = 0;
     
@@ -231,16 +238,36 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     
     //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
+    bool loc_succeeded = false;
     if(_incremental and camera_key > 1)
     {
-        curpose = LocalizeCurPose(cam);
-        if(curpose) {
-            curcam = curpose.get();
+        std::vector<gtsam::Pose3> poses = LocalizeCurPose(cam);
+        last_cam = poses[1];
+        if(poses.size() > 2) {
+            curcam = poses[2];
+            btwn_pos = poses[1].between(poses[2]);
             ++suc_count;
-            std::cout << camera_key << ": localization succeeded. success count: " << suc_count << std::endl;
+            loc_succeeded = true;
+            std::cout << camera_key << ": localization succeeded. success count: " << suc_count;
+            std::vector<double> lastp = GTSAMInterface::PoseToVector(poses[0]);
+            std::cout << " last: ";
+            for(int i=0; i<6; ++i)
+            {
+                std::cout << lastp[i] << ", ";
+            } std::cout << std::endl;
 //            transition = true; //disabled the constant velocity assumption instead.
         }
-        else { std::cout << camera_key << ": localization failed. " << active.size() << " in the active set" << std::endl;}
+        else {
+            btwn_pos = poses[0].between(poses[1]);
+            std::cout << camera_key << ": localization failed. " << active.size() << " in the active set" << std::endl;
+            std::cout << "velocity : ";
+            std::vector<double> betp = GTSAMInterface::PoseToVector(btwn_pos);
+            for(int i=0; i<6; ++i)
+            {
+                std::cout << betp[i] << ", ";
+            } std::cout << std::endl;
+            curcam = last_cam.compose(btwn_pos);
+        }
     }
     GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curcam);
     
@@ -254,9 +281,11 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     
     //add the kinematic constraints.
     if(camera_key != 0) {
-        gtsam::Pose3 btwn_pos = last_cam.between(curcam); //TODO. it's still wrong. last_pose should be the one in the GTS values...
+        if(camera_key == 1)
+            btwn_pos = last_cam.between(curcam);
         
-        if(PS.ConstantVelocity()){
+        if(PS.ConstantVelocity()) {
+//        if(not loc_succeeded) {
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
             double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
             double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
@@ -264,11 +293,14 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
             gtsam::Pose3 vel_est = GTSAMInterface::VectorToPose(pvec);
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, transition);
         } else {
-            FG->AddOdomFactor(camera_key, btwn_pos);
+            FG->AddOdomFactor(camera_key, btwn_pos, loc_succeeded);
         }
     }
     
-    last_cam = curcam; //TODO. last_pose should be the one in the GTS values...
+    if(not _incremental or camera_key < 2)
+    {
+        last_cam = curcam;
+    }
     return camera_key;
 }
 

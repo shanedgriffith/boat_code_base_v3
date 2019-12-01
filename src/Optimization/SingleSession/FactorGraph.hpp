@@ -50,6 +50,7 @@ protected:
     gtsam::noiseModel::Diagonal::shared_ptr poseNoise;
     gtsam::noiseModel::Diagonal::shared_ptr velNoise;
     gtsam::noiseModel::Diagonal::shared_ptr kinNoise;
+    gtsam::noiseModel::Diagonal::shared_ptr tightKinNoise;
     gtsam::noiseModel::Diagonal::shared_ptr dVNoise;
     gtsam::noiseModel::Isotropic::shared_ptr pixelNoise;
 //    gtsam::noiseModel::Robust::shared_ptr pixelNoise;
@@ -88,10 +89,10 @@ public:
     int GetActiveLandmarkSet(){return active_landmark_set;}
     
     void InitializeNoiseModels();
-
+    
     void AddCamera(int camera_key, gtsam::Pose3 cam_est);
     void AddVelocity(int camera_key, gtsam::Pose3 vel_est);
-    void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose);
+    void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose, bool tight = false);
     void AddKinematicConstraint(int camera_key, double delta_time);
     void AddSmoothVelocityConstraint(int camera_key);
     virtual void AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& landmark);

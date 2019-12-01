@@ -40,6 +40,9 @@ void FactorGraph::InitializeNoiseModels(){
     gtsam::Vector6 v6k = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::DELTA_P_X]), 6, 1);
     kinNoise = gtsam::noiseModel::Diagonal::Sigmas(v6k);
     
+    gtsam::Vector6 v6kt = (gtsam::Vector(6) << 0.05, 0.05, 0.05, 0.05, 0.05, 0.05).finished();
+    tightKinNoise = gtsam::noiseModel::Diagonal::Sigmas(v6kt);
+    
     gtsam::Vector6 v6d = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::DELTA_V_X]), 6, 1);
     dVNoise = gtsam::noiseModel::Diagonal::Sigmas(v6d);
     SetLandmarkDeviation(vals[Param::LANDMARK_DEVIATION]);
@@ -88,7 +91,7 @@ void FactorGraph::AddSmoothVelocityConstraint(int camera_key){
     variable_constraints++;
 }
 
-void FactorGraph::AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose){
+void FactorGraph::AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose, bool tight){
     /*Adds an odom factor.
      Meant to be used when odometry measurements are available.
      */
@@ -98,7 +101,14 @@ void FactorGraph::AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose){
         exit(-1);
     }
     
-    graph.add(gtsam::BetweenFactor<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), delta_pose, kinNoise));
+    if(tight)
+    {
+        graph.add(gtsam::BetweenFactor<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), delta_pose, tightKinNoise));
+    }
+    else
+    {
+        graph.add(gtsam::BetweenFactor<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), delta_pose, kinNoise));
+    }
     variable_constraints++;
 }
 

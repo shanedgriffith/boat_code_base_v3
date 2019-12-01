@@ -50,7 +50,7 @@ protected:
     void RunGTSAM(bool update_everything);
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition);
-    boost::optional<gtsam::Pose3> LocalizeCurPose(gtsam::Pose3& cam);
+    std::vector<gtsam::Pose3> LocalizeCurPose(gtsam::Pose3& cam);
     void AddCamera(int camera_key, gtsam::Pose3& cam, gtsam::Pose3& localized);
     int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
     
