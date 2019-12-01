@@ -97,7 +97,7 @@ std::vector<std::string> FileParsing::ParseLineAdv(char * line, std::string sepa
     std::vector<std::string> parsedline;
     int idx = 0;
     const char* tok;
-    for (tok = strtok_r(line, separator.c_str(), NULL); // NOTE: strtok_r here is mandatory (strtok leads to segfault in multi-threaded operation)
+    for (tok = strtok_r(line, separator.c_str(), &line); // NOTE: strtok_r here is mandatory (strtok leads to segfault in multi-threaded operation)
          tok && *tok;
          tok = strtok_r(NULL, string(separator+"\n").c_str(), &line))
     {

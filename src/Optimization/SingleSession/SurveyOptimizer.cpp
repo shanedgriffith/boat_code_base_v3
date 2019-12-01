@@ -62,7 +62,7 @@ void SurveyOptimizer::RunGTSAM(bool update_everything){
 }
 
 void SurveyOptimizer::SaveResults(SaveOptimizationResults& SOR, int iteration, double percent_completed, vector<double> drawscale){
-    if(_print_data_increments || percent_completed == 100){
+    if((_print_data_increments || percent_completed == 100) and iteration > 5){
         vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
         vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], num_cameras_in_traj);
         vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], num_cameras_in_traj);
@@ -163,22 +163,36 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
-{
-    if(active.size() <= 3)
+std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
+{   //argument to this function is needed when active.size() is zero.
+    int first_pose_idx = cur_pose_idx;
+    int latest_pose_idx = cur_pose_idx;
+    
+    if(active.size() > 3)
     {
-        return {};
+        first_pose_idx = active[0].camera_keys[0].index();
+        latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
     }
     
-    int first_pose_idx = active[0].camera_keys[0].index();
-    int latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
-    
-    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first_pose_idx, latest_pose_idx);
+    int first = std::min(first_pose_idx, latest_pose_idx-2);
+    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
     gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
     gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
-    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
     
     std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
+    
+    if(active.size() <= 3)
+    {
+        std::cout << "______________________ no localization. the active set is too small." << std::endl;
+        return poses;
+    }
+    
+    if(first_pose_idx > latest_pose_idx-2)
+    {
+        std::cout << "______________________ no localization. not enough poses in the active set." << std::endl;
+        return poses;
+    }
+    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
     
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point2> p2d1;
@@ -196,7 +210,12 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
         }
     }
     
-    std::cout << "localizing the new pose using: " << p3d.size() << " points from that active set that could be triangulated." << std::endl;
+    if(p3d.size() <= 3)
+    {
+        std::cout << "______________________ no localization. too few triangulated points." << std::endl;
+        return poses;
+    }
+    std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points from that active set that could be triangulated." << std::endl;
     
     LocalizePose loc(_cam);
 //    loc.debug = true;
@@ -242,7 +261,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     bool loc_succeeded = true;
     if(_incremental and camera_key > 1)
     {
-        std::vector<gtsam::Pose3> poses = LocalizeCurPose();
+        std::vector<gtsam::Pose3> poses = LocalizeCurPose(camera_key);
         last_cam = poses[1];
         if(poses.size() > 2) {
             curcam = poses[2];
@@ -337,7 +356,7 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS) {
         //Optimize the graph
         if(OptimizeThisIteration(camera_key)){
             SOR.TimeOptimization();
-            RunGTSAM(false);
+            RunGTSAM(_print_data_increments);
             if(_print_data_increments)
             {
                 SaveResults(SOR, camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
