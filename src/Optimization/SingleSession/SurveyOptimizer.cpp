@@ -163,7 +163,7 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
+std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose()
 {
     if(active.size() <= 3)
     {
@@ -176,6 +176,7 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
     std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first_pose_idx, latest_pose_idx);
     gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
     gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
+    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
     
     std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
     
@@ -195,15 +196,15 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
         }
     }
     
-    std::cout << "localizing the new pose using: " << p3d.size() << " points " << std::endl;
+    std::cout << "localizing the new pose using: " << p3d.size() << " points from that active set that could be triangulated." << std::endl;
     
     LocalizePose loc(_cam);
 //    loc.debug = true;
-    std::vector<double> vec = GTSAMInterface::PoseToVector(cam);
+    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     std::vector<double> inliers(p3d.size(), 1.0);
     loc.setRANSACModel(1);
-    std::vector<std::vector<double>> res = loc.UseBAIterative(vec, p3d, p2d1, inliers);
-//    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec, p3d, p2d1, inliers); //UseBAIterative
+    std::vector<std::vector<double>> res = loc.UseBAIterative(vec_pose_t_est, p3d, p2d1, inliers);
+//    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
     if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
     {
         poses.push_back(GTSAMInterface::VectorToPose(res[0]));
@@ -213,10 +214,10 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(gtsam::Pose3& cam)
 
 int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
-    gtsam::Pose3 cam = PS.CameraPose(cidx); //the camera pose estimated using sensors.
     static gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
+    gtsam::Pose3 pose_prior = PS.CameraPose(cidx); //the camera pose estimated using sensors.;
+    gtsam::Pose3 curcam = pose_prior;
     gtsam::Pose3 btwn_pos;
-    gtsam::Pose3 curcam = cam;
     static int suc_count = 0;
     
     int camera_key = FG->GetNextCameraKey();
@@ -238,10 +239,10 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     
     //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
-    bool loc_succeeded = false;
+    bool loc_succeeded = true;
     if(_incremental and camera_key > 1)
     {
-        std::vector<gtsam::Pose3> poses = LocalizeCurPose(cam);
+        std::vector<gtsam::Pose3> poses = LocalizeCurPose();
         last_cam = poses[1];
         if(poses.size() > 2) {
             curcam = poses[2];
@@ -277,7 +278,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     else AddLandmarkTracks(inactive);
     
     ++num_cameras_in_traj;
-    FG->AddCamera(camera_key, curcam);
+    FG->AddCamera(camera_key, pose_prior);
     
     //add the kinematic constraints.
     if(camera_key != 0) {
