@@ -258,9 +258,7 @@ std::shared_ptr<gtsam::Values> GTSAMInterface::getPoseValuesFrom(int var_id, int
     {
         gtsam::Symbol s(var_id, i);
         gtsam::Pose3 cur = i2.calculateEstimate<gtsam::Pose3>(s);
-#ifdef GTSAM4
         v->insert<gtsam::Pose3>(s, cur);
-#endif
     }
     return v;
 }

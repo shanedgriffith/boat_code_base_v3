@@ -9,6 +9,8 @@
 #include "Optimization/SingleSession/SurveyOptimizer.h"
 #include "RFlowOptimization/LocalizePose.hpp"
 
+#include <testRobust.hpp>
+
 using namespace std;
 
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
@@ -20,6 +22,10 @@ vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/D
 
 int main(int argc, char *argv[])
 {
+    
+//    testRobust tr;
+//    tr.image();
+//    return 0;
     
 //    PreprocessDroneRun predavis("/Users/shane/Documents/projects/VIO/datasets/", "outdoor_forward_1_davis_with_gt/");
 ////    predavis.FindKLTParams();

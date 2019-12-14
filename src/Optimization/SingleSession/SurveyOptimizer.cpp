@@ -143,10 +143,9 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
                 std::cout << "SurveyOptimizer::AddActiveLandmarks() error. the active landmark should have already been added to the factor graph, but it wasn't found." << std::endl;
                 exit(-1);
             }
-#ifdef GTSAM4
+            
             //remove the factor from isam2
             GTS.RemoveLandmarkFactor(smart_factor_idx);
-#endif
             
             //add the new measurement to the existing factor and add it back to the factor graph, which will be added to isam2
             FG->AddToExistingLandmark(landmarks[i].points[len-1], (int) 'x', landmarks[i].camera_keys[len-1], smart_factor_idx);
@@ -201,8 +200,31 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
         int smart_factor_idx = FG->GraphHasLandmark(active[i].key);
         if(smart_factor_idx < 0)
             continue;
-
-        boost::optional<gtsam::Point3> triangulated = GTS.triangulatePointFromPoseValues(*v, smart_factor_idx);
+        
+        boost::optional<gtsam::Point3> triangulated;
+        try{
+            triangulated = GTS.triangulatePointFromPoseValues(*v, smart_factor_idx);
+        }catch(std::exception& e)
+        {
+            //gtsam::ValuesKeyDoesNotExist
+            std::cout << e.what() << std::endl;
+            std::cout << "camera keys expected: " << first_pose_idx << " to " << latest_pose_idx << "" << std::endl;
+            FG->landmark_factors[0][smart_factor_idx].printKeys("camera keys actual:   ");
+            
+            //active has the wrong key? nope.
+            //incorrect mapping from key to smart_factor_idx? (duplicate mapping?)
+            for(int j=FG->landmark_keys[0].size()-1; FG->landmark_keys[0][j] >= active[i].key; --j)
+            {
+                std::cout << " l" << FG->landmark_keys[0][j] << ": ";
+                FG->landmark_factors[0][j].printKeys("");
+                if(j != FG->GraphHasLandmark(FG->landmark_keys[0][j]))
+                {
+                    std::cout << " bad mapping" << std::endl;
+                    exit(-1);
+                }
+            } std::cout << std::endl;
+            exit(-1);
+        }
         if(triangulated)
         {
             p3d.push_back(triangulated.get());
@@ -248,8 +270,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     if(transition){
         if(debug) std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
     	if(cache_landmarks) CacheLandmarks(active);
-    	else if(_incremental) AddActiveLandmarks(active);
-        else AddLandmarkTracks(active);
+        else if(not _incremental) AddLandmarkTracks(active);
     	active.clear();
     }
     

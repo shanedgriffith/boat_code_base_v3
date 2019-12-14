@@ -128,8 +128,6 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     int ldist = (int) vals[Param::MAX_LANDMARK_DIST]; //this threshold specifies the distance between the camera and the landmark.
     int onoise = (int) vals[Param::MAX_ALLOWED_OUTLIER_NOISE]; //the threshold specifies at what point factors are discarded due to reprojection error.
 
-#ifdef GTSAM4
-     //GTSAM 4.0
     //landmarkDistanceThreshold - if the landmark is triangulated at a distance larger than that the factor is considered degenerate
     //dynamicOutlierRejectionThreshold - if this is nonnegative the factor will check if the average reprojection error is smaller than this threshold after triangulation,
     //  and the factor is disregarded if the error is large
@@ -140,19 +138,12 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
     //params.setLinearizationMode(gtsam::LinearizationMode::JACOBIAN_Q); //either this, or zero_on_degeneracy.
     
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
-#else
-    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
-#endif
 
     if(landmark.used)
     {
         for(int i=0; i<landmark.points.size(); i++) {
             landmark_constraints++;
-#ifdef GTSAM4
             sppf.add(landmark.points[i], landmark.camera_keys[i]); //GTSAM 4.0
-#else
-            sppf.add(landmark.points[i], landmark.camera_keys[i], pixelNoise, k); //GTSAM 3.2.1
-#endif
         }
     }
     
@@ -167,18 +158,22 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
         landmarks++;
     }
     
+    if(landmark_factors[active_landmark_set].size()-1 != GraphHasLandmark(landmark.key))
+    {
+        std::cout << "added landmark l" << landmark.key << " should be " << landmark_factors[active_landmark_set].size()-1 << ", but is: " << GraphHasLandmark(landmark.key) << std::endl;
+        exit(-1);
+    }
+    
 //    std::cout << "FG size: " << landmark_keys[active_landmark_set].size() << std::endl;
 }
 
 void FactorGraph::AddToExistingLandmark(gtsam::Point2& point, int survey, int camera_key, int smart_factor_idx)
 {
-#ifdef GTSAM4
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2>& sppf = landmark_factors[active_landmark_set][smart_factor_idx];
     gtsam::Symbol S((char) survey, camera_key);
     sppf.add(point, S);
     landmark_to_graph_index[active_landmark_set][smart_factor_idx] = graph.size();
     graph.add(sppf);
-#endif
 }
 
 int FactorGraph::GraphHasLandmark(int landmark_key)
