@@ -135,7 +135,11 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
     for(int i=0; i<landmarks.size(); i++)
     {
         int len = landmarks[i].Length();
-        if(len >= 3)
+        if(len == 2)
+        {
+            FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+        }
+        else if(len > 2)
         {
             int smart_factor_idx = FG->GraphHasLandmark(landmarks[i].key);
             if(smart_factor_idx == -1)
@@ -149,10 +153,9 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
             
             //add the new measurement to the existing factor and add it back to the factor graph, which will be added to isam2
             FG->AddToExistingLandmark(landmarks[i].points[len-1], (int) 'x', landmarks[i].camera_keys[len-1], smart_factor_idx);
-        }
-        else if(len > 1)
-        {
-            FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+            
+            if(landmarks[i].key == 86986)
+                std::cout << "found an existing landmark with that. length is: " << landmarks[i].Length() << "" << std::endl;
         }
     }
 }
@@ -244,6 +247,7 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     std::vector<double> inliers(p3d.size(), 1.0);
     loc.setRANSACModel(1);
+    loc.setRobustLoss();
     std::vector<std::vector<double>> res = loc.UseBAIterative(vec_pose_t_est, p3d, p2d1, inliers);
 //    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
     if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
@@ -267,11 +271,12 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     //check for camera transitions
     bool flipped = PS.CheckCameraTransition(cidx, lcidx);
     bool transition = flipped || gap;
-    if(transition){
+    if(transition and not _incremental){
         if(debug) std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
     	if(cache_landmarks) CacheLandmarks(active);
-        else if(not _incremental) AddLandmarkTracks(active);
+        else AddLandmarkTracks(active);
     	active.clear();
+        std::cout << "transition" << std::endl;
     }
     
     //process the landmark measurement

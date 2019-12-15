@@ -44,10 +44,11 @@ protected:
     double RANSAC_PERC_DC = 0.5;
     int MIN_CORRESPONDENCES = 4;
     int RANSAC_MODEL = 0;
+    bool robust_loss_ = false;
 
     std::vector<double> Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, double err);
-    void UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
-    void AddLocalizationFactors(gtsam::Symbol symb, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    void UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
+    void AddLocalizationFactors(gtsam::Symbol symb, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
     void AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess, std::vector<double> noise);
     gtsam::Values RunBA();
 
@@ -97,6 +98,8 @@ public:
     gtsam::Pose3 RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
     
     std::vector<std::vector<double>> combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    
+    void setRobustLoss(){robust_loss_ = true;}
     
     void testP3P();
     
