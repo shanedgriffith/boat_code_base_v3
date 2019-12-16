@@ -156,19 +156,6 @@ void FactorGraph::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, LandmarkTrack& 
         graph.add(sppf);
         landmarks++;
     }
-    
-    if(landmark.key == 86986)
-        std::cout << "added landmark l" << landmark.key << " at " << landmark.camera_keys[landmark.Length()-1].index() << ", graphs shows it was added at index: " << GraphHasLandmark(landmark.key) << ". should be : " << landmark_factors[active_landmark_set].size() - 1 << ", length of track: " << landmark.Length() << std::endl;
-    
-    
-    
-    if(landmark_factors[active_landmark_set].size()-1 != GraphHasLandmark(landmark.key))
-    {
-        std::cout << "added landmark l" << landmark.key << " should be " << landmark_factors[active_landmark_set].size()-1 << ", but is: " << GraphHasLandmark(landmark.key) << std::endl;
-        exit(-1);
-    }
-    
-//    std::cout << "FG size: " << landmark_keys[active_landmark_set].size() << std::endl;
 }
 
 void FactorGraph::AddToExistingLandmark(gtsam::Point2& point, int survey, int camera_key, int smart_factor_idx)

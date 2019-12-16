@@ -153,9 +153,6 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
             
             //add the new measurement to the existing factor and add it back to the factor graph, which will be added to isam2
             FG->AddToExistingLandmark(landmarks[i].points[len-1], (int) 'x', landmarks[i].camera_keys[len-1], smart_factor_idx);
-            
-            if(landmarks[i].key == 86986)
-                std::cout << "found an existing landmark with that. length is: " << landmarks[i].Length() << "" << std::endl;
         }
     }
 }
@@ -243,7 +240,7 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points from that active set that could be triangulated." << std::endl;
     
     LocalizePose loc(_cam);
-//    loc.debug = true;
+    loc.debug = true;
     std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     std::vector<double> inliers(p3d.size(), 1.0);
     loc.setRANSACModel(1);

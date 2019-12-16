@@ -252,10 +252,6 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
     int num_landmarks_skipped=0;
     int lasti=0;
     for(int i=0; i<ids.size(); i++) {
-        if(ids[i] == 86986)
-        {
-            std::cout << "tracking file : " << siftfile << " has the landmark " << std::endl;
-        }
         lasti=i;
         //remove features that aren't tracked anymore
         //add to the entry using the info from the new frame.
@@ -263,10 +259,6 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
             if(debug)cout << "Removed landmark " << active[next_entry].key << endl;
             if(active[next_entry].Length() > 1) inactive.push_back(active[next_entry]);
             active.erase(active.begin() + next_entry, active.begin() + next_entry + 1);
-            if(inactive.size() > 0 and inactive[inactive.size()-1].key == 86896)
-            {
-                std::cout << "lost track of the landmark at: " << siftfile << std::endl;
-            }
         }
         
         //create a new entry if its key is greater than anything that's active
@@ -297,10 +289,6 @@ vector<LandmarkTrack> ParseFeatureTrackFile::ProcessNewPoints(int survey, int ck
         bool used = (rand()%100 < percent_of_tracks);
         LandmarkTrack lt(ids[i], used);
         lt.AddToTrack(imagecoord[i], survey, ckey);
-        if(ids[i] == 86896)
-        {
-            std::cout << "created a new landmark track at: " << siftfile << std::endl;
-        }
         active.push_back(lt);
     }
     return inactive;
