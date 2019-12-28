@@ -7,8 +7,6 @@
 #include <gtsam/base/Matrix.h>
 #include <gtsam/base/Vector.h>
 
-#ifdef GTSAM4
-
 #include <gtsam/base/numericalDerivative.h>
 
 
@@ -76,7 +74,6 @@ public:
     }
 };
 
-#endif
 
 
 

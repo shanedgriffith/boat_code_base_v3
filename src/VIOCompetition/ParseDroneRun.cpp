@@ -51,12 +51,10 @@ void ParseDroneRun::loadGroundTruth()
         char * tmp = line;
         vector<string> lp = ParseLine(tmp);
         if(lp[0].compare("#") == 0) continue;
-#ifdef GTSAM4
         gtsam::Point3 T(stod(lp[2]), stod(lp[3]), stod(lp[4]));
         gtsam::Rot3 R(stod(lp[8]), stod(lp[5]), stod(lp[6]), stod(lp[7]));
         groundtruth.push_back(gtsam::Pose3(R, T));
         GTtimestamps.push_back(stod(lp[1]));
-#endif
     }
     fclose(fp);
 }
@@ -131,7 +129,6 @@ gtsam::Vector3 ParseDroneRun::computeBias(const std::vector<gtsam::Vector3>& rea
      */
 }
 
-#ifdef GTSAM4
 boost::shared_ptr<PreintegratedCombinedMeasurements::Params>
 ParseDroneRun::getIMUNoiseModel()
 {
@@ -162,7 +159,6 @@ ParseDroneRun::getIMUNoiseModel()
     
     return p;
 }
-#endif
 
 gtsam::Pose3
 ParseDroneRun::tfIMUtoCam()

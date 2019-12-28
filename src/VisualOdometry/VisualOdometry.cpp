@@ -75,29 +75,22 @@ void VisualOdometry::AddLandmarkTrack(gtsam::Cal3_S2::shared_ptr k, int landmark
     int ldist = 5; //this threshold specifies the distance between the camera and the landmark.
     int onoise = 10; //the threshold specifies at what point factors are discarded due to reprojection error.
     
-#ifdef GTSAM4
     gtsam::SmartProjectionParams params;
     params.setLandmarkDistanceThreshold(ldist);
     params.setDynamicOutlierRejectionThreshold(onoise);
     gtsam::SmartProjectionPoseFactor<gtsam::Cal3_S2> sppf(pixelNoise, k, boost::none, params);
-#else
-    gtsam::SmartProjectionPoseFactor<gtsam::Pose3, gtsam::Point3, gtsam::Cal3_S2> sppf(1, -1, false, false, boost::none, gtsam::HESSIAN, ldist, onoise); //GTSAM 3.2.1
-#endif
     
     //camera_keys[i]-posenum + poses.size();
     int tosub = 0;
     if(posenum > N_PAST_SETS)
         tosub = posenum - N_PAST_SETS;
 //    int base_num = poses.size() - posenum - 1; //max(posenum, N_PAST_SETS);
-    for(int i=0; i<points.size(); i++) {
+    for(int i=0; i<points.size(); i++)
+    {
         int idx  = camera_keys[i].index();
         if(idx < posenum) continue;
         gtsam::Symbol s(camera_keys[i].chr(), idx-tosub);
-#ifdef GTSAM4
-        sppf.add(points[i], s); //GTSAM 4.0
-#else
-        sppf.add(points[i], s, pixelNoise, k); //GTSAM 3.2.1
-#endif
+        sppf.add(points[i], s);
     }
     
     landmark_factors.push_back(sppf);
@@ -302,13 +295,12 @@ VisualOdometry::triangulateAndCountInFrontOfCamera(gtsam::Pose3 guess, std::vect
     const gtsam::TriangulationParameters params(1.0, false, 150);
     
     int valid = 0;
-#ifdef GTSAM4
-    for(int i=0; i<p0.size(); i++) {
+    for(int i=0; i<p0.size(); i++)
+    {
         gtsam::Point2Vector measurements = {gtsam::Point2(p0[i].x, p0[i].y), gtsam::Point2(p1[i].x, p1[i].y)};
         gtsam::TriangulationResult res = triangulateSafe(cameras, measurements, params);
         if(res.valid()) valid++;
     }
-#endif
     return valid;
 }
 
@@ -489,11 +481,12 @@ bool VisualOdometry::PoseFrom3Dto2DCorrespondences(gtsam::Values& result, std::s
     {
         std::vector<double> inliers(p3d.size(), 1);
         LocalizePose lp(_cam);
-        std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
-        std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+        gtsam::Pose3 localized_pose;
+        std::vector<double> res;
+        std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
         if(res.size() > 0)
         {
-            poseres = GTSAMInterface::VectorToPose(res[0]);
+            poseres = localized_pose;
             return true;
         }
         
@@ -561,12 +554,12 @@ void VisualOdometry::test3Dto2DVO()
         {
             std::vector<double> inliers(p3d.size(), 1);
             LocalizePose lp(_cam);
-            gtsam::Pose3 poseres;
-            std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
-            std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+            gtsam::Pose3 localized_pose;
+            std::vector<double> res;
+            std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
             if(res.size() > 0)
             {
-                poseres = GTSAMInterface::VectorToPose(res[0]);
+                poseres = localized_pose;
                 std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
             }
             else
@@ -617,7 +610,6 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         
         std::vector<gtsam::Point3> p3d;
         std::vector<gtsam::Point2> p2d1;
-#ifdef GTSAM4
         for(int j=0; j<subids.size(); ++j)
         {
             std::vector<gtsam::Pose3> poses;
@@ -639,7 +631,6 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
             
             p2d1.push_back(gtsam::Point2(subset.first[j].x, subset.first[j].y));
         }
-#endif
         
         threepftf.push(pftf);
         threeposes.push(por.CameraPose(i));
@@ -648,12 +639,12 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         {
             std::vector<double> inliers(p3d.size(), 1);
             LocalizePose lp(_cam);
-            gtsam::Pose3 poseres;
-            std::vector<double> pguess = GTSAMInterface::PoseToVector(poseres);
-            std::vector<std::vector<double> > res = lp.UseBAIterative(pguess, p3d, p2d1, inliers);
+            gtsam::Pose3 localized_pose;
+            std::vector<double> res;
+            std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
             if(res.size() > 0)
             {
-                poseres = GTSAMInterface::VectorToPose(res[0]);
+                poseres = localized_pose;
                 std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
             }
             else

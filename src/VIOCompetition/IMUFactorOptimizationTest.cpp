@@ -4,9 +4,6 @@
 #include <gtsam/slam/SmartProjectionPoseFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
 
-
-#ifdef GTSAM4
-
 #include "GravityFactor.h"
 
 using namespace std;
@@ -498,5 +495,3 @@ IMUFactorOptimizationTest::testIMUFactor(std::vector<gtsam::Vector3> lin_acc, st
         //        }
     }
 }
-
-#endif

@@ -11,9 +11,8 @@
 #include <DataTypes/Camera.hpp>
 #include "PreprocessDroneRun.hpp"
 
-#ifdef GTSAM4
 #include <gtsam/navigation/CombinedImuFactor.h>
-#endif
+
 
 class ParseDroneRun : public ParseSurvey
 {
@@ -87,9 +86,7 @@ public:
     
     gtsam::Pose3 tfIMUtoCam();
     
-#ifdef GTSAM4
     boost::shared_ptr<gtsam::PreintegratedCombinedMeasurements::Params> getIMUNoiseModel();
-#endif
 };
 
 

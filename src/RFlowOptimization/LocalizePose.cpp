@@ -51,33 +51,45 @@ setRANSACModel(int model)
     RANSAC_MODEL = model;
 }
 
-void LocalizePose::PrintVec(std::vector<double> p){
-    for(int i=0; i<p.size(); i++){
+void
+LocalizePose::
+PrintVec(std::vector<double> p)
+{
+    for(int i=0; i<p.size(); i++)
+    {
         std::cout << p[i]<<",";
     }
     std::cout << std::endl;
 }
 
-bool LocalizePose::EmptyPose(gtsam::Pose3& p){
+bool
+LocalizePose::
+EmptyPose(gtsam::Pose3& p)
+{
     gtsam::Pose3 zeros = gtsam::Pose3::identity();
     return zeros.equals(p);
 }
 
-double LocalizePose::MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers){
+double
+LocalizePose::
+MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers)
+{
     gtsam::Pose3 gtp = GTSAMInterface::VectorToPose(pnppose);
     double sumall=0;
     double sumin=0;
     int cin=0;
 
     int count=0;
-    for(int i=0; i<p3d.size(); i++){
+    for(int i=0; i<p3d.size(); i++)
+    {
         gtsam::Point3 tfp = gtp.transform_to(p3d[i]);
         gtsam::Point2 res = _cam.ProjectToImage(tfp);
         if(!_cam.InsideImage(res)) continue;
         double dist = res.distance(p2d[i]);
         sumall+=dist;
         count++;
-        if(inliers[i]){
+        if(inliers[i])
+        {
             sumin+=dist;
             cin++;
         }
@@ -99,12 +111,14 @@ Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gts
         gtsam::Point3 tfp = gtp.transform_to(p3d[i]);
         gtsam::Point2 res = _cam.ProjectToImage(tfp);
         double dist = res.distance(p2d[i]);
-        if(dist > err || !_cam.InsideImage(res)){
+        if(dist > err || !_cam.InsideImage(res))
+        {
             if(inliers[i]>=0.0) nchanges++;
             inliers[i] = -1;
             if(!_cam.InsideImage(res)) continue;
         }
-        else{
+        else
+        {
             if(inliers[i]<0) nchanges++;
             inliers[i] = err;//dist; //I seem to get more reliable estimates using err, rather than dist, here.
             sumin+=dist;
@@ -128,7 +142,8 @@ GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1fra
     int maxinliers = -1;
     double err = ACCEPTABLE_TRI_RERROR;
     //0.25, 0.125, 0.0625, 0.03125, 0.0156, 0.078
-    for(double val=0.005; val <= 0.4; val*=2){
+    for(double val=0.005; val <= 0.4; val*=2)
+    {
         bool success = DualBA(val,
                          p0, p1frame0, f3d, f2d1, rerror0,
                          p1, p0frame1, b3d, b2d0, rerror1);
@@ -142,7 +157,8 @@ GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1fra
         posevals[2] = (pv0[2]*f3d.size()+pv1[2]*b3d.size())/(f3d.size()+b3d.size());
         posevals[3] = (pv0[3]*pv0[1] + pv1[3]*pv1[1])/(pv0[1]+pv1[1]);
         
-        if(posevals[1] > maxinliers) {
+        if(posevals[1] > maxinliers)
+        {
             maxinliers = posevals[1];
             bestval = val;
         }
@@ -151,7 +167,7 @@ GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1fra
     return bestval;
 }
 
-std::tuple(gtsam::Pose3, gtsam::Pose3, std::vector<double>)
+std::tuple<gtsam::Pose3, gtsam::Pose3, std::vector<double>>
 LocalizePose::
 DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
         std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
@@ -167,7 +183,8 @@ DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::
     double err = ACCEPTABLE_TRI_RERROR;
     double val = GetBestValueForInterposeVar(p0, p1, p1frame0, p0frame1, f3d, f2d1, rerror0, b3d, b2d0, rerror1);
     if(debug) std::cout << "Best Value For Interpose Var: " << val << std::endl;
-    for(; nchanges > 0 && i < MAX_ITERS; i++){
+    for(; nchanges > 0 && i < MAX_ITERS; i++)
+    {
         success = DualBA(val,
                          p0, p1frame0, f3d, f2d1, rerror0,
                          p1, p0frame1, b3d, b2d0, rerror1);
@@ -181,7 +198,8 @@ DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::
         posevals[3] = (pv0[3]*pv0[1] + pv1[3]*pv1[1])/(pv0[1]+pv1[1]);
 
         nchanges = posevals[0];
-        if(debug) {
+        if(debug)
+        {
             printf("iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                    (int)i, (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)(f3d.size()+b3d.size()));
         }
@@ -189,7 +207,8 @@ DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::
     
     if(i==0) return {};
     
-    if(debug && success) {
+    if(debug && success)
+    {
         printf("iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                (int) (i-1), (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)(f3d.size()+b3d.size()));
     }
@@ -231,7 +250,7 @@ DualBA(double val,
     return true;
 }
 
-std::vector<std::vector<double> >
+std::tuple<gtsam::Pose3, std::vector<double>>
 LocalizePose::
 UseBAIterative(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers)
 {
@@ -247,17 +266,21 @@ UseBAIterative(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d
     std::vector<double> best_posevals;
     double best_score;
     int minpiter = -1;
-    gtsam::Pose3 estp = GTSAMInterface::VectorToPose(pguess);
+    gtsam::Pose3 estp = pguess;
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
     std::vector<double> posevalsransac;
-    if(RANSAC_MODEL == 0)
+    switch(RANSAC_MODEL)
     {
-        posevalsransac = RANSAC_P3P(estp, p3d, p2d, inliers);
-    }
-    else
-    {
-        posevalsransac = RANSAC_BA(estp, p3d, p2d, inliers);
+        case 0:
+            std::tie(best_pose, posevalsransac) = RANSAC_P3P(p3d, p2d, inliers);
+            break;
+        case 1:
+            std::tie(best_pose, posevalsransac) = RANSAC_BA(estp, p3d, p2d, inliers);
+            break;
+        default:
+            std::cout << "set the ransac model" << std::endl;
+            exit(-1);
     }
     if(posevalsransac[1]<0.000001) return {};
     
@@ -266,7 +289,8 @@ UseBAIterative(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d
     int nchanges=1;
     double err = ACCEPTABLE_TRI_RERROR;
     //while(err>6.0 ||(nchanges > 0 && iters < MAX_ITERS)){
-    for(int i=0; nchanges > 0 and i < MAX_ITERS; i++) {
+    for(int i=0; nchanges > 0 and i < MAX_ITERS; i++)
+    {
         UseBA(estp, p3d, p2d, inliers, i);
         if(EmptyPose(estp)) break;
         std::vector<double> posevals = Maximization(estp, p3d, p2d, inliers, err);
@@ -281,7 +305,8 @@ UseBAIterative(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d
         iters++;
         nchanges = posevals[0];
         
-        if(debug) {
+        if(debug)
+        {
             printf("bai iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                     (int)iters, (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)p3d.size());
         }
@@ -291,7 +316,7 @@ UseBAIterative(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d
     if(minpiter != iters-1) Maximization(best_pose, p3d, p2d, inliers, err); //reset the inliers.
     if(best_posevals.size()==0)return {};
     best_posevals[0] = iters;
-    return {GTSAMInterface::PoseToVector(best_pose), best_posevals};
+    return std::make_tuple(best_pose, best_posevals);
 }
 
 gtsam::Pose3
@@ -380,7 +405,8 @@ GenerateRandomSet(int n, std::vector<int>& rset)
 }
 
 std::tuple<gtsam::Pose3, std::vector<double>>
-LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers){
+LocalizePose::
+RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers){
     //EM approach to finding the best pose.
     //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
     gtsam::Pose3 best_pose = p1guess;
@@ -439,7 +465,8 @@ LocalizePose::RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, 
 }
 
 std::tuple<gtsam::EssentialMatrix, std::vector<double>>
-LocalizePose::RANSAC_BA(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
+LocalizePose::
+RANSAC_BA(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
 {
     //EM approach to finding the best pose.
     //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
@@ -497,7 +524,9 @@ LocalizePose::RANSAC_BA(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Poi
     return std::make_tuple(best_pose, best_posevals);
 }
 
-gtsam::Pose3 LocalizePose::disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d)
+gtsam::Pose3
+LocalizePose::
+disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d)
 {
     int bestpidx = -1;
     double bestdist = std::numeric_limits<double>::max();
@@ -530,7 +559,9 @@ gtsam::Pose3 LocalizePose::disambiguatePoses(const std::vector<gtsam::Pose3>& po
     return poses[bestpidx];
 }
 
-gtsam::Pose3 LocalizePose::RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1)
+gtsam::Pose3
+LocalizePose::
+RunP3P(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1)
 {
     /*should have 4 points. the first three are used for the estimation. the fourth for disambiguation.*/
     std::vector<gtsam::Vector3> featureVectors(p3d.size());
@@ -540,10 +571,8 @@ gtsam::Pose3 LocalizePose::RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<g
     gtsam::PinholeCamera<gtsam::Cal3_S2> pc(p, *gtcam);
     for(int j=0; j<p3d.size(); j++)
     {
-#ifdef GTSAM4
         gtsam::Unit3 uv = pc.backprojectPointAtInfinity(p2d1[j]);
         featureVectors[j] = uv.unitVector();
-#endif
     }
     
     std::vector<gtsam::Pose3> poses;
@@ -555,13 +584,18 @@ gtsam::Pose3 LocalizePose::RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<g
     return res;
 }
 
-double LocalizePose::NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers)
+double
+LocalizePose::
+NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers)
 {
     double w = 1.0 * ninliers / setsize;
     return log(1-probability_all_inliers) / log(1.0-pow(w, nsamples_per_iteration));
 }
 
-std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers){
+std::tuple<gtsam::Pose3, std::vector<double>>
+LocalizePose::
+RANSAC_P3P(const gtsam::Pose3& p1guess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
+{
     //EM approach to finding the best pose.
     //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
     gtsam::Pose3 best_pose = p1guess;
@@ -576,7 +610,8 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
     double err = ACCEPTABLE_TRI_RERROR;
     int n_iters = MAX_RANSAC_ITERS;
     
-    for(; iters<n_iters; ++iters) {
+    for(; iters<n_iters; ++iters)
+    {
         GenerateRandomSet(rset.size(), rset);
         for(int j=0; j<rset.size(); j++)
         {
@@ -605,7 +640,8 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
     
-    if(debug) {
+    if(debug)
+    {
         printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
     }
@@ -613,56 +649,69 @@ std::vector<double> LocalizePose::RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<
     //have to reset the inliers.
     std::vector<double> posevals = Maximization(best_pose, p3d, p2d1, inliers, err);
     
-    p1guess = best_pose;
     best_posevals[0] = iters;
-    return best_posevals;
+    return std::make_tuple(best_pose, best_posevals);
 }
 
-std::vector<std::vector<double> > LocalizePose::RobustDualBA(std::vector<double> p0, std::vector<double> p1,
-                                                            std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
-                                                            std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb){
-    gtsam::Pose3 gp0 = GTSAMInterface::VectorToPose(p0);
-    gtsam::Pose3 gp1 = GTSAMInterface::VectorToPose(p1);
+std::tuple<gtsam::Pose3, std::vector<double>>
+LocalizePose::
+RobustDualBA(gtsam::Pose3& gp0, gtsam::Pose3& gp1,
+             std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
+             std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb)
+{
     gtsam::Pose3 p1frame0(gp1.rotation(), gp0.translation());
     struct timespec start, runir, end;
     
-    if(p3d.size()<MIN_CORRESPONDENCES || b3d.size()<MIN_CORRESPONDENCES)  {
+    if(p3d.size()<MIN_CORRESPONDENCES || b3d.size()<MIN_CORRESPONDENCES)
+    {
         std::cout << "Localization failed due to sizes: " <<p3d.size() << ", " << b3d.size() << std::endl;
-        return {};
+        return {}; //TODO: valid?
     }
     
     clock_gettime(CLOCK_MONOTONIC, &start);
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p1frame0.
-    std::vector<double> posevals1f0 = RANSAC_P3P(p1frame0, p3d, p2d1, rerrorp);
+    std::vector<double> posevals1f0;
+    std::tie(p1frame0, posevals1f0) = RANSAC_P3P(p1frame0, p3d, p2d1, rerrorp);
     
-    if(posevals1f0[1]<0.000001){
+    if(posevals1f0[1]<0.000001)
+    {
         std::cout << "Localization failed due to RANSAC failure on set p"<<std::endl;
-        return {};
+        return {}; //TODO: valid?
     }
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p0frame1.
     //gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0)); //this also looks wrong.
     gtsam::Pose3 p0frame1 = gp1.compose(gp1.between(p1frame0)*p1frame0.between(gp0)*p1frame0.between(gp1));
-    std::vector<double> posevals0f1 = RANSAC_P3P(p0frame1, b3d, b2d0, rerrorb);
+    std::vector<double> posevals0f1;
+    std::tie(p0frame1, posevals0f1) = RANSAC_P3P(p0frame1, b3d, b2d0, rerrorb);
     
     clock_gettime(CLOCK_MONOTONIC, &runir);
-    if(posevals0f1[1]<0.000001) {
+    if(posevals0f1[1]<0.000001)
+    {
         std::cout << "Localization failed due to RANSAC failure on set b"<<std::endl;
-        return {};
+        return {}; //TODO: valid?
     }
-
-    //iterative localization (like EM), started with the good initial estimates found using RANSAC.
-    std::vector<std::vector<double> > results = DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    std::string irtime = std::to_string((runir.tv_sec - start.tv_sec) + (runir.tv_nsec - start.tv_nsec)/1000000000.0);
-    std::string altime = std::to_string((end.tv_sec - runir.tv_sec) + (end.tv_nsec - runir.tv_nsec)/1000000000.0);
-    std::string tottime = std::to_string((end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/1000000000.0);
-    if(debug) std::cout << "runtimes (s) "<<irtime << " + " << altime << " ~= " << tottime << std::endl;
     
-    return results;
+    //iterative localization (like EM), started with the good initial estimates found using RANSAC.
+    gtsam::Pose3 estimated;
+    std::vector<double> stats;
+    std::tie(estimated, stats) = DualIterativeBA(gp0, gp1, p1frame0, p0frame1, p3d, p2d1, rerrorp, b3d, b2d0, rerrorb);
+    
+    if(debug)
+    {
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        std::string irtime = std::to_string((runir.tv_sec - start.tv_sec) + (runir.tv_nsec - start.tv_nsec)/1000000000.0);
+        std::string altime = std::to_string((end.tv_sec - runir.tv_sec) + (end.tv_nsec - runir.tv_nsec)/1000000000.0);
+        std::string tottime = std::to_string((end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)/1000000000.0);
+        std::cout << "runtimes (s) "<<irtime << " + " << altime << " ~= " << tottime << std::endl;
+    }
+    
+    return std::make_tuple(estimated, stats); //TODO: can these values be forwarded instead of untied/retied?
 }
 
-std::tuple<gtsam::EssentialMatrix, std::vector<double>> LocalizePose::UseBAIterative(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
+std::tuple<gtsam::EssentialMatrix, std::vector<double>>
+LocalizePose::
+UseBAIterative(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers)
 {
     //TODO: make this function consistent with the DualIterativeBA(). (and update RANSAC_BA() as well)
     //EM approach to finding the best pose.
@@ -683,10 +732,10 @@ std::tuple<gtsam::EssentialMatrix, std::vector<double>> LocalizePose::UseBAItera
     switch(RANSAC_MODEL)
     {
         case 0:
-            posevalsransac = RANSAC_NISTER(estp, p2d0, p2d1, inliers);
+            std::tie(estp, posevalsransac) = RANSAC_NISTER(p2d0, p2d1, inliers);
             break;
         case 1:
-            posevalsransac = RANSAC_BA(estp, p2d0, p2d1, inliers);
+            std::tie(estp, posevalsransac) = RANSAC_BA(p2d0, p2d1, inliers);
             break;
         default:
             std::cout << "set the ransac model" << std::endl;
@@ -700,10 +749,11 @@ std::tuple<gtsam::EssentialMatrix, std::vector<double>> LocalizePose::UseBAItera
     int nchanges=1;
     double err = ACCEPTABLE_TRI_RERROR;
     //while(err>6.0 ||(nchanges > 0 && iters < MAX_ITERS)){
-    for(int i=0; nchanges > 0 and i < MAX_ITERS; i++) {
-        UseBA(estp, p3d, p2d, inliers, i);
+    for(int i=0; nchanges > 0 and i < MAX_ITERS; i++)
+    {
+        UseBA(estp, p2d0, p2d1, inliers, i);
         if(EmptyPose(estp)) break;
-        std::vector<double> posevals = Maximization(estp, p3d, p2d, inliers, err);
+        std::vector<double> posevals = Maximization(estp, p2d0, p2d1, inliers, err);
         
         if(iters==0 or posevals[1]>best_score) //using the reprojection error of the inlier set, rather than the number of inliers.
         {
@@ -715,7 +765,8 @@ std::tuple<gtsam::EssentialMatrix, std::vector<double>> LocalizePose::UseBAItera
         iters++;
         nchanges = posevals[0];
         
-        if(debug) {
+        if(debug)
+        {
             printf("bai iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                    (int)iters, (int)posevals[0], posevals[2], posevals[3], (int)posevals[1], (int)p3d.size());
         }
@@ -723,9 +774,10 @@ std::tuple<gtsam::EssentialMatrix, std::vector<double>> LocalizePose::UseBAItera
             break;
     }
     if(minpiter != iters-1) Maximization(best_pose, p3d, p2d, inliers, err); //reset the inliers.
-    if(best_posevals.size()==0)return {};
+    if(best_posevals.size()==0)
+        return {};
     best_posevals[0] = iters;
-    return {GTSAMInterface::PoseToVector(best_pose), best_posevals};
+    return std::make_tuple(best_pose, best_posevals);
 }
 
 void

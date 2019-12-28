@@ -25,16 +25,14 @@ const vector<string> GTSAMInterface::keys = {
     "GTSAM_SKIP", "UPDATE_ITERATIONS"
 };
 
-std::vector<double> GTSAMInterface::PoseToVector(const gtsam::Pose3& cam){
+std::vector<double> GTSAMInterface::PoseToVector(const gtsam::Pose3& cam)
+{
     return {cam.x(), cam.y(), cam.z(), cam.rotation().roll(), cam.rotation().pitch(), cam.rotation().yaw()};
 }
 
-gtsam::Pose3 GTSAMInterface::VectorToPose(const std::vector<double>& p){
-#ifdef GTSAM4
-    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 4.0
-#else
-    return gtsam::Pose3(gtsam::Rot3::ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2])); //for GTSAM 3.2.1
-#endif
+gtsam::Pose3 GTSAMInterface::VectorToPose(const std::vector<double>& p)
+{
+    return gtsam::Pose3(gtsam::Rot3::Ypr(p[5], p[4], p[3]), gtsam::Point3(p[0], p[1], p[2]));
 }
 
 void GTSAMInterface::SetupSLAM(bool incremental) {
@@ -64,7 +62,6 @@ void GTSAMInterface::SetupSLAM(bool incremental) {
     initialEstimate.clear();
 }
 
-#ifdef GTSAM4
 void GTSAMInterface::RemoveLandmarkFactor(int landmark_idx)
 {
     if(landmark_idx > _fg->landmark_to_graph_index[_fg->GetActiveLandmarkSet()].size())
@@ -82,7 +79,6 @@ void GTSAMInterface::RemoveLandmarkFactor(int landmark_idx)
 //    std::cout << "set to remove landmark: " << landmark_idx << ", with factor idx: " << factor_idx << ", and factor: ";
 //    f->printKeys();
 }
-#endif
 
 void GTSAMInterface::Printi2Graph(const std::string& name, const gtsam::NonlinearFactorGraph& nfg)
 {
@@ -116,13 +112,9 @@ void GTSAMInterface::IncrementalUpdate() {
         int iterations = vals[Param::UPDATE_ITERATIONS];
         for(int i=0; i<iterations; i++) {
             if(i==0) {
-#ifdef GTSAM4
                 ISAM2Result res = i2.update(_fg->graph, initialEstimate, factors_to_remove);
                 factors_to_remove.clear();
                 last_factor_indices = res.newFactorsIndices;
-#else
-                ISAM2Result res = i2.update(_fg->graph, initialEstimate);
-#endif
             } else {
                 i2.update();
             }
@@ -263,15 +255,13 @@ std::shared_ptr<gtsam::Values> GTSAMInterface::getPoseValuesFrom(int var_id, int
     return v;
 }
 
-gtsam::Pose3 GTSAMInterface::PoseResult(Symbol s) {
-#ifdef GTSAM4
+gtsam::Pose3
+GTSAMInterface::
+PoseResult(Symbol s)
+{
     if(_incremental and not i2.valueExists(s))//exists() is O(1); uses a map.
-    {
         return i2.calculateEstimate<gtsam::Pose3>(s);
-    }
-    else
-#endif
-    if(results.exists<Pose3>(s))
+    else if(results.exists<Pose3>(s))
         return results.at<Pose3>(s);
     else if(initialEstimate.exists<Pose3>(s))
         return initialEstimate.at<Pose3>(s);

@@ -242,15 +242,17 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     
     LocalizePose loc(_cam);
 //    loc.debug = true; //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
-    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
+//    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     std::vector<double> inliers(p3d.size(), 1.0);
     loc.setRANSACModel(1);
     loc.setRobustLoss();
-    std::vector<std::vector<double>> res = loc.UseBAIterative(vec_pose_t_est, p3d, p2d1, inliers);
+    gtsam::Pose3 localized_pose;
+    std::vector<double> res;
+    std::tie(localized_pose, res) = loc.UseBAIterative(pose_t_est, p3d, p2d1, inliers);
 //    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
     if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
     {
-        poses.push_back(GTSAMInterface::VectorToPose(res[0]));
+        poses.push_back(localized_pose);
     }
     return poses;
 }

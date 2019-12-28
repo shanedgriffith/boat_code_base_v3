@@ -72,7 +72,7 @@ protected:
                                                      std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                                                      std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
     
-    std::tuple(gtsam::Pose3, gtsam::Pose3, std::vector<double>)
+    std::tuple<gtsam::Pose3, gtsam::Pose3, std::vector<double>>
     DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
                     std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                     std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
@@ -110,7 +110,7 @@ public:
 
     //for Pose3
     std::tuple<gtsam::Pose3, std::vector<double>>
-    UseBAIterative(const gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    UseBAIterative(const gtsam::Pose3& pose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
     
     //for EssentialMatrix
     std::tuple<gtsam::EssentialMatrix, std::vector<double>>
@@ -123,11 +123,13 @@ public:
                                                                 std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb);
     
     gtsam::Pose3
-    RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
+    RunP3P(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1);
     
     std::vector<std::vector<double>>
     combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
     
+//    template <class T>
+//    void setInitialEstimate(const T& estimate); //TODO: idea for refactor. rewrite for POSE, essential matrix, ...
     void setRobustLoss();
     void setRANSACModel(int model);
     
