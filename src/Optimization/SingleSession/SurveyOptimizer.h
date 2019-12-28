@@ -1,13 +1,5 @@
-//
-//  SurveyOptimizer.h
-//  BundleAdjustOneDataset
-//
-//  Created by Shane Griffith on 6/11/15.
-//  Copyright (c) 2015 shane. All rights reserved.
-//
+#pragma once
 
-#ifndef SRC_OPTIMIZATION_SURVEYOPTIMIZER_H_
-#define SRC_OPTIMIZATION_SURVEYOPTIMIZER_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +17,7 @@
 #include <DataTypes/Camera.hpp>
 #include <FileParsing/SaveOptimizationResults.h>
 #include <FileParsing/ParseSurvey.h>
+#include <FileParsing/ParseOptimizationResults.h>
 
 #include "GTSAMInterface.h"
 #include "FactorGraph.hpp"
@@ -52,7 +45,7 @@ protected:
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition);
     std::vector<gtsam::Pose3> LocalizeCurPose(int cur_pose_idx);
     void AddCamera(int camera_key, gtsam::Pose3& cam, gtsam::Pose3& localized);
-    int ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
+    int ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);
     
     int cache_set=0;
     std::vector<std::vector<LandmarkTrack> > cached_landmarks; //landmarks are cached to retroactively add inter-survey constraints.
@@ -64,6 +57,7 @@ protected:
     const Camera& _cam;
     FactorGraph * FG;
     bool clean_up = false;
+    
 public:
     double percent_of_tracks = 100.0;
     std::string _date;
@@ -83,7 +77,7 @@ public:
     
     //align the image tracking dataset with the interpolated data in the csv file.
     //this method assumes the image_auxiliary file starts before the csv sift file.
-    void Optimize(ParseSurvey& PS);
+    void Optimize(std::shared_ptr<ParseSurvey> PS);
     
     std::vector<double> Params(){return vals;}
     static std::vector<std::string> Keys(){return keys;}
@@ -93,6 +87,3 @@ public:
     void SetPercentOfTracks(double p){percent_of_tracks = p;}
 };
 
-
-
-#endif /* SRC_OPTIMIZATION_SURVEYOPTIMIZER_H_ */

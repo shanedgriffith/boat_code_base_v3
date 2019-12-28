@@ -26,6 +26,7 @@
 
 class ParseBoatSurvey: public ParseSurvey{
 protected:
+    const double IMU_GYRO_GAIN = 0.2; //0.224 for 5 sec vs 0.185 for 1 sec. //TODO: specifying a gain is ad-hoc. this is dumb.
     std::vector<double> GetRotationMatrix(double X, double Y, double Z);
     std::vector<double> ComposeRotationMatrices(std::vector<double> A, std::vector<double> B);
     std::vector<double> RotationMatrixToRPY(std::vector<double> R);
@@ -55,6 +56,7 @@ public:
     int GetImageNumber(int auxidx);
     int GetIndexOfImage(int image);
     double GetAvgAngularVelocity(int sidx, int eidx);
+    double changeInYaw(double t_m1, double t);
     bool Useable(int cidx, int lcidx);
     std::vector<double> GetDrawScale();
     void PlayPoses();

@@ -13,6 +13,7 @@
 #include <gtsam/geometry/Point2.h>
 
 #include "FileParsing/ParseSurvey.h"
+#include "BoatSurvey/ParseBoatSurvey.hpp"
 #include "EvaluateSLAM.h"
 #include "RFlowOptimization/LocalizePose.hpp"
 
@@ -182,13 +183,13 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     
     if(active.size() <= 3)
     {
-        std::cout << "______________________ no localization. the active set is too small." << std::endl;
+        std::cout << "______________________ no localization. the active set is too small. " << active.size() << " active landmark tracks." << std::endl;
         return poses;
     }
     
     if(first_pose_idx > latest_pose_idx-2)
     {
-        std::cout << "______________________ no localization. not enough poses in the active set." << std::endl;
+        std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
         return poses;
     }
     gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
@@ -234,13 +235,13 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     
     if(p3d.size() <= 3)
     {
-        std::cout << "______________________ no localization. too few triangulated points." << std::endl;
+        std::cout << "______________________ no localization. too few triangulated points. " << p3d.size() << " 3d points of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
         return poses;
     }
-    std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points from that active set that could be triangulated." << std::endl;
+    std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
     
     LocalizePose loc(_cam);
-    loc.debug = true;
+//    loc.debug = true; //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
     std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     std::vector<double> inliers(p3d.size(), 1.0);
     loc.setRANSACModel(1);
@@ -254,19 +255,20 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     return poses;
 }
 
-int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
+int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
-    static gtsam::Pose3 last_cam = PS.CameraPose(lcidx);
-    gtsam::Pose3 pose_prior = PS.CameraPose(cidx); //the camera pose estimated using sensors.;
+    static gtsam::Pose3 last_cam = PS->CameraPose(lcidx);
+    gtsam::Pose3 pose_prior = PS->CameraPose(cidx); //the camera pose estimated using sensors.;
     gtsam::Pose3 curcam = pose_prior;
     gtsam::Pose3 btwn_pos;
     static int suc_count = 0;
+    //static ParseOptimizationResults POR("/Volumes/Untitled/data/iSAM/", "140106_better_z_values_plus_loop_closure (closer to ground truth)"); //TODO: compare to the batch optimization method.
     
     int camera_key = FG->GetNextCameraKey();
 //    std::cout << "at iteration with camera x" << camera_key << std::endl;
     
     //check for camera transitions
-    bool flipped = PS.CheckCameraTransition(cidx, lcidx);
+    bool flipped = PS->CheckCameraTransition(cidx, lcidx);
     bool transition = flipped || gap;
     if(transition and not _incremental){
         if(debug) std::cout << "flip? " << flipped << ", gap? " << gap << ", at " << cidx << std::endl;
@@ -323,20 +325,36 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     FG->AddCamera(camera_key, pose_prior);
     
     //add the kinematic constraints.
-    if(camera_key != 0) {
+    if(camera_key != 0)
+    {
         if(camera_key == 1)
             btwn_pos = last_cam.between(curcam);
         
-        if(PS.ConstantVelocity()) {
+        if(dynamic_pointer_cast<ParseBoatSurvey>(PS))
+        {
+            std::shared_ptr<ParseBoatSurvey> pbs = dynamic_pointer_cast<ParseBoatSurvey>(PS);
+            double change_in_yaw = pbs->changeInYaw(PS->timings[lcidx], PS->timings[cidx]);
+            gtsam::Rot3 measured_rot = gtsam::Rot3::Ypr(change_in_yaw, 0, 0);
+//            std::cout << "btwn: " << std::endl;
+//            btwn_pos.print();
+//            std::cout << "rot: " << std::endl;
+//            measured_rot.print();
+            FG->AddOrientationConstraint(camera_key-1, camera_key, measured_rot);
+        }
+        
+        if(PS->ConstantVelocity()) {
 //        if(not loc_succeeded) {
             //note: keep constant velocity, but assume the between factor accounts for the time between poses.
-            double av = PS.GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
-            double delta_t = PS.timings[cidx]-PS.timings[lcidx]; //Get the difference in time.
+            double av = PS->GetAvgAngularVelocity(lcidx, cidx); //Estimate the angular velocity of the boat.
+            double delta_t = PS->timings[cidx]-PS->timings[lcidx]; //Get the difference in time.
             std::vector<double> pvec = {av*delta_t, 0.0, 0.0, btwn_pos.x(), btwn_pos.y(), 0.0};
             gtsam::Pose3 vel_est = GTSAMInterface::VectorToPose(pvec);
             AddPoseConstraints(delta_t, btwn_pos, vel_est, camera_key, transition);
         } else {
             FG->AddOdomFactor(camera_key, btwn_pos, loc_succeeded);
+            
+            //add IMU factor.
+            //(custom IMU factor; accumulate the change in rotation with which to constrain the yaw.
         }
     }
     
@@ -347,7 +365,7 @@ int SurveyOptimizer::ConstructGraph(ParseSurvey& PS, ParseFeatureTrackFile& PFT,
     return camera_key;
 }
 
-void SurveyOptimizer::Optimize(ParseSurvey& PS) {
+void SurveyOptimizer::Optimize(std::shared_ptr<ParseSurvey> PS) {
     //TODO: implement pose decimation, rather than the 1 by 10 (CAM_SKIP) rule currently used.
 	if(!initialized){cout << "SurveyOptimizer::Optimize() check initialization"<<endl; exit(1);}
     
@@ -363,17 +381,17 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS) {
     int cidx = 0, lcidx=0;
     for(int i=vals[Param::CAM_OFFSET]; ; i=i+vals[Param::CAM_SKIP]) {
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
-        bool gap = PS.CheckGap(lcidx, lcidx + vals[Param::CAM_SKIP]);
+        bool gap = PS->CheckGap(lcidx, lcidx + vals[Param::CAM_SKIP]);
         
-        ParseFeatureTrackFile PFT = PS.LoadVisualFeatureTracks(_cam, i, gap);
-        cidx = PS.FindSynchronizedAUXIndex(PFT.time, cidx);
+        ParseFeatureTrackFile PFT = PS->LoadVisualFeatureTracks(_cam, i, gap);
+        cidx = PS->FindSynchronizedAUXIndex(PFT.time, cidx);
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.
-        if(!PS.Useable(cidx, lcidx)) continue; //the camera is being adjusted, don't use the data.
+        if(!PS->Useable(cidx, lcidx)) continue; //the camera is being adjusted, don't use the data.
         if(PFT.CheckImageDuplication(active)) continue; //the image was duplicated, so the tracking data is unhelpful, don't use the data.
         
         //Construct the graph (camera, visual landmarks, velocity, and time)
-        //int camera_key = ConstructGraph(PS.CameraPose(cidx), PFT, av, PS.timings[cidx]);
+        //int camera_key = ConstructGraph(PS->CameraPose(cidx), PFT, av, PS->timings[cidx]);
         int camera_key = ConstructGraph(PS, PFT, cidx, lcidx, gap);
         
         //Optimize the graph
@@ -382,16 +400,16 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS) {
             RunGTSAM(_print_data_increments);
             if(_print_data_increments)
             {
-                SaveResults(SOR, camera_key, 100.0*cidx/(PS.timings.size()-1000), PS.GetDrawScale());
-                es.ErrorForSurvey(PS._pftbase, true);
+                SaveResults(SOR, camera_key, 100.0*cidx/(PS->timings.size()-1000), PS->GetDrawScale());
+                es.ErrorForSurvey(PS->_pftbase, true);
             }
         }
         
         //Log the data alignment.
-        int imageno = PS.GetImageNumber(cidx);
-        SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS.timings[cidx]);
+        int imageno = PS->GetImageNumber(cidx);
+        SOR.SaveDataCorrespondence(camera_key, i, cidx, imageno, PS->timings[cidx]);
         if(debug)
-            cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<(int) (PS.timings[cidx]/100000) << ((int)PS.timings[cidx])%100000 <<endl;
+            cout << "correspondence: " << camera_key <<", " << i << ", "<<cidx<<", "<<imageno<<", "<<(int) (PS->timings[cidx]/100000) << ((int)PS->timings[cidx])%100000 <<endl;
         
         lcidx = cidx;
         
@@ -408,9 +426,9 @@ void SurveyOptimizer::Optimize(ParseSurvey& PS) {
     //Final optimization
     SOR.TimeOptimization();
     RunGTSAM(true);
-    SaveResults(SOR, 0, 100.0, PS.GetDrawScale());
+    SaveResults(SOR, 0, 100.0, PS->GetDrawScale());
     SaveParameters();
-    es.ErrorForSurvey(PS._pftbase, true);
+    es.ErrorForSurvey(PS->_pftbase, true);
     es.PrintTots();
 }
 

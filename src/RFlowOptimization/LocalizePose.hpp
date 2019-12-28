@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <vector>
 
+#include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
@@ -46,10 +47,18 @@ protected:
     int RANSAC_MODEL = 0;
     bool robust_loss_ = false;
 
-    std::vector<double> Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, double err);
-    void UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
-    void AddLocalizationFactors(gtsam::Symbol symb, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
-    void AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess, std::vector<double> noise);
+    std::vector<double>
+    Maximization(gtsam::Pose3& gtp, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, double err);
+    
+    void
+    UseBA(gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
+    
+    void
+    AddLocalizationFactors(gtsam::Symbol symb, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers, int iter = 0);
+    
+    void
+    AddPose(gtsam::Symbol symb, gtsam::Pose3 pguess, std::vector<double> noise);
+    
     gtsam::Values RunBA();
 
     bool EmptyPose(gtsam::Pose3& p);
@@ -58,55 +67,75 @@ protected:
                 gtsam::Pose3 p0, gtsam::Pose3& p1frame0, std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                 gtsam::Pose3 p1, gtsam::Pose3& p0frame1, std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
 
-    double GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
+    double
+    GetBestValueForInterposeVar(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
                                                      std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                                                      std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
     
-    std::vector<std::vector<double> > DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
-                                                     std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
-                                                     std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
+    std::tuple(gtsam::Pose3, gtsam::Pose3, std::vector<double>)
+    DualIterativeBA(gtsam::Pose3 p0, gtsam::Pose3 p1, gtsam::Pose3 p1frame0, gtsam::Pose3 p0frame1,
+                    std::vector<gtsam::Point3>& f3d, std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
+                    std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
     
-    void GenerateRandomSet(int n, std::vector<int>& rset);
-    double NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers);
-    std::vector<double> RANSAC_BA(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    void
+    GenerateRandomSet(int n, std::vector<int>& rset);
     
-    std::vector<double> RANSAC_P3P(gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    double
+    NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers);
     
-    gtsam::Pose3 disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d);
+    std::tuple<gtsam::Pose3, std::vector<double>>
+    RANSAC_BA(const gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
     
-    void removeZeroPoints(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
+    std::tuple<gtsam::Pose3, std::vector<double>>
+    RANSAC_P3P(const gtsam::Pose3& p1guess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    
+    gtsam::Pose3
+    disambiguatePoses(const std::vector<gtsam::Pose3>& poses, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d);
+    
+    void
+    removeZeroPoints(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
     
     gtsam::NonlinearFactorGraph graph;
     gtsam::Values initEst;
     const Camera& _cam;
+    
 public:
     bool debug = false;
-    LocalizePose(const Camera& cam):_cam(cam){}
+    
+    LocalizePose(const Camera& cam);
 
     void SetErrorThreshold(double e) {ACCEPTABLE_TRI_RERROR = e;}
     
     double MeasureReprojectionError(std::vector<double>& pnppose, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<unsigned char>& inliers);
 
-    std::vector<std::vector<double> > UseBAIterative(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
-
+    //for Pose3
+    std::tuple<gtsam::Pose3, std::vector<double>>
+    UseBAIterative(const gtsam::Pose3& pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    
+    //for EssentialMatrix
+    std::tuple<gtsam::EssentialMatrix, std::vector<double>>
+    UseBAIterative(std::vector<gtsam::Point2>& p2d0, std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
+    
     void PrintVec(std::vector<double> p);
     
     std::vector<std::vector<double> > RobustDualBA(std::vector<double> p0, std::vector<double> p1,
                                                                 std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
                                                                 std::vector<gtsam::Point3>& b3d, std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb);
     
-    gtsam::Pose3 RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
+    gtsam::Pose3
+    RunP3P(std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d1);
     
-    std::vector<std::vector<double>> combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    std::vector<std::vector<double>>
+    combinedLocalizationMethod(std::vector<double> pguess, std::vector<gtsam::Point3>& p3d, std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
     
-    void setRobustLoss(){robust_loss_ = true;}
+    void setRobustLoss();
+    void setRANSACModel(int model);
     
     void testP3P();
     
     void testP3PStatic();
     void testLocalizePoses();
     
-    void setRANSACModel(int model) {RANSAC_MODEL = model;}
     
 //    void test();
 };

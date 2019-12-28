@@ -18,6 +18,7 @@
 #include <gtsam/slam/SmartProjectionPoseFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include "BetweenThree.h"
+#include "OrientationConstraint.h"
 
 using namespace std;
 
@@ -42,6 +43,10 @@ void FactorGraph::InitializeNoiseModels(){
     
     gtsam::Vector6 v6kt = (gtsam::Vector(6) << 0.05, 0.05, 0.05, 0.05, 0.05, 0.05).finished();
     tightKinNoise = gtsam::noiseModel::Diagonal::Sigmas(v6kt);
+    
+//    gtsam::Vector3 v3orei = (gtsam::Vector(3) << 0.002, 0.002, 0.01).finished();
+    gtsam::Vector3 v3orei = (gtsam::Vector(3) << 0.002, 0.002, 0.1).finished();
+    orientNoise = gtsam::noiseModel::Diagonal::Sigmas(v3orei);
     
     gtsam::Vector6 v6d = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&vals[Param::DELTA_V_X]), 6, 1);
     dVNoise = gtsam::noiseModel::Diagonal::Sigmas(v6d);
@@ -81,6 +86,12 @@ void FactorGraph::AddKinematicConstraint(int camera_key, double delta_time){
      */
     gtsam::Pose3 p(gtsam::Rot3::RzRyRx(0,0,0), gtsam::Point3(0,0,0));
     graph.add(BetweenThree<gtsam::Pose3>(gtsam::Symbol(key[(int) var::X], camera_key), gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::V], camera_key-1), delta_time, p, kinNoise));
+    variable_constraints++;
+}
+
+void FactorGraph::AddOrientationConstraint(int camera_key1, int camera_key2, const gtsam::Rot3& rot)
+{
+    graph.add(OrientationConstraint(gtsam::Symbol(key[(int) var::X], camera_key1), gtsam::Symbol(key[(int) var::X], camera_key2), rot, orientNoise));
     variable_constraints++;
 }
 

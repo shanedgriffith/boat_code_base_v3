@@ -8,7 +8,7 @@
 
 #include "Optimization/SingleSession/SurveyOptimizer.h"
 #include "RFlowOptimization/LocalizePose.hpp"
-
+#include "Optimization/SingleSession/testAngularVelocity.h"
 #include <testRobust.hpp>
 
 using namespace std;
@@ -22,6 +22,9 @@ vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/D
 
 int main(int argc, char *argv[])
 {
+//    testAngularVelocity::compareAngularVelocityToTraj();
+////    testAngularVelocity::testReprojectionWithYawDifference();
+//    return 1;
     
 //    testRobust tr;
 //    tr.image();
@@ -53,7 +56,7 @@ int main(int argc, char *argv[])
     
     std::string date = "140106";
 
-    ParseBoatSurvey PS(query_loc, pftbase, date);
+    std::shared_ptr<ParseSurvey> PS = std::make_shared<ParseBoatSurvey>(query_loc, pftbase, date);
     SurveyOptimizer so(axisptz, date, results_dir);
     so.Initialize();
     so.Optimize(PS);

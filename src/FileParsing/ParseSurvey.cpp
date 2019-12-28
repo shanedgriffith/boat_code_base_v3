@@ -54,6 +54,23 @@ int ParseSurvey::FindSynchronizedAUXIndex(double querytime, int from_idx){
     return from_idx;
 }
 
+int
+ParseSurvey::
+timestampToIndex(double timestamp)
+{
+    int s=0;
+    int e=timings.size();
+    while(e-s>=1)
+    {
+        int m = s + (e-s)/2;
+        if(timings[m] < timestamp) s = m;
+        else if(timings[m] > timestamp) e = m;
+        else return m;
+    }
+    throw std::runtime_error("ParseSurvey::timestampToIndex() error. timestamp not found.");
+    return -1;
+}
+
 double ParseSurvey::AngleDistance(double a, double b){
     //[-pi, pi]
     double d = a-b;

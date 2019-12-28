@@ -306,4 +306,9 @@ int ParseOptimizationResults::GetNearestPoseToImage(int image){
     return med+1;
 }
 
-
+double
+ParseOptimizationResults::
+timestamp(int idx)
+{
+    return timings[idx];
+}

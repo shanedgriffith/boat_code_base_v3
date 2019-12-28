@@ -108,11 +108,28 @@ double ParseBoatSurvey::GetAvgAngularVelocity(int sidx, int eidx) {
     sidx = max(0,sidx);
     eidx = min((int)omega.size()-1, eidx);
     double sum = 0.0;
-    for(int i=sidx; i<=eidx; i++) {
+    for(int i=sidx; i < eidx; ++i)
+    {
         sum += omega[i];
     }
-    if(eidx-sidx==0) return omega[eidx];
+    if(eidx-sidx == 0) return omega[eidx];
     return sum/(eidx-sidx);
+}
+
+double
+ParseBoatSurvey::
+changeInYaw(double t_m1, double t)
+{
+    int idx_m1 = timestampToIndex(t_m1);
+    int idx = timestampToIndex(t);
+    double ang=0;
+    for(int t=idx_m1+1; t<= idx; ++t)
+    {
+        double t_step = timings[t] - timings[t-1];
+        double& ang_vel = omega[t-1];
+        ang += ang_vel * IMU_GYRO_GAIN * t_step; 
+    }
+    return ang;
 }
 
 bool ParseBoatSurvey::Useable(int cidx, int lcidx){

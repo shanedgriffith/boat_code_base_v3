@@ -81,6 +81,7 @@ public:
     
     int GetNearestPoseToImage(int image);
     int GetImageIndexGivenPose(std::vector<double> ref_pose, double* boat_pose=NULL);
+    double timestamp(int idx);
     
     gtsam::Pose3 CameraPose(int idx);
 };
