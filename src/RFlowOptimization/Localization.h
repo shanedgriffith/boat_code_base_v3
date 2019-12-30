@@ -27,8 +27,6 @@ protected:
     std::vector<size_t>
     GenerateRandomSet(int n, int k);
     
-    gtsam::Values RunBA();
-    
     std::vector<double>
     Maximization(double err) = 0; //const gtsam::Pose3& gtp, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers,
     
@@ -36,10 +34,8 @@ protected:
     bool debug_ = false;
     bool robust_loss_ = false;
     int ransac_model_ = 0;
-    gtsam::NonlinearFactorGraph graph_;
-    gtsam::Values initial_estimate_;
-    const Camera& cam_;
     
+    const Camera& cam_;
 public:
     
     Localization(const Camera& cam);

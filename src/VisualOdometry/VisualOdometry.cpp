@@ -556,11 +556,10 @@ void VisualOdometry::test3Dto2DVO()
             LocalizePose lp(_cam);
             gtsam::Pose3 localized_pose;
             std::vector<double> res;
-            std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
+            std::tie(localized_pose, res) = lp.UseBAIterative(localized_pose, p3d, p2d1, inliers);
             if(res.size() > 0)
             {
-                poseres = localized_pose;
-                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
+                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<localized_pose << std::endl;
             }
             else
             {
@@ -641,11 +640,10 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
             LocalizePose lp(_cam);
             gtsam::Pose3 localized_pose;
             std::vector<double> res;
-            std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
+            std::tie(localized_pose, res) = lp.UseBAIterative(localized_pose, p3d, p2d1, inliers);
             if(res.size() > 0)
             {
-                poseres = localized_pose;
-                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<poseres << std::endl;
+                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " << localized_pose << std::endl;
             }
             else
             {

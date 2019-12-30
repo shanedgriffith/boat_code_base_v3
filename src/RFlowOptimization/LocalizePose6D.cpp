@@ -12,60 +12,10 @@ LocalizePose6D(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::P
 , p2d_(p2d)
 , inliers_(p3d.size(), 0.0)
 {
-    std::vector<double> flexible_sigmas = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5};
-    gtsam::Vector6 v6p = Eigen::Map<Eigen::Matrix<double, 6, 1> >((double*)(&flexible_sigmas), 6, 1);
-    flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v6p);
-    
-    measurement_noise_outlier_free_ = gtsam::noiseModel::Isotropic::Sigma(2, 3.0);
-    measurement_noise_robust_iter_0_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(ACCEPTABLE_TRI_RERROR), measurement_noise_outlier_free_);
-    measurement_noise_robust_iter_1ton_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(ACCEPTABLE_TRI_RERROR), measurement_noise_outlier_free_);
-    
+    //TODO.
     if(p3d_.size() < MIN_CORRESPONDENCES)
     {
         throw std::runtime_error("LocalizePose6D::LocalizePose6D() Error. Need at least " + std::to_string(MIN_CORRESPONDENCES) + " correspondences");
-    }
-}
-
-void
-LocalizePose6D::
-AddPose(gtsam::Symbol symb, const gtsam::Pose3& pguess)
-{
-    graph_.add(gtsam::PriorFactor<gtsam::Pose3>(symb, pguess, flexible_));
-    initial_estimate_.insert(symb, pguess);
-}
-
-gtsam::Pose3
-LocalizePose6D::
-UseBA(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers, int iter)
-{
-    gtsam::Symbol symb('x', 0);
-    AddPose(symb, pguess);
-    AddLocalizationFactors(symb, p3d_subset, p2d_subset, inliers, iter);
-    gtsam::Values result = RunBA();
-    if(result.size()==0) return gtsam::Pose3::identity();
-    else return result.at<gtsam::Pose3>(symb);
-}
-
-void
-LocalizePose6D::
-AddLocalizationFactors(gtsam::Symbol symb, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers, int iter)
-{
-    gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
-    gtsam::noiseModel::Base::shared_ptr measurement_noise = measurement_noise_outlier_free_;
-    if(robust_loss_)
-    {
-        if(iter==0) measurement_noise = measurement_noise_robust_iter_0_;
-        else measurement_noise = measurement_noise_robust_iter_1ton_;
-    }
-    
-    for(int i=0; i<p2d_subset.size(); ++i)
-    {
-        if(not robust_loss_ and inliers[i]<0.0)
-        {
-            continue;
-        }
-        
-        graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset[i], p3d_subset[i], measurement_noise, symb, gt_camera));
     }
 }
 
@@ -163,10 +113,12 @@ RANSAC_BA() // const gtsam::Pose3& p1guess, const std::vector<gtsam::Point3>& p3
             subp3d[j] = p3d_[rset[j]];
             subp2d1[j] = p2d_[rset[j]];
         }
+        
         gtsam::Pose3 estp = UseBA(best_pose, subp3d, subp2d1, subinliers);
         
         if(EmptyPose(estp)) continue;
-        std::vector<double> posevals = Maximization(estp, p3d, p2d1, inliers, err);
+        
+        std::vector<double> posevals = Maximization(estp, p3d_, p2d_, inliers_, err);
         if(posevals[1]>best_posevals[1] or
            (posevals[1]==best_posevals[1] and posevals[2] < best_posevals[2]))
         {
@@ -175,7 +127,7 @@ RANSAC_BA() // const gtsam::Pose3& p1guess, const std::vector<gtsam::Point3>& p3
             last_save_iter = iters;
         }
         
-        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d.size(), SAMPLE_SIZE, 0.99));
+        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d_.size(), SAMPLE_SIZE, 0.99));
         
         if(n_total_iters < 0) continue;
         
@@ -185,14 +137,14 @@ RANSAC_BA() // const gtsam::Pose3& p1guess, const std::vector<gtsam::Point3>& p3
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
     
-    if(debug)
+    if(debug_)
     {
         printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
     }
     
     //have to reset the inliers.
-    std::vector<double> posevals = Maximization(best_pose, p3d, p2d1, inliers, err);
+    std::vector<double> posevals = Maximization(best_pose, p3d_, p2d_, inliers_, err);
     
     best_posevals[0] = iters;
     return std::make_tuple(best_pose, best_posevals);
@@ -205,18 +157,14 @@ RANSAC_P3P() // const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::
     //EM approach to finding the best pose.
     //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
     gtsam::Pose3 best_pose;
-//    int kdisambiguation = 1; // pick k random points to use for disambiguation, which are different from the set used to compute the localiation
-//    std::vector<int> rset(3+kdisambiguation);
     int SAMPLE_SIZE = 4;
     std::vector<gtsam::Point3> subp3d(SAMPLE_SIZE);
     std::vector<gtsam::Point2> subp2d1(SAMPLE_SIZE);
     std::vector<double> best_posevals(4, 0.0);
-    int iters=0;
     int last_save_iter = 0;
     double err = ACCEPTABLE_TRI_RERROR;
     int n_iters = MAX_RANSAC_ITERS;
-    
-    for(; iters<n_iters; ++iters)
+    for(int iters=0; iters<n_iters; ++iters)
     {
 //        GenerateRandomSet(rset.size(), rset);
         std::vector<size_t> rset = GenerateRandomSet(p3d_.size(), SAMPLE_SIZE);
@@ -226,9 +174,12 @@ RANSAC_P3P() // const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::
             subp2d1[j] = p2d_[rset[j]];
         }
         
-        gtsam::Pose3 estp = RunP3P(subp3d, subp2d1);
+        if(not P3P::suitableSet(p3d_subset))
+            continue;
         
-        std::vector<double> posevals = Maximization(estp, p3d, p2d1, inliers, err);
+        gtsam::Pose3 estp = P3P::RunP3P(cam_, subp3d, subp2d1);
+        
+        std::vector<double> posevals = Maximization(estp, p3d_, p2d_, inliers_, err);
         if(posevals[1]>best_posevals[1] or
            (posevals[1]==best_posevals[1] and posevals[2] < best_posevals[2]))
         {
@@ -237,7 +188,7 @@ RANSAC_P3P() // const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::
             last_save_iter = iters;
         }
         
-        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d.size(), 3, 0.99));//the fourth sample needs to be an inlier as well..., but if it's slightly off, the the correct result can still be selected.
+        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d_.size(), 3, 0.99));//the fourth sample needs to be an inlier as well..., but if it's slightly off, the the correct result can still be selected.
         
         if(n_total_iters < 0) continue;
         
@@ -247,63 +198,17 @@ RANSAC_P3P() // const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::
         //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
     }
     
-    if(debug)
+    if(debug_)
     {
         printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
                (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d.size());
     }
     
     //have to reset the inliers.
-    std::vector<double> posevals = Maximization(best_pose, p3d, p2d1, inliers, err);
+    std::vector<double> posevals = Maximization(best_pose, p3d_, p2d_, inliers_, err);
     
     best_posevals[0] = iters;
     return std::make_tuple(best_pose, best_posevals);
-}
-
-gtsam::Pose3
-LocalizePose6D::
-disambiguatePoses(const std::vector<gtsam::Pose3>& poses, const gtsam::Point3& point3d, const gtsam::Point2& point2d)
-{
-    int bestpidx = -1;
-    double bestdist = std::numeric_limits<double>::max();
-    for(int i=0; i<poses.size(); ++i)
-    {
-        gtsam::Point3 tfp = poses[i].transform_to(point3d);
-        gtsam::Point2 res = cam_.ProjectToImage(tfp);
-        double dist = res.distance(point2d);
-        
-        if(dist < bestdist)
-        {
-            bestdist = sumd;
-            bestpidx = i;
-        }
-    }
-    
-    return poses[bestpidx];
-}
-
-gtsam::Pose3
-LocalizePose6D::
-RunP3P(const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
-{
-    /*should have 4 points. the first three are used for the estimation. the fourth for disambiguation.*/
-    std::vector<gtsam::Vector3> feature_vectors(p3d_subset.size());
-    static gtsam::PinholeCamera<gtsam::Cal3_S2> pc(gtsam::Pose3::identity(), *(cam_.GetGTSAMCam()));
-    for(int j=0; j<p3d_subset.size(); j++)
-    {
-        gtsam::Unit3 uv = pc.backprojectPointAtInfinity(p2d_subset[j]);
-        feature_vectors[j] = uv.unitVector();
-    }
-    
-    if(not P3P::suitableSet(p3d_subset))
-        return gtsam::Pose3::identity();
-    
-    std::vector<gtsam::Pose3> poses = P3P::computePoses(feature_vectors, p3d_subset);
-    
-    //NOTE: only the fourth point is used for disambiguation
-    gtsam::Pose3 res = disambiguatePoses(poses, p3d_subset[3], p2d_subset[3]);
-    
-    return res;
 }
 
 std::tuple<gtsam::Pose3, std::vector<double>>

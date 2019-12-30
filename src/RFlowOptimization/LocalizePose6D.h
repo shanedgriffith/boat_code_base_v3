@@ -26,11 +26,6 @@ protected:
     const std::vector<gtsam::Point2>& p2d_;
     std::vector<double> inliers_;
     
-    gtsam::noiseModel::Base::shared_ptr flexible_;
-    gtsam::noiseModel::Base::shared_ptr measurement_noise_outlier_free_;
-    gtsam::noiseModel::Base::shared_ptr measurement_noise_robust_iter_0_;
-    gtsam::noiseModel::Base::shared_ptr measurement_noise_robust_iter_1ton_;
-    
     gtsam::Pose3
     UseBA(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, const std::vector<double>& inliers, int iter = 0);
     
@@ -46,11 +41,6 @@ protected:
     std::tuple<gtsam::Pose3, std::vector<double>>
     RANSAC_P3P(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
     
-    gtsam::Pose3
-    disambiguatePoses(const std::vector<gtsam::Pose3>& poses, const gtsam::Point3& point3d, const gtsam::Point2& point2d);
-    
-    bool EmptyPose(const gtsam::Pose3& p);
-    
     double MeasureReprojectionError();
     
     
@@ -60,10 +50,7 @@ public:
     
     //for Pose3
     std::tuple<gtsam::Pose3, std::vector<double>>
-    UseBAIterative(, std::vector<double>& inliers);
-    
-    gtsam::Pose3
-    RunP3P(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1);
+    UseBAIterative();
     
     std::tuple<gtsam::Pose3, std::vector<double>>
     combinedLocalizationMethod(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);

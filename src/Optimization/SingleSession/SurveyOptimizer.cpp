@@ -250,10 +250,12 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     std::vector<double> res;
     std::tie(localized_pose, res) = loc.UseBAIterative(pose_t_est, p3d, p2d1, inliers);
 //    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
-    if(res.size() > 0 and (res[1][1] > 0.5 * p3d.size() or res[1][1] > 15))
+    if(res.size() > 0 and (res[1] > 0.5 * p3d.size() or res[1] > 15))
     {
         poses.push_back(localized_pose);
     }
+    if(res.size() > 0) std::cout << "localization failed: no stats. " << std:endl;
+    else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", avg error: " << res[1] << std:endl;
     return poses;
 }
 

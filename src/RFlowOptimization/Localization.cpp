@@ -1,10 +1,6 @@
 #include "Localization.cpp"
 
-#include <gtsam/base/Matrix.h>
-#include <gtsam/slam/PriorFactor.h>
-#include <gtsam/slam/ProjectionFactor.h>
-#include <gtsam/slam/BetweenFactor.h>
-#include <gtsam/nonlinear/DoglegOptimizer.h>
+
 
 Localization::
 Localization(const Camera& cam)
@@ -71,30 +67,6 @@ GenerateRandomSet(int n, int k)
         rset[nadded] = setindices[rnum];
     }
     return rset;
-}
-
-gtsam::Values
-Localization::
-RunBA()
-{
-    gtsam::Values result;
-    //std::cout << "initial error: " << graph.error(initEst) << std::endl;
-    try
-    {
-        //result = gtsam::LevenbergMarquardtOptimizer(graph, initEst).optimize();
-        result = gtsam::DoglegOptimizer(graph, initEst).optimize();
-    }
-    catch(const std::exception& ex)
-    {
-        if(debug)
-        {
-            std::cout<<"Localization::RunBA() error: optimization failed. \n " << std::endl;
-            ex.what();
-        }
-    }
-    graph.resize(0);
-    initEst.clear();
-    return result;
 }
 
 
