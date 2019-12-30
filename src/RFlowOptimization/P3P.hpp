@@ -27,6 +27,9 @@ public:
      worldPoints are the 3D points.
      solutions are the 4 possible result poses.
      */
-    static int computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints, std::vector<gtsam::Pose3>& solutions );
+    static std::vector<gtsam::Pose3> computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints);
+    
+    // Verify that world points are not colinear
+    static bool suitableSet(const std::vector<gtsam::Point3>& worldPoints);
 };
 

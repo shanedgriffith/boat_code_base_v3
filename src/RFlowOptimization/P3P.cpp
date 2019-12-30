@@ -58,26 +58,38 @@
 #include <math.h>
 #include <complex>
 
-/*
- Computes 4 solutions. A fourth point needs to be projected for disambiguation.
- */
-int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints, std::vector<gtsam::Pose3>& solutions  )
+bool
+P3P::
+suitableSet(const std::vector<gtsam::Point3>& worldPoints)
 {
-    // Extraction of world points
-    if(featureVectors.size() < 3 )
-        return -1;
+    if(worldPoints.size() < 3)
+    {
+        return false;
+    }
     
     Eigen::Vector3d P1 = worldPoints[0].vector();
     Eigen::Vector3d P2 = worldPoints[1].vector();
     Eigen::Vector3d P3 = worldPoints[2].vector();
     
-    // Verification that world points are not colinear
-    
     Eigen::Vector3d temp1 = (P2 - P1);
     Eigen::Vector3d temp2 = (P3 - P1);
     
     if( (temp1.cross(temp2)).norm() == 0 )
-        return -1;
+    {
+        return false;
+    }
+    return true;
+}
+
+/*
+ Computes up to 4 solutions. A fourth point needs to be projected for disambiguation.
+ */
+std::vector<gtsam::Pose3> P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints, std::vector<gtsam::Pose3>& solutions  )
+{
+    // Extraction of world points
+    Eigen::Vector3d P1 = worldPoints[0].vector();
+    Eigen::Vector3d P2 = worldPoints[1].vector();
+    Eigen::Vector3d P3 = worldPoints[2].vector();
     
     // Extraction of feature vectors
     
@@ -204,7 +216,8 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
     solveQuartic( factors, realRoots );
     
     // Backsubstitution of each solution
-    for(int i=0; i<4; i++)
+    std::vector<gtsam::Pose3> solutions;
+    for(int i=0; i<4; ++i)
     {
         double cot_alpha = (-f_1*p_1/f_2-realRoots[i]*p_2+d_12*b)/(-f_1*realRoots[i]*p_2/f_2+p_1-d_12);
         
@@ -230,13 +243,16 @@ int P3P::computePoses( const std::vector<gtsam::Vector3>& featureVectors, const 
         
         R = N*R.transpose()*T.transpose();
         
+        if(std::isnan(C.x()))
+           continue;
+           
         gtsam::Point3 t(C.x(), C.y(), C.z());
         gtsam::Rot3 rot(R);
         gtsam::Pose3 p(rot, t);
         solutions.push_back(p);
     }
     
-    return 0;
+    return solutions;
 }
 
 void P3P::solveQuartic( Eigen::Matrix<double,5,1> factors, Eigen::Vector4d & realRoots  )
