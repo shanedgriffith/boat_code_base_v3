@@ -28,7 +28,7 @@ protected:
     
 public:
     
-    LocalisePose6DDual(const gtsam::Pose3& p0, const gtsam::Pose3& p1,
+    LocalisePose6DDual(const Camera& cam, const gtsam::Pose3& p0, const gtsam::Pose3& p1,
                        const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1, std::vector<double>& rerrorp,
                        const std::vector<gtsam::Point3>& b3d, const std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerrorb);
     

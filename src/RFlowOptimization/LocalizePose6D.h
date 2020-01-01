@@ -22,31 +22,21 @@
 class LocalizePose6D: public Localization
 {
 protected:
+    
+    std::tuple<gtsam::Pose3, std::vector<double>>
+    RANSAC();
+    
+    double MeasureReprojectionError();
+    
+    gtsam::Pose3 pguess_;
     const std::vector<gtsam::Point3>& p3d_;
     const std::vector<gtsam::Point2>& p2d_;
     std::vector<double> inliers_;
     
-    gtsam::Pose3
-    UseBA(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, const std::vector<double>& inliers, int iter = 0);
-    
-    void
-    AddLocalizationFactors(gtsam::Symbol symb, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, const std::vector<double>& inliers, int iter = 0);
-    
-    void
-    AddPose(gtsam::Symbol symb, const gtsam::Pose3& pguess);
-    
-    std::tuple<gtsam::Pose3, std::vector<double>>
-    RANSAC_BA(const gtsam::Pose3& p1guess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
-    
-    std::tuple<gtsam::Pose3, std::vector<double>>
-    RANSAC_P3P(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d1, std::vector<double>& inliers);
-    
-    double MeasureReprojectionError();
-    
-    
 public:
     
-    LocalizePose6D(const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d);
+    
+    LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d);
     
     //for Pose3
     std::tuple<gtsam::Pose3, std::vector<double>>
@@ -55,5 +45,7 @@ public:
     std::tuple<gtsam::Pose3, std::vector<double>>
     combinedLocalizationMethod(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
     
+    void
+    setInitialEstimate(const gtsam::Pose3& guess);
     
 };

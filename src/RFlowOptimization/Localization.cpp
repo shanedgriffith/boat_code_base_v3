@@ -1,10 +1,13 @@
-#include "Localization.cpp"
+#include "Localization.h"
 
-
+#include <random>
 
 Localization::
 Localization(const Camera& cam)
 : cam_(cam)
+, debug_(false)
+, ransac_method_(Localization::METHOD::PNP)
+, robust_loss_(false)
 {}
 
 void
@@ -16,9 +19,9 @@ setRobustLoss()
 
 void
 Localization::
-setRANSACModel(int model)
+setRANSACMethod(Localization::METHOD method)
 {
-    ransac_model_ = model;
+    ransac_method_ = method;
 }
 
 void
@@ -28,14 +31,16 @@ setErrorThreshold(double e)
     ACCEPTABLE_TRI_RERROR = e;
 }
 
-void setDebug()
+void
+Localization::
+setDebug()
 {
     debug_ = true;
 }
 
 double
 Localization::
-NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers)
+NumRequiredRANSACIterations(size_t ninliers, size_t setsize, size_t nsamples_per_iteration, double probability_all_inliers)
 {
     double w = 1.0 * ninliers / setsize;
     return log(1-probability_all_inliers) / log(1.0-pow(w, nsamples_per_iteration));
@@ -46,7 +51,7 @@ std::vector<size_t>
 Localization::
 GenerateRandomSet(int n, int k)
 {   //meant to be called with a value for n that doesn't change
-    static std::vector setindices;
+    static std::vector<int> setindices;
     
     if(setindices.size() != n)
     {
@@ -69,8 +74,25 @@ GenerateRandomSet(int n, int k)
     return rset;
 }
 
-
-
+std::tuple<bool, gtsam::Pose3>
+Localization::
+runMethod(const gtsam::Pose3& guess, const std::vector<gtsam::Point3>& subp3d, const std::vector<gtsam::Point2>& subp2d1)
+{
+    switch(ransac_method_)
+    {
+        case Localization::METHOD::P3P:
+            P3P localizer(cam_, subp3d, subp2d1);
+            return localizer.run();
+            break;
+        case Localization::METHOD::PNP:
+            PNP localizer(cam_, guess, subp3d, subp2d1);
+            return localizer.run();
+            break;
+        default:
+    }
+    std::cout << "Localization::METHOD not recognized." << std::endl;
+    exit(-1);
+}
 
 
 

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <gtsam/nonlinear/Values.h>
+#include <gtsam/geometry/Pose3.h>
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 
 #include "DataTypes/Camera.hpp"
@@ -10,6 +11,10 @@
 
 class Localization
 {
+public:
+    
+    enum METHOD {P3P=0, PNP}; //class template better?
+    
 protected:
     const int MAX_RANSAC_ITERS = 100;
     double ACCEPTABLE_TRI_RERROR = 6.0;
@@ -19,7 +24,7 @@ protected:
     int MIN_CORRESPONDENCES = 4;
     
     double
-    NumRequiredRANSACIterations(int ninliers, int setsize, int nsamples_per_iteration, double probability_all_inliers);
+    NumRequiredRANSACIterations(size_t ninliers, size_t setsize, size_t nsamples_per_iteration, double probability_all_inliers);
     
     void
     GenerateRandomSet(int n, std::vector<int>& rset);
@@ -27,22 +32,25 @@ protected:
     std::vector<size_t>
     GenerateRandomSet(int n, int k);
     
-    std::vector<double>
-    Maximization(double err) = 0; //const gtsam::Pose3& gtp, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers,
+    virtual std::vector<double>
+    Maximization() = 0; //const gtsam::Pose3& gtp, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers,
     
+    std::tuple<bool, gtsam::Pose3>
+    runMethod(const gtsam::Pose3& guess, const std::vector<gtsam::Point3>& subp3d, const std::vector<gtsam::Point2>& subp2d1);
     
-    bool debug_ = false;
-    bool robust_loss_ = false;
-    int ransac_model_ = 0;
+    bool debug_;
+    Localization::METHOD ransac_method_;
+    bool robust_loss_;
     
     const Camera& cam_;
+    
 public:
     
     Localization(const Camera& cam);
     
     void setRobustLoss();
     
-    void setRANSACModel(int model);
+    void setRANSACMethod(Localization::METHOD method);
     
     void setErrorThreshold(double e);
     

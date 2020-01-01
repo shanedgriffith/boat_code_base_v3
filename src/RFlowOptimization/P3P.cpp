@@ -1,4 +1,4 @@
-#include "P3P.hpp"
+#include "P3P.h"
 
 /*
  Removed the TooN dependency.
@@ -51,7 +51,7 @@
  *                  -1 if world points aligned
  */
 
-#include "P3P.hpp"
+#include "P3P.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -62,18 +62,27 @@
 #include <gtsam/geometry/Cal3_S2.h>
 #include <gtsam/geometry/PinholeCamera.h>
 
+P3P::
+P3P(const Camera& cam, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
+: cam_(cam)
+, world_points_(p3d_subset)
+, p2d_subset_(p2d_subset)
+{
+    
+}
+
 bool
 P3P::
-suitableSet(const std::vector<gtsam::Point3>& worldPoints)
+suitableSet()
 {
     if(worldPoints.size() < 3)
     {
         return false;
     }
     
-    Eigen::Vector3d P1 = worldPoints[0].vector();
-    Eigen::Vector3d P2 = worldPoints[1].vector();
-    Eigen::Vector3d P3 = worldPoints[2].vector();
+    Eigen::Vector3d P1 = world_points_[0].vector();
+    Eigen::Vector3d P2 = world_points_[1].vector();
+    Eigen::Vector3d P3 = world_points_[2].vector();
     
     Eigen::Vector3d temp1 = (P2 - P1);
     Eigen::Vector3d temp2 = (P3 - P1);
@@ -87,14 +96,14 @@ suitableSet(const std::vector<gtsam::Point3>& worldPoints)
 
 gtsam::Pose3
 P3P::
-disambiguatePoses(const Camera& cam, const std::vector<gtsam::Pose3>& poses, const gtsam::Point3& point3d, const gtsam::Point2& point2d)
+disambiguatePoses(const std::vector<gtsam::Pose3>& poses, gtsam::Point3& point3d, gtsam::Point2& point2d)
 {
     int bestpidx = -1;
     double bestdist = std::numeric_limits<double>::max();
     for(int i=0; i<poses.size(); ++i)
     {
         gtsam::Point3 tfp = poses[i].transform_to(point3d);
-        gtsam::Point2 res = cam.ProjectToImage(tfp);
+        gtsam::Point2 res = cam_.ProjectToImage(tfp);
         double dist = res.distance(point2d);
         
         if(dist < bestdist)
@@ -107,25 +116,38 @@ disambiguatePoses(const Camera& cam, const std::vector<gtsam::Pose3>& poses, con
     return poses[bestpidx];
 }
 
-gtsam::Pose3
+std::vector<gtsam::Vector3>
 P3P::
-RunP3P(const Camera& cam, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
+pixelsToVectors()
 {
-    /*should have 4 points. the first three are used for the estimation. the fourth for disambiguation.*/
-    std::vector<gtsam::Vector3> feature_vectors(p3d_subset.size());
-    gtsam::PinholeCamera<gtsam::Cal3_S2> pc(gtsam::Pose3::identity(), *(cam.GetGTSAMCam()));
-    for(int j=0; j<p3d_subset.size(); j++)
+    std::vector<gtsam::Vector3> feature_vectors(p2d_subset_.size());
+    gtsam::PinholeCamera<gtsam::Cal3_S2> pc(gtsam::Pose3::identity(), *(cam_.GetGTSAMCam()));
+    for(int j=0; j<p2d_subset_.size(); j++)
     {
-        gtsam::Unit3 uv = pc.backprojectPointAtInfinity(p2d_subset[j]);
+        gtsam::Unit3 uv = pc.backprojectPointAtInfinity(p2d_subset_[j]);
         feature_vectors[j] = uv.unitVector();
     }
+    return feature_vectors;
+}
+
+std::tuple<bool, gtsam::Pose3>
+P3P::
+run()
+{
+    if(not suitableSet())
+    {
+        return std::make_tuple(false, gtsam::Pose3::identity());
+    }
     
-    std::vector<gtsam::Pose3> poses = computePoses(feature_vectors, p3d_subset);
+    /*should have 4 points. the first three are used for the estimation. the fourth for disambiguation.*/
+    std::vector<gtsam::Vector3> feature_vectors = pixelsToVectors();
+    
+    std::vector<gtsam::Pose3> poses = computePoses(feature_vectors); // TODO: break down this function.
     
     //NOTE: only the fourth point is used for disambiguation
-    gtsam::Pose3 res = disambiguatePoses(cam, poses, p3d_subset[3], p2d_subset[3]);
+    gtsam::Pose3 res = disambiguatePoses(poses, world_points_[3], p2d_subset_[3]);
     
-    return res;
+    return std::make_tuple(true, res);
 }
 
 /*
@@ -133,12 +155,12 @@ RunP3P(const Camera& cam, const std::vector<gtsam::Point3>& p3d_subset, const st
  */
 std::vector<gtsam::Pose3>
 P3P::
-computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vector<gtsam::Point3>& worldPoints)
+computePoses( const std::vector<gtsam::Vector3>& featureVectors)
 {
     // Extraction of world points
-    Eigen::Vector3d P1 = worldPoints[0].vector();
-    Eigen::Vector3d P2 = worldPoints[1].vector();
-    Eigen::Vector3d P3 = worldPoints[2].vector();
+    Eigen::Vector3d P1 = world_points_[0].vector();
+    Eigen::Vector3d P2 = world_points_[1].vector();
+    Eigen::Vector3d P3 = world_points_[2].vector();
     
     // Extraction of feature vectors
     
@@ -174,9 +196,9 @@ computePoses( const std::vector<gtsam::Vector3>& featureVectors, const std::vect
         
         f3 = T.transpose()*f3;
         
-        P1 = worldPoints[1].vector();
-        P2 = worldPoints[0].vector();
-        P3 = worldPoints[2].vector();
+        P1 = world_points_[1].vector();
+        P2 = world_points_[0].vector();
+        P3 = world_points_[2].vector();
     }
     
     // Creation of intermediate world frame

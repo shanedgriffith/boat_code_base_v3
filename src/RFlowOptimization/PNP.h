@@ -6,6 +6,7 @@
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/nonlinear/Values.h>
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
+#include <gtsam/inference/Symbol.h>
 
 #include "DataTypes/Camera.hpp"
 
@@ -17,32 +18,39 @@ protected:
     gtsam::noiseModel::Base::shared_ptr measurement_noise_;
     
     void
-    AddPose(gtsam::Symbol symb, const gtsam::Pose3& pguess);
+    addPose(gtsam::Symbol symb);
     
     void
-    AddLocalizationFactors(gtsam::Symbol symb, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers);
+    addLocalizationFactors(gtsam::Symbol symb);
     
-    gtsam::Values RunBA();
+    gtsam::Symbol
+    constructGraph();
+    
+    gtsam::Values
+    optimize();
     
     bool debug_;
     bool explicit_filter_;
     gtsam::NonlinearFactorGraph graph_;
     gtsam::Values initial_estimate_;
-    const Camera& cam_;
+    bool optimization_succeeded_;
     
+    const Camera& cam_;
+    const gtsam::Pose3& pguess_;
+    const std::vector<gtsam::Point3>& p3d_subset_;
+    const std::vector<gtsam::Point2>& p2d_subset_;
+    const std::vector<bool>& inliers_;
 public:
     
     enum NM{OUTLIER_FREE=0, HUBER, GEMAN_MCCLURE};
     
-    PNP(const Camera& cam, double acceptable_rerror, PNP::NM noise_model);
+    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset);
     
-    gtsam::Pose3
-    UseBA(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers);
+    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers);
     
     void
-    setExplicitFilter();
+    setNoiseModel(double acceptable_rerror, PNP::NM noise_model);
     
-    bool
-    EmptyPose(const gtsam::Pose3& p);
-    
+    std::tuple<bool, gtsam::Pose3>
+    run();
 };
