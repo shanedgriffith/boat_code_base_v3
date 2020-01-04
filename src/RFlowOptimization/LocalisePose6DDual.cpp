@@ -168,8 +168,7 @@ RobustDualBA()
     }
     
     //use RANSAC (with EM of sorts; uses the updated best pose) to find the best estimate of p0frame1.
-    //gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0)); //this also looks wrong.
-    gtsam::Pose3 p0frame1 = gp1.compose(gp1.between(p1frame0)*p1frame0.between(gp0)*p1frame0.between(gp1));
+    gtsam::Pose3 p0frame1 = gp1.compose(p1frame0.between(gp0));
     std::vector<double> posevals0f1;
     std::tie(p0frame1, posevals0f1) = RANSAC_P3P(b3d, b2d0, rerrorb);
     

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "LocalisePose6D.h"
+#include "Localization.h"
+#include "LocalizePose6D.h"
 
 
 
 
-class LocalisePose6DDual : public LocalisePose6D {
+class LocalisePose6DDual : public LocalizePose6D {
 protected:
     
     const std::vector<gtsam::Point3>& b3d;
@@ -25,6 +26,8 @@ protected:
                     const std::vector<gtsam::Point3>& f3d, const std::vector<gtsam::Point2>& f2d1, std::vector<double>& rerror0,
                     const std::vector<gtsam::Point3>& b3d, const std::vector<gtsam::Point2>& b2d0, std::vector<double>& rerror1);
     
+    gtsam::Pose3 p1frame0_guess_;
+    gtsam::Pose3 p0frame1_guess_;
     
 public:
     

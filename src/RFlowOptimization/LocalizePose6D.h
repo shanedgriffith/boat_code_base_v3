@@ -21,31 +21,66 @@
  * */
 class LocalizePose6D: public Localization
 {
+public:
+    
+    enum METHOD {P3P=0, PNP}; //class template better?
+    
 protected:
+    const int SAMPLE_SIZE = 4;
+    double ACCEPTABLE_TRI_RERROR = 6.0;
     
-    std::tuple<gtsam::Pose3, std::vector<double>>
-    RANSAC();
+    size_t
+    setSize();
     
-    double MeasureReprojectionError();
+    size_t
+    sampleSize();
+    
+    void
+    updateSubsets(const std::vector<size_t>& rset = {});
+    
+    void
+    updateOptimizationMethod();
+    
+    double
+    MeasureReprojectionError();
+    
+    std::vector<double>
+    Maximization();
+    
+    void
+    updateResult();
+    
+    bool
+    runMethod();
+    
     
     gtsam::Pose3 pguess_;
+    gtsam::Pose3 best_guess_;
     const std::vector<gtsam::Point3>& p3d_;
     const std::vector<gtsam::Point2>& p2d_;
     std::vector<double> inliers_;
+    LocalizePose6D::METHOD ransac_method_;
+    std::vector<gtsam::Point3> p3d_subset_;
+    std::vector<gtsam::Point2> p2d_subset_;
+    std::vector<gtsam::Point3>& p3d_set_; //extra references to avoid a copy.
+    std::vector<gtsam::Point2>& p2d_set_;
+    
     
 public:
     
-    
     LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d);
     
-    //for Pose3
-    std::tuple<gtsam::Pose3, std::vector<double>>
+    std::tuple<bool, gtsam::Pose3, std::vector<double>>
     UseBAIterative();
     
-    std::tuple<gtsam::Pose3, std::vector<double>>
-    combinedLocalizationMethod(const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers);
+    std::vector<double>
+    getInliers();
     
     void
     setInitialEstimate(const gtsam::Pose3& guess);
     
+    void setRANSACMethod(LocalizePose6D::METHOD method);
+    
+    void
+    setErrorThreshold(double e);
 };

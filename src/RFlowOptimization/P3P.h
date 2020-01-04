@@ -1,10 +1,5 @@
 #pragma once
 
-
-/*
- Removed the TooN dependency.
- */
-
 #include <gtsam/base/Vector.h>
 #include <gtsam/base/Matrix.h>
 
@@ -30,7 +25,7 @@ private:
     computePoses(const std::vector<gtsam::Vector3>& featureVectors);
     
     gtsam::Pose3
-    disambiguatePoses(const std::vector<gtsam::Pose3>& poses, gtsam::Point3& point3d, gtsam::Point2& point2d);
+    disambiguatePoses(const std::vector<gtsam::Pose3>& poses, const gtsam::Point3& point3d, const gtsam::Point2& point2d);
     
     std::vector<gtsam::Vector3>
     pixelsToVectors();

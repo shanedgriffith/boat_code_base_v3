@@ -15,7 +15,7 @@
 #include "FileParsing/ParseSurvey.h"
 #include "BoatSurvey/ParseBoatSurvey.hpp"
 #include "EvaluateSLAM.h"
-#include "RFlowOptimization/LocalizePose.hpp"
+#include "RFlowOptimization/LocalizePose6D.h"
 
 using namespace std;
 
@@ -24,10 +24,10 @@ const vector<string> SurveyOptimizer::keys = {
 };
 
 SurveyOptimizer::SurveyOptimizer(const Camera& cam, FactorGraph * _fg, std::string date, std::string results_dir, bool print_data_increments):
-_cam(cam), _results_dir(results_dir), FG(_fg), _date(date), _print_data_increments(print_data_increments) {}
+cam_(cam), _results_dir(results_dir), FG(_fg), _date(date), _print_data_increments(print_data_increments) {}
 
 SurveyOptimizer::SurveyOptimizer(const Camera& cam, std::string date, std::string results_dir, bool print_data_increments):
-_cam(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_data_increments)
+cam_(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_data_increments)
 {
     FG = new FactorGraph();
     clean_up = true;
@@ -36,7 +36,7 @@ _cam(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_
 void SurveyOptimizer::Initialize(){
     initialized = true;
     
-    num_cameras_in_traj = 0;
+    numcam_eras_in_traj = 0;
     GTS = GTSAMInterface(FG);
     LoadParameters();
     
@@ -65,8 +65,8 @@ void SurveyOptimizer::RunGTSAM(bool update_everything){
 void SurveyOptimizer::SaveResults(SaveOptimizationResults& SOR, int iteration, double percent_completed, vector<double> drawscale){
     if((_print_data_increments || percent_completed == 100) and iteration > 5){
         vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
-        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], num_cameras_in_traj);
-        vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], num_cameras_in_traj);
+        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], numcam_eras_in_traj);
+        vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], numcam_eras_in_traj);
         SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, drawscale);
     }
     SOR.StatusMessage(iteration, percent_completed);
@@ -118,7 +118,7 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
 }
 
 //void SurveyOptimizer::AddCamera(int camera_key, gtsam::Pose3& measured, gtsam::Pose3& localized){
-//    num_cameras_in_traj++;
+//    numcam_eras_in_traj++;
 //    GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, localized);
 //    FG->AddCamera(camera_key, measured);
 //}
@@ -126,7 +126,7 @@ void SurveyOptimizer::AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_po
 void SurveyOptimizer::AddLandmarkTracks(vector<LandmarkTrack>& landmarks){
     for(int i=0; i<landmarks.size(); i++)
     {
-        FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+        FG->AddLandmarkTrack(cam_.GetGTSAMCam(), landmarks[i]);
     }
 }
 
@@ -138,7 +138,7 @@ void SurveyOptimizer::AddActiveLandmarks(vector<LandmarkTrack>& landmarks)
         int len = landmarks[i].Length();
         if(len == 2)
         {
-            FG->AddLandmarkTrack(_cam.GetGTSAMCam(), landmarks[i]);
+            FG->AddLandmarkTrack(cam_.GetGTSAMCam(), landmarks[i]);
         }
         else if(len > 2)
         {
@@ -240,28 +240,28 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     }
     std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
     
-    LocalizePose loc(_cam);
+    LocalizePose6D loc(cam_, p3d, p2d1);
 //    loc.debug = true; //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
 //    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
-    std::vector<double> inliers(p3d.size(), 1.0);
-    loc.setRANSACModel(1);
+    loc.setInitialEstimate(pose_t_est);
+    loc.setRANSACMethod(Localization::METHOD::PNP);
     loc.setRobustLoss();
     gtsam::Pose3 localized_pose;
     std::vector<double> res;
-    std::tie(localized_pose, res) = loc.UseBAIterative(pose_t_est, p3d, p2d1, inliers);
+    std::tie(localized_pose, res) = loc.UseBAIterative();
 //    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
     if(res.size() > 0 and (res[1] > 0.5 * p3d.size() or res[1] > 15))
     {
         poses.push_back(localized_pose);
     }
-    if(res.size() > 0) std::cout << "localization failed: no stats. " << std:endl;
-    else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", avg error: " << res[1] << std:endl;
+    if(res.size() > 0) std::cout << "localization failed: no stats. " << std::endl;
+    else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", avg error: " << res[1] << std::endl;
     return poses;
 }
 
 int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
     //get the poses
-    static gtsam::Pose3 last_cam = PS->CameraPose(lcidx);
+    static gtsam::Pose3 lastcam_ = PS->CameraPose(lcidx);
     gtsam::Pose3 pose_prior = PS->CameraPose(cidx); //the camera pose estimated using sensors.;
     gtsam::Pose3 curcam = pose_prior;
     gtsam::Pose3 btwn_pos;
@@ -291,7 +291,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     if(_incremental and camera_key > 1)
     {
         std::vector<gtsam::Pose3> poses = LocalizeCurPose(camera_key);
-        last_cam = poses[1];
+        lastcam_ = poses[1];
         if(poses.size() > 2) {
             curcam = poses[2];
             btwn_pos = poses[1].between(poses[2]);
@@ -315,7 +315,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
             {
                 std::cout << betp[i] << ", ";
             } std::cout << std::endl;
-            curcam = last_cam.compose(btwn_pos);
+            curcam = lastcam_.compose(btwn_pos);
         }
     }
     GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curcam);
@@ -325,14 +325,14 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     else if(_incremental) AddActiveLandmarks(active);
     else AddLandmarkTracks(inactive);
     
-    ++num_cameras_in_traj;
+    ++numcam_eras_in_traj;
     FG->AddCamera(camera_key, pose_prior);
     
     //add the kinematic constraints.
     if(camera_key != 0)
     {
         if(camera_key == 1)
-            btwn_pos = last_cam.between(curcam);
+            btwn_pos = lastcam_.between(curcam);
         
         if(dynamic_pointer_cast<ParseBoatSurvey>(PS))
         {
@@ -364,7 +364,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     
     if(not _incremental or camera_key < 2)
     {
-        last_cam = curcam;
+        lastcam_ = curcam;
     }
     return camera_key;
 }
@@ -375,7 +375,7 @@ void SurveyOptimizer::Optimize(std::shared_ptr<ParseSurvey> PS) {
     
     std::cout << "Constructing the factor graph." << std::endl;
     
-    EvaluateSLAM es(_cam, _date, _results_dir);
+    EvaluateSLAM es(cam_, _date, _results_dir);
     es.debug=true;
     
     SaveOptimizationResults SOR(_results_dir + _date);
@@ -387,7 +387,7 @@ void SurveyOptimizer::Optimize(std::shared_ptr<ParseSurvey> PS) {
         //Find the AUX file entry that is time-aligned with the visual feature track data. (for the camera pose)
         bool gap = PS->CheckGap(lcidx, lcidx + vals[Param::CAM_SKIP]);
         
-        ParseFeatureTrackFile PFT = PS->LoadVisualFeatureTracks(_cam, i, gap);
+        ParseFeatureTrackFile PFT = PS->LoadVisualFeatureTracks(cam_, i, gap);
         cidx = PS->FindSynchronizedAUXIndex(PFT.time, cidx);
         if(cidx==-1) break;
         if(cidx == lcidx) continue; //the feature track file didn't advance anything.

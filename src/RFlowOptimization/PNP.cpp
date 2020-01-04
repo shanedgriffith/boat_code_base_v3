@@ -9,14 +9,14 @@
 #include "Optimization/MultiSession/LocalizationFactor.h"
 
 PNP::
-PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
+PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<bool>& inliers)
 : debug_(false)
-, explicit_filter_(false)
+, explicit_filter_(inliers.size() > 0)
 , cam_(cam)
 , pguess_(pguess)
 , p3d_subset_(p3d_subset)
 , p2d_subset_(p2d_subset)
-, inliers_({})
+, inliers_(inliers)
 {
     //assume some sigmas for the pose.
     std::vector<double> flexible_sigmas = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5};
@@ -26,13 +26,6 @@ PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Poin
     // default acceptable error of 6 pixels.
     measurement_noise_ = gtsam::noiseModel::Isotropic::Sigma(2, 6.0/2.0);
 }
-
-PNP::
-PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers)
-: PNP(cam, pguess, p3d_subset, p2d_subset)
-, explicit_filter_(true)
-, inliers_(inliers)
-{}
 
 void
 PNP::
@@ -64,18 +57,18 @@ addPose(gtsam::Symbol symb)
 
 void
 PNP::
-addLocalizationFactors(gtsam::Symbol symb, )
+addLocalizationFactors(gtsam::Symbol symb)
 {
     gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
 
     for(int i=0; i<p2d_subset_.size(); ++i)
     {
-        if(explicit_filter_ and inliers[i]<0.0) //unnecessary if using GM. TODO: test to see which parameter values for GM + Huber produce the best results.
+        if(explicit_filter_ and inliers_[i] < 0.0) //unnecessary if using GM. TODO: test to see which parameter values for GM + Huber produce the best results.
         {
             continue;
         }
         
-        graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset[i], p3d_subset[i], measurement_noise_, symb, gt_camera));
+        graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset_[i], p3d_subset_[i], measurement_noise_, symb, gt_camera));
     }
 }
 
@@ -84,8 +77,8 @@ PNP::
 constructGraph()
 {
     gtsam::Symbol symb('x', 0);
-    AddPose(symb, pguess);
-    AddLocalizationFactors(symb, p3d_subset, p2d_subset, inliers);
+    addPose(symb);
+    addLocalizationFactors(symb);
     return symb;
 }
 

@@ -75,7 +75,7 @@ bool
 P3P::
 suitableSet()
 {
-    if(worldPoints.size() < 3)
+    if(world_points_.size() < 3)
     {
         return false;
     }
@@ -96,7 +96,7 @@ suitableSet()
 
 gtsam::Pose3
 P3P::
-disambiguatePoses(const std::vector<gtsam::Pose3>& poses, gtsam::Point3& point3d, gtsam::Point2& point2d)
+disambiguatePoses(const std::vector<gtsam::Pose3>& poses, const gtsam::Point3& point3d, const gtsam::Point2& point2d)
 {
     int bestpidx = -1;
     double bestdist = std::numeric_limits<double>::max();

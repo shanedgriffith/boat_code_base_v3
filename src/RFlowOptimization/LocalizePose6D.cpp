@@ -13,12 +13,22 @@ LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const s
 , p3d_(p3d)
 , p2d_(p2d)
 , inliers_(p3d.size(), 0.0)
+, ransac_method_(LocalizePose6D::METHOD::PNP)
+, p3d_set_(p3d_subset_)
+, p2d_set_(p2d_subset_)
 {
     //TODO.
-    if(p3d_.size() < MIN_CORRESPONDENCES)
+    if(p3d_.size() < SAMPLE_SIZE)
     {
-        throw std::runtime_error("LocalizePose6D::LocalizePose6D() Error. Need at least " + std::to_string(MIN_CORRESPONDENCES) + " correspondences");
+        throw std::runtime_error("LocalizePose6D::LocalizePose6D() Error. Need at least " + std::to_string(SAMPLE_SIZE) + " correspondences");
     }
+}
+
+void
+LocalizePose6D::
+setRANSACMethod(LocalizePose6D::METHOD method)
+{
+    ransac_method_ = method;
 }
 
 void
@@ -26,6 +36,43 @@ LocalizePose6D::
 setInitialEstimate(const gtsam::Pose3& guess)
 {
     pguess_ = guess;
+    best_guess_ = guess;
+}
+
+void
+LocalizePose6D::
+updateResult()
+{
+    best_guess_ = pguess_;
+}
+
+size_t
+LocalizePose6D::
+setSize()
+{
+    return p3d_.size();
+}
+
+size_t
+LocalizePose6D::
+sampleSize()
+{
+    return SAMPLE_SIZE;
+}
+
+std::vector<double>
+LocalizePose6D::
+getInliers()
+{
+    return inliers_;
+}
+
+
+void
+LocalizePose6D::
+setErrorThreshold(double e)
+{
+    ACCEPTABLE_TRI_RERROR = e;
 }
 
 double
@@ -86,125 +133,79 @@ Maximization()
         }
         sumall+=dist;
     }
-    return {(double)nchanges, (double)ninliers, sumall/p3d_.size(), sumin/ninliers};
+    return {(double) nchanges, (double) ninliers, sumall/p3d_.size(), sumin/ninliers};
 }
 
-std::tuple<gtsam::Pose3, std::vector<double>>
+void
 LocalizePose6D::
-RANSAC()
+updateSubsets(const std::vector<size_t>& rset)
 {
-    //EM approach to finding the best pose.
-    //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
-    gtsam::Pose3 best_pose = pguess_;
-    const int SAMPLE_SIZE = 4;
-    std::vector<gtsam::Point3> subp3d(SAMPLE_SIZE);
-    std::vector<gtsam::Point2> subp2d1(SAMPLE_SIZE);
-    std::vector<double> best_posevals(4, 0.0);
-    int iters=0;
-    int last_save_iter = 0;
-    double err = ACCEPTABLE_TRI_RERROR;
-    
-    int n_iters = MAX_RANSAC_ITERS;
-    
-    for(; iters<n_iters; iters++)
+    if(rset.size() == 0)
     {
-        std::vector<size_t> rset = GenerateRandomSet(p3d_.size(), SAMPLE_SIZE);
-        for(int j=0; j<rset.size(); j++){
-            subp3d[j] = p3d_[rset[j]];
-            subp2d1[j] = p2d_[rset[j]];
-        }
-        
-        bool success;
-        std::tie(success, pguess_) = runMethod(pguess_, subp3d, subp2d1);
-        if(not success) continue;
-        
-        std::vector<double> posevals = Maximization();
-        if(posevals[1]>best_posevals[1] or
-           (posevals[1]==best_posevals[1] and posevals[2] < best_posevals[2]))
-        {
-            swap(best_posevals, posevals);
-            best_pose = pguess_;
-            last_save_iter = iters;
-        }
-        
-        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], p3d_.size(), SAMPLE_SIZE, 0.99));
-        
-        if(n_total_iters < 0) continue;
-        
-        n_iters = std::min(n_iters, n_total_iters);
-        
-        //makes RANSAC faster by 10x (1ms to 10ms), but it's less consistent
-        //if(best_posevals[1]/p3d.size()>RANSAC_PERC_DC || iters-last_save_iter>=RANSAC_IMPROV_ITERS) break;
+        p3d_set_ = p3d_;
+        p2d_set_ = p2d_;
+        return;
     }
-    
-    if(debug_)
+    else
     {
-        printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
-               (int)iters, (int)best_posevals[0], best_posevals[2], best_posevals[3], (int)best_posevals[1], (int)p3d_.size());
+        p3d_set_ = p3d_subset_;
+        p2d_set_ = p2d_subset_;
     }
-    
-    //have to reset the inliers.
-    std::vector<double> posevals = Maximization(best_pose, p3d_, p2d_, inliers_, err);
-    
-    best_posevals[0] = iters;
-    return std::make_tuple(best_pose, best_posevals);
+    p3d_subset_.resize(rset.size());
+    p2d_subset_.resize(rset.size());
+    for(int j=0; j<rset.size(); j++)
+    {
+        p3d_subset_[j] = p3d_[rset[j]];
+        p2d_subset_[j] = p2d_[rset[j]];
+    }
 }
 
-std::tuple<gtsam::Pose3, std::vector<double>>
+void
 LocalizePose6D::
-UseBAIterative()
+updateOptimizationMethod()
 {
-    //TODO: make this function consistent with the DualIterativeBA(). (and update RANSAC_BA() as well)
-    //EM approach to finding the best pose.
-    //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
-    gtsam::Pose3 best_pose;
-    std::vector<double> best_posevals;
-    double best_score;
-    int minpiter = -1;
-    
-    //first RANSAC to find the best estimate of p1frame0.
-    std::vector<double> posevalsransac;
-    std::tie(pguess_, posevalsransac) = RANSAC();
-    
-    if(posevalsransac[1]<0.000001) return {};
-    
-    //measure rerror with the previous set of inliers, if it's good, update the set of inliers.
-    int iters = 0;
-    int nchanges=1;
-    double err = ACCEPTABLE_TRI_RERROR;
-    for(int i=0; nchanges > 0 and i < MAX_ITERS; i++)
+    ransac_method_ = LocalizePose6D::METHOD::PNP;
+}
+
+bool
+LocalizePose6D::
+runMethod()
+{
+    bool success;
+    switch(ransac_method_)
     {
-        PNP localizer(cam_, pguess_, p3d_, p2d_, inliers_);
-        bool success;
-        std::tie(success, pguess_) = localizer.run();
-        if(not success) continue;
-        
-        std::vector<double> posevals = Maximization();
-        
-        if(iters==0 or posevals[1]>best_score) //using the reprojection error of the inlier set, rather than the number of inliers.
+        case LocalizePose6D::METHOD::P3P:
         {
-            best_score = posevals[1];
-            best_pose = pguess_;
-            best_posevals = posevals;
-            minpiter = iters;
+            P3P localizer(cam_, p3d_set_, p2d_set_);
+            std::tie(success, pguess_) = localizer.run();
+            break;
         }
-        iters++;
-        nchanges = posevals[0];
-        
-        if(debug_)
+        case LocalizePose6D::METHOD::PNP:
         {
-            printf("bai iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %d\n",
-                   (int) iters, (int) posevals[0], posevals[2], posevals[3], (int) posevals[1], (int) p3d_.size());
+            PNP localizer(cam_, best_guess_, p3d_set_, p2d_set_);
+            std::tie(success, pguess_) = localizer.run();
+            break;
         }
-        if(robust_loss_ and iters > 1)
+        default:
+            std::cout << "Localization::METHOD not recognized." << std::endl;
+            exit(-1);
             break;
     }
     
-    pguess_ = best_pose;
-    if(minpiter != iters-1) Maximization(); //reset the inliers.
-    if(best_posevals.size()==0) return std::make_tuple(best_pose, {});
-    best_posevals[0] = iters;
-    return std::make_tuple(best_pose, best_posevals);
+    return success;
 }
 
+std::tuple<bool, gtsam::Pose3, std::vector<double>>
+LocalizePose6D::
+UseBAIterative()
+{
+    std::vector<double> posevals = RANSAC();
+    bool suc = posevals[1] < 0.000001;
+    if(suc)
+    {
+        posevals = iterativeBA();
+    }
+    
+    return std::make_tuple(suc, best_guess_, posevals);
+}
 

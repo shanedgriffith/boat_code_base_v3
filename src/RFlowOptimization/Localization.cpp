@@ -1,12 +1,14 @@
 #include "Localization.h"
 
+#include "P3P.h"
+#include "PNP.h"
+
 #include <random>
 
 Localization::
 Localization(const Camera& cam)
 : cam_(cam)
 , debug_(false)
-, ransac_method_(Localization::METHOD::PNP)
 , robust_loss_(false)
 {}
 
@@ -15,20 +17,6 @@ Localization::
 setRobustLoss()
 {
     robust_loss_ = true;
-}
-
-void
-Localization::
-setRANSACMethod(Localization::METHOD method)
-{
-    ransac_method_ = method;
-}
-
-void
-Localization::
-setErrorThreshold(double e)
-{
-    ACCEPTABLE_TRI_RERROR = e;
 }
 
 void
@@ -49,7 +37,7 @@ NumRequiredRANSACIterations(size_t ninliers, size_t setsize, size_t nsamples_per
 //n choose k in O(k)
 std::vector<size_t>
 Localization::
-GenerateRandomSet(int n, int k)
+GenerateRandomSet(size_t n, size_t k)
 {   //meant to be called with a value for n that doesn't change
     static std::vector<int> setindices;
     
@@ -74,29 +62,102 @@ GenerateRandomSet(int n, int k)
     return rset;
 }
 
-std::tuple<bool, gtsam::Pose3>
+std::vector<double>
 Localization::
-runMethod(const gtsam::Pose3& guess, const std::vector<gtsam::Point3>& subp3d, const std::vector<gtsam::Point2>& subp2d1)
+RANSAC()
 {
-    switch(ransac_method_)
+    //the standard RANSAC loop.
+    //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers
+    std::vector<double> best_posevals(4, 0.0);
+    size_t SET_SIZE = setSize();
+    size_t SAMPLE_SIZE = sampleSize();
+    
+    size_t n_iters = MAX_RANSAC_ITERS;
+    int nchanges = 0;
+    for(size_t iters = 0; iters < n_iters; ++iters)
     {
-        case Localization::METHOD::P3P:
-            P3P localizer(cam_, subp3d, subp2d1);
-            return localizer.run();
-            break;
-        case Localization::METHOD::PNP:
-            PNP localizer(cam_, guess, subp3d, subp2d1);
-            return localizer.run();
-            break;
-        default:
+        std::vector<size_t> rset = GenerateRandomSet(SET_SIZE, SAMPLE_SIZE);
+        
+        updateSubsets(rset);
+        
+        bool success = runMethod();
+        if(not success) continue;
+        
+        std::vector<double> posevals = Maximization();
+        if(posevals[1]>best_posevals[1] or
+           (posevals[1]==best_posevals[1] and posevals[2] < best_posevals[2]))
+        {
+            swap(best_posevals, posevals);
+            updateResult(); //or set initial estimate?
+            nchanges = best_posevals[0];
+            best_posevals[0] = iters;
+        }
+        
+        int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], SET_SIZE, SAMPLE_SIZE, 0.99));
+        
+        if(n_total_iters < 0) continue;
+        
+        n_iters = std::min(static_cast<int>(n_iters), n_total_iters);
     }
-    std::cout << "Localization::METHOD not recognized." << std::endl;
-    exit(-1);
+    
+    if(debug_)
+    {
+        printf("ransac iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %zu\n",
+               (int) best_posevals[0], (int) nchanges, best_posevals[2], best_posevals[3], (int) best_posevals[1], SET_SIZE);
+    }
+    
+    //reset the inliers. (don't keep the returned result)
+    Maximization();
+    
+    return best_posevals;
 }
 
-
-
-
+std::vector<double>
+Localization::
+iterativeBA()
+{
+    //TODO: make this function consistent with the DualIterativeBA(). (and update RANSAC_BA() as well)
+    //EM approach to finding the best pose.
+    //returns: {best pose, info}, where info is {# of iterations, # of inliers, average reprojection error, average reprojection error of inliers}
+    
+    //assumes that the initial estimate of the pose is good; e.g., obtained with RANSAC.
+    std::vector<double> best_posevals(4,0);
+    
+    updateOptimizationMethod();
+    
+    updateSubsets();
+    
+    int nchanges=1;
+    for(size_t iters = 0; nchanges > 0 and iters < MAX_ITERS; ++iters)
+    {
+        bool success = runMethod();
+        if(not success) continue;
+        
+        std::vector<double> posevals = Maximization();
+        
+        if(iters==0 or posevals[1]>best_posevals[1]) //using the reprojection error of the inlier set, rather than the number of inliers.
+        {
+            std::swap(best_posevals, posevals);
+            updateResult();
+            best_posevals[0] = iters;
+        }
+        
+        nchanges = posevals[0];
+        
+        if(debug_)
+        {
+            printf("bai iter[%d]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %zu\n",
+                   (int) iters, (int) posevals[0], posevals[2], posevals[3], (int) posevals[1], setSize());
+        }
+        if(robust_loss_ and iters > 1)
+            break;
+    }
+    
+    //reset the inliers. (don't keep the returned result)
+    Maximization();
+    
+    return best_posevals;
+}
 
 
 

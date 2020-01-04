@@ -54,7 +54,7 @@ protected:
     int num_cameras_in_traj=0;
     std::vector<LandmarkTrack> active;
     GTSAMInterface GTS;
-    const Camera& _cam;
+    const Camera& cam_;
     FactorGraph * FG;
     bool clean_up = false;
     

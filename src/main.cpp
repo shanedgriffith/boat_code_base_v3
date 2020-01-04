@@ -7,7 +7,6 @@
 #include "VisualOdometry/VisualOdometry.hpp"
 
 #include "Optimization/SingleSession/SurveyOptimizer.h"
-#include "RFlowOptimization/LocalizePose.hpp"
 #include "Optimization/SingleSession/testAngularVelocity.h"
 #include <testRobust.hpp>
 

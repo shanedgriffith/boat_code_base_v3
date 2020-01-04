@@ -12,6 +12,10 @@
 
 class PNP
 {
+public:
+    
+    enum NM{OUTLIER_FREE=0, HUBER, GEMAN_MCCLURE};
+    
 protected:
     
     gtsam::noiseModel::Base::shared_ptr flexible_;
@@ -42,11 +46,8 @@ protected:
     const std::vector<bool>& inliers_;
 public:
     
-    enum NM{OUTLIER_FREE=0, HUBER, GEMAN_MCCLURE};
     
-    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset);
-    
-    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<double>& inliers);
+    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<bool>& inliers = {});
     
     void
     setNoiseModel(double acceptable_rerror, PNP::NM noise_model);

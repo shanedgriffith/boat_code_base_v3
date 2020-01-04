@@ -14,7 +14,7 @@
 
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
-#include <RFlowOptimization/LocalizePose.hpp>
+#include <RFlowOptimization/LocalizePose6D.h>
 #include <opencv2/core/eigen.hpp>
 
 #include "Optimization/SingleSession/GTSAMInterface.h"
@@ -479,11 +479,10 @@ bool VisualOdometry::PoseFrom3Dto2DCorrespondences(gtsam::Values& result, std::s
     
     if( p3d.size() >= 4 )
     {
-        std::vector<double> inliers(p3d.size(), 1);
-        LocalizePose lp(_cam);
+        LocalizePose6D lp(_cam, poseres, p3d, p2d1);
         gtsam::Pose3 localized_pose;
         std::vector<double> res;
-        std::tie(localized_pose, res) = lp.UseBAIterative(poseres, p3d, p2d1, inliers);
+        std::tie(localized_pose, res) = lp.UseBAIterative();
         if(res.size() > 0)
         {
             poseres = localized_pose;
@@ -552,11 +551,11 @@ void VisualOdometry::test3Dto2DVO()
         
         if(p3d.size() >= 4)
         {
-            std::vector<double> inliers(p3d.size(), 1);
-            LocalizePose lp(_cam);
+            LocalizePose6D loc(_cam, p3d, p2d1);
+            loc.setRANSACMethod(LocalizePose6D::METHOD:P3P);
             gtsam::Pose3 localized_pose;
             std::vector<double> res;
-            std::tie(localized_pose, res) = lp.UseBAIterative(localized_pose, p3d, p2d1, inliers);
+            std::tie(localized_pose, res) = loc.UseBAIterative();
             if(res.size() > 0)
             {
                 std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<localized_pose << std::endl;
@@ -584,10 +583,9 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
     
     gtsam::Cal3_S2::shared_ptr gtcam = _cam.GetGTSAMCam();
     
-    
     std::queue<std::shared_ptr<ParseFeatureTrackFile>> threepftf;
     std::queue<gtsam::Pose3> threeposes;
-    for(int i=0; i<100; ++i)
+    for(int i=0; i < 100; ++i)
     {
         std::shared_ptr<ParseFeatureTrackFile> pftf = std::make_shared<ParseFeatureTrackFile>(_cam, pftbase + date, por.ftfilenos[i]);
         while(threepftf.size() > 2)
@@ -621,10 +619,13 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
             poses.push_back(threeposes.back());
             poses.push_back(threeposes.front());
             
-            try {
+            try
+            {
                 gtsam::Point3 triangulated = triangulatePoint3(poses, gtcam, coords);
                 p3d.push_back(triangulated);
-            }catch(std::exception e) {
+            }
+            catch(std::exception e)
+            {
                 continue;
             }
             
@@ -636,11 +637,10 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         
         if(p3d.size() >= 4)
         {
-            std::vector<double> inliers(p3d.size(), 1);
-            LocalizePose lp(_cam);
+            LocalizePose6D lp(_cam, localized_pose, p3d, p2d1);
             gtsam::Pose3 localized_pose;
             std::vector<double> res;
-            std::tie(localized_pose, res) = lp.UseBAIterative(localized_pose, p3d, p2d1, inliers);
+            std::tie(localized_pose, res) = lp.UseBAIterative();
             if(res.size() > 0)
             {
                 std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " << localized_pose << std::endl;
