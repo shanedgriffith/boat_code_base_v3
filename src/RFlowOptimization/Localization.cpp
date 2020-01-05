@@ -128,7 +128,7 @@ iterativeBA()
     updateSubsets();
     
     int nchanges=1;
-    for(size_t iters = 0; nchanges > 0 and iters < MAX_ITERS; ++iters)
+    for(size_t iters = 0; nchanges > 0 and iters < MAX_OPTIMIZATION_ITERS; ++iters)
     {
         bool success = runMethod();
         if(not success) continue;

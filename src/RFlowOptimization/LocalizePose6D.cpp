@@ -14,8 +14,6 @@ LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const s
 , p2d_(p2d)
 , inliers_(p3d.size(), 0.0)
 , ransac_method_(LocalizePose6D::METHOD::PNP)
-, p3d_set_(p3d_subset_)
-, p2d_set_(p2d_subset_)
 {
     //TODO.
     if(p3d_.size() < SAMPLE_SIZE)
@@ -66,7 +64,6 @@ getInliers()
 {
     return inliers_;
 }
-
 
 void
 LocalizePose6D::
@@ -142,21 +139,25 @@ updateSubsets(const std::vector<size_t>& rset)
 {
     if(rset.size() == 0)
     {
-        p3d_set_ = p3d_;
-        p2d_set_ = p2d_;
-        return;
+        //the method will run on the original, full set
+        p3d_subset_.resize(p3d_.size());
+        p2d_subset_.resize(p2d_.size());
+        for(int j=0; j<p3d_.size(); j++)
+        {
+            p3d_subset_[j] = p3d_[j];
+            p2d_subset_[j] = p2d_[j];
+        }
     }
     else
     {
-        p3d_set_ = p3d_subset_;
-        p2d_set_ = p2d_subset_;
-    }
-    p3d_subset_.resize(rset.size());
-    p2d_subset_.resize(rset.size());
-    for(int j=0; j<rset.size(); j++)
-    {
-        p3d_subset_[j] = p3d_[rset[j]];
-        p2d_subset_[j] = p2d_[rset[j]];
+        //the method will run on the subset
+        p3d_subset_.resize(rset.size());
+        p2d_subset_.resize(rset.size());
+        for(int j=0; j<rset.size(); j++)
+        {
+            p3d_subset_[j] = p3d_[rset[j]];
+            p2d_subset_[j] = p2d_[rset[j]];
+        }
     }
 }
 
@@ -176,13 +177,13 @@ runMethod()
     {
         case LocalizePose6D::METHOD::P3P:
         {
-            P3P localizer(cam_, p3d_set_, p2d_set_);
+            P3P localizer(cam_, p3d_subset_, p2d_subset_);
             std::tie(success, pguess_) = localizer.run();
             break;
         }
         case LocalizePose6D::METHOD::PNP:
         {
-            PNP localizer(cam_, best_guess_, p3d_set_, p2d_set_);
+            PNP localizer(cam_, best_guess_, p3d_subset_, p2d_subset_);
             std::tie(success, pguess_) = localizer.run();
             break;
         }
@@ -193,6 +194,15 @@ runMethod()
     }
     
     return success;
+}
+
+std::tuple<bool, gtsam::Pose3, std::vector<double>>
+LocalizePose6D::
+UseRANSAC()
+{
+    std::vector<double> posevals = RANSAC();
+    bool suc = posevals[1] < 0.000001;
+    return std::make_tuple(suc, best_guess_, posevals);
 }
 
 std::tuple<bool, gtsam::Pose3, std::vector<double>>

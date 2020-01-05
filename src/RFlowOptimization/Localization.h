@@ -28,7 +28,7 @@ protected:
     updateSubsets(const std::vector<size_t>& rset = {}) = 0;
     
     virtual std::vector<double>
-    Maximization() = 0; //const gtsam::Pose3& gtp, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, std::vector<double>& inliers,
+    Maximization() = 0;
     
     virtual void
     updateResult() = 0;

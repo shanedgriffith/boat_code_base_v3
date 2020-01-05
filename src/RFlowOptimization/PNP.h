@@ -44,6 +44,7 @@ protected:
     const std::vector<gtsam::Point3>& p3d_subset_;
     const std::vector<gtsam::Point2>& p2d_subset_;
     const std::vector<bool>& inliers_;
+    
 public:
     
     

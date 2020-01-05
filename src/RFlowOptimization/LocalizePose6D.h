@@ -62,13 +62,14 @@ protected:
     LocalizePose6D::METHOD ransac_method_;
     std::vector<gtsam::Point3> p3d_subset_;
     std::vector<gtsam::Point2> p2d_subset_;
-    std::vector<gtsam::Point3>& p3d_set_; //extra references to avoid a copy.
-    std::vector<gtsam::Point2>& p2d_set_;
     
     
 public:
     
     LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d);
+    
+    std::tuple<bool, gtsam::Pose3, std::vector<double>>
+    UseRANSAC();
     
     std::tuple<bool, gtsam::Pose3, std::vector<double>>
     UseBAIterative();
@@ -79,7 +80,8 @@ public:
     void
     setInitialEstimate(const gtsam::Pose3& guess);
     
-    void setRANSACMethod(LocalizePose6D::METHOD method);
+    void
+    setRANSACMethod(LocalizePose6D::METHOD method);
     
     void
     setErrorThreshold(double e);
