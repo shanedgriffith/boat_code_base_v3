@@ -23,7 +23,7 @@ class LocalizePose6D: public Localization
 {
 public:
     
-    enum METHOD {P3P=0, PNP}; //class template better?
+    enum METHOD {_P3P=0, _PNP}; //class template better?
     
 protected:
     const int SAMPLE_SIZE = 4;
@@ -51,7 +51,7 @@ protected:
     updateResult();
     
     bool
-    runMethod();
+    runMethod(bool use_robust_loss);
     
     
     gtsam::Pose3 pguess_;

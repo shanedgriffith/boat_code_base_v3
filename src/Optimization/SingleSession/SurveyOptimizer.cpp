@@ -36,7 +36,7 @@ cam_(cam), _results_dir(results_dir), _date(date), _print_data_increments(print_
 void SurveyOptimizer::Initialize(){
     initialized = true;
     
-    numcam_eras_in_traj = 0;
+    num_cameras_in_traj = 0;
     GTS = GTSAMInterface(FG);
     LoadParameters();
     
@@ -65,8 +65,8 @@ void SurveyOptimizer::RunGTSAM(bool update_everything){
 void SurveyOptimizer::SaveResults(SaveOptimizationResults& SOR, int iteration, double percent_completed, vector<double> drawscale){
     if((_print_data_increments || percent_completed == 100) and iteration > 5){
         vector<vector<double> > ls = GTS.GetOptimizedLandmarks();
-        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], numcam_eras_in_traj);
-        vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], numcam_eras_in_traj);
+        vector<vector<double> > ts = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::X], num_cameras_in_traj);
+        vector<vector<double> > vs = GTS.GetOptimizedTrajectory(FG->key[(int) FactorGraph::var::V], num_cameras_in_traj);
         SOR.PlotAndSaveCurrentEstimate(ls, ts, vs, drawscale);
     }
     SOR.StatusMessage(iteration, percent_completed);
@@ -241,20 +241,19 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     std::cout << "localizing the new pose using: " << p3d.size() << " of " << active.size() << " points of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
     
     LocalizePose6D loc(cam_, p3d, p2d1);
-//    loc.debug = true; //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
+    loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
 //    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
     loc.setInitialEstimate(pose_t_est);
-    loc.setRANSACMethod(Localization::METHOD::PNP);
+    loc.setRANSACMethod(LocalizePose6D::METHOD::_PNP);
     loc.setRobustLoss();
     gtsam::Pose3 localized_pose;
     std::vector<double> res;
-    std::tie(localized_pose, res) = loc.UseBAIterative();
-//    std::vector<std::vector<double>> res = loc.combinedLocalizationMethod(vec_pose_t_est, p3d, p2d1, inliers); //UseBAIterative
-    if(res.size() > 0 and (res[1] > 0.5 * p3d.size() or res[1] > 15))
+    bool suc;
+    std::tie(suc, localized_pose, res) = loc.UseBAIterative();
+    if(suc and (res[1] > 0.5 * p3d.size() or res[1] > 15))
     {
         poses.push_back(localized_pose);
     }
-    if(res.size() > 0) std::cout << "localization failed: no stats. " << std::endl;
     else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", avg error: " << res[1] << std::endl;
     return poses;
 }
@@ -325,7 +324,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     else if(_incremental) AddActiveLandmarks(active);
     else AddLandmarkTracks(inactive);
     
-    ++numcam_eras_in_traj;
+    ++num_cameras_in_traj;
     FG->AddCamera(camera_key, pose_prior);
     
     //add the kinematic constraints.

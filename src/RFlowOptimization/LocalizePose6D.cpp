@@ -13,7 +13,7 @@ LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const s
 , p3d_(p3d)
 , p2d_(p2d)
 , inliers_(p3d.size(), 0.0)
-, ransac_method_(LocalizePose6D::METHOD::PNP)
+, ransac_method_(LocalizePose6D::METHOD::_PNP)
 {
     //TODO.
     if(p3d_.size() < SAMPLE_SIZE)
@@ -111,7 +111,8 @@ Maximization()
     int ninliers = 0;
     double sumall=0;
     double sumin=0;
-    for(int i=0; i<p3d_.size(); i++){
+    for(int i=0; i<p3d_.size(); i++)
+    {
         gtsam::Point3 tfp = pguess_.transform_to(p3d_[i]);
         gtsam::Point2 res = cam_.ProjectToImage(tfp);
         double dist = res.distance(p2d_[i]);
@@ -142,7 +143,7 @@ updateSubsets(const std::vector<size_t>& rset)
         //the method will run on the original, full set
         p3d_subset_.resize(p3d_.size());
         p2d_subset_.resize(p2d_.size());
-        for(int j=0; j<p3d_.size(); j++)
+        for(int j=0; j<p3d_.size(); ++j)
         {
             p3d_subset_[j] = p3d_[j];
             p2d_subset_[j] = p2d_[j];
@@ -153,7 +154,7 @@ updateSubsets(const std::vector<size_t>& rset)
         //the method will run on the subset
         p3d_subset_.resize(rset.size());
         p2d_subset_.resize(rset.size());
-        for(int j=0; j<rset.size(); j++)
+        for(int j=0; j<rset.size(); ++j)
         {
             p3d_subset_[j] = p3d_[rset[j]];
             p2d_subset_[j] = p2d_[rset[j]];
@@ -165,25 +166,32 @@ void
 LocalizePose6D::
 updateOptimizationMethod()
 {
-    ransac_method_ = LocalizePose6D::METHOD::PNP;
+    ransac_method_ = LocalizePose6D::METHOD::_PNP;
 }
 
 bool
 LocalizePose6D::
-runMethod()
+runMethod(bool use_robust_loss)
 {
     bool success;
     switch(ransac_method_)
     {
-        case LocalizePose6D::METHOD::P3P:
+        case LocalizePose6D::METHOD::_P3P:
         {
-            P3P localizer(cam_, p3d_subset_, p2d_subset_);
+            P3P localizer(cam_, p3d_subset_, p2d_subset_); //'class' keyword distinguishes the class P3P from the enum P3P.
             std::tie(success, pguess_) = localizer.run();
             break;
         }
-        case LocalizePose6D::METHOD::PNP:
+        case LocalizePose6D::METHOD::_PNP:
         {
             PNP localizer(cam_, best_guess_, p3d_subset_, p2d_subset_);
+            PNP::NM noise_model = PNP::NM::OUTLIER_FREE;
+            if(use_robust_loss)
+            {
+                if(iter == 0) noise_model = PNP::NM::HUBER;
+                else noise_model = PNP::NM::GEMAN_MCCLURE;
+            }
+            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR, noise_model);
             std::tie(success, pguess_) = localizer.run();
             break;
         }
@@ -201,7 +209,7 @@ LocalizePose6D::
 UseRANSAC()
 {
     std::vector<double> posevals = RANSAC();
-    bool suc = posevals[1] < 0.000001;
+    bool suc = posevals[1] > 0.000001;
     return std::make_tuple(suc, best_guess_, posevals);
 }
 
@@ -210,7 +218,7 @@ LocalizePose6D::
 UseBAIterative()
 {
     std::vector<double> posevals = RANSAC();
-    bool suc = posevals[1] < 0.000001;
+    bool suc = posevals[1] > 0.000001;
     if(suc)
     {
         posevals = iterativeBA();

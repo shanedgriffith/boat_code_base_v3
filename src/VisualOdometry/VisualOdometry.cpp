@@ -479,13 +479,12 @@ bool VisualOdometry::PoseFrom3Dto2DCorrespondences(gtsam::Values& result, std::s
     
     if( p3d.size() >= 4 )
     {
-        LocalizePose6D lp(_cam, poseres, p3d, p2d1);
+        LocalizePose6D lp(_cam, p3d, p2d1);
         gtsam::Pose3 localized_pose;
-        std::vector<double> res;
-        std::tie(localized_pose, res) = lp.UseBAIterative();
-        if(res.size() > 0)
+        bool suc;
+        std::tie(suc, poseres, ignore) = lp.UseBAIterative();
+        if(suc)
         {
-            poseres = localized_pose;
             return true;
         }
         
@@ -552,13 +551,13 @@ void VisualOdometry::test3Dto2DVO()
         if(p3d.size() >= 4)
         {
             LocalizePose6D loc(_cam, p3d, p2d1);
-            loc.setRANSACMethod(LocalizePose6D::METHOD:P3P);
+            loc.setRANSACMethod(LocalizePose6D::METHOD::_P3P);
             gtsam::Pose3 localized_pose;
-            std::vector<double> res;
-            std::tie(localized_pose, res) = loc.UseBAIterative();
-            if(res.size() > 0)
+            bool suc;
+            std::tie(suc, localized_pose, ignore) = loc.UseBAIterative();
+            if(suc)
             {
-                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " <<localized_pose << std::endl;
+                std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " << localized_pose << std::endl;
             }
             else
             {
@@ -637,11 +636,11 @@ void VisualOdometry::test3Dto2DVOWithTriangulation()
         
         if(p3d.size() >= 4)
         {
-            LocalizePose6D lp(_cam, localized_pose, p3d, p2d1);
+            LocalizePose6D lp(_cam, p3d, p2d1);
             gtsam::Pose3 localized_pose;
-            std::vector<double> res;
-            std::tie(localized_pose, res) = lp.UseBAIterative();
-            if(res.size() > 0)
+            bool suc;
+            std::tie(suc, localized_pose, ignore) = lp.UseBAIterative();
+            if(suc)
             {
                 std::cout << "---------------------\nactual: " << por.CameraPose(i) << "\nestimated: " << localized_pose << std::endl;
             }

@@ -30,7 +30,7 @@ protected:
     gtsam::Symbol
     constructGraph();
     
-    gtsam::Values
+    std::tuple<bool, gtsam::Values>
     optimize();
     
     bool debug_;

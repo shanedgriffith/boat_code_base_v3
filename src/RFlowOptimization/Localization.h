@@ -37,7 +37,7 @@ protected:
     updateOptimizationMethod() = 0;
     
     virtual bool
-    runMethod() = 0;
+    runMethod(bool use_robust_loss) = 0;
     
     std::vector<double>
     RANSAC();
@@ -53,6 +53,7 @@ protected:
     
     bool debug_;
     bool robust_loss_;
+    size_t iter;
     
     const Camera& cam_;
     

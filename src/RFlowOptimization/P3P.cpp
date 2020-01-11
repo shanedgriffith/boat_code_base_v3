@@ -144,6 +144,13 @@ run()
     
     std::vector<gtsam::Pose3> poses = computePoses(feature_vectors); // TODO: break down this function.
     
+    if(poses.size()==0)
+    {
+        std::cout << "P3P::run() Error. Found no poses. May be an issue with P3P." << std::endl;
+//        exit(-1);
+        return std::make_tuple(false, gtsam::Pose3::identity());
+    }
+    
     //NOTE: only the fourth point is used for disambiguation
     gtsam::Pose3 res = disambiguatePoses(poses, world_points_[3], p2d_subset_[3]);
     
