@@ -192,7 +192,7 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
         std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
         return poses;
     }
-    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
+    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t1.between(pose_t2));
     
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point2> p2d1;
@@ -242,9 +242,8 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     
     LocalizePose6D loc(cam_, p3d, p2d1);
     loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
-//    std::vector<double> vec_pose_t_est = GTSAMInterface::PoseToVector(pose_t_est);
-    loc.setInitialEstimate(pose_t_est);
     loc.setRANSACMethod(LocalizePose6D::METHOD::_PNP);
+    loc.setInitialEstimate(pose_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
     loc.setRobustLoss();
     gtsam::Pose3 localized_pose;
     std::vector<double> res;
@@ -254,7 +253,18 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     {
         poses.push_back(localized_pose);
     }
-    else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", avg error: " << res[1] << std::endl;
+    else std::cout << "localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", all avg rerror: " << res[2] << std::endl;
+    
+//    gtsam::Pose3 guess1 = pose_t1.compose(pose_t2.between(pose_t1)); // this is going forward.
+//    gtsam::Pose3 guess2 = pose_t1;
+//    gtsam::Pose3 guess3 = pose_t1.compose(pose_t1.between(pose_t2)); // this is going backward.
+//    double t1 = (localized_pose.translation().between(guess1.translation())).norm();
+//    double t2 = (localized_pose.translation().between(guess2.translation())).norm();
+//    double t3 = (localized_pose.translation().between(guess3.translation())).norm();
+//    if(t1 < t2 and t1 < t3) std::cout << "distance 1 closer.  " << t1 << ", " << t2 << ", " << t3 << ". " << localized_pose.translation() << ", " << guess1.translation() << ", " << guess2.translation() << ", "<< guess3.translation() << ", " << std::endl;
+//    else if(t2 < t1 and t2 < t3) std::cout << "distance 2 closer  " << t1 << ", " << t2 << ", " << t3 << ". " << localized_pose.translation() << ", " << guess1.translation() << ", " << guess2.translation() << ", "<< guess3.translation() << ", "  << std::endl;
+//    else   std::cout << "distance 3 closer  " << t1 << ", " << t2 << ", " << t3 << ". " << localized_pose.translation() << ", " << guess1.translation() << ", " << guess2.translation() << ", "<< guess3.translation() << ", " << std::endl;
+    
     return poses;
 }
 

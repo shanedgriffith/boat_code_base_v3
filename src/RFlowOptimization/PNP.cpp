@@ -9,19 +9,34 @@
 #include "Optimization/MultiSession/LocalizationFactor.h"
 
 PNP::
-PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset, const std::vector<bool>& inliers)
+PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
 : debug_(false)
-, explicit_filter_(inliers.size() > 0)
+, explicit_filter_(false)
+, nlocalization_factors(0)
 , cam_(cam)
 , pguess_(pguess)
 , p3d_subset_(p3d_subset)
 , p2d_subset_(p2d_subset)
-, inliers_(inliers)
 {
     //assume some sigmas for the pose.
     gtsam::Vector6 v6p;
     v6p = (gtsam::Vector(6) << 5.0, 5.0, 5.0, 0.5, 0.5, 0.5).finished();
     flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v6p);
+}
+
+void
+PNP::
+setDebug()
+{
+    debug_ = true;
+}
+
+void
+PNP::
+setInliers(std::shared_ptr<std::vector<double>> inliers)
+{
+    explicit_filter_ = inliers->size() > 0;
+    inliers_ = inliers;
 }
 
 void
@@ -38,9 +53,10 @@ setNoiseModel(double acceptable_rerror, PNP::NM noise_model)
             measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(acceptable_rerror), measurement_noise_outlier_free_);
             break;
         case PNP::GEMAN_MCCLURE:
-        default:
-            measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(acceptable_rerror/2.0), measurement_noise_outlier_free_);
+            measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(acceptable_rerror), measurement_noise_outlier_free_); //acceptable_rerror
             break;
+        default:
+            throw std::runtime_error("PNP::setNoiseModel() error. unknown loss.");
     }
 }
 
@@ -60,13 +76,21 @@ addLocalizationFactors(gtsam::Symbol symb)
 
     for(int i=0; i<p2d_subset_.size(); ++i)
     {
-        if(explicit_filter_ and inliers_[i] < 0.0) //unnecessary if using GM. TODO: test to see which parameter values for GM + Huber produce the best results.
+        if(explicit_filter_ and (*inliers_)[i] < 0.0) //unnecessary if using GM. TODO: test to see which parameter values for GM + Huber produce the best results.
         {
             continue;
         }
-        
+        ++nlocalization_factors;
         graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset_[i], p3d_subset_[i], measurement_noise_, symb, gt_camera));
     }
+    
+//    int c2 = 0;
+//    for(size_t i=0; i<p2d_subset_.size(); ++i)
+//    {
+//        if(explicit_filter_ and (*inliers_)[i] == 0) ++c2;
+//    }
+//    
+//    std::cout << "localization with " << nlocalization_factors << " of " << p2d_subset_.size() << ". unset inliers: " << c2 << std::endl;
 }
 
 gtsam::Symbol
@@ -84,7 +108,24 @@ PNP::
 optimize()
 {
     gtsam::Values result;
-    bool suc;
+    bool suc = 0;
+    
+    if(debug_)
+    {
+        std::cout << "-------------BundleAdjustment-------------" << std::endl;
+        graph_.print();
+        initial_estimate_.print();
+    }
+    
+    if(nlocalization_factors == 0)
+    {
+        if(debug_)
+        {
+            std::cout<<"PNP::RunBA() error: no localization factors. \n " << std::endl;
+        }
+        return std::make_tuple(suc, result);
+    }
+    
     try
     {
         gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);

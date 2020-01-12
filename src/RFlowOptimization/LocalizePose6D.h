@@ -50,15 +50,18 @@ protected:
     void
     updateResult();
     
+    void
+    updateGuess();
+    
     bool
-    runMethod(bool use_robust_loss);
+    runMethod(bool use_robust_loss, bool use_inliers);
     
     
     gtsam::Pose3 pguess_;
     gtsam::Pose3 best_guess_;
     const std::vector<gtsam::Point3>& p3d_;
     const std::vector<gtsam::Point2>& p2d_;
-    std::vector<double> inliers_;
+    std::shared_ptr<std::vector<double>> inliers_;
     LocalizePose6D::METHOD ransac_method_;
     std::vector<gtsam::Point3> p3d_subset_;
     std::vector<gtsam::Point2> p2d_subset_;
@@ -74,7 +77,7 @@ public:
     std::tuple<bool, gtsam::Pose3, std::vector<double>>
     UseBAIterative();
     
-    std::vector<double>
+    std::shared_ptr<std::vector<double>>
     getInliers();
     
     void

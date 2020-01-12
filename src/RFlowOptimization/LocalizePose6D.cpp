@@ -12,7 +12,6 @@ LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const s
 : Localization(cam)
 , p3d_(p3d)
 , p2d_(p2d)
-, inliers_(p3d.size(), 0.0)
 , ransac_method_(LocalizePose6D::METHOD::_PNP)
 {
     //TODO.
@@ -20,6 +19,7 @@ LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const s
     {
         throw std::runtime_error("LocalizePose6D::LocalizePose6D() Error. Need at least " + std::to_string(SAMPLE_SIZE) + " correspondences");
     }
+    inliers_ = std::make_shared<std::vector<double>>(p3d.size(), 0);
 }
 
 void
@@ -35,6 +35,13 @@ setInitialEstimate(const gtsam::Pose3& guess)
 {
     pguess_ = guess;
     best_guess_ = guess;
+}
+
+void
+LocalizePose6D::
+updateGuess()
+{
+    pguess_ = best_guess_;
 }
 
 void
@@ -58,7 +65,7 @@ sampleSize()
     return SAMPLE_SIZE;
 }
 
-std::vector<double>
+std::shared_ptr<std::vector<double>>
 LocalizePose6D::
 getInliers()
 {
@@ -89,7 +96,7 @@ MeasureReprojectionError() //const gtsam::Pose3& gtp, const std::vector<gtsam::P
         double dist = res.distance(p2d_[i]);
         sumall+=dist;
         count++;
-        if(inliers_[i])
+        if((*inliers_)[i])
         {
             sumin+=dist;
             cin++;
@@ -111,26 +118,34 @@ Maximization()
     int ninliers = 0;
     double sumall=0;
     double sumin=0;
-    for(int i=0; i<p3d_.size(); i++)
+    for(size_t i=0; i<p3d_.size(); ++i)
     {
         gtsam::Point3 tfp = pguess_.transform_to(p3d_[i]);
         gtsam::Point2 res = cam_.ProjectToImage(tfp);
         double dist = res.distance(p2d_[i]);
         if(dist > ACCEPTABLE_TRI_RERROR || !cam_.InsideImage(res))
         {
-            if(inliers_[i]>=0.0) nchanges++;
-            inliers_[i] = -1;
+            if((*inliers_)[i]>=0.0) nchanges++;
+            (*inliers_)[i] = -1;
             if(!cam_.InsideImage(res)) continue;
         }
         else
         {
-            if(inliers_[i]<0) nchanges++;
-            inliers_[i] = ACCEPTABLE_TRI_RERROR;//dist; //I seem to get more reliable estimates using err, rather than dist, here.
+            if((*inliers_)[i]<0) nchanges++;
+            (*inliers_)[i] = ACCEPTABLE_TRI_RERROR;//dist; //I seem to get more reliable estimates using err, rather than dist, here.
             sumin+=dist;
             ninliers++;
         }
         sumall+=dist;
     }
+    
+//    int c2 = 0;
+//    for(size_t i=0; i<p3d_.size(); ++i)
+//    {
+//        if((*inliers_)[i] == 0) ++c2;
+//    }
+//    
+//    std::cout << "counted " << ninliers << " inliers. number of unset inliers: " << c2 << ". total : " << p3d_.size() << ". all rerror: " << sumall/p3d_.size() << std::endl;
     return {(double) nchanges, (double) ninliers, sumall/p3d_.size(), sumin/ninliers};
 }
 
@@ -171,7 +186,7 @@ updateOptimizationMethod()
 
 bool
 LocalizePose6D::
-runMethod(bool use_robust_loss)
+runMethod(bool use_robust_loss, bool use_inliers)
 {
     bool success;
     switch(ransac_method_)
@@ -191,7 +206,8 @@ runMethod(bool use_robust_loss)
                 if(iter == 0) noise_model = PNP::NM::HUBER;
                 else noise_model = PNP::NM::GEMAN_MCCLURE;
             }
-            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR, noise_model);
+            else if(use_inliers) localizer.setInliers(inliers_);
+            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model);
             std::tie(success, pguess_) = localizer.run();
             break;
         }

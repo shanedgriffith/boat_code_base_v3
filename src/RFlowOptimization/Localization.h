@@ -37,7 +37,10 @@ protected:
     updateOptimizationMethod() = 0;
     
     virtual bool
-    runMethod(bool use_robust_loss) = 0;
+    runMethod(bool use_robust_loss, bool use_inliers) = 0;
+    
+    virtual void
+    updateGuess() = 0;
     
     std::vector<double>
     RANSAC();

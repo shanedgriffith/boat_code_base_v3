@@ -81,7 +81,7 @@ RANSAC()
         
         updateSubsets(rset);
         
-        bool success = runMethod(false);
+        bool success = runMethod(false, false);
         if(not success) continue;
         
         std::vector<double> posevals = Maximization();
@@ -108,6 +108,7 @@ RANSAC()
     }
     
     //this function call is only to set the inliers to those that correspond to the best_pose.
+    updateGuess();
     Maximization();
     
     return best_posevals;
@@ -131,8 +132,9 @@ iterativeBA()
     int nchanges=1;
     for(iter = 0; nchanges > 0 and iter < MAX_OPTIMIZATION_ITERS; ++iter)
     {
-        bool success = runMethod(robust_loss_);
-        if(not success) continue;
+        bool success = runMethod(robust_loss_, true);
+        if(not success)
+            break;
         
         std::vector<double> posevals = Maximization();
         nchanges = posevals[0];
@@ -154,6 +156,7 @@ iterativeBA()
     }
     
     //this function call is only to set the inliers to those that correspond to the best_pose.
+    updateGuess();
     Maximization();
     
     return best_posevals;
