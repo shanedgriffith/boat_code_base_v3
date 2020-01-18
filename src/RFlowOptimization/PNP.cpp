@@ -83,14 +83,6 @@ addLocalizationFactors(gtsam::Symbol symb)
         ++nlocalization_factors;
         graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset_[i], p3d_subset_[i], measurement_noise_, symb, gt_camera));
     }
-    
-//    int c2 = 0;
-//    for(size_t i=0; i<p2d_subset_.size(); ++i)
-//    {
-//        if(explicit_filter_ and (*inliers_)[i] == 0) ++c2;
-//    }
-//    
-//    std::cout << "localization with " << nlocalization_factors << " of " << p2d_subset_.size() << ". unset inliers: " << c2 << std::endl;
 }
 
 gtsam::Symbol

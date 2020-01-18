@@ -2,10 +2,6 @@
 
 #include "P3P.h"
 #include "PNP.h"
-#include "Optimization/MultiSession/LocalizationFactor.h"
-
-#include <gtsam/linear/NoiseModel.h>
-#include <gtsam/nonlinear/Values.h>
 
 LocalizePose6D::
 LocalizePose6D(const Camera& cam, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d)

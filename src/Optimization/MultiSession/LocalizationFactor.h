@@ -19,8 +19,7 @@
  * @author Shane Griffith (small modifications)
  */
 
-#ifndef SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_
-#define SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_
+#pragma once
 
 #include <gtsam/geometry/SimpleCamera.h>
 #include <gtsam/geometry/Point2.h>
@@ -195,5 +194,3 @@ private:
       ar & BOOST_SERIALIZATION_NVP(verboseCheirality_);
     }
 };
-
-#endif /* SRC_RFLOWOPTIMIZATION_LOCALIZATIONFACTOR_H_ */
