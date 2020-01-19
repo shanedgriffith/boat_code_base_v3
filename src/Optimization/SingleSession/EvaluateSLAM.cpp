@@ -119,8 +119,6 @@ double EvaluateSLAM::OfflineRError(ParseOptimizationResults& POR, int idx, std::
 }
 
 std::vector<double> EvaluateSLAM::ErrorForSurvey(std::string _pftbase, bool save){
-    time_t start,interm,end;
-    time (&start);
     ParseOptimizationResults POR(_results_dir, _date);
 
     std::vector<double> result(POR.boat.size(), 0.0);

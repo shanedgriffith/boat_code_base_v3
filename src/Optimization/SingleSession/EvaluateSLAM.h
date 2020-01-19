@@ -6,8 +6,7 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef SRC_OPTIMIZATION_EVALUATESLAM_H_
-#define SRC_OPTIMIZATION_EVALUATESLAM_H_
+#pragma once
 
 #include <dirent.h>
 #include <stdio.h>
@@ -48,5 +47,3 @@ public:
     double GetAverageRerror(std::vector<double> rerrors);
     void PrintTots(std::string name = "", bool compact = false);
 };
-
-#endif /* SRC_OPTIMIZATION_EVALUATESLAM_H_ */

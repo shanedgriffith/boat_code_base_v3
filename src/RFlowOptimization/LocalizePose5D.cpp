@@ -1,6 +1,6 @@
 #include "LocalizePose5D.h"
 
-#include "Nister.h" //see, e.g., https://github.com/opencv/opencv/blob/master/modules/calib3d/src/five-point.cpp
+#include "Nister5point.h" //see, e.g., https://github.com/opencv/opencv/blob/master/modules/calib3d/src/five-point.cpp
 #include "PNP.h"
 
 LocalizePose5D::

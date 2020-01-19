@@ -10,6 +10,8 @@
 #include "Optimization/SingleSession/testAngularVelocity.h"
 #include <testRobust.hpp>
 
+#include <RFlowOptimization/Nister5Point.h>
+
 using namespace std;
 
 vector<string> cluster_paths = {"/home/shaneg/results/", "/home/shaneg/data/VBags/", "/home/shaneg/data/Lakeshore_KLT/", "/home/shaneg/data/bike_datasets/"};
@@ -21,6 +23,8 @@ vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/D
 
 int main(int argc, char *argv[])
 {
+    testNister5Point();
+    
 //    testAngularVelocity::compareAngularVelocityToTraj();
 ////    testAngularVelocity::testReprojectionWithYawDifference();
 //    return 1;

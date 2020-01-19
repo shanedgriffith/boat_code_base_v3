@@ -5,11 +5,17 @@
 #include <gtsam/slam/ProjectionFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/nonlinear/DoglegOptimizer.h>
+#include <gtsam/slam/EssentialMatrixFactor.h>
 
 #include "Optimization/MultiSession/LocalizationFactor.h"
 
-PNP::
-PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
+//explicit template specialization for a class template (see https://stackoverflow.com/a/13952386/6834155)
+template class PNP<gtsam::EssentialMatrix, gtsam::Point2>;
+template class PNP<gtsam::Pose3, gtsam::Point3>;
+
+template <class T, class P>
+PNP<T,P>::
+PNP(const Camera& cam, const T& pguess, const std::vector<P>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
 : debug_(false)
 , explicit_filter_(false)
 , nlocalization_factors(0)
@@ -18,41 +24,63 @@ PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Poin
 , p3d_subset_(p3d_subset)
 , p2d_subset_(p2d_subset)
 {
+    initializeCorrespondenceNoiseModel();
+}
+
+template <>
+void
+PNP<gtsam::Pose3, gtsam::Point3>::
+initializeCorrespondenceNoiseModel()
+{
     //assume some sigmas for the pose.
     gtsam::Vector6 v6p;
     v6p = (gtsam::Vector(6) << 5.0, 5.0, 5.0, 0.5, 0.5, 0.5).finished();
     flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v6p);
 }
 
+template <>
 void
-PNP::
+PNP<gtsam::EssentialMatrix, gtsam::Point2>::
+initializeCorrespondenceNoiseModel()
+{
+    //assume some sigmas for E.
+    gtsam::Vector5 v5p;
+    v5p = (gtsam::Vector(6) << 1.0, 1.0, 0.5, 0.5, 0.5).finished(); //TODO: correct?
+    flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+}
+
+template <class T, class P>
+void
+PNP<T,P>::
 setDebug()
 {
     debug_ = true;
 }
 
+template <class T, class P>
 void
-PNP::
+PNP<T,P>::
 setInliers(std::shared_ptr<std::vector<double>> inliers)
 {
     explicit_filter_ = inliers->size() > 0;
     inliers_ = inliers;
 }
 
+template <class T, class P>
 void
-PNP::
-setNoiseModel(double acceptable_rerror, PNP::NM noise_model)
+PNP<T,P>::
+setNoiseModel(double acceptable_rerror, PNP<T,P>::NM noise_model)
 {
     gtsam::noiseModel::Base::shared_ptr measurement_noise_outlier_free_ = gtsam::noiseModel::Isotropic::Sigma(2, acceptable_rerror);
     switch(noise_model)
     {
-        case PNP::OUTLIER_FREE:
+        case PNP<T,P>::OUTLIER_FREE:
             measurement_noise_ = measurement_noise_outlier_free_;
             break;
-        case PNP::HUBER:
+        case PNP<T,P>::HUBER:
             measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(acceptable_rerror), measurement_noise_outlier_free_);
             break;
-        case PNP::GEMAN_MCCLURE:
+        case PNP<T,P>::GEMAN_MCCLURE:
             measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(acceptable_rerror), measurement_noise_outlier_free_); //acceptable_rerror
             break;
         default:
@@ -60,19 +88,37 @@ setNoiseModel(double acceptable_rerror, PNP::NM noise_model)
     }
 }
 
+template <class T, class P>
 void
-PNP::
+PNP<T,P>::
 addPose(gtsam::Symbol symb)
 {
     graph_.add(gtsam::PriorFactor<gtsam::Pose3>(symb, pguess_, flexible_));
     initial_estimate_.insert(symb, pguess_);
 }
 
+template <>
 void
-PNP::
+PNP<gtsam::Pose3, gtsam::Point3>::
+addLocalizationFactor(gtsam::Symbol symb, size_t i)
+{
+    static gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
+    graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset_[i], p3d_subset_[i], measurement_noise_, symb, gt_camera));
+}
+
+template <>
+void
+PNP<gtsam::EssentialMatrix, gtsam::Point2>::
+addLocalizationFactor(gtsam::Symbol symb, size_t i)
+{
+    graph_.add(gtsam::EssentialMatrixFactor(symb, p2d_subset_[i], p3d_subset_[i], measurement_noise_));
+}
+
+template <class T, class P>
+void
+PNP<T,P>::
 addLocalizationFactors(gtsam::Symbol symb)
 {
-    gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
 
     for(int i=0; i<p2d_subset_.size(); ++i)
     {
@@ -81,12 +127,13 @@ addLocalizationFactors(gtsam::Symbol symb)
             continue;
         }
         ++nlocalization_factors;
-        graph_.add(LocalizationFactor<gtsam::Pose3, gtsam::Cal3_S2>(p2d_subset_[i], p3d_subset_[i], measurement_noise_, symb, gt_camera));
+        addLocalizationFactor(symb, i);
     }
 }
 
+template <class T, class P>
 gtsam::Symbol
-PNP::
+PNP<T,P>::
 constructGraph()
 {
     gtsam::Symbol symb('x', 0);
@@ -95,8 +142,9 @@ constructGraph()
     return symb;
 }
 
+template <class T, class P>
 std::tuple<bool, gtsam::Values>
-PNP::
+PNP<T,P>::
 optimize()
 {
     gtsam::Values result;
@@ -139,8 +187,9 @@ optimize()
     return std::make_tuple(suc, result);
 }
 
-std::tuple<bool, gtsam::Pose3>
-PNP::
+template <class T, class P>
+std::tuple<bool, T>
+PNP<T,P>::
 run()
 {
     gtsam::Symbol symb = constructGraph();
@@ -150,10 +199,10 @@ run()
 
     if(result.size()==0)
     {
-        return std::make_tuple(false, gtsam::Pose3::identity());
+        return std::make_tuple(false, T::identity());
     }
     else
     {
-        return std::make_tuple(suc, result.at<gtsam::Pose3>(symb));
+        return std::make_tuple(suc, result.at<T>(symb));
     }
 }

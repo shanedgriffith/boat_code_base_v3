@@ -195,12 +195,12 @@ runMethod(bool use_robust_loss, bool use_inliers)
         }
         case LocalizePose6D::METHOD::_PNP:
         {
-            PNP localizer(cam_, best_guess_, p3d_subset_, p2d_subset_);
-            PNP::NM noise_model = PNP::NM::OUTLIER_FREE;
+            PNP localizer<gtsam::Pose3, gtsam::Point3>(cam_, best_guess_, p3d_subset_, p2d_subset_);
+            PNP<gtsam::Pose3, gtsam::Point3>::NM noise_model = PNP<gtsam::Pose3, gtsam::Point3>::NM::OUTLIER_FREE;
             if(use_robust_loss)
             {
-                if(iter == 0) noise_model = PNP::NM::HUBER;
-                else noise_model = PNP::NM::GEMAN_MCCLURE;
+                if(iter == 0) noise_model = PNP<gtsam::Pose3, gtsam::Point3>::NM::HUBER;
+                else noise_model = PNP<gtsam::Pose3, gtsam::Point3>::NM::GEMAN_MCCLURE;
             }
             else if(use_inliers) localizer.setInliers(inliers_);
             localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model);

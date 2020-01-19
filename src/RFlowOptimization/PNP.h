@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
@@ -10,6 +10,7 @@
 
 #include "DataTypes/Camera.hpp"
 
+template <class T=gtsam::Pose3, class P=gtsam::Point3>
 class PNP
 {
 public:
@@ -22,7 +23,13 @@ protected:
     gtsam::noiseModel::Base::shared_ptr measurement_noise_;
     
     void
+    initializeCorrespondenceNoiseModel();
+    
+    void
     addPose(gtsam::Symbol symb);
+    
+    void
+    addLocalizationFactor(gtsam::Symbol symb, size_t i);
     
     void
     addLocalizationFactors(gtsam::Symbol symb);
@@ -41,15 +48,15 @@ protected:
     bool optimization_succeeded_;
     
     const Camera& cam_;
-    const gtsam::Pose3& pguess_;
-    const std::vector<gtsam::Point3>& p3d_subset_;
+    const T& pguess_;
+    const std::vector<P>& p3d_subset_;
     const std::vector<gtsam::Point2>& p2d_subset_;
     std::shared_ptr<std::vector<double>> inliers_;
     
 public:
     
     
-    PNP(const Camera& cam, const gtsam::Pose3& pguess, const std::vector<gtsam::Point3>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset);
+    PNP(const Camera& cam, const T& pguess, const std::vector<P>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset);
     
     void
     setNoiseModel(double acceptable_rerror, PNP::NM noise_model);
@@ -57,7 +64,7 @@ public:
     void
     setInliers(std::shared_ptr<std::vector<double>> inliers);
     
-    std::tuple<bool, gtsam::Pose3>
+    std::tuple<bool, T>
     run();
     
     void
