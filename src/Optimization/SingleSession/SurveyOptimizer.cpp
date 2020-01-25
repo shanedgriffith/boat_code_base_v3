@@ -15,7 +15,8 @@
 #include "FileParsing/ParseSurvey.h"
 #include "BoatSurvey/ParseBoatSurvey.hpp"
 #include "EvaluateSLAM.h"
-#include "RFlowOptimization/LocalizePose6D.h"
+#include "Localization/LocalizePose6D.h"
+#include "Localization/LocalizePose5D.h"
 
 using namespace std;
 

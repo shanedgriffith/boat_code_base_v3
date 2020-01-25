@@ -14,7 +14,7 @@
 
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
-#include <RFlowOptimization/LocalizePose6D.h>
+#include <Localization/LocalizePose6D.h>
 #include <opencv2/core/eigen.hpp>
 
 #include "Optimization/SingleSession/GTSAMInterface.h"

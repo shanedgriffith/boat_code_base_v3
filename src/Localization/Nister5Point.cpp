@@ -42,7 +42,8 @@ void testNister5Point()
     gtsam::EssentialMatrix E;
     bool sol;
     std::tie(sol, E) = n5p.run();
-    std::cout << " solution ? " << sol << ": " << E << std::endl;
+    
+    std::cout << " solution ? " << sol << ": " << E.matrix() << std::endl;
 }
 
 Nister5Point::
@@ -66,7 +67,8 @@ std::vector<Nister5Point::PMatrix>
 Nister5Point::
 projectionsFromEssential(const Nister5Point::EMatrix &E)
 {   // four possible projection matrices from an essential matrix.
-    std::vector<Nister5Point::PMatrix> P(4);
+    std::vector<Nister5Point::PMatrix> P;
+    P.resize(4); //note: eigen memory allocation breaks if the size is initialized in the vector constructor.
     
     // Assumes input E is a rank 2 matrix, with equal singular values
     JacobiSVD<EMatrix> svd(E, ComputeFullU | ComputeFullV);
@@ -336,6 +338,7 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
     
     int best_inliers = 0;
     int valid_solutions = 0;
+    
     for(int i=0; i<solutions.size(); ++i)
     {
         // Test to see if this E matrix is the correct one we're after
@@ -358,6 +361,7 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
             
             if(inliers == 5)
             {
+//                std::cout << "found one with 5 inliers" << std::endl;
                 return std::make_tuple(true, P[j]);
             }
         }
