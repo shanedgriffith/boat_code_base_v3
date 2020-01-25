@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 using namespace Eigen;
-//using namespace Nister5Point;
 
 void testNister5Point()
 {
@@ -48,18 +47,19 @@ void testNister5Point()
 
 Nister5Point::
 Nister5Point(const std::vector<gtsam::Point2>& p2d0_subset, const std::vector<gtsam::Point2>& p2d1_subset)
-: p2d0_subset_(pd20_subset)
-, p2d1_subset_(pd21_subset)
+: p2d0_subset_(p2d0_subset)
+, p2d1_subset_(p2d1_subset)
 {}
 
 bool
 Nister5Point::
 suitableSet()
 {
-    if(pd20_subset_.size() < 5)
+    if(p2d0_subset_.size() < 5)
     {
         return false;
     }
+    return true;
 }
 
 std::vector<Nister5Point::PMatrix>
@@ -104,13 +104,13 @@ computePossibleSolutions()
 {
     // F is a temp variable, not the F fundamental matrix
     Matrix<double, Dynamic, 9> F(p2d0_subset_.size(),9);
-    for(int i=0; i < pd20_subset_.size(); ++i)
+    for(int i=0; i < p2d0_subset_.size(); ++i)
     {
-        const double& x1 = pd20_subset_[i](0);
-        const double& y1 = pd20_subset_[i](1);
+        const double& x1 = p2d0_subset_[i](0);
+        const double& y1 = p2d0_subset_[i](1);
         
-        const double& x2 = pd21_subset_[i](0);
-        const double& y2 = pd21_subset_[i](1);
+        const double& x2 = p2d1_subset_[i](0);
+        const double& y2 = p2d1_subset_[i](1);
         F(i,0) = x1*x2;
         F(i,1) = x2*y1;
         F(i,2) = x2;
@@ -222,9 +222,7 @@ computePossibleSolutions()
             continue;
         }
         
-        double solToPoly = zeror[i];
-        
-        double z = solutionsToPolynomial(i);
+        double z = zeror[i];
         
         M.Eval(z, ret_eval.data());
         
@@ -372,8 +370,8 @@ gtsam::EssentialMatrix
 Nister5Point::
 convertTo(Nister5Point::PMatrix& P)
 {
-    Eigen::Matrix<double, 3, 3> R = P.block<3,3>(0,0);
-    Eigen::Matrix<double, 3, 1> t = P.block<3,1>(0,3);
+    Eigen::Matrix<double, 3, 3> R = P.block(0,0,3,3);
+    Eigen::Matrix<double, 3, 1> t = P.block(0,3,3,1);
     gtsam::Unit3 tu(t);
     gtsam::Rot3 rot(R);
     return gtsam::EssentialMatrix(rot, tu);
@@ -402,8 +400,8 @@ run()
     if(sol)
     {
         gtsam::EssentialMatrix p = convertTo(P);
-        return std::make_tuple(sol, p);
+        return std::make_tuple(true, p);
     }
     
-    return std::make_tuple(sol, std::ignore);
+    return std::make_tuple(false, gtsam::EssentialMatrix());
 }

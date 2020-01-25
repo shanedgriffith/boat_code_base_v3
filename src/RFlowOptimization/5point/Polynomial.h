@@ -1,5 +1,4 @@
-#ifndef __POLYNOMIAL_H__
-#define __POLYNOMIAL_H__
+#pragma once 
 
 #include <vector>
 #include <iostream>
@@ -181,4 +180,3 @@ public:
     std::vector < std::vector<Polynomial> > m_data;
 };
 
-#endif

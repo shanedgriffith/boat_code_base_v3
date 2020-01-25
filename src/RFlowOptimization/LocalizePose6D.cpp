@@ -195,7 +195,7 @@ runMethod(bool use_robust_loss, bool use_inliers)
         }
         case LocalizePose6D::METHOD::_PNP:
         {
-            PNP localizer<gtsam::Pose3, gtsam::Point3>(cam_, best_guess_, p3d_subset_, p2d_subset_);
+            PNP<gtsam::Pose3, gtsam::Point3> localizer(cam_, best_guess_, p3d_subset_, p2d_subset_);
             PNP<gtsam::Pose3, gtsam::Point3>::NM noise_model = PNP<gtsam::Pose3, gtsam::Point3>::NM::OUTLIER_FREE;
             if(use_robust_loss)
             {

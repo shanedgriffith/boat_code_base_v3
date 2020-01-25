@@ -9,10 +9,6 @@
 
 #include "Optimization/MultiSession/LocalizationFactor.h"
 
-//explicit template specialization for a class template (see https://stackoverflow.com/a/13952386/6834155)
-template class PNP<gtsam::EssentialMatrix, gtsam::Point2>;
-template class PNP<gtsam::Pose3, gtsam::Point3>;
-
 template <class T, class P>
 PNP<T,P>::
 PNP(const Camera& cam, const T& pguess, const std::vector<P>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset)
@@ -93,7 +89,7 @@ void
 PNP<T,P>::
 addPose(gtsam::Symbol symb)
 {
-    graph_.add(gtsam::PriorFactor<gtsam::Pose3>(symb, pguess_, flexible_));
+    graph_.add(gtsam::PriorFactor<T>(symb, pguess_, flexible_));
     initial_estimate_.insert(symb, pguess_);
 }
 
@@ -199,10 +195,15 @@ run()
 
     if(result.size()==0)
     {
-        return std::make_tuple(false, T::identity());
+        return std::make_tuple(false, T());
     }
     else
     {
         return std::make_tuple(suc, result.at<T>(symb));
     }
 }
+
+//explicit template specialization for a class template (see https://stackoverflow.com/a/13952386/6834155)
+//this *must* go at the bottom
+template class PNP<gtsam::EssentialMatrix, gtsam::Point2>;
+template class PNP<gtsam::Pose3, gtsam::Point3>;

@@ -22,7 +22,7 @@ private:
     std::vector<PMatrix>
     projectionsFromEssential(const EMatrix &E);
     
-    PMatrix
+    std::tuple<bool, PMatrix>
     disambiguateSolutions(std::vector<EMatrix> solutions);
     
     std::vector<EMatrix>
@@ -30,6 +30,9 @@ private:
     
     gtsam::EssentialMatrix
     convertTo(PMatrix& P);
+    
+    bool
+    suitableSet();
     
     const std::vector<gtsam::Point2>& p2d0_subset_;
     const std::vector<gtsam::Point2>& p2d1_subset_;

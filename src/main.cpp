@@ -24,6 +24,7 @@ vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/D
 int main(int argc, char *argv[])
 {
     testNister5Point();
+    exit(1);
     
 //    testAngularVelocity::compareAngularVelocityToTraj();
 ////    testAngularVelocity::testReprojectionWithYawDifference();

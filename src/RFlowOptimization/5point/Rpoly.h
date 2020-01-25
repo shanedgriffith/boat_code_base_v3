@@ -27,8 +27,7 @@
 // example, data is input from a file to eliminate the need for a user to type data in via
 // the console.
 
-#ifndef __RPOLY_H__
-#define __RPOLY_H__
+#pragma once
 
 #define MAXDEGREE 100
 #define MDP1 MAXDEGREE+1
@@ -42,5 +41,3 @@ void newest_ak1(int tFlag, double* uu, double* vv, double a, double a1, double a
 void QuadIT_ak1(int N, int* NZ, double uu, double vv, double* szr, double* szi, double* lzr, double* lzi, double qp[MDP1], int NN, double* a, double* b, double p[MDP1], double qk[MDP1], double* a1, double* a3, double* a7, double* c, double* d, double* e, double* f, double* g, double* h, double K[MDP1]);
 void RealIT_ak1(int* iFlag, int* NZ, double* sss, int N, double p[MDP1], int NN, double qp[MDP1], double* szr, double* szi, double K[MDP1], double qk[MDP1]);
 void Quad_ak1(double a, double b1, double c, double* sr, double* si, double* lr, double* li);
-
-#endif
