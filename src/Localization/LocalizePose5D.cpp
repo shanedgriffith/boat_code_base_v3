@@ -123,7 +123,6 @@ Maximization()
         gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
         double dp = va.dot( (pguess_.matrix() * vb));
         dp = fabs(dp);
-//        std::cout << ", " << dp ;
         if(dp > ACCEPTABLE_TRI_RERROR)
         {
             if((*inliers_)[i]>=0.0) nchanges++;
@@ -132,7 +131,7 @@ Maximization()
         else
         {
             if((*inliers_)[i]<0) nchanges++;
-            (*inliers_)[i] = ACCEPTABLE_TRI_RERROR;//dist; //I seem to get more reliable estimates using err, rather than dist, here.
+            (*inliers_)[i] = ACCEPTABLE_TRI_RERROR; //I seem to get more reliable estimates using err, rather than dist, here.
             sumin+=dp;
             ninliers++;
         }
@@ -196,14 +195,17 @@ runMethod(bool use_robust_loss, bool use_inliers)
             PNP<gtsam::EssentialMatrix, gtsam::Point2> localizer(cam_, best_guess_, p2d0_subset_, p2d1_subset_);
             localizer.setDebug();
             PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::OUTLIER_FREE;
-            if(false and use_robust_loss)
+            if(use_robust_loss)
             {
                 if(iter == 0) noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::HUBER;
                 else noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::GEMAN_MCCLURE;
             }
             else if(use_inliers) localizer.setInliers(inliers_);
-            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model);
+            localizer.setNoiseModel<1>(ACCEPTABLE_TRI_RERROR/2.0, noise_model);
             std::tie(success, pguess_) = localizer.run();
+            std::cout << "pnp? " << success << std::endl;
+            if(not success)
+                exit(1);
             break;
         }
         default:

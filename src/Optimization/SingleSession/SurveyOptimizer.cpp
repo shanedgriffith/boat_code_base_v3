@@ -392,7 +392,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
         std::vector<gtsam::Pose3> poses = LocalizeCurPose(camera_key);
         lastcam_ = poses[1];
         if(poses.size() > 2) {
-//            LocalizeCurPose2D(camera_key);
+            LocalizeCurPose2D(camera_key);
             std::cout << "------------------------------------------------------------------------------------------------------------------------" << std::endl;
             curcam = poses[2];
             btwn_pos = poses[1].between(poses[2]);

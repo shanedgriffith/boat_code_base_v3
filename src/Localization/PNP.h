@@ -58,6 +58,7 @@ public:
     
     PNP(const Camera& cam, const T& pguess, const std::vector<P>& p3d_subset, const std::vector<gtsam::Point2>& p2d_subset);
     
+    template <int N>
     void
     setNoiseModel(double acceptable_rerror, PNP::NM noise_model);
     

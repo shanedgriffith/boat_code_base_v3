@@ -31,6 +31,7 @@ initializeCorrespondenceNoiseModel()
     //assume some sigmas for the pose.
     gtsam::Vector6 v6p;
     v6p = (gtsam::Vector(6) << 5.0, 5.0, 5.0, 0.5, 0.5, 0.5).finished();
+//    v6p = (gtsam::Vector(6) << 5.0, 5.0, 5.0, 0.5, 0.5, 0.5).finished();
     flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v6p);
 }
 
@@ -63,11 +64,12 @@ setInliers(std::shared_ptr<std::vector<double>> inliers)
 }
 
 template <class T, class P>
+template <int N>
 void
 PNP<T,P>::
-setNoiseModel(double acceptable_rerror, PNP<T,P>::NM noise_model)
+setNoiseModel<N>(double acceptable_rerror, PNP<T,P>::NM noise_model)
 {
-    gtsam::noiseModel::Base::shared_ptr measurement_noise_outlier_free_ = gtsam::noiseModel::Isotropic::Sigma(2, acceptable_rerror);
+    gtsam::noiseModel::Base::shared_ptr measurement_noise_outlier_free_ = gtsam::noiseModel::Isotropic::Sigma(N, acceptable_rerror);
     switch(noise_model)
     {
         case PNP<T,P>::OUTLIER_FREE:
@@ -77,12 +79,24 @@ setNoiseModel(double acceptable_rerror, PNP<T,P>::NM noise_model)
             measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(acceptable_rerror), measurement_noise_outlier_free_);
             break;
         case PNP<T,P>::GEMAN_MCCLURE:
-            measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(acceptable_rerror), measurement_noise_outlier_free_); //acceptable_rerror
+            measurement_noise_ = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::GemanMcClure::Create(acceptable_rerror), measurement_noise_outlier_free_);
             break;
         default:
             throw std::runtime_error("PNP::setNoiseModel() error. unknown loss.");
     }
 }
+
+template <class T, class P>
+template <>
+void
+PNP<T,P>::
+setNoiseModel<2>(double acceptable_rerror, PNP<T,P>::NM noise_model);
+
+template <class T, class P>
+template <>
+void
+PNP<T,P>::
+setNoiseModel<1>(double acceptable_rerror, PNP<T,P>::NM noise_model);
 
 template <class T, class P>
 void
@@ -162,11 +176,12 @@ optimize()
     }
     
     gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);
+    double initial_error = optimizer.error();
     result = optimizer.optimize();
     try
     {
         
-        double initial_error = optimizer.error();
+        
         
         double result_error = optimizer.error();
         suc = result_error < initial_error;
