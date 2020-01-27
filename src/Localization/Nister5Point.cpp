@@ -63,43 +63,6 @@ suitableSet()
     return true;
 }
 
-std::vector<Nister5Point::PMatrix>
-Nister5Point::
-projectionsFromEssential(const Nister5Point::EMatrix &E)
-{   // four possible projection matrices from an essential matrix.
-    std::vector<Nister5Point::PMatrix> P;
-    P.resize(4); //note: eigen memory allocation breaks if the size is initialized in the vector constructor.
-    
-    // Assumes input E is a rank 2 matrix, with equal singular values
-    JacobiSVD<EMatrix> svd(E, ComputeFullU | ComputeFullV);
-    const Matrix3d &U = svd.matrixU(),
-    &V = svd.matrixV();
-    Matrix3d W;
-    
-    // Find rotation, translation
-    W.setZero();
-    W(0,1) = -1.0;
-    W(1,0) = 1.0;
-    W(2,2) = 1.0;
-    
-    // Rotation
-    Matrix3d R1 = U * W             * V.transpose();
-    Matrix3d R2 = U * W.transpose() * V.transpose();
-    
-    P[0].block(0,0,3,3) = R1;
-    P[1].block(0,0,3,3) = R1;
-    P[2].block(0,0,3,3) = R2;
-    P[3].block(0,0,3,3) = R2;
-    
-    // Translation
-    P[0].col(3) =  U.col(2);
-    P[1].col(3) = -U.col(2);
-    P[2].col(3) =  U.col(2);
-    P[3].col(3) = -U.col(2);
-    
-    return P;
-}
-
 std::vector<Nister5Point::EMatrix>
 Nister5Point::
 computePossibleSolutions()
@@ -328,6 +291,43 @@ triangulatePoint(const gtsam::Point2& a, const gtsam::Point2& b, const PMatrix &
     return svd.matrixV().col(3);
 }
 
+
+std::vector<Nister5Point::PMatrix, Eigen::aligned_allocator<Nister5Point::PMatrix>>
+Nister5Point::
+projectionsFromEssential(const Nister5Point::EMatrix &E)
+{   // four possible projection matrices from an essential matrix.
+    std::vector<Nister5Point::PMatrix, Eigen::aligned_allocator<Nister5Point::PMatrix> > P(4);
+    
+    // Assumes input E is a rank 2 matrix, with equal singular values
+    JacobiSVD<EMatrix> svd(E, ComputeFullU | ComputeFullV);
+    const Matrix3d &U = svd.matrixU(),
+    &V = svd.matrixV();
+    Matrix3d W;
+    
+    // Find rotation, translation
+    W.setZero();
+    W(0,1) = -1.0;
+    W(1,0) = 1.0;
+    W(2,2) = 1.0;
+    
+    // Rotation
+    Matrix3d R1 = U * W             * V.transpose();
+    Matrix3d R2 = U * W.transpose() * V.transpose();
+    
+    P[0].block(0,0,3,3) = R1;
+    P[1].block(0,0,3,3) = R1;
+    P[2].block(0,0,3,3) = R2;
+    P[3].block(0,0,3,3) = R2;
+    
+    // Translation
+    P[0].col(3) =  U.col(2);
+    P[1].col(3) = -U.col(2);
+    P[2].col(3) =  U.col(2);
+    P[3].col(3) = -U.col(2);
+    
+    return P;
+}
+
 std::tuple<bool, Nister5Point::PMatrix>
 Nister5Point::
 disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
@@ -336,13 +336,10 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
     
     gtsam::Pose3 EssentialMatrix;
     
-    int best_inliers = 0;
-    int valid_solutions = 0;
-    
     for(int i=0; i<solutions.size(); ++i)
     {
         // Test to see if this E matrix is the correct one we're after
-        std::vector<PMatrix> P = projectionsFromEssential(solutions[i]);
+        std::vector<PMatrix, Eigen::aligned_allocator<Nister5Point::PMatrix>> P = projectionsFromEssential(solutions[i]);
         
         for(size_t j=0; j < P.size(); j++)
         {
@@ -361,7 +358,6 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
             
             if(inliers == 5)
             {
-//                std::cout << "found one with 5 inliers" << std::endl;
                 return std::make_tuple(true, P[j]);
             }
         }

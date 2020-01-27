@@ -3,6 +3,7 @@
 #include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/Point2.h>
 
+#include <Eigen/StdVector>
 
 
 //Nister's 5point algorithm to estimate the essential matrix. Implementation due to Nghia Ho.
@@ -19,7 +20,7 @@ private:
     double
     calcDepth(const Eigen::Vector4d &X, const PMatrix &P);
     
-    std::vector<PMatrix>
+    std::vector<PMatrix, Eigen::aligned_allocator<PMatrix> >
     projectionsFromEssential(const EMatrix &E);
     
     std::tuple<bool, PMatrix>

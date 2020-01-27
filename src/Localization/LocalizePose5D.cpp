@@ -10,7 +10,6 @@ LocalizePose5D(const Camera& cam, const std::vector<gtsam::Point2>& p2d0, const 
 , p2d1_(p2d1)
 , ransac_method_(LocalizePose5D::METHOD::_PNP)
 {
-    //TODO.
     if(p2d0_.size() < SAMPLE_SIZE)
     {
         throw std::runtime_error("LocalizePose5D::LocalizePose5D() Error. Need at least " + std::to_string(SAMPLE_SIZE) + " correspondences");
@@ -77,27 +76,30 @@ setErrorThreshold(double e)
 
 double
 LocalizePose5D::
-MeasureReprojectionError() //const gtsam::Pose3& gtp, const std::vector<gtsam::Point3>& p3d, const std::vector<gtsam::Point2>& p2d, const std::vector<unsigned char>& inliers
+MeasureReprojectionError()
 {
     double sumall=0;
     double sumin=0;
     int cin=0;
     
     int count=0;
+//    std::cout << "dist: ";
     for(int i=0; i<p2d0_.size(); i++)
     {
-        gtsam::Point3 tfp = pguess_.transform_to(p2d0_[i]);
-        gtsam::Point2 res = cam_.ProjectToImage(tfp);
-        if(!cam_.InsideImage(res)) continue;
-        double dist = res.distance(p2d1_[i]);
-        sumall+=dist;
+        gtsam::Vector3 va = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]).normalized();
+        gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
+        double dp = va.dot( (pguess_.matrix() * vb)) ;
+        dp = fabs(dp);
+//        std::cout << ", " << dp ;
+        sumall += dp;
         count++;
-        if((*inliers_)[i])
+        if((*inliers_)[i] >= 0.0)
         {
-            sumin+=dist;
+            sumin += dp;
             cin++;
         }
     }
+//    std::cout << std::endl;
     if(debug_)
     {
         std::cout<<"num points: " << count << ", reprojection error: "<<sumall/count<<", inliers only: "<<sumin/cin<< ", "<< cin << " of " << count << " are inliers." << std::endl;
@@ -114,34 +116,30 @@ Maximization()
     int ninliers = 0;
     double sumall=0;
     double sumin=0;
+//    std::cout << "dist: ";
     for(size_t i=0; i<p2d0_.size(); ++i)
     {
-        gtsam::Point3 tfp = pguess_.transform_to(p2d0_[i]); //TODO: could be the opposite; i.e., swap p2d0 and p2d1
-        gtsam::Point2 res = cam_.ProjectToImage(tfp);
-        double dist = res.distance(p2d1_[i]);
-        if(dist > ACCEPTABLE_TRI_RERROR || !cam_.InsideImage(res))
+        gtsam::Vector3 va = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]).normalized();
+        gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
+        double dp = va.dot( (pguess_.matrix() * vb));
+        dp = fabs(dp);
+//        std::cout << ", " << dp ;
+        if(dp > ACCEPTABLE_TRI_RERROR)
         {
             if((*inliers_)[i]>=0.0) nchanges++;
             (*inliers_)[i] = -1;
-            if(!cam_.InsideImage(res)) continue;
         }
         else
         {
             if((*inliers_)[i]<0) nchanges++;
             (*inliers_)[i] = ACCEPTABLE_TRI_RERROR;//dist; //I seem to get more reliable estimates using err, rather than dist, here.
-            sumin+=dist;
+            sumin+=dp;
             ninliers++;
         }
-        sumall+=dist;
+        sumall+=dp;
     }
+//    std::cout << std::endl;
     
-    //    int c2 = 0;
-    //    for(size_t i=0; i<p2d0_.size(); ++i)
-    //    {
-    //        if((*inliers_)[i] == 0) ++c2;
-    //    }
-    //
-    //    std::cout << "counted " << ninliers << " inliers. number of unset inliers: " << c2 << ". total : " << p2d0_.size() << ". all rerror: " << sumall/p2d0_.size() << std::endl;
     return {(double) nchanges, (double) ninliers, sumall/p2d0_.size(), sumin/ninliers};
 }
 
@@ -189,16 +187,16 @@ runMethod(bool use_robust_loss, bool use_inliers)
     {
         case LocalizePose5D::METHOD::_NISTER:
         {
-            //TODO: add Nister localization.
-//            Nister5Point n5p(p2d0_subset_, p2d1_subset_);
-//            std::tie(success, pguess_) = n5p.run();
+            Nister5Point n5p(p2d0_subset_, p2d1_subset_);
+            std::tie(success, pguess_) = n5p.run();
             break;
         }
         case LocalizePose5D::METHOD::_PNP:
         {
             PNP<gtsam::EssentialMatrix, gtsam::Point2> localizer(cam_, best_guess_, p2d0_subset_, p2d1_subset_);
+            localizer.setDebug();
             PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::OUTLIER_FREE;
-            if(use_robust_loss)
+            if(false and use_robust_loss)
             {
                 if(iter == 0) noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::HUBER;
                 else noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::GEMAN_MCCLURE;

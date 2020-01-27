@@ -22,7 +22,7 @@ void rpoly_ak1(double op[MDP1], int* Degree, double zeror[MAXDEGREE], double zer
     const double sinr = sin(94.0*RADFAC); // = 0.99756405
 
     if ((*Degree) > MAXDEGREE){
-        cout << "\nThe entered Degree is greater than MAXDEGREE. Exiting rpoly. No further action taken.\n";
+//        cout << "\nThe entered Degree is greater than MAXDEGREE. Exiting rpoly. No further action taken.\n";
         *Degree = -1;
         return;
     } // End ((*Degree) > MAXDEGREE)
@@ -218,7 +218,7 @@ void rpoly_ak1(double op[MDP1], int* Degree, double zeror[MAXDEGREE], double zer
             // Return with failure if no convergence with 20 shifts
 
             if (jj > 20) {
-                cout << "\nFailure. No convergence after 20 shifts. Program terminated.\n";
+//                cout << "\nFailure. No convergence after 20 shifts. Program terminated.\n";
                 *Degree -= N;
                 break;
             } // End if (jj > 20)
@@ -226,7 +226,7 @@ void rpoly_ak1(double op[MDP1], int* Degree, double zeror[MAXDEGREE], double zer
         } // End while (N >= 1)
     } // End if op[0] != 0
     else { // else op[0] == 0
-        cout << "\nThe leading coefficient is zero. No further action taken. Program terminated.\n";
+//        cout << "\nThe leading coefficient is zero. No further action taken. Program terminated.\n";
         *Degree = 0;
     } // End else op[0] == 0
 

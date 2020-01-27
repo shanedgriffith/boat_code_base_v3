@@ -41,7 +41,7 @@ initializeCorrespondenceNoiseModel()
 {
     //assume some sigmas for E.
     gtsam::Vector5 v5p;
-    v5p = (gtsam::Vector(6) << 1.0, 1.0, 0.5, 0.5, 0.5).finished(); //TODO: correct?
+    v5p = (gtsam::Vector(5) << 1.0, 1.0, 0.5, 0.5, 0.5).finished(); //TODO: correct?
     flexible_ = gtsam::noiseModel::Diagonal::Sigmas(v5p);
 }
 
@@ -107,7 +107,7 @@ void
 PNP<gtsam::EssentialMatrix, gtsam::Point2>::
 addLocalizationFactor(gtsam::Symbol symb, size_t i)
 {
-    graph_.add(gtsam::EssentialMatrixFactor(symb, p2d_subset_[i], p3d_subset_[i], measurement_noise_));
+    graph_.add(gtsam::EssentialMatrixFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_));
 }
 
 template <class T, class P>
@@ -115,7 +115,6 @@ void
 PNP<T,P>::
 addLocalizationFactors(gtsam::Symbol symb)
 {
-
     for(int i=0; i<p2d_subset_.size(); ++i)
     {
         if(explicit_filter_ and (*inliers_)[i] < 0.0) //unnecessary if using GM. TODO: test to see which parameter values for GM + Huber produce the best results.
@@ -162,11 +161,13 @@ optimize()
         return std::make_tuple(suc, result);
     }
     
+    gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);
+    result = optimizer.optimize();
     try
     {
-        gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);
+        
         double initial_error = optimizer.error();
-        result = optimizer.optimize();
+        
         double result_error = optimizer.error();
         suc = result_error < initial_error;
     }
@@ -176,6 +177,7 @@ optimize()
         {
             std::cout<<"PNP::RunBA() error: optimization failed. \n " << std::endl;
             ex.what();
+            exit(1);
         }
     }
     graph_.resize(0);
