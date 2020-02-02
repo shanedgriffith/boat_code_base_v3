@@ -64,10 +64,9 @@ setInliers(std::shared_ptr<std::vector<double>> inliers)
 }
 
 template <class T, class P>
-template <int N>
 void
 PNP<T,P>::
-setNoiseModel<N>(double acceptable_rerror, PNP<T,P>::NM noise_model)
+setNoiseModel(double acceptable_rerror, PNP<T,P>::NM noise_model, const int& N)
 {
     gtsam::noiseModel::Base::shared_ptr measurement_noise_outlier_free_ = gtsam::noiseModel::Isotropic::Sigma(N, acceptable_rerror);
     switch(noise_model)
@@ -85,18 +84,6 @@ setNoiseModel<N>(double acceptable_rerror, PNP<T,P>::NM noise_model)
             throw std::runtime_error("PNP::setNoiseModel() error. unknown loss.");
     }
 }
-
-template <class T, class P>
-template <>
-void
-PNP<T,P>::
-setNoiseModel<2>(double acceptable_rerror, PNP<T,P>::NM noise_model);
-
-template <class T, class P>
-template <>
-void
-PNP<T,P>::
-setNoiseModel<1>(double acceptable_rerror, PNP<T,P>::NM noise_model);
 
 template <class T, class P>
 void
@@ -175,14 +162,11 @@ optimize()
         return std::make_tuple(suc, result);
     }
     
-    gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);
-    double initial_error = optimizer.error();
-    result = optimizer.optimize();
     try
     {
-        
-        
-        
+        gtsam::DoglegOptimizer optimizer(graph_, initial_estimate_);
+        double initial_error = optimizer.error();
+        result = optimizer.optimize();
         double result_error = optimizer.error();
         suc = result_error < initial_error;
     }

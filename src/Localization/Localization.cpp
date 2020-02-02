@@ -94,11 +94,11 @@ RANSAC()
             best_posevals[0] = iter;
         }
         
-        if(debug_)
-        {
-            printf("ransac iter[%zu]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %zu\n",
-                   iter, (int) nchanges, best_posevals[2], best_posevals[3], (int) best_posevals[1], setSize());
-        }
+//        if(debug_)
+//        {
+//            printf("ransac iter[%zu]: %d changes; reprojection error: %lf (all), %lf (inliers); number of inliers %d of %zu\n",
+//                   iter, (int) nchanges, best_posevals[2], best_posevals[3], (int) best_posevals[1], setSize());
+//        }
         
         int n_total_iters = ceil(NumRequiredRANSACIterations(best_posevals[1], SET_SIZE, SAMPLE_SIZE, 0.99));
         

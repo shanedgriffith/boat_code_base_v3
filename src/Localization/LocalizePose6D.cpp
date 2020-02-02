@@ -203,7 +203,7 @@ runMethod(bool use_robust_loss, bool use_inliers)
                 else noise_model = PNP<gtsam::Pose3, gtsam::Point3>::NM::GEMAN_MCCLURE;
             }
             else if(use_inliers) localizer.setInliers(inliers_);
-            localizer.setNoiseModel<2>(ACCEPTABLE_TRI_RERROR/2.0, noise_model);
+            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model, 2);
             std::tie(success, pguess_) = localizer.run();
             break;
         }

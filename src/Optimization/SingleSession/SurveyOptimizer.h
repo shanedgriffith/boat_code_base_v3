@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <vector>
 
+#include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/SimpleCamera.h>    //calibration and performs projections
 
 #include <FileParsing/ParseFeatureTrackFile.h>
@@ -43,7 +44,7 @@ protected:
     void RunGTSAM(bool update_everything);
     ParseFeatureTrackFile LoadVisualFeatureTracks(int& index);
     void AddPoseConstraints(double delta_time, gtsam::Pose3 btwn_pos, gtsam::Pose3 vel_est, int camera_key, bool transition);
-    std::vector<gtsam::Pose3> LocalizeCurPose2D(int cur_pose_idx);
+    std::tuple<bool, gtsam::EssentialMatrix> LocalizeCurPose2D(int cur_pose_idx);
     std::vector<gtsam::Pose3> LocalizeCurPose(int cur_pose_idx);
     void AddCamera(int camera_key, gtsam::Pose3& cam, gtsam::Pose3& localized);
     int ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap);

@@ -108,6 +108,8 @@ void GTSAMInterface::IncrementalUpdate() {
 //    Printi2Graph("Factor graph before update()", i2.getFactorsUnsafe());
 //    Printi2Graph("Factors to add", _fg->graph);
     
+//    _fg->graph.print();
+//    initialEstimate.print();
 //    try {
         int iterations = vals[Param::UPDATE_ITERATIONS];
         for(int i=0; i<iterations; i++) {

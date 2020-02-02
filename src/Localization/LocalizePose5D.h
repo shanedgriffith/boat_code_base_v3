@@ -18,7 +18,7 @@ public:
     
 protected:
     const int SAMPLE_SIZE = 5;
-    double ACCEPTABLE_TRI_RERROR = 0.05;
+    double ACCEPTABLE_TRI_RERROR = 0.002;//0.05;
     
     size_t
     setSize();

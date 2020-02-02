@@ -8,14 +8,12 @@
 
 #include "FactorGraph.hpp"
 
-#include <gtsam/geometry/Pose3.h>           //camera position
-#include <gtsam/geometry/Point3.h>          //landmark coordinate
-#include <gtsam/geometry/Point2.h>          //camera observation
+#include <gtsam/geometry/Point2.h>
 #include <gtsam/base/Vector.h>
 #include <gtsam/nonlinear/Symbol.h>//using symbols to identify factors
 
+#include <gtsam/slam/EssentialMatrixConstraint.h>
 #include <gtsam/slam/PriorFactor.h>
-#include <gtsam/slam/SmartProjectionPoseFactor.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include "BetweenThree.h"
 #include "OrientationConstraint.h"
@@ -62,6 +60,14 @@ void FactorGraph::SetLandmarkDeviation(double dev) {
 //    pixelNoise = gtsam::noiseModel::Robust::Create(robust, gaussian);
 //    gtsam::noiseModel::Isotropic::shared_ptr gaussian = gtsam::noiseModel::Isotropic::Sigma(dimensions, dev);
 //    pixelNoise = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(1.345), gaussian);
+}
+
+void FactorGraph::AddEssentialMatrix(int camera_key, gtsam::EssentialMatrix& E)
+{
+    gtsam::Vector5 v5p;
+    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
+    auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+    graph.add(gtsam::EssentialMatrixConstraint(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), E, noisemodel));
 }
 
 void FactorGraph::AddCamera(int camera_key, gtsam::Pose3 cam_est){

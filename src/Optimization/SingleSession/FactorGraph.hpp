@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <vector>
 
+#include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
@@ -88,6 +89,7 @@ public:
     void InitializeNoiseModels();
     
     void AddCamera(int camera_key, gtsam::Pose3 cam_est);
+    void AddEssentialMatrix(int camera_key, gtsam::EssentialMatrix& E);
     void AddVelocity(int camera_key, gtsam::Pose3 vel_est);
     void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose, bool tight = false);
     void AddKinematicConstraint(int camera_key, double delta_time);

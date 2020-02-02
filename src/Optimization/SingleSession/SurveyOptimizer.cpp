@@ -164,47 +164,46 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
-std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose2D(int cur_pose_idx)
+std::tuple<bool, gtsam::EssentialMatrix>
+SurveyOptimizer::
+LocalizeCurPose2D(int cur_pose_idx)
 {   //argument to this function is needed when active.size() is zero.
-    int first_pose_idx = cur_pose_idx;
-    int latest_pose_idx = cur_pose_idx;
+//    int first_pose_idx = cur_pose_idx;
+//    int latest_pose_idx = cur_pose_idx;
+//    
+//    if(active.size() > 3)
+//    {
+//        first_pose_idx = active[0].camera_keys[0].index();
+//        latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
+//    }
+//    
+//    int first = std::min(first_pose_idx, latest_pose_idx-2);
+//    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
+//    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
+//    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
+//    
+//    std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
+//
+//    if(active.size() <= 3)
+//    {
+//        std::cout << "______________________ no localization. the active set is too small. " << active.size() << " active landmark tracks." << std::endl;
+//        return E;
+//    }
+//    
+//    if(first_pose_idx > latest_pose_idx-2)
+//    {
+//        std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
+//        return E;
+//    }
+////    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t1.between(pose_t2));
+//    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t2.between(pose_t1));
     
-    if(active.size() > 3)
-    {
-        first_pose_idx = active[0].camera_keys[0].index();
-        latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
-    }
-    
-    int first = std::min(first_pose_idx, latest_pose_idx-2);
-    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
-    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
-    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
-    
-    std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
-    
-    if(active.size() <= 3)
-    {
-        std::cout << "______________________ no localization. the active set is too small. " << active.size() << " active landmark tracks." << std::endl;
-        return poses;
-    }
-    
-    if(first_pose_idx > latest_pose_idx-2)
-    {
-        std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
-        return poses;
-    }
-//    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t1.between(pose_t2));
-    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t1.between(pose_t2));
-    
+    gtsam::EssentialMatrix E;
     std::vector<gtsam::Point2> p2d0;
     std::vector<gtsam::Point2> p2d1;
     for(int i=0; i<active.size(); ++i)
     {
-        int smart_factor_idx = FG->GraphHasLandmark(active[i].key);
-        if(smart_factor_idx < 0)
-            continue;
-        
-        if(active[i].Length() < 3)
+        if(active[i].Length() < 2)
             continue;
         
         p2d0.push_back(active[i].points[active[i].Length()-2]);
@@ -213,27 +212,31 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose2D(int cur_pose_idx)
     
     if(p2d0.size() < 5)
     {
-        std::cout << "______________________ 2D-2D no localization. too few correspondences. " << p2d0.size() << " 2d-2d correspondences of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
-        return poses;
+        std::cout << "______________________ 2D-2D no localization. too few correspondences. " << p2d0.size() << " 2d-2d correspondences of " << active.size() << " total, over poses " << cur_pose_idx-1 << " to " << cur_pose_idx << std::endl;
+        return std::make_tuple(false, E);
     }
-    std::cout << "2D-2D localizing the new pose using: " << p2d0.size() << " of " << active.size() << " total, over poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
+    std::cout << "2D-2D localizing the new pose using: " << p2d0.size() << " of " << active.size() << " total, over poses " << cur_pose_idx-1 << " to " << cur_pose_idx << std::endl;
 
     LocalizePose5D loc(cam_, p2d0, p2d1);
-    loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
+//    loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
     loc.setRANSACMethod(LocalizePose5D::METHOD::_NISTER);
-    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
-//    loc.setRobustLoss();
+//    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
+    loc.setRobustLoss();
     gtsam::EssentialMatrix localized_e;
     std::vector<double> res;
     bool suc;
     std::tie(suc, localized_e, res) = loc.UseBAIterative();
+    std::cout << "2D-2D localization: inlier ratio: " << res[1] << " of " << p2d0.size() << ", all avg rerror: " << res[2] << std::endl;
     if(suc and (res[1] > 0.5 * p2d0.size() or res[1] > 15))
     {
-//        poses.push_back(localized_pose);
+        return std::make_tuple(true, localized_e);
     }
-    else std::cout << "2D-2D localization failed: inlier ratio: " << res[1] << " of " << p2d0.size() << ", all avg rerror: " << res[2] << std::endl;
+    else
+        std::cout << "2D-2D localization failed " << std::endl;
+    //else
+//        std::cout << "2D-2D localization failed: inlier ratio: " << res[1] << " of " << p2d0.size() << ", all avg rerror: " << res[2] << std::endl;
     
-    return {};
+    return std::make_tuple(false, localized_e);
 }
 
 void
@@ -288,11 +291,10 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
         std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
         return poses;
     }
-    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t1.between(pose_t2));
+    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
     
     std::vector<gtsam::Point3> p3d;
     std::vector<gtsam::Point2> p2d1;
-    std::vector<gtsam::Point2> p2d0;
     for(int i=0; i<active.size(); ++i)
     {
         int smart_factor_idx = FG->GraphHasLandmark(active[i].key);
@@ -327,7 +329,6 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
         {
             p3d.push_back(triangulated.get());
             p2d1.push_back(active[i].points[active[i].Length()-1]);
-//            p2d0.push_back(active[i].points[active[i].Length()-2]);
         }
     }
     
@@ -347,13 +348,13 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     std::vector<double> res;
     bool suc;
     std::tie(suc, localized_pose, res) = loc.UseBAIterative();
+    std::cout << "3D-2D localization inlier ratio: " << res[1] << " of " << p3d.size() << ", all avg error: " << res[2] << std::endl;
     if(suc and (res[1] > 0.5 * p3d.size() or res[1] > 15))
     {
         poses.push_back(localized_pose);
     }
-    else std::cout << "3D-2D localization failed: inlier ratio: " << res[1] << " of " << p3d.size() << ", all avg rerror: " << res[2] << std::endl;
-    
-//    testE(poses[1].between(poses[2]), p3d, p2d0, p2d1);
+    else
+        std::cout << "3D-2D localization failed " << std::endl;
     
     return poses;
 }
@@ -387,12 +388,23 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
     bool loc_succeeded = true;
+    if(_incremental and camera_key > 0)
+    {
+        bool suc;
+        gtsam::EssentialMatrix E;
+        std::tie(suc, E) = LocalizeCurPose2D(camera_key);
+        if(suc)
+        {
+            FG->AddEssentialMatrix(camera_key, E);
+        }
+    }
+    
     if(_incremental and camera_key > 1)
     {
         std::vector<gtsam::Pose3> poses = LocalizeCurPose(camera_key);
         lastcam_ = poses[1];
-        if(poses.size() > 2) {
-            LocalizeCurPose2D(camera_key);
+        if(poses.size() > 2)
+        {
             std::cout << "------------------------------------------------------------------------------------------------------------------------" << std::endl;
             curcam = poses[2];
             btwn_pos = poses[1].between(poses[2]);
@@ -407,7 +419,8 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
             } std::cout << std::endl;
 //            transition = true; //disabled the constant velocity assumption instead.
         }
-        else {
+        else
+        {
             btwn_pos = poses[0].between(poses[1]);
             std::cout << camera_key << ": localization failed. " << active.size() << " in the active set" << std::endl;
             std::cout << "velocity : ";

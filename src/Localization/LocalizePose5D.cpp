@@ -3,6 +3,8 @@
 #include "Nister5point.h" //see, e.g., https://github.com/opencv/opencv/blob/master/modules/calib3d/src/five-point.cpp
 #include "PNP.h"
 
+#include <numeric>
+
 LocalizePose5D::
 LocalizePose5D(const Camera& cam, const std::vector<gtsam::Point2>& p2d0, const std::vector<gtsam::Point2>& p2d1)
 : Localization(cam)
@@ -83,14 +85,12 @@ MeasureReprojectionError()
     int cin=0;
     
     int count=0;
-//    std::cout << "dist: ";
     for(int i=0; i<p2d0_.size(); i++)
     {
         gtsam::Vector3 va = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]).normalized();
         gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
         double dp = va.dot( (pguess_.matrix() * vb)) ;
         dp = fabs(dp);
-//        std::cout << ", " << dp ;
         sumall += dp;
         count++;
         if((*inliers_)[i] >= 0.0)
@@ -99,7 +99,7 @@ MeasureReprojectionError()
             cin++;
         }
     }
-//    std::cout << std::endl;
+    
     if(debug_)
     {
         std::cout<<"num points: " << count << ", reprojection error: "<<sumall/count<<", inliers only: "<<sumin/cin<< ", "<< cin << " of " << count << " are inliers." << std::endl;
@@ -111,19 +111,26 @@ MeasureReprojectionError()
 std::vector<double>
 LocalizePose5D::
 Maximization()
-{
+{   //this uses an adaptive threshold. 2*sigma, since the error doesn't correspond to pixel errors.
     int nchanges=0;
     int ninliers = 0;
     double sumall=0;
     double sumin=0;
-//    std::cout << "dist: ";
+    std::vector<double> ds(p2d0_.size());
     for(size_t i=0; i<p2d0_.size(); ++i)
     {
         gtsam::Vector3 va = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]).normalized();
         gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
         double dp = va.dot( (pguess_.matrix() * vb));
-        dp = fabs(dp);
-        if(dp > ACCEPTABLE_TRI_RERROR)
+        ds[i] = dp*dp;
+    }
+    double stddev = sqrt(1.0 * std::accumulate(ds.begin(), ds.end(), 0.0) / p2d0_.size());
+    double thresh = stddev;
+    
+    for(size_t i=0; i<p2d0_.size(); ++i)
+    {
+        double dp = sqrt(ds[i]);
+        if(dp > 2 * thresh)
         {
             if((*inliers_)[i]>=0.0) nchanges++;
             (*inliers_)[i] = -1;
@@ -137,7 +144,6 @@ Maximization()
         }
         sumall+=dp;
     }
-//    std::cout << std::endl;
     
     return {(double) nchanges, (double) ninliers, sumall/p2d0_.size(), sumin/ninliers};
 }
@@ -193,7 +199,6 @@ runMethod(bool use_robust_loss, bool use_inliers)
         case LocalizePose5D::METHOD::_PNP:
         {
             PNP<gtsam::EssentialMatrix, gtsam::Point2> localizer(cam_, best_guess_, p2d0_subset_, p2d1_subset_);
-            localizer.setDebug();
             PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::OUTLIER_FREE;
             if(use_robust_loss)
             {
@@ -201,11 +206,9 @@ runMethod(bool use_robust_loss, bool use_inliers)
                 else noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::GEMAN_MCCLURE;
             }
             else if(use_inliers) localizer.setInliers(inliers_);
-            localizer.setNoiseModel<1>(ACCEPTABLE_TRI_RERROR/2.0, noise_model);
+            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model, 1);
             std::tie(success, pguess_) = localizer.run();
-            std::cout << "pnp? " << success << std::endl;
-            if(not success)
-                exit(1);
+//            std::cout << "pnp? " << success << std::endl;
             break;
         }
         default:
