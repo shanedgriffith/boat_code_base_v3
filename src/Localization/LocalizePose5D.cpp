@@ -113,41 +113,20 @@ std::vector<double>
 LocalizePose5D::
 Maximization()
 {   //this uses an adaptive threshold. 2*sigma, since the error doesn't correspond to pixel errors.
+    gtsam::Matrix E = pguess_.matrix();
+    
     int nchanges=0;
     int ninliers = 0;
     double sumall=0;
     double sumin=0;
-    std::vector<double> ds(p2d0_.size());
     for(size_t i=0; i<p2d0_.size(); ++i)
     {
-        gtsam::Vector3 va = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]).normalized();
-        gtsam::Vector3 vb = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]).normalized();
-        double dp = va.dot( (pguess_.matrix() * vb));
-        ds[i] = dp*dp;
-    }
-    double stddev = sqrt(1.0 * std::accumulate(ds.begin(), ds.end(), 0.0) / p2d0_.size());
-    double thresh = stddev;
-    std::cout << "candidate E: " << pguess_ << std::endl;
-    std::cout << "candidate E: (" << gtsam::Rot3::Logmap(pguess_.rotation()).transpose() << ") T: " << pguess_.direction().point3() << std::endl;
-    
-    gtsam::Pose3 p0;
-    gtsam::Pose3 p1(pguess_.rotation(), pguess_.direction().point3());
-    std::vector<gtsam::Pose3> poses = {p0, p1};
-    
-    int nin=0;
-    for(size_t i=0; i<p2d0_.size(); ++i)
-    {
-        gtsam::Point2Vector measurements = {  p2d0_[i], p2d1_[i] };
+        gtsam::Vector3 p0h = gtsam::EssentialMatrix::Homogeneous(p2d0_[i]);
+        gtsam::Vector3 p1h = gtsam::EssentialMatrix::Homogeneous(p2d1_[i]);
+        gtsam::Vector3 v01 = E * p0h;
+        double dist01 = fabs(v01.dot(p1h)) / sqrt(v01.x() * v01.x() + v01.y() * v01.y());
         
-        bool outside = true;
-        try{
-            gtsam::Point3 resp = gtsam::triangulatePoint3(poses, cam_.GetGTSAMCam(), measurements);
-            outside = false;
-            ++nin;
-        } catch(std::exception e) {}
-        
-        double dp = sqrt(ds[i]);
-        if(dp > 2 * thresh or outside)
+        if(dist01 > 6)
         {
             if((*inliers_)[i]>=0.0) nchanges++;
             (*inliers_)[i] = -1;
@@ -155,14 +134,12 @@ Maximization()
         else
         {
             if((*inliers_)[i]<0) nchanges++;
-            (*inliers_)[i] = ACCEPTABLE_TRI_RERROR; //I seem to get more reliable estimates using err, rather than dist, here.
-            sumin+=dp;
+            (*inliers_)[i] = 6;//I seem to get more reliable estimates using err, rather than dist, here.
+            sumin+=dist01;
             ninliers++;
         }
-        sumall+=dp;
+        sumall+=dist01;
     }
-    
-    std::cout << "points successfully triangulated: " << nin << " of " << p2d0_.size() << std::endl;
     
     return {(double) nchanges, (double) ninliers, sumall/p2d0_.size(), sumin/ninliers};
 }
