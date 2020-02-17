@@ -108,7 +108,8 @@ void
 PNP<gtsam::EssentialMatrix, gtsam::Point2>::
 addLocalizationFactor(gtsam::Symbol symb, size_t i)
 {
-    graph_.add(gtsam::EssentialMatrixFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_));
+    static gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
+    graph_.add(gtsam::EssentialMatrixFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_, gt_camera));
 }
 
 template <class T, class P>

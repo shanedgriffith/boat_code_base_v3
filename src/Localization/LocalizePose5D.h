@@ -17,7 +17,7 @@ public:
     enum METHOD {_NISTER=0, _PNP};
     
 protected:
-    const int SAMPLE_SIZE = 5;
+    const int SAMPLE_SIZE = 8;
     double ACCEPTABLE_TRI_RERROR = 0.002;//0.05;
     
     size_t

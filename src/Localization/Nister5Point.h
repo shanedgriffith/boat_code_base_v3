@@ -2,9 +2,9 @@
 
 #include <gtsam/geometry/EssentialMatrix.h>
 #include <gtsam/geometry/Point2.h>
+#include "DataTypes/Camera.hpp"
 
 #include <Eigen/StdVector>
-
 
 //Nister's 5point algorithm to estimate the essential matrix. Implementation due to Nghia Ho.
 class Nister5Point
@@ -35,17 +35,16 @@ private:
     bool
     suitableSet();
     
+    const Camera& cam_;
     const std::vector<gtsam::Point2>& p2d0_subset_;
     const std::vector<gtsam::Point2>& p2d1_subset_;
     
 public:
     
     
-    Nister5Point(const std::vector<gtsam::Point2>& p2d0_subset, const std::vector<gtsam::Point2>& p2d1_subset);
+    Nister5Point(const Camera& cam, const std::vector<gtsam::Point2>& p2d0_subset, const std::vector<gtsam::Point2>& p2d1_subset);
     
     std::tuple<bool, gtsam::EssentialMatrix>
     run();
     
 };
-
-void testNister5Point();

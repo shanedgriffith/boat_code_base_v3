@@ -9,6 +9,7 @@
 #include "Optimization/SingleSession/SurveyOptimizer.h"
 #include "Optimization/SingleSession/testAngularVelocity.h"
 #include <testRobust.hpp>
+#include <Tests/testE.h>
 
 #include <Localization/Nister5Point.h>
 
@@ -23,7 +24,7 @@ vector<string> home_paths = {"/Volumes/Untitled/data/iSAM/", "/Volumes/SAMSUNG/D
 
 int main(int argc, char *argv[])
 {
-//    testNister5Point();
+//    TestE::verifyOptimizationForE2();
 //    exit(1);
     
 //    testAngularVelocity::compareAngularVelocityToTraj();

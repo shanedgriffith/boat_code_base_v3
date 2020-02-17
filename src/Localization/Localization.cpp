@@ -73,10 +73,13 @@ RANSAC()
     size_t SET_SIZE = setSize();
     size_t SAMPLE_SIZE = sampleSize();
     
+    Maximization();
+    
     size_t n_iters = MAX_RANSAC_ITERS;
     int nchanges = 0;
     for(iter = 0; iter < n_iters; ++iter)
     {
+//        std::cout << "RANSAC iter: " << iter << std::endl;
         std::vector<size_t> rset = GenerateRandomSet(SET_SIZE, SAMPLE_SIZE);
         
         updateSubsets(rset);
@@ -138,6 +141,7 @@ iterativeBA()
     int nchanges=1;
     for(iter = 0; nchanges > 0 and iter < MAX_OPTIMIZATION_ITERS; ++iter)
     {
+        std::cout << "optimization iter: " << iter << std::endl;
         bool success = runMethod(robust_loss_, true);
         if(not success)
             break;

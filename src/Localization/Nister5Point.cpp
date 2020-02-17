@@ -3,52 +3,17 @@
 #include "5point/Polynomial.h"
 #include "5point/Rpoly.h"
 
+#include <gtsam/geometry/triangulation.h>
+#include <gtsam/geometry/Cal3_S2.h>
+
 #include <stdio.h>
 
 using namespace Eigen;
 
-void testNister5Point()
-{
-    std::vector<gtsam::Point2> pts1 =
-    {
-        gtsam::Point2(0.4964 ,1.0577),
-        gtsam::Point2(0.3650, -0.0919),
-        gtsam::Point2(-0.5412, 0.0159),
-        gtsam::Point2(-0.5239, 0.9467),
-        gtsam::Point2(0.3467, 0.5301),
-        gtsam::Point2(0.2797, 0.0012),
-        gtsam::Point2(-0.1986, 0.0460),
-        gtsam::Point2(-0.1622, 0.5347),
-        gtsam::Point2(0.0796, 0.2379),
-        gtsam::Point2(-0.3946, 0.7969)
-    };
-    
-    std::vector<gtsam::Point2> pts2 =
-    {
-        gtsam::Point2(0.7570, 2.7340),
-        gtsam::Point2(0.3961, 0.6981),
-        gtsam::Point2(-0.6014, 0.7110),
-        gtsam::Point2(-0.7385, 2.2712),
-        gtsam::Point2(0.4177, 1.2132),
-        gtsam::Point2(0.3052, 0.4835),
-        gtsam::Point2(-0.2171, 0.5057),
-        gtsam::Point2(-0.2059, 1.1583),
-        gtsam::Point2(0.0946, 0.7013),
-        gtsam::Point2(-0.6236, 3.0253)
-    };
-    
-    Nister5Point n5p(pts1, pts2);
-    
-    gtsam::EssentialMatrix E;
-    bool sol;
-    std::tie(sol, E) = n5p.run();
-    
-    std::cout << " solution ? " << sol << ": " << E.matrix() << std::endl;
-}
-
 Nister5Point::
-Nister5Point(const std::vector<gtsam::Point2>& p2d0_subset, const std::vector<gtsam::Point2>& p2d1_subset)
-: p2d0_subset_(p2d0_subset)
+Nister5Point(const Camera& cam, const std::vector<gtsam::Point2>& p2d0_subset, const std::vector<gtsam::Point2>& p2d1_subset)
+: cam_(cam)
+, p2d0_subset_(p2d0_subset)
 , p2d1_subset_(p2d1_subset)
 {}
 
@@ -334,8 +299,6 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
 {
     PMatrix P_ref = Nister5Point::PMatrix::Identity();
     
-    gtsam::Pose3 EssentialMatrix;
-    
     for(int i=0; i<solutions.size(); ++i)
     {
         // Test to see if this E matrix is the correct one we're after
@@ -343,20 +306,27 @@ disambiguateSolutions(std::vector<Nister5Point::EMatrix> solutions)
         
         for(size_t j=0; j < P.size(); j++)
         {
-            size_t inliers=0;
-            for(size_t k=0; k<p2d0_subset_.size(); ++k, ++inliers)
+            gtsam::EssentialMatrix pguess = convertTo(P[j]);
+            
+            gtsam::Pose3 p0;
+            gtsam::Pose3 p1(pguess.rotation(), pguess.direction().point3());
+            std::vector<gtsam::Pose3> poses = {p0, p1};
+            
+            int nin=0;
+            for(int i=0; i<p2d0_subset_.size(); ++i)
             {
-                Vector4d pt3d = triangulatePoint(p2d0_subset_[k], p2d1_subset_[k], P_ref, P[j]);
-                double depth1 = calcDepth(pt3d, P_ref);
-                double depth2 = calcDepth(pt3d, P[j]);
+                gtsam::Point2Vector measurements = {
+                    p2d0_subset_[i],
+                    p2d1_subset_[i]
+                };
                 
-                if(depth1 < 0 || depth2 < 0)
-                {
-                    break;
-                }
+                try{
+                    gtsam::Point3 resp = gtsam::triangulatePoint3(poses, cam_.GetGTSAMCam(), measurements);
+                    ++nin;
+                }catch(std::exception e) {}
             }
             
-            if(inliers == 5)
+            if(nin == 5)
             {
                 return std::make_tuple(true, P[j]);
             }
@@ -400,6 +370,18 @@ run()
     if(sol)
     {
         gtsam::EssentialMatrix p = convertTo(P);
+        
+        gtsam::Vector3 r = gtsam::Rot3::Logmap(p.rotation());
+        gtsam::Vector3 t = p.direction().point3();
+        
+        for(int i=0; i<3; ++i)
+        {
+            if(isnan(r(i)) or isnan(t(i)))
+            {
+                return std::make_tuple(false, gtsam::EssentialMatrix());
+            }
+        }
+        
         return std::make_tuple(true, p);
     }
     

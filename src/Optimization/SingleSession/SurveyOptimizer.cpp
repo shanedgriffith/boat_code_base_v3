@@ -11,6 +11,7 @@
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
+#include <gtsam/slam/EssentialMatrixConstraint.h>
 
 #include "FileParsing/ParseSurvey.h"
 #include "BoatSurvey/ParseBoatSurvey.hpp"
@@ -164,24 +165,27 @@ void SurveyOptimizer::CacheLandmarks(vector<LandmarkTrack>& inactive){
         cached_landmarks[cache_set].push_back(inactive[i]);
 }
 
+
+#include <gtsam/slam/EssentialMatrixFactor.h>
+
 std::tuple<bool, gtsam::EssentialMatrix>
 SurveyOptimizer::
 LocalizeCurPose2D(int cur_pose_idx)
 {   //argument to this function is needed when active.size() is zero.
-//    int first_pose_idx = cur_pose_idx;
-//    int latest_pose_idx = cur_pose_idx;
-//    
+    int first_pose_idx = cur_pose_idx;
+    int latest_pose_idx = cur_pose_idx;
+//
 //    if(active.size() > 3)
 //    {
 //        first_pose_idx = active[0].camera_keys[0].index();
 //        latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
 //    }
-//    
-//    int first = std::min(first_pose_idx, latest_pose_idx-2);
-//    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
-//    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
-//    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
-//    
+    
+    int first = std::min(first_pose_idx, latest_pose_idx-2);
+    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
+    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
+    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
+
 //    std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
 //
 //    if(active.size() <= 3)
@@ -195,19 +199,20 @@ LocalizeCurPose2D(int cur_pose_idx)
 //        std::cout << "______________________ no localization. not enough poses in the active set. poses " << first_pose_idx << " to " << latest_pose_idx << std::endl;
 //        return E;
 //    }
-////    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t1.between(pose_t2));
-//    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t2.between(pose_t1));
+//    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
+//    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t_est);
+    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t2.between(pose_t1)); //USE THIS, *not* the above. It's the essential matrix, not the absolute pose, so it's the btwn().
     
     gtsam::EssentialMatrix E;
     std::vector<gtsam::Point2> p2d0;
     std::vector<gtsam::Point2> p2d1;
     for(int i=0; i<active.size(); ++i)
     {
-        if(active[i].Length() < 2)
+        if(active[i].Length() < 3)
             continue;
         
-        p2d0.push_back(active[i].points[active[i].Length()-2]);
-        p2d1.push_back(active[i].points[active[i].Length()-1]);
+        p2d0.push_back(active[i].points[active[i].Length()-3]);
+        p2d1.push_back(active[i].points[active[i].Length()-2]);
     }
     
     if(p2d0.size() < 5)
@@ -216,25 +221,113 @@ LocalizeCurPose2D(int cur_pose_idx)
         return std::make_tuple(false, E);
     }
     std::cout << "2D-2D localizing the new pose using: " << p2d0.size() << " of " << active.size() << " total, over poses " << cur_pose_idx-1 << " to " << cur_pose_idx << std::endl;
-
+    
+//    return std::make_tuple(true, e_t1); // TODO: remove.
+    
+//    gtsam::Vector5 v5p;
+//    v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
+//    auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+//    gtsam::Rot3 pix = gtsam::Rot3::Rx(3.14159);
+//    gtsam::EssentialMatrix le = gtsam::EssentialMatrix::FromPose3(gtsam::Pose3(e_t1.rotation(), pix * (e_t1.direction().unitVector())));
+//    gtsam::EssentialMatrixConstraint emc = gtsam::EssentialMatrixConstraint(0, 1, e_t1, noisemodel);
+//    gtsam::Vector err = emc.evaluateError(pose_t2, pose_t1);
+//    std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
+//    
+//    emc = gtsam::EssentialMatrixConstraint(0, 1, le, noisemodel);
+//    err = emc.evaluateError(pose_t2, pose_t1);
+//    std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
+    
+//    static gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
+//    gtsam::NonlinearFactorGraph graph;
+//    auto model = gtsam::noiseModel::Isotropic::Sigma(1, 1); //1D?
+//    for(int i=0; i<p2d0.size(); ++i)
+//    {
+//        graph.add(gtsam::EssentialMatrixFactor(1, p2d0[i], p2d1[i], model, gt_camera));
+//    }
+//    
+//    gtsam::Pose3 btwn = pose_t2.between(pose_t1);
+//    gtsam::Unit3 aTb(btwn.translation());
+//    gtsam::EssentialMatrix trueE(btwn.rotation(), aTb);
+//    gtsam::Values initial;
+//    initial.insert(1, trueE);
+//    
+//    gtsam::LevenbergMarquardtOptimizer optimizer(graph, initial);
+//    std::cout << "optimization running..." << std::endl;
+//    gtsam::Values result = optimizer.optimize();
+//    std::cout << "optimization finished..." << std::endl;
+//    
+//    //Print result (as essentialMatrix) and error
+//    double error = graph.error(result);
+//    E = result.at<gtsam::EssentialMatrix>(1);
+//    gtsam::Rot3 tr = E.rotation().inverse();
+//    gtsam::Rot3 pix = gtsam::Rot3::Rx(3.14159);
+//    
+//    //    std::cout << "essential matrix: \n" << E.direction().unitVector().transpose() << ", " << gtsam::Rot3::Logmap(E.rotation()).transpose() << std::endl;
+//    std::cout << "essential matrix: \n" << pix * (E.direction().unitVector()).transpose() << ", " << gtsam::Rot3::Logmap(E.rotation()).transpose() << std::endl;
+//    //    std::cout << "essential matrix: \n" << E.rotation().inverse() * (E.direction().unitVector()).transpose() << ", " << gtsam::Rot3::Logmap(E.rotation().inverse()).transpose() << std::endl;
+//    std::cout << "expected: \n" << trueE.direction().unitVector().transpose() << ", " << gtsam::Rot3::Logmap(trueE.rotation()).transpose() << std::endl;
+//    
+//    gtsam::EssentialMatrix le = gtsam::EssentialMatrix::FromPose3(gtsam::Pose3(E.rotation(), pix * (E.direction().unitVector())));
+//    
+//    gtsam::Vector5 v5p;
+//    v5p = (gtsam::Vector(5) << 1, 1, 1, 1, 1).finished();
+//    auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+//    
+//    gtsam::EssentialMatrixConstraint emc(0, 1, le, noisemodel);
+//    gtsam::Vector err = emc.evaluateError(pose_t2, pose_t1);
+//    std::cout << "E error: " << err.transpose() << ", total : " << err.norm() << std::endl;
+//    
+//    emc = gtsam::EssentialMatrixConstraint(0, 1, E, noisemodel);
+//    err = emc.evaluateError(pose_t2, pose_t1);
+//    std::cout << "E error: " << err.transpose() << ", total : " << err.norm() << std::endl;
+//    
+//    return std::make_tuple(false, le);
+    
+    
     LocalizePose5D loc(cam_, p2d0, p2d1);
-//    loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
+    loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
     loc.setRANSACMethod(LocalizePose5D::METHOD::_NISTER);
-//    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
-    loc.setRobustLoss();
+    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
+//    loc.setRobustLoss();
     gtsam::EssentialMatrix localized_e;
     std::vector<double> res;
     bool suc;
     std::tie(suc, localized_e, res) = loc.UseBAIterative();
     std::cout << "2D-2D localization: inlier ratio: " << res[1] << " of " << p2d0.size() << ", all avg rerror: " << res[2] << std::endl;
+//    gtsam::Pose3 bt = pose_t2.between(pose_t1);
+//    std::cout << "btwn: " << gtsam::Pose3::Logmap(bt).transpose() << std::endl;
+//    gtsam::EssentialMatrix ebt = gtsam::EssentialMatrix::FromPose3(bt);
+    std::cout << "trueE: \t\t" << e_t1 << std::endl; //R: (" << gtsam::Rot3::Logmap(e_t1.rotation()).transpose() << ") T: " << e_t1.direction().point3() << std::endl;
     if(suc and (res[1] > 0.5 * p2d0.size() or res[1] > 15))
     {
+        std::cout << "estimatedE: \t" << localized_e << std::endl;
+        
+        gtsam::Symbol s0('x', cur_pose_idx-1);
+        gtsam::Symbol s1('x', cur_pose_idx);
+        gtsam::Vector5 v5p;
+        v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
+//    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
+        auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+        gtsam::EssentialMatrixConstraint emc(s0, s1, localized_e, noisemodel);
+        
+        std::cout << "E: R: (" << gtsam::Rot3::Logmap(localized_e.rotation()).transpose() << ") T: " << localized_e.direction().point3() << std::endl;
+        
+        gtsam::Vector err = emc.evaluateError(pose_t2, pose_t1);
+        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
+        
+        
+        gtsam::Rot3 pix = gtsam::Rot3::Rx(3.14159);
+        gtsam::EssentialMatrix le = gtsam::EssentialMatrix::FromPose3(gtsam::Pose3(localized_e.rotation(), pix * (localized_e.direction().unitVector())));
+        emc = gtsam::EssentialMatrixConstraint(s0, s1, le, noisemodel);
+        
+        err = emc.evaluateError(pose_t2, pose_t1);
+        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
+        
         return std::make_tuple(true, localized_e);
     }
     else
         std::cout << "2D-2D localization failed " << std::endl;
-    //else
-//        std::cout << "2D-2D localization failed: inlier ratio: " << res[1] << " of " << p2d0.size() << ", all avg rerror: " << res[2] << std::endl;
+    
     
     return std::make_tuple(false, localized_e);
 }
@@ -388,14 +481,14 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
     bool loc_succeeded = true;
-    if(_incremental and camera_key > 0)
+    if(_incremental and camera_key > 10)
     {
         bool suc;
         gtsam::EssentialMatrix E;
         std::tie(suc, E) = LocalizeCurPose2D(camera_key);
         if(suc)
         {
-            FG->AddEssentialMatrix(camera_key, E);
+//            FG->AddEssentialMatrix(camera_key, E);
         }
     }
     
@@ -423,12 +516,12 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
         {
             btwn_pos = poses[0].between(poses[1]);
             std::cout << camera_key << ": localization failed. " << active.size() << " in the active set" << std::endl;
-            std::cout << "velocity : ";
-            std::vector<double> betp = GTSAMInterface::PoseToVector(btwn_pos);
-            for(int i=0; i<6; ++i)
-            {
-                std::cout << betp[i] << ", ";
-            } std::cout << std::endl;
+//            std::cout << "velocity : ";
+//            std::vector<double> betp = GTSAMInterface::PoseToVector(btwn_pos);
+//            for(int i=0; i<6; ++i)
+//            {
+//                std::cout << betp[i] << ", ";
+//            } std::cout << std::endl;
             curcam = lastcam_.compose(btwn_pos);
         }
     }

@@ -116,13 +116,4 @@ public:
 };
 
 
-
-
-
-
-
-
-
-
-
 #endif /* SRC_OPTIMIZATION_GTSAMInterface_H_ */

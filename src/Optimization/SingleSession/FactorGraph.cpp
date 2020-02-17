@@ -65,7 +65,8 @@ void FactorGraph::SetLandmarkDeviation(double dev) {
 void FactorGraph::AddEssentialMatrix(int camera_key, gtsam::EssentialMatrix& E)
 {
     gtsam::Vector5 v5p;
-    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
+    v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
+//    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
     auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
     graph.add(gtsam::EssentialMatrixConstraint(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), E, noisemodel));
 }

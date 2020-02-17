@@ -2,6 +2,7 @@
 
 #include "Nister5point.h" //see, e.g., https://github.com/opencv/opencv/blob/master/modules/calib3d/src/five-point.cpp
 #include "PNP.h"
+#include "gtsam/geometry/triangulation.h"
 
 #include <numeric>
 
@@ -126,11 +127,27 @@ Maximization()
     }
     double stddev = sqrt(1.0 * std::accumulate(ds.begin(), ds.end(), 0.0) / p2d0_.size());
     double thresh = stddev;
+    std::cout << "candidate E: " << pguess_ << std::endl;
+    std::cout << "candidate E: (" << gtsam::Rot3::Logmap(pguess_.rotation()).transpose() << ") T: " << pguess_.direction().point3() << std::endl;
     
+    gtsam::Pose3 p0;
+    gtsam::Pose3 p1(pguess_.rotation(), pguess_.direction().point3());
+    std::vector<gtsam::Pose3> poses = {p0, p1};
+    
+    int nin=0;
     for(size_t i=0; i<p2d0_.size(); ++i)
     {
+        gtsam::Point2Vector measurements = {  p2d0_[i], p2d1_[i] };
+        
+        bool outside = true;
+        try{
+            gtsam::Point3 resp = gtsam::triangulatePoint3(poses, cam_.GetGTSAMCam(), measurements);
+            outside = false;
+            ++nin;
+        } catch(std::exception e) {}
+        
         double dp = sqrt(ds[i]);
-        if(dp > 2 * thresh)
+        if(dp > 2 * thresh or outside)
         {
             if((*inliers_)[i]>=0.0) nchanges++;
             (*inliers_)[i] = -1;
@@ -144,6 +161,8 @@ Maximization()
         }
         sumall+=dp;
     }
+    
+    std::cout << "points successfully triangulated: " << nin << " of " << p2d0_.size() << std::endl;
     
     return {(double) nchanges, (double) ninliers, sumall/p2d0_.size(), sumin/ninliers};
 }
@@ -192,7 +211,7 @@ runMethod(bool use_robust_loss, bool use_inliers)
     {
         case LocalizePose5D::METHOD::_NISTER:
         {
-            Nister5Point n5p(p2d0_subset_, p2d1_subset_);
+            Nister5Point n5p(cam_, p2d0_subset_, p2d1_subset_);
             std::tie(success, pguess_) = n5p.run();
             break;
         }
@@ -206,7 +225,7 @@ runMethod(bool use_robust_loss, bool use_inliers)
                 else noise_model = PNP<gtsam::EssentialMatrix, gtsam::Point2>::NM::GEMAN_MCCLURE;
             }
             else if(use_inliers) localizer.setInliers(inliers_);
-            localizer.setNoiseModel(ACCEPTABLE_TRI_RERROR/2.0, noise_model, 1);
+            localizer.setNoiseModel(1.0, noise_model, 1); // ACCEPTABLE_TRI_RERROR/2.0
             std::tie(success, pguess_) = localizer.run();
 //            std::cout << "pnp? " << success << std::endl;
             break;
