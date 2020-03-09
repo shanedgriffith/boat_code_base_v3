@@ -181,10 +181,10 @@ LocalizeCurPose2D(int cur_pose_idx)
 //        latest_pose_idx = active[0].camera_keys[active[0].Length()-1].index();
 //    }
     
-    int first = std::min(first_pose_idx, latest_pose_idx-2);
-    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
-    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
-    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
+//    int first = std::min(first_pose_idx, latest_pose_idx-2);
+//    std::shared_ptr<gtsam::Values> v = GTS.getPoseValuesFrom(FG->key[(int)FactorGraph::var::X], first, latest_pose_idx);
+//    gtsam::Pose3 pose_t2 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-2));
+//    gtsam::Pose3 pose_t1 = v->at<gtsam::Pose3>(gtsam::Symbol(FG->key[(int)FactorGraph::var::X], latest_pose_idx-1));
 
 //    std::vector<gtsam::Pose3> poses = {pose_t2, pose_t1};
 //
@@ -201,19 +201,24 @@ LocalizeCurPose2D(int cur_pose_idx)
 //    }
 //    gtsam::Pose3 pose_t_est = pose_t1.compose(pose_t2.between(pose_t1));
 //    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t_est);
-    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t2.between(pose_t1)); //USE THIS, *not* the above. It's the essential matrix, not the absolute pose, so it's the btwn().
+//    gtsam::EssentialMatrix e_t1 = gtsam::EssentialMatrix::FromPose3(pose_t2.between(pose_t1)); //USE THIS, *not* the above. It's the essential matrix, not the absolute pose, so it's the btwn().
     
     gtsam::EssentialMatrix E;
     std::vector<gtsam::Point2> p2d0;
     std::vector<gtsam::Point2> p2d1;
+    
+    std::string base = "/Users/shane/Documents/projects/VO/test_E_correspondences/" + std::to_string(cur_pose_idx) + ".csv";
+    FILE * fp = FileParsing::OpenFile(base, "w");
     for(int i=0; i<active.size(); ++i)
     {
         if(active[i].Length() < 3)
             continue;
         
-        p2d0.push_back(active[i].points[active[i].Length()-3]);
-        p2d1.push_back(active[i].points[active[i].Length()-2]);
+        p2d0.push_back(active[i].points[active[i].Length()-2]);
+        p2d1.push_back(active[i].points[active[i].Length()-1]);
+        fprintf(fp, "%lf,%lf,%lf,%lf\n", active[i].points[active[i].Length()-2].x(), active[i].points[active[i].Length()-2].y(), active[i].points[active[i].Length()-1].x(), active[i].points[active[i].Length()-1].y());
     }
+    fclose(fp);
     
     if(p2d0.size() < 5)
     {
@@ -221,6 +226,11 @@ LocalizeCurPose2D(int cur_pose_idx)
         return std::make_tuple(false, E);
     }
     std::cout << "2D-2D localizing the new pose using: " << p2d0.size() << " of " << active.size() << " total, over poses " << cur_pose_idx-1 << " to " << cur_pose_idx << std::endl;
+    
+//    FG->AddEssentialMatrixFactor(cur_pose_idx, p2d0, p2d1);
+    
+    
+    return std::make_tuple(false, E);
     
 //    return std::make_tuple(true, e_t1); // TODO: remove.
     
@@ -287,7 +297,7 @@ LocalizeCurPose2D(int cur_pose_idx)
     LocalizePose5D loc(cam_, p2d0, p2d1);
     loc.setDebug(); //TODO: 1) verify that the robust loss is better than explicit filter; 2) tune the weight parameter to make that the case; 3) implement the barron loss.
     loc.setRANSACMethod(LocalizePose5D::METHOD::_NISTER);
-    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
+//    loc.setInitialEstimate(e_t1); //TODO: why is the previous pose a better initial estimate than pose_t1.compose(pose_t2.between(pose_t1));
 //    loc.setRobustLoss();
     gtsam::EssentialMatrix localized_e;
     std::vector<double> res;
@@ -297,31 +307,31 @@ LocalizeCurPose2D(int cur_pose_idx)
 //    gtsam::Pose3 bt = pose_t2.between(pose_t1);
 //    std::cout << "btwn: " << gtsam::Pose3::Logmap(bt).transpose() << std::endl;
 //    gtsam::EssentialMatrix ebt = gtsam::EssentialMatrix::FromPose3(bt);
-    std::cout << "trueE: \t\t" << e_t1 << std::endl; //R: (" << gtsam::Rot3::Logmap(e_t1.rotation()).transpose() << ") T: " << e_t1.direction().point3() << std::endl;
+//    std::cout << "trueE: \t\t" << e_t1 << std::endl; //R: (" << gtsam::Rot3::Logmap(e_t1.rotation()).transpose() << ") T: " << e_t1.direction().point3() << std::endl;
     if(suc and (res[1] > 0.5 * p2d0.size() or res[1] > 15))
     {
         std::cout << "estimatedE: \t" << localized_e << std::endl;
         
-        gtsam::Symbol s0('x', cur_pose_idx-1);
-        gtsam::Symbol s1('x', cur_pose_idx);
-        gtsam::Vector5 v5p;
-        v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
-//    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
-        auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
-        gtsam::EssentialMatrixConstraint emc(s0, s1, localized_e, noisemodel);
+//        gtsam::Symbol s0('x', cur_pose_idx-1);
+//        gtsam::Symbol s1('x', cur_pose_idx);
+//        gtsam::Vector5 v5p;
+//        v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
+////    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
+//        auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
+//        gtsam::EssentialMatrixConstraint emc(s0, s1, localized_e, noisemodel);
+//        
+//        std::cout << "E: R: (" << gtsam::Rot3::Logmap(localized_e.rotation()).transpose() << ") T: " << localized_e.direction().point3() << std::endl;
+//        
+//        gtsam::Vector err = emc.evaluateError(pose_t2, pose_t1);
+//        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
         
-        std::cout << "E: R: (" << gtsam::Rot3::Logmap(localized_e.rotation()).transpose() << ") T: " << localized_e.direction().point3() << std::endl;
         
-        gtsam::Vector err = emc.evaluateError(pose_t2, pose_t1);
-        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
-        
-        
-        gtsam::Rot3 pix = gtsam::Rot3::Rx(3.14159);
-        gtsam::EssentialMatrix le = gtsam::EssentialMatrix::FromPose3(gtsam::Pose3(localized_e.rotation(), pix * (localized_e.direction().unitVector())));
-        emc = gtsam::EssentialMatrixConstraint(s0, s1, le, noisemodel);
-        
-        err = emc.evaluateError(pose_t2, pose_t1);
-        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
+//        gtsam::Rot3 pix = gtsam::Rot3::Rx(3.14159);
+//        gtsam::EssentialMatrix le = gtsam::EssentialMatrix::FromPose3(gtsam::Pose3(localized_e.rotation(), pix * (localized_e.direction().unitVector())));
+//        emc = gtsam::EssentialMatrixConstraint(s0, s1, le, noisemodel);
+//        
+//        err = emc.evaluateError(pose_t2, pose_t1);
+//        std::cout << "E error: " << err.transpose() << ", norm: " << err.transpose().norm() << std::endl;
         
         return std::make_tuple(true, localized_e);
     }
@@ -452,7 +462,9 @@ std::vector<gtsam::Pose3> SurveyOptimizer::LocalizeCurPose(int cur_pose_idx)
     return poses;
 }
 
-int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap){
+int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatureTrackFile& PFT, int cidx, int lcidx, bool gap)
+{
+    std::cout << "------------------------------------------------------------------------------------------------------------------------" << std::endl;
     //get the poses
     static gtsam::Pose3 lastcam_ = PS->CameraPose(lcidx);
     gtsam::Pose3 pose_prior = PS->CameraPose(cidx); //the camera pose estimated using sensors.;
@@ -481,24 +493,14 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
     //initialize the camera (this is added after processing the landmarks in order to have the active set for localizing the current pose)
     boost::optional<gtsam::Pose3> curpose;
     bool loc_succeeded = true;
-    if(_incremental and camera_key > 10)
-    {
-        bool suc;
-        gtsam::EssentialMatrix E;
-        std::tie(suc, E) = LocalizeCurPose2D(camera_key);
-        if(suc)
-        {
-//            FG->AddEssentialMatrix(camera_key, E);
-        }
-    }
-    
     if(_incremental and camera_key > 1)
     {
+        LocalizeCurPose2D(camera_key);
+        
         std::vector<gtsam::Pose3> poses = LocalizeCurPose(camera_key);
         lastcam_ = poses[1];
         if(poses.size() > 2)
         {
-            std::cout << "------------------------------------------------------------------------------------------------------------------------" << std::endl;
             curcam = poses[2];
             btwn_pos = poses[1].between(poses[2]);
             ++suc_count;
@@ -516,6 +518,7 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
         {
             btwn_pos = poses[0].between(poses[1]);
             std::cout << camera_key << ": localization failed. " << active.size() << " in the active set" << std::endl;
+            
 //            std::cout << "velocity : ";
 //            std::vector<double> betp = GTSAMInterface::PoseToVector(btwn_pos);
 //            for(int i=0; i<6; ++i)
@@ -526,6 +529,19 @@ int SurveyOptimizer::ConstructGraph(std::shared_ptr<ParseSurvey> PS, ParseFeatur
         }
     }
     GTS.InitializePose(FG->key[(int)FactorGraph::var::X], camera_key, curcam);
+    
+    
+    
+//    if(not loc_succeeded and _incremental and camera_key > 1)
+//    {
+//        bool suc;
+//        gtsam::EssentialMatrix E;
+//        std::tie(suc, E) = LocalizeCurPose2D(camera_key);
+//        if(suc)
+//        {
+//            //            FG->AddEssentialMatrix(camera_key, E);
+//        }
+//    }
     
     //add the landmark measurement to the graph
     if(cache_landmarks) CacheLandmarks(inactive);

@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 6/9/15.
 //  Copyright (c) 2015 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_
-#define SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -61,8 +60,6 @@ public:
     std::vector<double> GetDrawScale();
     void PlayPoses();
 };
-
-#endif /* SRC_BOATSURVEY_PARSEBOATSURVEY_HPP_ */
 
 
 

@@ -15,6 +15,9 @@ public:
     
     static void verifyOptimizationForE();
     
+    static void testDistanceToEpipolarLine();
+    
+    static void testEssentialMatrixVO();
 };
 
 

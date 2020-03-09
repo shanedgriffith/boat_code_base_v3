@@ -6,8 +6,7 @@
 //  Copyright (c) 2015 shane. All rights reserved.
 //
 
-#ifndef SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_
-#define SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -85,6 +84,3 @@ public:
     
     gtsam::Pose3 CameraPose(int idx);
 };
-
-
-#endif /* SRC_FILEPARSING_PARSEOPTIMIZATIONRESULTS_H_ */

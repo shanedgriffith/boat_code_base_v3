@@ -8,6 +8,8 @@
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 #include <gtsam/inference/Symbol.h>
 
+#include "CustomEFactor.h"
+
 #include "DataTypes/Camera.hpp"
 
 template <class T=gtsam::Pose3, class P=gtsam::Point3>

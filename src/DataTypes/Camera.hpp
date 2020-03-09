@@ -5,8 +5,9 @@
  *      Author: shane
  */
 
-#ifndef SRC_DATATYPES_CAMERA_HPP_
-#define SRC_DATATYPES_CAMERA_HPP_
+#pragma once
+
+#include <boost/make_shared.hpp>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
@@ -14,35 +15,28 @@
 
 #include <gtsam/geometry/Point3.h>
 #include <gtsam/geometry/Point2.h>
-#include <gtsam/geometry/Cal3_S2.h>
+#include <gtsam/geometry/Cal3DS2.h>
 
 class Camera{
 public:
-    cv::Mat distCoeffs;
-	double _fx, _fy, _cx, _cy;
-	int _w, _h;
-    gtsam::Cal3_S2::shared_ptr k;
-	Camera(double fx, double fy, double cx, double cy, int w, int h):
-		_fx(fx), _fy(fy), _cx(cx), _cy(cy), _w(w), _h(h),
-        k(new gtsam::Cal3_S2(_fx, _fy, 0.0, _cx, _cy)),
-        distCoeffs(5, 1, CV_64F, cv::Scalar::all(0))
-    {}
+    double _fx, _fy, _cx, _cy;
+    int _w, _h;
     
-    ~Camera() {
-//        delete(k); //check. this right for deleting the shared_ptr object?
-    }
+    boost::shared_ptr<gtsam::Cal3DS2> k;
+    
+    Camera(double fx, double fy, double cx, double cy, int w, int h);
+    
+    ~Camera() {}
     
     void SetDistortion(double k1, double k2, double p1, double p2, double k3);
-    cv::Mat Distortion() const;
-	bool InsideImage(int x, int y) const;
-	bool InsideImage(gtsam::Point2 p) const;
-    cv::Point2f NormalizedToPixel(cv::Point2f p) const;
-    cv::Point2f PixelToNormalized(cv::Point2f p) const;
-	gtsam::Point2 ProjectToImage(gtsam::Point3) const;
+    bool InsideImage(int x, int y) const;
+    bool InsideImage(gtsam::Point2 p) const;
+    gtsam::Point2 NormalizedToPixel(gtsam::Point2 p) const;
+    gtsam::Point2 PixelToNormalized(gtsam::Point2 p) const;
+    gtsam::Point2 ProjectToImage(gtsam::Point3 p) const;
     cv::Mat IntrinsicMatrix() const;
-	int w() const;
-	int h() const;
-    gtsam::Cal3_S2::shared_ptr GetGTSAMCam() const;
+    int w() const;
+    int h() const;
+    boost::shared_ptr<gtsam::Cal3DS2> GetGTSAMCam() const;
 };
 
-#endif /* SRC_DATATYPES_CAMERA_HPP_ */

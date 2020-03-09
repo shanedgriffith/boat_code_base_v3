@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 1/11/16.
 //  Copyright © 2016 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_FILEPARSING_HPP_
-#define SRC_FILEPARSING_FILEPARSING_HPP_
 
 #include <stdio.h>
 #include <string>
@@ -49,5 +48,3 @@ public:
     static std::vector<std::vector<std::string> > ReadCSVFile(std::string file);
 };
 
-
-#endif /* SRC_FILEPARSING_FILEPARSING_HPP_ */

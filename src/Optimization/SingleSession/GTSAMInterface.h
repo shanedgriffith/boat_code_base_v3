@@ -6,10 +6,8 @@
 //  Copyright (c) 2014 shane. All rights reserved.
 //
 
-#ifndef SRC_OPTIMIZATION_GTSAMInterface_H_
-#define SRC_OPTIMIZATION_GTSAMInterface_H_
+#pragma once
 
-//#include <optional>
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Point3.h>
@@ -114,6 +112,3 @@ public:
     boost::optional<gtsam::Point3> triangulatePointFromPoseValues(gtsam::Values& v, int landmark_idx);
     void RemoveLandmarkFactor(int landmark_idx);
 };
-
-
-#endif /* SRC_OPTIMIZATION_GTSAMInterface_H_ */

@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 6/10/15.
 //  Copyright (c) 2015 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_PARSEFEATURETRACKFILE_H_
-#define SRC_FILEPARSING_PARSEFEATURETRACKFILE_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -95,6 +94,3 @@ public:
     static ParseFeatureTrackFile ReconstructFromCachedSet(const Camera& cam, std::vector<LandmarkTrack>& landmarks, int ckey);
 };
 
-
-
-#endif /* SRC_FILEPARSING_PARSEFEATURETRACKFILE_H_ */

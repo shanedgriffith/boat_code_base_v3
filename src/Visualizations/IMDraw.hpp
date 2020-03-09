@@ -4,9 +4,7 @@
  *  Created on: May 2, 2017
  *      Author: shane
  */
-
-#ifndef SRC_VISUALIZATIONS_IMDRAW_HPP_
-#define SRC_VISUALIZATIONS_IMDRAW_HPP_
+#pragma once
 
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
@@ -25,7 +23,3 @@ public:
     void SetPointSize(int s) {psize = s;}
 //    void SetColor(CvScalar col) {default_color = col;}
 };
-
-
-
-#endif /* SRC_VISUALIZATIONS_IMDRAW_HPP_ */

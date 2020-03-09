@@ -25,6 +25,7 @@
 
 #include "DataTypes/Camera.hpp"
 #include "BoatSurvey/ParseBoatSurvey.hpp"
+#include "FileParsing/FileParsing.hpp"
 
 #include "testE.h"
 
@@ -168,5 +169,83 @@ verifyOptimizationForE()
     gtsam::Vector err = emc.evaluateError(gtsam::Pose3::identity(), aPb);
     std::cout << "E error: " << err.transpose() << std::endl;
 }
+
+void
+TestE::
+testDistanceToEpipolarLine()
+{
+    gtsam::Pose3 pose_t2(gtsam::Rot3::Expmap(gtsam::Vector3(-1.251, -1.1194, 1.073)), gtsam::Point3(7.3938, -35.725, -0.061478));
+    gtsam::Pose3 pose_t1(gtsam::Rot3::Expmap(gtsam::Vector3(-1.2479, -1.1258, 1.0751)), gtsam::Point3(7.2857, -36.169, -0.063827));
+    Camera axisptz = ParseBoatSurvey::GetCamera();
+    gtsam::Cal3_S2::shared_ptr cam = axisptz.GetGTSAMCam();
+    
+    gtsam::Pose3 btwn = pose_t2.between(pose_t1);
+    gtsam::Unit3 aTb(btwn.translation());
+    //Create initial estimate
+    gtsam::EssentialMatrix trueE(btwn.rotation(), aTb);
+    
+    for(int i=0; i<p2d0.size(); ++i)
+    {
+        gtsam::Point2 c0 = p2d0[i]; //cam->calibrate(p2d0[i]);//
+        gtsam::Point2 c1 = p2d1[i]; //cam->calibrate(p2d1[i]);//
+        
+        gtsam::Vector3 p0h = gtsam::EssentialMatrix::Homogeneous(c0);
+        gtsam::Vector3 p1h = gtsam::EssentialMatrix::Homogeneous(c1);
+        
+        gtsam::Vector3 v01 = trueE.matrix() * p0h;
+        gtsam::Vector3 v10 = trueE.matrix().transpose() * p1h;
+        
+        double dist01 = fabs(v01.dot(p1h)) / sqrt(v01.x() * v01.x() + v01.y() * v01.y());
+        double dist10 = fabs(v10.dot(p0h)) / sqrt(v10.x() * v10.x() + v10.y() * v10.y());
+        double dx = p0h.transpose() * trueE.matrix().transpose() * p1h;
+        
+        std::cout << "--------------" << std::endl;
+        std::cout << "original p0h: " << p0h.transpose() << std::endl;
+        std::cout << "original p1h: " << p1h.transpose() << std::endl;
+        std::cout << "         v01: " << v01.transpose() << std::endl;
+        std::cout << "         v10: " << v10.transpose() << std::endl;
+        std::cout << "         d01: " << dist01 << std::endl;
+        std::cout << "         d10: " << dist10 << std::endl;
+        std::cout << "         dx: " << dx << std::endl;
+        
+        
+    }
+}
+
+void
+TestE::
+testEssentialMatrixVO()
+{
+    ParseOptimizationResults POR("/Volumes/Untitled/data/maps/", "140106");
+    
+    for(int i=110; i<500; ++i)
+    {
+        std::string base = "/Users/shane/Documents/projects/VO/test_E_correspondences/" + std::to_string(cur_pose_idx) + ".csv";
+        if(not FileParsing::Exists(base))
+        {
+            continue;
+        }
+        std::vector<std::vector<std::string> > data = ReadCSVFile(base);
+        std::vector<gtsam::Point2> p0, p1;
+        for(int j=0; j<data.size(); ++j)
+        {
+            p0.push_back(gtsam::Point2(stod(data[j][0]), stod(data[j][1])));
+            p1.push_back(gtsam::Point2(stod(data[j][2]), stod(data[j][3])));
+        }
+        
+        
+        
+        
+        exit(1);
+        
+    }
+    
+    
+    
+}
+
+
+
+
 
 

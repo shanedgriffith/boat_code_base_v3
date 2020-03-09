@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 5/23/14.
 //  Copyright (c) 2014 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_DATATYPES_LANDMARKTRACK_H_
-#define SRC_DATATYPES_LANDMARKTRACK_H_
 
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
@@ -40,6 +39,3 @@ public:
     int Length() {return static_cast<int>(points.size());}
 };
 
-
-
-#endif /* SRC_DATATYPES_LANDMARKTRACK_H_ */

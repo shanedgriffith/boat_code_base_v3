@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 6/19/15.
 //  Copyright (c) 2015 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_PARSEVISIBILITYFILE_H_
-#define SRC_FILEPARSING_PARSEVISIBILITYFILE_H_
 
 
 #include <stdio.h>
@@ -36,6 +35,3 @@ public:
 
 
 
-
-
-#endif /* SRC_FILEPARSING_PARSEVISIBILITYFILE_H_ */

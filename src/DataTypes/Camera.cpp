@@ -7,20 +7,43 @@
 
 #include "Camera.hpp"
 
-bool Camera::InsideImage(int x, int y) const{
-	return x >=0 && y >= 0 && x <_w && y < _h;
+Camera::
+Camera(double fx, double fy, double cx, double cy, int w, int h)
+: _fx(fx)
+, _fy(fy)
+, _cx(cx)
+, _cy(cy)
+, _w(w)
+, _h(h)
+, k(boost::make_shared<gtsam::Cal3DS2>(_fx, _fy, 0.0, _cx, _cy, 0, 0, 0, 0))
+{}
+
+bool
+Camera::
+InsideImage(int x, int y) const
+{
+    return x >=0 && y >= 0 && x <_w && y < _h;
 }
 
-bool Camera::InsideImage(gtsam::Point2 p) const{
-	return InsideImage(p.x(), p.y());
+bool
+Camera::
+InsideImage(gtsam::Point2 p) const
+{
+    return InsideImage(p.x(), p.y());
 }
 
-gtsam::Point2 Camera::ProjectToImage(gtsam::Point3 p) const{
+gtsam::Point2
+Camera::
+ProjectToImage(gtsam::Point3 p) const
+{
     if(p.z()<0) return gtsam::Point2(-1, -1);
-	return gtsam::Point2((_fx*p.x() + _cx*p.z())/p.z(), (_fy*p.y() + _cy*p.z())/p.z());
+    return gtsam::Point2((_fx*p.x() + _cx*p.z())/p.z(), (_fy*p.y() + _cy*p.z())/p.z());
 }
 
-cv::Mat Camera::IntrinsicMatrix() const{
+cv::Mat
+Camera::
+IntrinsicMatrix() const
+{
     cv::Mat K(3, 3, CV_64F, cv::Scalar(0));
     double * data = (double*)K.data;
     data[0] = _fx;
@@ -31,51 +54,44 @@ cv::Mat Camera::IntrinsicMatrix() const{
     return K;
 }
 
-cv::Point2f Camera::NormalizedToPixel(cv::Point2f p) const{
-    cv::Point2f pix;
-    pix.x = p.x*_fx + _cx;
-    pix.y = p.y*_fy + _cy;
-    return pix;
+gtsam::Point2
+Camera::
+NormalizedToPixel(gtsam::Point2 p) const
+{
+    return k->uncalibrate(p);
 }
 
-cv::Point2f Camera::PixelToNormalized(cv::Point2f p) const{
-	//using undistort points accounts for the camera distortion.
-	//if the image is already rectified, the distortion coefficients should be set to zero.
-	std::vector<cv::Point2f> pvec = {p};
-	cv::undistortPoints(pvec, pvec, IntrinsicMatrix(), Distortion());
-	return pvec[0];
-//    cv::Point2f norm;
-//    norm.x = (p.x-_u)/_fx;
-//    norm.y = (p.y-_v)/_fy;
-//    return norm;
+gtsam::Point2
+Camera::
+PixelToNormalized(gtsam::Point2 p) const
+{
+    return k->calibrate(p);
 }
 
-int Camera::w() const{
-	return _w;
+int
+Camera::
+w() const{
+    return _w;
 }
 
-int Camera::h() const{
-	return _h;
+int
+Camera::
+h() const{
+    return _h;
 }
 
-gtsam::Cal3_S2::shared_ptr Camera::GetGTSAMCam() const{
-//    if(!k)
-//        k = gtsam::Cal3_S2::shared_ptr(new gtsam::Cal3_S2(_fx, _fy, 0.0, _u, _v));
+boost::shared_ptr<gtsam::Cal3DS2>
+Camera::
+GetGTSAMCam() const
+{
     return k;
 }
 
-void Camera::SetDistortion(double k1, double k2, double p1, double p2, double k3)
+void
+Camera::
+SetDistortion(double k1, double k2, double p1, double p2, double k3)
 {
-    double * d = (double *) distCoeffs.data;
-    d[0] = k1;
-    d[1] = k2;
-    d[2] = p1;
-    d[3] = p2;
-    d[4] = k3;
-}
-
-cv::Mat Camera::Distortion() const{
-    return distCoeffs;
+    k = boost::make_shared<gtsam::Cal3DS2>(_fx, _fy, 0.0, _cx, _cy, k1, k2, p1, p2);
 }
 
 

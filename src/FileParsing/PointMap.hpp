@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 2/20/16.
 //  Copyright © 2016 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_POINTMAP_HPP_
-#define SRC_FILEPARSING_POINTMAP_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -53,10 +52,3 @@ public:
     void WritePoints();
 };
 
-
-
-
-
-
-
-#endif /* SRC_FILEPARSING_POINTMAP_HPP_ */

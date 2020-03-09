@@ -1,5 +1,5 @@
-#ifndef SRC_OPTIMIZATION_FACTORGRAPH_HPP_
-#define SRC_OPTIMIZATION_FACTORGRAPH_HPP_
+#pragma once
+
 
 #include <stdio.h>
 #include <string.h>
@@ -89,6 +89,7 @@ public:
     void InitializeNoiseModels();
     
     void AddCamera(int camera_key, gtsam::Pose3 cam_est);
+    void AddEssentialMatrixFactor(int camera_key, const std::vector<gtsam::Point2>& p0, const std::vector<gtsam::Point2>& p1);
     void AddEssentialMatrix(int camera_key, gtsam::EssentialMatrix& E);
     void AddVelocity(int camera_key, gtsam::Pose3 vel_est);
     void AddOdomFactor(int camera_key, gtsam::Pose3 delta_pose, bool tight = false);
@@ -109,6 +110,3 @@ public:
     static std::vector<std::string> Keys(){return keys;}
     void SetParams(std::vector<double> params){vals = params; InitializeNoiseModels();}
 };
-
-
-#endif /* SRC_OPTIMIZATION_FACTORGRAPH_HPP_ */

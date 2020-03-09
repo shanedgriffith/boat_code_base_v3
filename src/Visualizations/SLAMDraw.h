@@ -6,8 +6,7 @@
 //  Copyright (c) 2014 Shane Griffith. All rights reserved.
 //
 
-#ifndef SRC_VISUALIZATIONS_SLAMDRAW_H_
-#define SRC_VISUALIZATIONS_SLAMDRAW_H_
+#pragma once
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -111,4 +110,3 @@ public:
     void PutText(double x, double y, std::string text);
 };
 
-#endif /* SRC_VISUALIZATIONS_SLAMDRAW_H_ */

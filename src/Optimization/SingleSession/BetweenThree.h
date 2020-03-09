@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 10/29/14.
 //  Copyright (c) 2014 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_OPTIMIZATION_BETWEENTHREE_H_
-#define SRC_OPTIMIZATION_BETWEENTHREE_H_
 
 #include <gtsam/inference/Key.h>
 #include <gtsam/slam/BetweenFactor.h>
@@ -79,4 +78,3 @@ public:
     }
 };
 
-#endif /* SRC_OPTIMIZATION_BETWEENTHREE_H_ */

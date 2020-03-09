@@ -4,9 +4,8 @@
  *  Created on: May 5, 2016
  *      Author: shane
  */
+#pragma once
 
-#ifndef SRC_DATATYPES_MAP_HPP_
-#define SRC_DATATYPES_MAP_HPP_
 
 #include <stdio.h>
 #include <string.h>
@@ -46,6 +45,3 @@ public:
 
 	int NumSurveys() const ;
 };
-
-
-#endif /* SRC_DATATYPES_MAP_HPP_ */

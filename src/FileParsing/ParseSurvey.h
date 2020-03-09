@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 6/9/15.
 //  Copyright (c) 2015 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_PARSESURVEY_H_
-#define SRC_FILEPARSING_PARSESURVEY_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -74,5 +73,3 @@ public:
 
 
 
-
-#endif /* SRC_FILEPARSING_PARSESURVEY_H_ */

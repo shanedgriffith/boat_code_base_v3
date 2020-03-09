@@ -7,7 +7,7 @@
 #include <gtsam/nonlinear/DoglegOptimizer.h>
 #include <gtsam/slam/EssentialMatrixFactor.h>
 
-#include "Optimization/MultiSession/LocalizationFactor.h"
+#include "LocalizationFactor.h"
 
 template <class T, class P>
 PNP<T,P>::
@@ -109,7 +109,9 @@ PNP<gtsam::EssentialMatrix, gtsam::Point2>::
 addLocalizationFactor(gtsam::Symbol symb, size_t i)
 {
     static gtsam::Cal3_S2::shared_ptr gt_camera = cam_.GetGTSAMCam();
-    graph_.add(gtsam::EssentialMatrixFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_, gt_camera));
+    
+    graph_.add(CustomEFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_));
+//    graph_.add(gtsam::EssentialMatrixFactor(symb, p3d_subset_[i], p2d_subset_[i], measurement_noise_, gt_camera));
 }
 
 template <class T, class P>

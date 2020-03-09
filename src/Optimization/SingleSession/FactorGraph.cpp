@@ -17,6 +17,7 @@
 #include <gtsam/slam/BetweenFactor.h>
 #include "BetweenThree.h"
 #include "OrientationConstraint.h"
+#include "Localization/CustomEFactor2.h"
 
 using namespace std;
 
@@ -62,10 +63,25 @@ void FactorGraph::SetLandmarkDeviation(double dev) {
 //    pixelNoise = gtsam::noiseModel::Robust::Create(gtsam::noiseModel::mEstimator::Huber::Create(1.345), gaussian);
 }
 
+void FactorGraph::AddEssentialMatrixFactor(int camera_key, const std::vector<gtsam::Point2>& p0, const std::vector<gtsam::Point2>& p1)
+{
+    gtsam::Vector1 v1p;
+//    v5p = (gtsam::Vector(5) << 1, 1, 1, 1, 1).finished();
+    v1p = (gtsam::Vector(1) << 3).finished();
+    auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v1p);
+    gtsam::Symbol symt(key[(int) var::X], camera_key-1);
+    gtsam::Symbol symt1(key[(int) var::X], camera_key);
+    for(int i=0; i<p0.size(); ++i)
+    {
+        graph.add(CustomEFactor2(symt, symt1, p0[i], p1[i], noisemodel));
+    }
+}
+
 void FactorGraph::AddEssentialMatrix(int camera_key, gtsam::EssentialMatrix& E)
 {
     gtsam::Vector5 v5p;
-    v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
+    v5p = (gtsam::Vector(5) << 1, 1, 1, 1, 1).finished();
+//    v5p = (gtsam::Vector(5) << 10, 10, 10, 10, 10).finished();
 //    v5p = (gtsam::Vector(5) << 0.05, 0.05, 0.0017, 0.0017, 0.0017).finished();
     auto noisemodel = gtsam::noiseModel::Diagonal::Sigmas(v5p);
     graph.add(gtsam::EssentialMatrixConstraint(gtsam::Symbol(key[(int) var::X], camera_key-1), gtsam::Symbol(key[(int) var::X], camera_key), E, noisemodel));

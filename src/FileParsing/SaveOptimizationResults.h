@@ -5,9 +5,8 @@
 //  Created by Shane Griffith on 6/10/15.
 //  Copyright (c) 2015 shane. All rights reserved.
 //
+#pragma once
 
-#ifndef SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_
-#define SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -54,6 +53,3 @@ public:
     
     void SaveDataCorrespondence(int camera_key, int sift_file_no, int aux_file_idx, int imageno, double timestamp);
 };
-
-
-#endif /* SRC_FILEPARSING_SAVEOPTIMIZATIONRESULTS_H_ */
